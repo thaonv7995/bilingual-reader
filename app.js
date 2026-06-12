@@ -311,6 +311,53 @@ function App() {
     }
   }, []);
 
+  // Clear sentence highlights when clicking outside of the iframes
+  useEffect(() => {
+    const handleParentClick = (e) => {
+      if (!e.target.closest('.reader-iframe')) {
+        clearAllHighlights();
+      }
+    };
+    window.addEventListener('click', handleParentClick);
+    return () => window.removeEventListener('click', handleParentClick);
+  }, []);
+
+  // Synchronize scrolling between English and Vietnamese wrappers (esp. in stacked layouts)
+  useEffect(() => {
+    const enWrapper = document.querySelector('#en-pane .iframe-wrapper');
+    const viWrapper = document.querySelector('#vi-pane .iframe-wrapper');
+    if (!enWrapper || !viWrapper) return;
+
+    let isSyncingEnScroll = false;
+    let isSyncingViScroll = false;
+
+    const handleEnScroll = () => {
+      if (!isSyncingEnScroll) {
+        isSyncingViScroll = true;
+        viWrapper.scrollTop = enWrapper.scrollTop;
+        viWrapper.scrollLeft = enWrapper.scrollLeft;
+        setTimeout(() => { isSyncingViScroll = false; }, 20);
+      }
+    };
+
+    const handleViScroll = () => {
+      if (!isSyncingViScroll) {
+        isSyncingEnScroll = true;
+        enWrapper.scrollTop = viWrapper.scrollTop;
+        enWrapper.scrollLeft = viWrapper.scrollLeft;
+        setTimeout(() => { isSyncingEnScroll = false; }, 20);
+      }
+    };
+
+    enWrapper.addEventListener('scroll', handleEnScroll);
+    viWrapper.addEventListener('scroll', handleViScroll);
+
+    return () => {
+      enWrapper.removeEventListener('scroll', handleEnScroll);
+      viWrapper.removeEventListener('scroll', handleViScroll);
+    };
+  }, [layoutMode, viewMode, page]);
+
   // Silent background prefetch for book pages when activeBook changes
   useEffect(() => {
     if (!activeBook) return;
@@ -458,6 +505,16 @@ function App() {
         // Hide internal pages redundant navigation controls
         const nav = doc.querySelector('.page-nav');
         if (nav) nav.style.display = 'none';
+
+        const isEnglish = e.target.classList.contains('en-pane-iframe');
+        // Inject bilingual highlight CSS (pass isEnglish to differentiate highlight color)
+        injectHighlightCSS(doc, isEnglish);
+
+        // Segment sentences in the document
+        segmentDocSentences(doc);
+
+        // Register highlighting listeners inside the iframe
+        registerIframeHighlightListeners(iframeWin, doc);
 
         // Listen for keys inside the iframe to slide pages
         doc.addEventListener('keydown', (event) => {
@@ -1341,6 +1398,224 @@ Instructions:
       ${popupConfig && renderPopupModal()}
     </div>
   `;
+}
+
+// --- Bilingual Sentence Highlight Sync Helpers ---
+
+function splitIntoSentences(text) {
+  if (!text) return [];
+  
+  const sentences = [];
+  let currentStart = 0;
+  
+  const boundaryRegex = /([.!?])(\s+|$)/g;
+  let match;
+  
+  const abbrevs = [
+    'mr', 'mrs', 'dr', 'ms', 'prof', 'sr', 'jr', 'vs', 'etc', 'eg', 'ie', 'al',
+    'st', 'av', 'rd', 'capt', 'gen', 'col', 'lt', 'sgt', 'rep', 'sen', 'oct', 'nov', 'dec',
+    'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'tp', 'ts', 'ths', 'gs', 'hcm'
+  ];
+  
+  while ((match = boundaryRegex.exec(text)) !== null) {
+    const boundaryIdx = match.index;
+    
+    const precedingText = text.substring(currentStart, boundaryIdx);
+    const lastWordMatch = precedingText.match(/(\b\w+)$/);
+    const lastWord = lastWordMatch ? lastWordMatch[1].toLowerCase() : '';
+    
+    if (abbrevs.includes(lastWord)) {
+      continue;
+    }
+    
+    // Split including exact boundary punctuation and its trailing whitespace
+    const sentenceEnd = boundaryIdx + 1 + match[2].length;
+    const sentenceText = text.substring(currentStart, sentenceEnd);
+    if (sentenceText.length > 0) {
+      sentences.push(sentenceText);
+    }
+    currentStart = sentenceEnd;
+  }
+  
+  if (currentStart < text.length) {
+    const remaining = text.substring(currentStart);
+    if (remaining.length > 0) {
+      sentences.push(remaining);
+    }
+  }
+  
+  return sentences;
+}
+
+function segmentParagraph(pElement, pIdx) {
+  const text = pElement.textContent;
+  const sentences = splitIntoSentences(text);
+  
+  if (sentences.length <= 1) {
+    const span = pElement.ownerDocument.createElement('span');
+    span.className = 'sentence-node';
+    span.dataset.sentenceId = `p-${pIdx}-s-0`;
+    while (pElement.firstChild) {
+      span.appendChild(pElement.firstChild);
+    }
+    pElement.appendChild(span);
+    return;
+  }
+  
+  const sentenceSpans = sentences.map((sText, sIdx) => {
+    const span = pElement.ownerDocument.createElement('span');
+    span.className = 'sentence-node';
+    span.dataset.sentenceId = `p-${pIdx}-s-${sIdx}`;
+    return span;
+  });
+  
+  let currentSentenceIdx = 0;
+  let currentSentenceRemainingLen = sentences[0].length;
+  
+  const childNodes = Array.from(pElement.childNodes);
+  pElement.innerHTML = '';
+  
+  childNodes.forEach(node => {
+    if (node.nodeType === 3) { // Text Node
+      let nodeText = node.textContent;
+      while (nodeText.length > 0 && currentSentenceIdx < sentences.length) {
+        if (nodeText.length <= currentSentenceRemainingLen) {
+          const textNode = pElement.ownerDocument.createTextNode(nodeText);
+          sentenceSpans[currentSentenceIdx].appendChild(textNode);
+          currentSentenceRemainingLen -= nodeText.length;
+          nodeText = '';
+        } else {
+          const part = nodeText.substring(0, currentSentenceRemainingLen);
+          const textNode = pElement.ownerDocument.createTextNode(part);
+          sentenceSpans[currentSentenceIdx].appendChild(textNode);
+          
+          nodeText = nodeText.substring(currentSentenceRemainingLen);
+          
+          currentSentenceIdx++;
+          if (currentSentenceIdx < sentences.length) {
+            currentSentenceRemainingLen = sentences[currentSentenceIdx].length;
+          }
+        }
+      }
+    } else if (node.nodeType === 1) { // Element Node
+      sentenceSpans[currentSentenceIdx].appendChild(node);
+      currentSentenceRemainingLen -= node.textContent.length;
+      if (currentSentenceRemainingLen <= 0 && currentSentenceIdx < sentences.length - 1) {
+        currentSentenceIdx++;
+        currentSentenceRemainingLen = sentences[currentSentenceIdx].length;
+      }
+    }
+  });
+  
+  sentenceSpans.forEach(span => {
+    if (span.textContent.length > 0) {
+      pElement.appendChild(span);
+    }
+  });
+}
+
+function segmentDocSentences(doc) {
+  const article = doc.querySelector('article') || doc.body;
+  if (!article) return;
+  
+  const paragraphs = article.querySelectorAll('p, .chapter-start, .no-indent, h1, h2, h3, li');
+  paragraphs.forEach((p, idx) => {
+    if (!p.querySelector('.sentence-node')) {
+      segmentParagraph(p, idx);
+    }
+  });
+}
+
+function injectHighlightCSS(doc, isEnglish) {
+  if (doc.getElementById('bilingual-highlight-style')) return;
+  const style = doc.createElement('style');
+  style.id = 'bilingual-highlight-style';
+  
+  const highlightColor = isEnglish 
+    ? 'rgba(56, 189, 248, 0.35)' // Light sky blue for English
+    : 'rgba(250, 204, 21, 0.35)'; // Light yellow for Vietnamese
+    
+  const hoverColor = isEnglish
+    ? 'rgba(56, 189, 248, 0.15)'
+    : 'rgba(250, 204, 21, 0.15)';
+
+  const shadowColor = isEnglish
+    ? 'rgba(56, 189, 248, 0.5)'
+    : 'rgba(250, 204, 21, 0.5)';
+
+  style.textContent = `
+    .sentence-node {
+      transition: background-color 0.2s ease;
+      border-radius: 3px;
+      cursor: pointer;
+      display: inline;
+    }
+    .sentence-node:hover {
+      background-color: ${hoverColor};
+    }
+    .sentence-node.highlight-sync {
+      background-color: ${highlightColor} !important;
+      box-shadow: 0 0 4px ${shadowColor};
+    }
+  `;
+  doc.head.appendChild(style);
+}
+
+function highlightSentenceAcrossIframes(sentenceId) {
+  const enIframe = document.querySelector('.en-pane-iframe');
+  const viIframe = document.querySelector('.vi-pane-iframe');
+  
+  [enIframe, viIframe].forEach(iframe => {
+    if (iframe && iframe.contentDocument) {
+      const doc = iframe.contentDocument;
+      doc.querySelectorAll('.sentence-node.highlight-sync').forEach(el => {
+        el.classList.remove('highlight-sync');
+      });
+      const targetNode = doc.querySelector(`.sentence-node[data-sentence-id="${sentenceId}"]`);
+      if (targetNode) {
+        targetNode.classList.add('highlight-sync');
+      }
+    }
+  });
+}
+
+function clearAllHighlights() {
+  const enIframe = document.querySelector('.en-pane-iframe');
+  const viIframe = document.querySelector('.vi-pane-iframe');
+  
+  [enIframe, viIframe].forEach(iframe => {
+    if (iframe && iframe.contentDocument) {
+      iframe.contentDocument.querySelectorAll('.sentence-node.highlight-sync').forEach(el => {
+        el.classList.remove('highlight-sync');
+      });
+    }
+  });
+}
+
+function registerIframeHighlightListeners(iframeWin, doc) {
+  doc.addEventListener('mouseup', (e) => {
+    setTimeout(() => {
+      const selection = iframeWin.getSelection();
+      const selectedText = selection.toString().trim();
+      
+      let sentenceNode = null;
+      if (selectedText.length > 0) {
+        const node = selection.anchorNode;
+        if (node) {
+          sentenceNode = node.parentElement.closest('.sentence-node');
+        }
+      } else {
+        sentenceNode = e.target.closest('.sentence-node');
+      }
+      
+      if (sentenceNode) {
+        const sentenceId = sentenceNode.dataset.sentenceId;
+        highlightSentenceAcrossIframes(sentenceId);
+      } else {
+        clearAllHighlights();
+      }
+    }, 10);
+  });
 }
 
 // Render the application to root body element
