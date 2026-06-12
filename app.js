@@ -51,7 +51,7 @@ function App() {
     const width = window.innerWidth;
     if (width < 600) return 2;
     if (width < 1000) return 4;
-    if (width < 1500) return 6;
+    if (width < 1400) return 6;
     return 8;
   };
   const [cols, setCols] = useState(getColsCount);
