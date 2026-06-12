@@ -50,9 +50,8 @@ function App() {
   const getColsCount = () => {
     const width = window.innerWidth;
     if (width < 600) return 2;
-    if (width < 1000) return 4;
-    if (width < 1400) return 6;
-    return 8;
+    if (width < 1000) return 3;
+    return 4;
   };
   const [cols, setCols] = useState(getColsCount);
   const [currentPage, setCurrentPage] = useState(1);
@@ -951,7 +950,7 @@ Instructions:
   // --- Render Dashboard UI ---
   if (!activeBook) {
     return html`
-      <div>
+      <div class="app-container">
         <header>
           <div class="header-container">
             <h1>Bilingual Digital Library</h1>
