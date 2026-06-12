@@ -1532,16 +1532,12 @@ function injectHighlightCSS(doc, isEnglish) {
   style.id = 'bilingual-highlight-style';
   
   const highlightColor = isEnglish 
-    ? 'rgba(56, 189, 248, 0.35)' // Light sky blue for English
-    : 'rgba(250, 204, 21, 0.35)'; // Light yellow for Vietnamese
+    ? 'rgba(56, 189, 248, 0.18)' // Softer sky blue for English
+    : 'rgba(250, 204, 21, 0.20)'; // Softer yellow for Vietnamese
     
   const hoverColor = isEnglish
-    ? 'rgba(56, 189, 248, 0.15)'
-    : 'rgba(250, 204, 21, 0.15)';
-
-  const shadowColor = isEnglish
-    ? 'rgba(56, 189, 248, 0.5)'
-    : 'rgba(250, 204, 21, 0.5)';
+    ? 'rgba(56, 189, 248, 0.08)'
+    : 'rgba(250, 204, 21, 0.08)';
 
   style.textContent = `
     .sentence-node {
@@ -1555,7 +1551,6 @@ function injectHighlightCSS(doc, isEnglish) {
     }
     .sentence-node.highlight-sync {
       background-color: ${highlightColor} !important;
-      box-shadow: 0 0 4px ${shadowColor};
     }
   `;
   doc.head.appendChild(style);
