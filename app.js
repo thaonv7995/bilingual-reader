@@ -140,7 +140,6 @@ function App() {
     return localStorage.getItem('bilingual.reader.chatOpen') === 'true';
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false);
   const [bookHighlights, setBookHighlights] = useState([]);
 
   // --- API & Settings State ---
@@ -242,7 +241,6 @@ function App() {
     } else {
       setBookHighlights([]);
       removeAllReaderHighlightUI();
-      setHighlightsPanelOpen(false);
     }
   }, [activeBook]);
 
@@ -686,38 +684,6 @@ function App() {
       highlightAppContext = null;
     };
   }, [activeBook, page, bookHighlights]);
-
-  const jumpToHighlight = (highlight) => {
-    if (!highlight || !activeBook) return;
-    removeAllReaderHighlightUI();
-    setPage(highlight.page);
-    setTimeout(() => {
-      const iframe = document.querySelector(highlight.lang === 'en' ? '.en-pane-iframe' : '.vi-pane-iframe');
-      if (iframe && iframe.contentDocument) {
-        const mark = iframe.contentDocument.querySelector(`mark.reader-highlight[data-highlight-id="${highlight.id}"]`);
-        if (mark) {
-          mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          mark.classList.add('reader-highlight--pulse');
-          setTimeout(() => mark.classList.remove('reader-highlight--pulse'), 1200);
-        }
-      }
-    }, 350);
-  };
-
-  const groupedHighlights = useMemo(() => {
-    const groups = {};
-    bookHighlights.forEach(h => {
-      if (!groups[h.page]) groups[h.page] = [];
-      groups[h.page].push(h);
-    });
-    return Object.keys(groups)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map(pageNum => ({
-        page: pageNum,
-        items: groups[pageNum].sort((a, b) => a.createdAt - b.createdAt),
-      }));
-  }, [bookHighlights]);
 
   // --- Router hash controller ---
   useEffect(() => {
@@ -1285,49 +1251,6 @@ Instructions:
   }
 
   // --- Render Settings Modal ---
-  function renderHighlightsPanel() {
-    if (!highlightsPanelOpen) return null;
-
-    return html`
-      <div class="highlights-panel">
-        <div class="highlights-panel__header">
-          <span class="highlights-panel__title">🖍 Highlights (${bookHighlights.length})</span>
-          <button class="nav-btn" onClick=${() => setHighlightsPanelOpen(false)}>✕</button>
-        </div>
-        <div class="highlights-panel__body">
-          ${bookHighlights.length === 0 && html`
-            <div class="highlights-panel__empty">
-              Chưa có highlight nào.<br />
-              Bôi đen text trong trang sách để bắt đầu.
-            </div>
-          `}
-          ${groupedHighlights.map(group => html`
-            <div class="highlights-panel__group" key=${group.page}>
-              <div class="highlights-panel__group-title">Trang ${group.page}</div>
-              ${group.items.map(item => html`
-                <button
-                  key=${item.id}
-                  class="highlights-panel__item"
-                  onClick=${() => jumpToHighlight(item)}
-                >
-                  <span
-                    class="highlights-panel__item-color"
-                    style=${{ backgroundColor: item.color }}
-                  />
-                  <span class="highlights-panel__item-content">
-                    <span class="highlights-panel__item-text">${item.text}</span>
-                    ${item.note && html`<span class="highlights-panel__item-note">${item.note}</span>`}
-                    <span class="highlights-panel__item-meta">${item.lang.toUpperCase()}</span>
-                  </span>
-                </button>
-              `)}
-            </div>
-          `)}
-        </div>
-      </div>
-    `;
-  }
-
   function renderSettingsModal() {
     return html`
       <div class="modal-backdrop" onClick=${() => setSettingsOpen(false)}>
@@ -1502,13 +1425,6 @@ Instructions:
             </button>
           </div>
 
-          <button class=${`btn-icon ${highlightsPanelOpen ? 'active' : ''}`} onClick=${() => setHighlightsPanelOpen(v => !v)} title="Highlights & Ghi chú">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 20h9"></path>
-              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-            </svg>
-          </button>
-
           <button class=${`btn-icon ${chatOpen ? 'active' : ''}`} onClick=${() => setChatOpen(!chatOpen)} title="Trợ lý AI">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1528,7 +1444,7 @@ Instructions:
       </div>
 
       <div
-        class=${`reader-workspace ${chatOpen ? 'chat-open' : ''} ${highlightsPanelOpen ? 'highlights-open' : ''}`}
+        class=${`reader-workspace ${chatOpen ? 'chat-open' : ''}`}
         style=${chatOpen ? { '--chat-width': `${chatWidth}px` } : {}}
       >
         <div class=${`reader-panes layout-${layoutMode}`}>
@@ -1553,8 +1469,6 @@ Instructions:
             </div>
           `}
         </div>
-
-        ${renderHighlightsPanel()}
 
         <!-- Chat Sidebar Drawer -->
         <div class=${`chat-sidebar ${isResizing ? 'is-resizing' : ''}`} style=${chatOpen ? { width: `${chatWidth}px` } : { width: '0px', borderLeft: 'none', overflow: 'hidden' }}>
