@@ -2137,6 +2137,7 @@ function showReaderStickyNote(doc, anchorRect, options) {
   noteEl.appendChild(textarea);
   noteEl.appendChild(footer);
   noteEl.addEventListener('mousedown', (e) => e.stopPropagation());
+  noteEl.addEventListener('mouseup', (e) => e.stopPropagation());
   doc.body.appendChild(noteEl);
   textarea.focus();
 }
@@ -2206,6 +2207,7 @@ function showReaderHighlightToolbar(doc, anchorRect, options) {
   }
 
   toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
+  toolbar.addEventListener('mouseup', (e) => e.stopPropagation());
   doc.body.appendChild(toolbar);
 }
 
@@ -2247,7 +2249,11 @@ function registerIframeHighlightListeners(iframeWin, doc, iframeEl, lang) {
   });
 
   doc.addEventListener('mouseup', (e) => {
+    if (e.target.closest('.reader-highlight-toolbar, .reader-highlight-sticky')) return;
+
     setTimeout(() => {
+      if (e.target.closest('.reader-highlight-toolbar, .reader-highlight-sticky')) return;
+
       const selection = iframeWin.getSelection();
       const selectedText = selection.toString().trim();
       const clickedMark = e.target.closest('mark.reader-highlight');
