@@ -31,6 +31,7 @@ class CursorProvider(Provider):
         try:
             proc = subprocess.run(
                 [base.path, "agent"],
+                stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
                 timeout=20,

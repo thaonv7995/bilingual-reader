@@ -90,6 +90,7 @@ class Provider(ABC):
             proc = subprocess.Popen(
                 cmd,
                 cwd=book_root,
+                stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -104,8 +105,8 @@ class Provider(ABC):
                     emit(line, stream)
 
             threads = [
-                threading.Thread(target=pump, args=(proc.stdout, stdout_chunks, "stdout")),
-                threading.Thread(target=pump, args=(proc.stderr, stderr_chunks, "stderr")),
+                threading.Thread(target=pump, args=(proc.stdout, stdout_chunks, "stdout"), daemon=True),
+                threading.Thread(target=pump, args=(proc.stderr, stderr_chunks, "stderr"), daemon=True),
             ]
             for t in threads:
                 t.start()

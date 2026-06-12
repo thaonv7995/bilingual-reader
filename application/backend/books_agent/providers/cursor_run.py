@@ -35,6 +35,7 @@ def run_cursor_agent(
     proc = subprocess.Popen(
         cmd,
         cwd=book_root,
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,

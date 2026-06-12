@@ -27,6 +27,7 @@ class AntigravityProvider(Provider):
                     "-p",
                     "Reply with exactly: pong",
                 ],
+                stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
                 timeout=45,

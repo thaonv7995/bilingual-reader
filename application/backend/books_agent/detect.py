@@ -23,6 +23,7 @@ class DetectResult:
 def _run(argv: list[str], timeout: int = 12) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         argv,
+        stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
         timeout=timeout,

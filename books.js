@@ -46,6 +46,14 @@ const BOOKS = [
     pageCount: 386,
     description: "A hands-on guide to building microservice-based applications using Java and Spring. Covers service discovery, configuration management, routing, and resilience patterns.",
     cover: "books/spring-microservices-in-action/output/assets/images/page_0001_cover_full.png"
+  },
+  {
+    slug: "animal-farm-by-george-orwell",
+    title: "Animal Farm",
+    author: "George Orwell",
+    pageCount: 108,
+    description: "A satirical allegorical novella reflecting events leading up to the Russian Revolution and the Stalinist era of the Soviet Union. A timeless classic about power, corruption, and equality.",
+    cover: "books/animal-farm-by-george-orwell/output/assets/cover.jpg"
   }
 ];
 
