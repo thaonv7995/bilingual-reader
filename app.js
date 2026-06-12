@@ -46,6 +46,38 @@ function App() {
   });
   const [fullBookText, setFullBookText] = useState('');
 
+  // --- Dynamic Dashboard Layout & Pagination State ---
+  const getColsCount = () => {
+    const width = window.innerWidth;
+    if (width < 600) return 2;
+    if (width < 900) return 4;
+    if (width < 1200) return 6;
+    return 8;
+  };
+  const [cols, setCols] = useState(getColsCount);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setCols(getColsCount());
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const sortedBooks = useMemo(() => {
+    return typeof BOOKS !== 'undefined' ? [...BOOKS].reverse() : [];
+  }, []);
+
+  const pageSize = cols * 3;
+  const totalPages = Math.ceil(sortedBooks.length / pageSize);
+  const clampedPage = Math.min(currentPage, Math.max(1, totalPages));
+
+  const paginatedBooks = useMemo(() => {
+    const start = (clampedPage - 1) * pageSize;
+    return sortedBooks.slice(start, start + pageSize);
+  }, [sortedBooks, clampedPage, pageSize]);
+
   // --- UI Layout State ---
   const [chatOpen, setChatOpen] = useState(() => {
     return localStorage.getItem('bilingual.reader.chatOpen') === 'true';
@@ -936,7 +968,7 @@ Instructions:
           </div>
 
           <div class="books-grid">
-            ${BOOKS.map(book => {
+            ${paginatedBooks.map(book => {
               const hasCover = !!book.cover;
               return html`
                 <div class="book-card" key=${book.slug} onClick=${() => {
@@ -968,6 +1000,18 @@ Instructions:
               `;
             })}
           </div>
+
+          ${totalPages > 1 && html`
+            <div class="pagination-container">
+              <button class="nav-btn pagination-arrow" disabled=${clampedPage <= 1} onClick=${() => setCurrentPage(p => Math.max(1, p - 1))}>
+                ◀
+              </button>
+              <span class="pagination-info">Trang ${clampedPage} / ${totalPages}</span>
+              <button class="nav-btn pagination-arrow" disabled=${clampedPage >= totalPages} onClick=${() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
+                ▶
+              </button>
+            </div>
+          `}
         </main>
 
         <footer>
