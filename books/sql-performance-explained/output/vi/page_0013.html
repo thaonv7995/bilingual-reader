@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Các Nút Lá Chỉ Mục</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      display: none;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--head {
+      margin-bottom: 4mm;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page table.lang-table {
+      width: auto;
+      margin: 0 0 3.5mm;
+      border-collapse: collapse;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+
+    .prose-page table.lang-table th,
+    .prose-page table.lang-table td {
+      border: none;
+      padding: 0.6mm 0;
+      vertical-align: top;
+      text-align: left;
+      background: transparent;
+    }
+
+    .prose-page table.lang-table th {
+      font-weight: 700;
+      padding-right: 10mm;
+    }
+
+    .prose-page table.lang-table td:first-child {
+      padding-right: 10mm;
+      white-space: nowrap;
+    }
+
+    .prose-page figure.diagram {
+      max-width: 100%;
+      margin: 2mm 0 3mm;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">13</span>
+      </header>
+      <p class="chapter-running-head">Các Nút Lá Chỉ Mục</p>
+      <hr class="chapter-rule chapter-rule--head" aria-hidden="true">
+
+      <table class="lang-table">
+        <thead>
+          <tr>
+            <th scope="col">Ngôn Ngữ Lập Trình</th>
+            <th scope="col">Tên</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Java</td>
+            <td><code>java.util.LinkedList</code></td>
+          </tr>
+          <tr>
+            <td>.NET Framework</td>
+            <td><code>System.Collections.Generic.LinkedList</code></td>
+          </tr>
+          <tr>
+            <td>C++</td>
+            <td><code>std::list</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="no-indent">Các cơ sở dữ liệu sử dụng danh sách liên kết đôi để kết nối các <i>nút lá chỉ mục</i> được gọi là.</p>
+
+      <p>Mỗi nút lá được lưu trữ trong một <i>khối cơ sở dữ liệu</i> hoặc <i>trang</i>; tức là, đơn vị lưu trữ nhỏ nhất của cơ sở dữ liệu. Tất cả các khối chỉ mục đều có cùng kích thước—thường là vài kilobyte. Cơ sở dữ liệu sử dụng không gian trong mỗi khối đến mức tối đa và lưu trữ càng nhiều mục chỉ mục càng tốt trong mỗi khối. Điều đó có nghĩa là thứ tự chỉ mục được duy trì ở hai cấp độ khác nhau: các mục chỉ mục trong mỗi nút lá, và các nút lá với nhau bằng cách sử dụng một danh sách liên kết đôi.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;1.1.&nbsp;Các Nút Lá Chỉ Mục và Dữ Liệu Bảng Tương Ứng</figcaption>
+        <img src="../assets/images/page_0013_fig_1_1.png" width="1027" height="640" alt="Hình 1.1. Các Nút Lá Chỉ Mục và Dữ Liệu Bảng Tương Ứng">
+      </figure>
+
+      <p>Hình&nbsp;1.1 minh họa các nút lá chỉ mục và kết nối của chúng với dữ liệu bảng. Mỗi mục chỉ mục bao gồm các cột được chỉ mục (khóa, cột&nbsp;2) và tham chiếu đến hàng bảng tương ứng (thông qua ROWID hoặc RID). Không giống như chỉ mục, dữ liệu bảng được lưu trữ trong một cấu trúc heap và không được sắp xếp chút nào.</p>
+
+      <p>Không có mối quan hệ nào giữa các hàng được lưu trữ trong cùng một khối bảng cũng như không có kết nối nào giữa các khối.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">3</p>
+    </article>
+  </main>
+</body>
+</html>

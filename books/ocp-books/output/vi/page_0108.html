@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="2"] {
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0107.html">← Trước</a>
+    <a href="page_0109.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">108</span>
+      </header>
+
+      <ol class="numbered" start="2">
+        <li>Trong trường hợp các kiểu trả về primitive, Java Language Specification (Đặc tả ngôn ngữ Java) quy định rằng kiểu trả về của overriding method (phương thức ghi đè) phải khớp chính xác với kiểu trả về của overridden method (phương thức bị ghi đè), mặc dù nó có định nghĩa các mối quan hệ supertype-subtype (kiểu cha - kiểu con) giữa các kiểu dữ liệu số.</li>
+        <li><strong>Parameters (Tham số)</strong> - Danh sách các parameter mà overriding method nhận vào phải trùng khớp hoàn toàn với danh sách của overridden method về cả kiểu dữ liệu và thứ tự (tên parameter không quan trọng). Thật vậy, nếu có sự khác biệt về kiểu dữ liệu và/hoặc thứ tự của các parameter, đó sẽ không phải là ghi đè (override) mà là nạp chồng (overload). Tôi đã thảo luận về việc overload các method trước đó.</li>
+        <li><strong>Throws clause (Mệnh đề throws)</strong> - Quy tắc này sẽ dễ hiểu hơn sau khi bạn tìm hiểu về xử lý exception (ngoại lệ), nhưng hiện tại hãy nhớ rằng một overriding method không được phép đưa một checked exception (ngoại lệ checked) rộng hơn (tức là một exception lớp cha - superclass exception) vào mệnh đề throws của nó so với các exception có trong mệnh đề throws của overridden method. Ví dụ, nếu mệnh đề throws của overridden method có <code>IOException</code>, overriding method không thể có <code>Exception</code> vì <code>Exception</code> là superclass (lớp cha) của <code>IOException</code>, nhưng nó có thể có <code>FileNotFoundException</code> vì <code>FileNotFoundException</code> là subclass (lớp con) của <code>IOException</code> và do đó hẹp hơn <code>IOException</code>.</li>
+      </ol>
+
+      <p>Overriding method cũng không thể throw (ném ra) một checked exception mới không được liệt kê trong mệnh đề throws của overridden method. Tuy nhiên, overriding method có thể quyết định không khai báo mệnh đề throws nào cả.</p>
+
+      <p>Lưu ý rằng những quy tắc này chỉ áp dụng cho các checked exception vì đây là những ngoại lệ duy nhất mà trình biên dịch (compiler) quan tâm.</p>
+
+      <p class="no-indent">Hãy cùng xem các quy tắc này hoạt động như thế nào đối với các class sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class InterestCalculator{
+Number computeInterest(double principal, double yrs, double rate)
+throws Exception {
+if(yrs&lt;0) throw new IllegalArgumentException("yrs </code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

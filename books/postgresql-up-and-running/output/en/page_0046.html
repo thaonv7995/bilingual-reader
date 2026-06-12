@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0045.html">← Prev</a>
+    <a href="page_0047.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">46</span>
+      </header>
+
+      <p>Another common way to organize schemas is by roles. We found this to be particularly
+      handy with applications that serve multiple clients whose data must be kept separate.</p>
+
+      <p>Suppose that you started a business to build and lease a dog-management system to dog
+      spas. Through creative advertising, you now have a dozen clients, but your database still
+      has a single table to store all the dogs. Whimsical government regulation passes, and
+      now you have to put in iron-clad assurances that one spa cannot see dog information
+      from another. To comply, you set up one schema per spa and create the same dogs table
+      in each. You then move the dog records into the schema for the spa where those dogs
+      are pampered. The final touch is to create different login roles for each schema with the
+      same name as the schema, so that the <code>doggy_day_care</code> schema would be owned by the
+      <code>doggy_day_care</code> role, <code>hot_dogs</code> schema would be owned by the <code>hot_dogs</code> role, etc. Dogs
+      are now completely isolated in their respective schemas. When spas log into your da‐
+      tabase to make edits, they will be able to access only data in their own schemas.</p>
+
+      <p>Wait, it gets better. Because we named our roles to match their respective schemas, we’re
+      blessed with another useful technique. But we must first introduce the <code>search_path</code>
+      database variable.</p>
+
+      <p>As we mentioned earlier, object names must be unique within a schema, but you can
+      have same-named objects in different schemas. For example, you have the same table
+      called dogs in all 12 schemas. When you execute something like <code>SELECT * FROM dogs</code>,
+      how does PostgreSQL know which schema you’re referring to? The simple answer is to
+      always prepend the schema name separated from the table name by a dot, such as in
+      <code>SELECT * FROM doggy_day_care.dogs</code>. Another method is to set the <code>search_path</code>
+      variable to be something like <code>public</code>, <code>doggy_day_care</code>, <code>hot_dogs</code>. When the query
+      executes, the planner searches for the dogs table first in the <code>public</code> schema, then <code>doggy_day_care</code>, then <code>hot_dogs</code>.</p>
+
+      <p>PostgreSQL has a little-known variable called <code>user</code> that lists the name of the currently
+      logged-in user. <code>SELECT user</code> returns this name.</p>
+
+      <p>Recall how we named our spa schemas to be same as their login roles. We did this so
+      that we can take advantage of the default search path set in <code>postgresql.conf</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>search_path = "$user", public;</code></pre>
+      </figure>
+
+      <p>Now, if role <code>doggy_day_care</code> logs in, all queries will first look in the <code>doggy_day_care</code>
+      schema for the tables before moving to <code>public</code>. And most important, the SQL remains
+      the same for all spas. Even if the spa-management business grows to have thousands or
+      hundreds of thousands of clients, none of the SQL scripts needs to change. To make
+      things easier, create a template database with no dogs. Adding a new spa requires just a
+      few lines to create a schema, database, role, and skeleton tables.</p>
+
+      <p>Another practice that we strongly advocate is to create schemas to house extensions
+      (<span class="accent-word">“Step 2: Installing into a database (version 9.1 and later)” on page 35</span>). When you install
+      an extension, new tables, functions, data types, and plenty of other relics enter your</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">28<span class="sep">|</span>Chapter 2: Database Administration</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

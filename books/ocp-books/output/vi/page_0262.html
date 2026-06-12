@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0261.html">← Trước</a>
+    <a href="page_0263.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">262</span>
+      </header>
+
+      <p class="no-indent">không hề biết bất kỳ thông tin nào về kiểu của các đối tượng mà danh sách này được dùng để lưu trữ. Vì lý do này,
+      generics trong Java được xem là&nbsp;<strong>invariant (bất biến)</strong>.</p>
+
+      <p>Điều này không có nghĩa là không bao giờ có mối quan hệ kiểu cha-kiểu con (supertype-subtype) giữa các kiểu được tham số hóa (parameterized types).
+      Bạn sẽ sớm thấy rằng mối quan hệ như vậy có thể tồn tại, ít nhất là đối với trình biên dịch, khi các đối số kiểu
+      (type arguments) có giới hạn (bounds) và trong những trường hợp như vậy, bạn sẽ thấy các kiểu được tham số hóa thể hiện
+      tính đồng biến (covariance).</p>
+
+      <p>Cơ chế xóa kiểu (Type erasure) có ảnh hưởng nghiêm trọng đến việc nạp chồng (overloading) và ghi đè (overriding) các phương thức. Mặc dù không
+      được đề cập một cách rõ ràng, bài thi vẫn có các câu hỏi liên quan đến khía cạnh này. Vì vậy, chúng ta hãy cùng tìm hiểu sâu
+      hơn một chút về nó.</p>
+
+      <h3 class="section-title section-title--sub">Ảnh hưởng của cơ chế xóa kiểu (Type erasure) đối với nạp chồng phương thức (Method Overloading)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Như đã giải thích trước đó, các phương thức nạp chồng (overloaded methods) là các phương thức khác nhau về chữ ký (signature) của chúng. Hãy nhớ
+      rằng chữ ký phương thức (method signature) được tạo thành từ tên phương thức cộng với các kiểu tham số. Vì thông tin generic
+      bị loại bỏ lúc runtime do cơ chế xóa kiểu (type erasure), kéo theo việc thông tin generic không thể
+      là một phần của chữ ký. Do đó, hai phương thức chỉ khác nhau về đối số kiểu (type arguments) không phải là các
+      phương thức nạp chồng hợp lệ. Trình biên dịch sẽ từ chối biên dịch mã nguồn như vậy vì nó biết rằng JVM sẽ không
+      thể phân biệt được chúng lúc runtime. Ví dụ, đoạn mã sau sẽ không biên dịch được:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public class TestClass{
+    public void processData(DataHolder&lt;String&gt; stringData){
+        String s = stringData.getData();
+        System.out.println(s);
+    }
+    public void processData(DataHolder&lt;Integer&gt; intData){
+        Integer i = intData.getData();
+        System.out.println(i);
+    }
+}</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Window Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0150.html">← Prev</a>
+    <a href="page_0152.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">151</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-23.</strong> The basic window</figcaption>
+        <pre class="code-block"><code>SELECT tract_id, val, AVG(val) OVER () as val_avg
+FROM census.facts
+WHERE fact_type_id = 86;
+ tract_id   |    val    |        val_avg
+------------+-----------+-----------------------
+25001010100 |  2942.000 | 4430.0602165087956698
+25001010206 |  2750.000 | 4430.0602165087956698
+25001010208 |  2003.000 | 4430.0602165087956698
+25001010304 |  2421.000 | 4430.0602165087956698
+:</code></pre>
+      </figure>
+
+      <p class="no-indent">The OVER sets the boundary of the window. In this example, because the parentheses
+      contain no constraint, the window covers all the rows in our WHERE. So the average is
+      average across all rows with fact_type_id = 86. The clause also morphed our con&shy;ventional
+      AVG aggregate function into a window aggregate function. For each row, Post&shy;greSQL
+      submits all the rows in the window to the AVG aggregation and outputs the value
+      as part of the row. Because our window has multiple rows, the result of the aggregation
+      is repeated. Notice that with window functions, we were able to perform an aggregation
+      without GROUP BY. Furthermore, we were able to rejoin the aggregated result back with
+      the other variables without using a formal join.</p>
+
+      <p>You can use all SQL aggregate functions as window functions. In addition, you&rsquo;ll find
+      ROW, RANK, LEAD, and others listed in Window Functions.</p>
+
+      <h3 class="subsection-title">PARTITION BY</h3>
+      <p class="no-indent">You can run a window function over rows containing particular values instead of using
+      the whole table. This requries the addition of a PARTITION BY clause, which instructs
+      PostgreSQL to take the aggregate over the indicated rows. In <span class="accent-word">Example 7-24</span>, we repeat
+      what we did in <span class="accent-word">Example 7-23</span> but partition our window by county code, which is always
+      the first five characters of the tract_id column.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-24.</strong> Partition our window by county code</figcaption>
+        <pre class="code-block"><code>SELECT tract_id, val, AVG(val) OVER (PARTITION BY left(tract_id,5)) As val_avg_county
+FROM census.facts WHERE fact_type_id = 2 ORDER BY tract_id;
+  tract_id   |   val    |    val_avg_county
+-------------+----------+-----------------------
+ 25001010100 | 1765.000 | 1709.9107142857142857
+ 25001010206 | 1366.000 | 1709.9107142857142857
+ 25001010208 |  984.000 | 1709.9107142857142857
+ :
+ 25003900100 | 1920.000 | 1438.2307692307692308
+ 25003900200 | 1968.000 | 1438.2307692307692308</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Window Functions<span class="sep">|</span>133</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Các truy vấn có tham số</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 4mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .indented-block {
+      margin: 0 0 3.2mm 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .footnotes {
+      margin-top: 8mm;
+      padding-top: 0;
+      border-top: none;
+      font-size: 9.5pt;
+      line-height: 1.35;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">42</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <h3 class="section-title">Các truy vấn có tham số</h3>
+
+      <p class="no-indent">Phần này đề cập đến một chủ đề thường bị bỏ qua trong hầu hết các sách giáo khoa SQL:<br><em>các truy vấn có tham số và tham số liên kết.</em></p>
+
+      <p>Tham số liên kết&mdash;còn được gọi là tham số động hoặc biến liên kết&mdash;là một cách thay thế để truyền dữ liệu đến cơ sở dữ liệu. Thay vì đưa các giá trị trực tiếp vào câu lệnh SQL, bạn chỉ cần sử dụng một dấu chấm hỏi như <code>?</code>, <code>:name</code> hoặc <code>@name</code> và cung cấp các giá trị thực tế bằng cách sử dụng một cuộc gọi API riêng biệt.</p>
+
+      <p>Không có gì xấu khi viết các giá trị trực tiếp vào các câu lệnh ad-hoc; tuy nhiên, có hai lý do tốt để sử dụng tham số liên kết trong các chương trình:</p>
+
+      <p class="operation-label">Bảo mật</p>
+      <p class="indented-block">Các biến liên kết là cách tốt nhất để ngăn chặn tấn công SQL injection<sup>1</sup>.</p>
+
+      <p class="operation-label">Hiệu suất</p>
+      <p class="indented-block">Các cơ sở dữ liệu có bộ nhớ đệm kế hoạch thực thi như SQL Server và cơ sở dữ liệu Oracle có thể tái sử dụng một kế hoạch thực thi khi thực hiện cùng một câu lệnh nhiều lần. Điều này tiết kiệm công sức trong việc xây dựng lại kế hoạch thực thi nhưng chỉ hoạt động nếu câu lệnh SQL hoàn toàn giống nhau. Nếu bạn đưa các giá trị khác nhau vào câu lệnh SQL, cơ sở dữ liệu sẽ xử lý nó như một câu lệnh khác và tái tạo kế hoạch thực thi.</p>
+
+      <p class="indented-block">Khi sử dụng tham số liên kết, bạn không viết các giá trị thực tế mà thay vào đó chèn các dấu chấm hỏi vào câu lệnh SQL. Bằng cách đó, các câu lệnh không thay đổi khi thực hiện chúng với các giá trị khác nhau.</p>
+
+      <div class="footnotes">
+        <p><sup>1</sup> http://en.wikipedia.org/wiki/SQL_injection</p>
+      </div>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">32</p>
+    </article>
+  </main>
+</body>
+</html>

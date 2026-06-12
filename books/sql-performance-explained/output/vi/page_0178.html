@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Phụ lục A: Kế hoạch thực thi</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 4mm 0 0;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page .operation-desc {
+      margin: 0 0 0 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page h3.subsection-title {
+      margin: 6mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phụ lục A: Kế hoạch thực thi</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="operation-label">QUÉT CHỈ MỤC TOÀN BỘ</p>
+      <p class="operation-desc">Đọc toàn bộ chỉ mục&mdash;tất cả các hàng&mdash;theo thứ tự chỉ mục. Tùy thuộc vào các thống kê hệ thống khác nhau, cơ sở dữ liệu có thể thực hiện thao tác này nếu nó cần tất cả các hàng theo thứ tự chỉ mục&mdash;ví dụ, do một mệnh đề <code>order by</code> tương ứng. Thay vào đó, bộ tối ưu hóa cũng có thể sử dụng <code>QUÉT CHỈ MỤC NHANH TOÀN BỘ</code> và thực hiện một thao tác sắp xếp bổ sung. Xem Chương&nbsp;6, &ldquo;Sắp xếp và Nhóm&rdquo;.</p>
+
+      <p class="operation-label">QUÉT CHỈ MỤC NHANH TOÀN BỘ</p>
+      <p class="operation-desc">Đọc toàn bộ chỉ mục&mdash;tất cả các hàng&mdash;như được lưu trên đĩa. Thao tác này thường được thực hiện thay vì quét bảng toàn bộ nếu tất cả các cột cần thiết có sẵn trong chỉ mục. Tương tự như <code>TRUY CẬP BẢNG TOÀN BỘ</code>, <code>QUÉT CHỈ MỤC NHANH TOÀN BỘ</code> có thể hưởng lợi từ các thao tác đọc đa khối. Xem Chương&nbsp;5, &ldquo;Phân cụm Dữ liệu&rdquo;.</p>
+
+      <p class="operation-label">TRUY CẬP BẢNG THEO ROWID CHỈ MỤC</p>
+      <p class="operation-desc">Lấy một hàng từ bảng bằng cách sử dụng <code>ROWID</code> được lấy từ tìm kiếm chỉ mục trước đó. Xem thêm Chương&nbsp;1, &ldquo;Giải phẫu của một Chỉ mục&rdquo;.</p>
+
+      <p class="operation-label">TRUY CẬP BẢNG TOÀN BỘ</p>
+      <p class="operation-desc">Điều này cũng được gọi là quét bảng toàn bộ. Đọc toàn bộ bảng&mdash;tất cả các hàng và cột&mdash;như được lưu trên đĩa. Mặc dù các thao tác đọc đa khối cải thiện tốc độ của một quét bảng toàn bộ đáng kể, nhưng nó vẫn là một trong những thao tác tốn kém nhất. Ngoài tỷ lệ IO cao, một quét bảng toàn bộ phải kiểm tra tất cả các hàng trong bảng nên nó cũng có thể tiêu tốn một lượng lớn thời gian CPU. Xem thêm &ldquo;Quét Bảng Toàn Bộ&rdquo; trên trang&nbsp;13.</p>
+
+      <h3 class="subsection-title">Kết nối</h3>
+
+      <p class="no-indent">Thông thường, các thao tác kết nối chỉ xử lý hai bảng cùng một lúc. Trong trường hợp một truy vấn có nhiều kết nối, chúng được thực hiện tuần tự: trước hai bảng, sau đó là kết quả trung gian với bảng tiếp theo. Trong bối cảnh của các kết nối, thuật ngữ &ldquo;bảng&rdquo; do đó cũng có thể có nghĩa là &ldquo;kết quả trung gian&rdquo;.</p>
+
+      <p class="operation-label">KẾT NỐI VÒNG LẶP LỒNG</p>
+      <p class="operation-desc">Kết nối hai bảng bằng cách lấy kết quả từ một bảng và truy vấn bảng kia cho mỗi hàng từ bảng đầu tiên. Xem thêm &ldquo;Vòng Lặp Lồng&rdquo; trên trang&nbsp;92.</p>
+
+      <footer class="book-footer">
+        <span class="page-folio">168</span>
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

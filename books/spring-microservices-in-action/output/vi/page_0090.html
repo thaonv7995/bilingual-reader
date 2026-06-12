@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Về quản lý cấu hình (và độ phức tạp)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0089.html">← Trước</a>
+    <a href="page_0091.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Về quản lý cấu hình (và độ phức tạp)</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">65</span>
+      </header>
+
+      <p>Nhiều nhà phát triển sẽ tìm tới file thuộc tính khiêm tốn (hoặc YAML, JSON, hoặc XML) để lưu thông tin cấu hình. File thuộc tính này thường nằm trên một server, chứa thông tin kết nối database và middleware cùng metadata về ứng dụng điều khiển hành vi của ứng dụng. Tách ứng dụng thành một file thuộc tính thì dễ, và hầu hết nhà phát triển không bao giờ vận hành hóa cấu hình ứng dụng hơn nữa ngoài việc đưa file cấu hình vào source control (nếu có) và triển khai nó như một phần của ứng dụng.</p>
+
+      <p>Cách tiếp cận này có thể hoạt động với số lượng ứng dụng nhỏ, nhưng nhanh chóng sụp đổ khi xử lý các ứng dụng dựa trên cloud có thể chứa hàng trăm microservice, trong đó mỗi microservice lại có thể có nhiều instance dịch vụ đang chạy.</p>
+
+      <p>Đột nhiên việc quản lý cấu hình trở thành vấn đề lớn khi team ứng dụng và vận hành trong môi trường dựa trên cloud phải vật lộn với mớ rối file cấu hình nào đặt ở đâu. Phát triển microservice dựa trên cloud nhấn mạnh</p>
+
+      <ol class="manning-numbered">
+        <li>Tách hoàn toàn cấu hình của ứng dụng khỏi mã nguồn thực sự được triển khai</li>
+        <li>Xây dựng server và ứng dụng thành một image bất biến không bao giờ thay đổi khi được đẩy qua các môi trường của bạn</li>
+        <li>Tiêm mọi thông tin cấu hình ứng dụng tại thời điểm khởi động server thông qua biến môi trường hoặc qua kho lưu trữ tập trung mà các microservice của ứng dụng đọc khi khởi động</li>
+      </ol>
+
+      <p>Chương này sẽ giới thiệu các nguyên tắc và mẫu cốt lõi cần thiết để quản lý dữ liệu cấu hình ứng dụng trong ứng dụng microservice dựa trên cloud.</p>
+
+      <h4 class="subsection-title">3.1 Về quản lý cấu hình (và độ phức tạp)</h4>
+
+      <p>Quản lý cấu hình ứng dụng là điều then chốt đối với microservice chạy trên cloud vì các instance microservice cần được khởi chạy nhanh với sự can thiệp tối thiểu của con người. Mỗi lần con người phải cấu hình thủ công hoặc chạm vào một dịch vụ để triển khai nó là một cơ hội cho configuration drift, sự cố ngoài dự kiến và độ trễ trong việc đáp ứng các thách thức về khả năng mở rộng của ứng dụng.</p>
+
+      <p>Hãy bắt đầu cuộc thảo luận về quản lý cấu hình ứng dụng bằng cách thiết lập bốn nguyên tắc chúng ta muốn tuân theo:</p>
+
+      <ol class="manning-numbered">
+        <li><strong class="run-in">Tách biệt</strong>&mdash;Chúng ta muốn tách hoàn toàn thông tin cấu hình dịch vụ khỏi việc triển khai vật lý thực sự của một dịch vụ. Cấu hình ứng dụng không nên được triển khai cùng instance dịch vụ. Thay vào đó, thông tin cấu hình nên được truyền tới dịch vụ đang khởi động dưới dạng biến môi trường hoặc được đọc từ kho lưu trữ tập trung khi dịch vụ khởi động.</li>
+        <li><strong class="run-in">Trừu tượng hóa</strong>&mdash;Trừu tượng hóa việc truy cập dữ liệu cấu hình phía sau một giao diện dịch vụ. Thay vì viết mã trực tiếp truy cập kho lưu trữ dịch vụ (mà</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

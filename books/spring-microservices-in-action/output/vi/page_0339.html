@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Listing 10.1 build .travis.yml</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 7;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 22%) minmax(0, 48%) minmax(0, 30%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 2;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-left {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 52mm;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--101 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 34mm;
+    }
+    .prose-page.chapter-page .listing-annotated--101 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 15mm;
+    }
+    .prose-page.chapter-page .listing-annotated--101 .listing-callouts-right .listing-callout:nth-child(4) {
+      margin-top: 16mm;
+    }
+    .prose-page.chapter-page .listing-annotated--101 .listing-callouts-right .listing-callout:nth-child(5) {
+      margin-top: 15mm;
+    }
+    .prose-page.chapter-page .listing-annotated--101 .listing-callouts-right .listing-callout:nth-child(6) {
+      margin-top: 12mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0338.html">← Trước</a>
+    <a href="page_0340.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">314</span>
+        <span class="rh-center">CHƯƠNG 10 <em>Triển khai microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Các bước pipeline build hình 10.17 (tiếp theo)">
+        <li>Quy trình build của bạn sau đó sẽ dùng tệp docker-compose của dự án và ecs-cli của Amazon để triển khai tất cả các dịch vụ bạn đã build lên dịch vụ Docker của Amazon, Amazon ECS.</li>
+        <li>Sau khi triển khai các dịch vụ hoàn tất, quy trình build của bạn sẽ khởi chạy một dự án Travis CI hoàn toàn riêng biệt để chạy các kiểm thử nền tảng đối với môi trường development.</li>
+      </ol>
+
+      <p class="no-indent">Giờ chúng ta đã đi qua các bước tổng quát trong tệp .travis.yml, hãy xem các chi tiết cụ thể của tệp .travis.yml của bạn. Listing 10.1 trình bày các phần khác nhau của tệp .travis.yml.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Các chú thích mã trong listing 10.1 được căn chỉnh với các số trong hình 10.17.</p>
+      </aside>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 10.1</strong><br>Cấu trúc của build .travis.yml</figcaption>
+        <div class="listing-annotated listing-annotated--101" aria-label="Listing 10.1 .travis.yml có chú thích">
+          <div class="listing-callouts-left" aria-label="Chú thích bên trái Listing 10.1">
+            <p class="listing-callout">(9) Kích hoạt một build Travis thực thi các kiểm thử nền tảng cho các dịch vụ build</p>
+          </div>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>language: java
+jdk:
+  - oraclejdk8
+cache:
+  directories:
+     - "$HOME/.m2"
+sudo: required
+services:
+  - docker
+notifications:
+  email:
+  - youremail@gmail.com
+  on_success: always
+  on_failure: always
+branches:
+  only:
+     - master
+env:
+  global:
+  # Remove for conciseness
+before_install:
+  - gem install travis -v 1.8.5 --no-rdoc --no-ri
+  - sudo curl -o /usr/local/bin/ecs-cli
+    ➥ https://s3.amazonaws.com/amazon-ecs-cli/
+    ➥ ecs-cli-linux-amd64-latest
+  - sudo chmod +x /usr/local/bin/ecs-cli
+  - export BUILD_NAME=chapter10-$TRAVIS_BRANCH-
+    ➥ $(date -u "+%Y%m%d%H%M%S")-$TRAVIS_BUILD_NUMBER
+  - export CONTAINER_IP=52.53.169.60
+  - export PLATFORM_TEST_NAME="chapter10-platform-tests"
+script:
+  - sh travis_scripts/tag_build.sh
+  - sh travis_scripts/build_services.sh
+  - sh travis_scripts/deploy_to_docker_hub.sh
+  - sh travis_scripts/deploy_amazon_ecs.sh
+  - sh travis_scripts/trigger_platform_tests.sh</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích Listing 10.1">
+            <p class="listing-callout">(3) Thiết lập cấu hình runtime cốt lõi cho build</p>
+            <p class="listing-callout">(4) Thực thi cài đặt trước build các công cụ dòng lệnh cần thiết</p>
+            <p class="listing-callout">(5) Thực thi một shell script sẽ gắn tag mã nguồn với tên build</p>
+            <p class="listing-callout">(6) Build các máy chủ và image Docker cục bộ bằng Maven</p>
+            <p class="listing-callout">(7) Đẩy các image Docker lên Docker Hub</p>
+            <p class="listing-callout">(8) Khởi động các dịch vụ trong một container Amazon ECS</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

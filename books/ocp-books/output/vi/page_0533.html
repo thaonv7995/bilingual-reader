@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý việc thực thi code đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm;
+      padding-left: 1.5em;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0532.html">← Trước</a>
+    <a href="page_0534.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">533</span>
+      </header>
+
+      <p class="no-indent">tương lai. Đây thực chất là một interface (giao diện) gốc mô tả mục đích của một <code>Executor</code>&nbsp;. Nó không cung cấp bất kỳ method nào để quản lý vòng đời của chính bản thân <code>Executor</code>&nbsp;. Không có lớp (class) nào được định nghĩa công khai trong JDK triển khai (implements) <code>Executor</code>&nbsp;. Tất nhiên, bạn có thể tự định nghĩa một lớp cho riêng mình nhưng điều đó thường không bắt buộc.</p>
+
+      <p class="no-indent"><strong class="run-in">ExecutorService</strong> - <code>ExecutorService</code>&nbsp;là một interface (giao diện) kế thừa từ <code>Executor</code>&nbsp; (cũng như <code>AutoCloseable</code>&nbsp;kể từ Java 19). Nó bổ sung thêm cho interface (giao diện) <code>Executor</code>&nbsp;các method như <code>shutdown()</code>&nbsp;, <code>shutdownNow()</code>&nbsp;, và <code>close()</code>&nbsp;để quản lý việc kết thúc của nó. Có một số khác biệt nhỏ trong cách hoạt động của ba method này.</p>
+
+      <ol class="numbered">
+        <li><code>void shutdown()</code>&nbsp;- Bắt đầu một quá trình tắt tuần tự, trong đó các task đã được submit trước đó vẫn sẽ được thực thi, nhưng không chấp nhận thêm bất kỳ task mới nào.</li>
+        <li><code>List&lt;Runnable&gt; shutdownNow()</code>&nbsp;- Cố gắng dừng tất cả các task đang tích cực thực thi (thường bằng cách gọi <code>interrupt()</code>&nbsp;trên các thread (luồng) worker của nó), tạm dừng việc xử lý các task đang chờ, và trả về một danh sách các task đang chờ được thực thi.</li>
+        <li><code>void close()</code>&nbsp;- Bắt đầu một quá trình tắt tuần tự, trong đó các task đã được submit trước đó vẫn được thực thi, nhưng không chấp nhận thêm bất kỳ task mới nào. Method này sẽ đợi cho đến khi tất cả các task hoàn thành thực thi và executor đã kết thúc hoạt động (terminated).</li>
+      </ol>
+
+      <p>Lưu ý rằng các method <code>shutdown</code>&nbsp;và <code>shutdownNow</code>&nbsp;không làm cho thread (luồng) hiện tại (tức là thread gọi một trong các method này) bị chặn (block) hoặc phải đợi cho đến khi <code>ExecutorService</code>&nbsp;tắt hoàn toàn. Nhưng method <code>close</code>&nbsp;, vốn chỉ mới khả dụng kể từ Java 19, thì có chặn thread. Nếu muốn thread (luồng) hiện tại đợi cho đến khi <code>ExecutorService</code>&nbsp;kết thúc sau khi gọi <code>shutdown</code>&nbsp;hoặc <code>shutdownNow</code>&nbsp;, bạn có thể gọi method <code>awaitTermination(long timeout, TimeUnit unit)</code>&nbsp;trên đối tượng (instance) <code>ExecutorService</code>&nbsp;. Việc không tắt <code>ExecutorService</code>&nbsp;thông qua một trong các method này có thể khiến các thread (luồng) worker của nó tiếp tục duy trì hoạt động, và điều đó sẽ ngăn chương trình Java kết thúc. Một số executor, chẳng hạn như executor được tạo bởi method <code>newWorkStealingPool()</code>&nbsp;, không duy trì bất kỳ thread (luồng) rảnh rỗi nào và do đó không cần phải tắt, nhưng dù sao việc tắt chúng vẫn là một thói quen tốt. Từ Java 19 trở đi, việc sử dụng một executor service với khối Try-with-resources sẽ giải quyết yêu cầu này một cách gọn gàng.</p>
+
+      <p>Một <code>ExecutorService</code>&nbsp;cũng cho phép submit các task trả về một giá trị thông qua các method <code>Future&lt;T&gt; submit(Callable&lt;T&gt; c)</code>&nbsp;, <code>Future&lt;T&gt; submit(Runnable r)</code>&nbsp;và</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

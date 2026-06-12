@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">22</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <h3 class="section-title">Chỉ mục nối kết</h3>
+
+      <p class="no-indent">Mặc dù cơ sở dữ liệu tự động tạo chỉ mục cho khóa chính, vẫn có chỗ cho việc tinh chỉnh thủ công nếu khóa bao gồm nhiều cột. Trong trường hợp đó, cơ sở dữ liệu tạo một chỉ mục trên tất cả các cột khóa chính—một chỉ mục nối kết (còn được gọi là chỉ mục đa cột, chỉ mục tổng hợp hoặc chỉ mục kết hợp). Lưu ý rằng thứ tự cột của một chỉ mục nối kết có ảnh hưởng lớn đến khả năng sử dụng của nó, vì vậy phải được chọn lựa cẩn thận.</p>
+
+      <p>Để minh họa, giả sử có một vụ sáp nhập công ty. Nhân viên của công ty khác được thêm vào bảng <code>EMPLOYEES</code> của chúng tôi, khiến nó trở nên lớn gấp mười lần. Chỉ có một vấn đề: <code>EMPLOYEE_ID</code> không duy nhất giữa hai công ty. Chúng tôi cần mở rộng khóa chính bằng một định danh bổ sung—ví dụ, một ID chi nhánh. Do đó, khóa chính mới có hai cột: <code>EMPLOYEE_ID</code> như trước và <code>SUBSIDIARY_ID</code> để khôi phục tính duy nhất.</p>
+
+      <p>Chỉ mục cho khóa chính mới được định nghĩa theo cách sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE UNIQUE INDEX employee_pk
+    ON employees (employee_id, subsidiary_id);</code></pre>
+      </figure>
+
+      <p>Một truy vấn cho một nhân viên cụ thể phải xem xét toàn bộ khóa chính—tức là, cột <code>SUBSIDIARY_ID</code> cũng phải được sử dụng:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name
+  FROM employees
+ WHERE employee_id   = 123
+   AND subsidiary_id = 30;</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id |Operation                   | Name         | Rows | Cost |
+---------------------------------------------------------------
+| 0 |SELECT STATEMENT            |              |    1 |    2 |
+| 1 | TABLE ACCESS BY INDEX ROWID| EMPLOYEES    |    1 |    2 |
+|*2 |  INDEX UNIQUE SCAN         | EMPLOYEES_PK |    1 |    1 |
+---------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - access("EMPLOYEE_ID"=123 AND "SUBSIDIARY_ID"=30)</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">12</p>
+    </article>
+  </main>
+</body>
+</html>

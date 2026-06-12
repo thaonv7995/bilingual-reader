@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.type-name {
+      margin: 0 0 1mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.type-desc {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0103.html">← Prev</a>
+    <a href="page_0105.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">104</span>
+      </header>
+
+      <p class="type-name no-indent"><code>tsrange</code></p>
+      <p class="type-desc">New in version 9.2; allows you to define opened and closed ranges of timestamp
+      with no timezone. The type consists of two timestamps and opened/closed range
+      qualifiers. For example, <code>'[2012-01-01 14:00, 2012-01-01 15:00)'::tsrange</code>
+      defines a period starting at 14:00 but ending before 15:00. Refer to <span class="accent-word">Range Types</span> for
+      details.</p>
+
+      <p class="type-name no-indent"><code>tstzrange</code></p>
+      <p class="type-desc">New in version 9.2; allows you to define opened and closed ranges of timestamp
+      with timezone.</p>
+
+      <p class="type-name no-indent"><code>daterange</code></p>
+      <p class="type-desc">New in version 9.2; allows you to define opened and closed ranges of dates.</p>
+
+      <h3 class="subsection-title">Time Zones: What They Are and Are Not</h3>
+      <p class="no-indent">A common misconception with PostgreSQL time zone−aware data types is that Post‐
+      greSQL records an extra time marker with the datetime value itself. This is incorrect. If
+      you save <code>2012-2-14 18:08:00-8</code> (-8 being the Pacific offset from UTC), PostgreSQL
+      internally works like this:</p>
+
+      <ol class="numbered">
+        <li>Get the UTC time for <code>2012-02-14 18:08:00-8</code>. This is <code>2012-02-15 04:08:00-0</code>.</li>
+        <li>Store the value <code>2012-02-15 04:08:00</code>.</li>
+      </ol>
+
+      <p>When you call the data back for display, PostgreSQL internally works like this:</p>
+
+      <ol class="numbered">
+        <li>Find the time zone observed by the server or the requested time zone (for instance,
+        <code>America/New_York</code>).</li>
+        <li>Compute the offset for time zone for this UTC time. (-5 for <code>America/New_York</code>).</li>
+        <li>Determine the datetime with the offset (<code>2012-02-15 16:08:00</code> with a -5 offset be‐
+        comes <code>2012-02-15 21:08:00</code>).</li>
+        <li>Display the result (<code>2012-02-15 21:08:00-5</code>).</li>
+      </ol>
+
+      <p>As you can see, PostgreSQL doesn’t store the time zone but only uses it to convert the
+      datetime to UTC before storage. After that, the time zone information is gone. When
+      PostgreSQL displays the datetime, it always does so in the default time zone dictated by
+      the session, user, database, or server, in that order. If you use time-zone-aware data types,
+      we implore you to consider the consequence of a server move from one time zone to
+      another. Suppose you based a server in New York City and subsequently restored the
+      database in Los Angeles. All timestamps with time zone fields would suddenly display
+      in Pacific time. This is fine as long as you anticipate this behavior.</p>
+
+      <p>Here’s an example of how something can go wrong. Suppose that McDonald’s had its
+      server on the East Coast and the opening time for stores is <code>timetz</code>. A new McDonald’s</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">86<span class="sep">|</span>Chapter 5: Data Types</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

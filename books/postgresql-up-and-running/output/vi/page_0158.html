@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 7: SQL: Cách PostgreSQL — Các phép nối LATERAL</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0157.html">← Trước</a>
+    <a href="page_0159.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">158</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE interval_periods(i_type interval);
+INSERT INTO interval_periods (i_type)
+VALUES ('5 months'), ('132 days'), ('4862 hours');</code></pre>
+      </figure>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-32.</strong> Sử dụng LATERAL với generate_series</figcaption>
+        <pre class="code-block"><code>SELECT i_type, dt
+FROM
+    interval_periods CROSS JOIN LATERAL
+    generate_series('2012-01-01'::date, '2012-12-31'::date, i_type) AS dt
+WHERE NOT (dt = '2012-01-01' AND i_type = '132 days'::interval);
+ i_type   |           dt
+------------+------------------------
+ 5 mons     | 2012-01-01 00:00:00-05
+ 5 mons     | 2012-06-01 00:00:00-04
+ 5 mons     | 2012-11-01 00:00:00-04
+ 132 days   | 2012-05-12 00:00:00-04
+ 132 days   | 2012-09-21 00:00:00-04
+ 4862:00:00 | 2012-01-01 00:00:00-05
+ 4862:00:00 | 2012-07-21 15:00:00-04</code></pre>
+      </figure>
+
+      <p>Lateral cũng hữu ích để sử dụng các giá trị từ bên trái để giới hạn số lượng hàng
+      trả về từ bên phải. <span class="accent-word">Ví dụ 7-33</span> sử dụng LATERAL để trả về, cho mỗi siêu người dùng
+      đã sử dụng trang web của chúng tôi trong 100 ngày qua, năm lần đăng nhập cuối cùng và những gì họ đã làm.
+      Các bảng được sử dụng trong ví dụ này đã được tạo trong <span class="accent-word">&ldquo;LOẠI CỦA&rdquo; trên trang 109</span> và <span class="accent-word">&ldquo;Tạo bảng cơ bản
+      &rdquo; trên trang 107</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-33.</strong> Sử dụng LATERAL để giới hạn hàng từ một bảng đã nối.</figcaption>
+        <pre class="code-block"><code>SELECT u.user_name, l.description, l.log_ts
+FROM
+    super_users AS u CROSS JOIN LATERAL (
+    SELECT description, log_ts
+    FROM logs
+    WHERE
+        log_ts &gt; CURRENT_TIMESTAMP - interval '100 days' AND
+        logs.user_name = u.user_name
+    ORDER BY log_ts DESC LIMIT 5
+    ) AS l;</code></pre>
+      </figure>
+
+      <p>Mặc dù bạn có thể đạt được kết quả tương tự bằng cách sử dụng các hàm cửa sổ, các phép nối lateral mang lại
+      kết quả nhanh hơn với cú pháp ngắn gọn hơn.</p>
+
+      <p>Bạn có thể sử dụng nhiều phép nối lateral trong SQL của bạn và thậm chí nối chúng theo chuỗi như bạn
+      sẽ làm khi nối hơn hai truy vấn con. Đôi khi bạn có thể bỏ qua
+      từ khóa LATERAL; trình phân tích truy vấn đủ thông minh để nhận ra một phép nối lateral nếu bạn
+      có một biểu thức tương quan. Nhưng chúng tôi khuyên bạn nên luôn bao gồm từ khóa này để
+      đảm bảo rõ ràng. Ngoài ra, bạn sẽ gặp lỗi nếu bạn viết câu lệnh của mình với giả định sử dụng
+      một phép nối lateral nhưng chạy câu lệnh trên một phiên bản PostgreSQL trước lateral.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">140<span class="sep">|</span>Chương 7: SQL: Cách PostgreSQL</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

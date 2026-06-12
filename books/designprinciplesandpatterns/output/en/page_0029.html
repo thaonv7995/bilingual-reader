@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Page 29 — Design Principles and Patterns</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 8mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      font-size: 9pt;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+    }
+    .prose-page .principle-statement {
+      margin: 0 0 3.2mm 2em;
+      text-indent: 0;
+      font-style: italic;
+    }
+    .prose-page .metric-block {
+      margin: 0 0 3mm 1.25em;
+      text-indent: 0;
+    }
+    .prose-page .metric-block .metric-name {
+      font-weight: 700;
+    }
+    .prose-page .formula {
+      margin: 2mm 0 4mm;
+      text-align: center;
+      font-style: italic;
+    }
+    .prose-page figure.diagram svg {
+      display: block;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    .prose-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10pt;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0028.html">← Prev</a>
+      <a href="page_0030.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">29</span>
+      </header>
+
+      <p class="no-indent"><strong>Adapter</strong></p>
+      <p class="no-indent">When inserting an abstract interface is infeasible because the server is third party software, or is so heavily depended upon that it cannot easily be changed, an ADAPTER can be used to bind the abstract interface to the server. See Figure 2-31.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 420 220" width="420" height="220" role="img" aria-label="Figure 2-31 Adapter">
+          <defs>
+            <marker id="assoc-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Consumer -->
+          <rect x="20" y="80" width="100" height="50" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="70" y="110" text-anchor="middle" font-family="Times, serif" font-size="13">Consumer</text>
+          <!-- Interface -->
+          <rect x="160" y="20" width="150" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="235" y="42" text-anchor="middle" font-family="Times, serif" font-size="11">«interface»</text>
+          <text x="235" y="60" text-anchor="middle" font-family="Times, serif" font-size="13">Resource</text>
+          <text x="235" y="72" text-anchor="middle" font-family="Times, serif" font-size="13">Manager</text>
+          <!-- Adapter -->
+          <rect x="175" y="110" width="120" height="45" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="235" y="128" text-anchor="middle" font-family="Times, serif" font-size="11">Resource</text>
+          <text x="235" y="142" text-anchor="middle" font-family="Times, serif" font-size="11">Manager</text>
+          <text x="235" y="152" text-anchor="middle" font-family="Times, serif" font-size="11">Adapter</text>
+          <!-- Server -->
+          <rect x="320" y="105" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="365" y="130" text-anchor="middle" font-family="Times, serif" font-size="12">Resource</text>
+          <text x="365" y="145" text-anchor="middle" font-family="Times, serif" font-size="12">Manager_I</text>
+          <!-- Consumer -> interface -->
+          <line x1="120" y1="100" x2="160" y2="48" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+          <!-- Adapter -> interface -->
+          <line x1="235" y1="110" x2="235" y2="75" stroke="#000" stroke-width="1.2"/>
+          <polygon points="235,75 228,88 242,88" fill="none" stroke="#000" stroke-width="1.2"/>
+          <!-- Adapter -> server -->
+          <line x1="295" y1="132" x2="320" y2="132" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+        </svg>
+        <figcaption><strong>Figure 2-31</strong><br>Adapter</figcaption>
+      </figure>
+      <p>The adapter is an object that implements the abstract interface to delegate to the server. Every method of the adpater simply translates and then delegates.</p>
+      <p class="no-indent"><strong>Observer</strong></p>
+      <p class="no-indent">It often occurs that one element of a design needs to take some form of action when another element in the design discovers that an event has occurred. However, we frequently don’t want the detector to know about the actor.</p>
+      <p>Consider the case of a meter that shows the status of a sensor. Every time the sensor changes its reading we want the meter to display the new value. However, we don’t want the sensor to know anything about the meter.</p>
+      <p>We can address this situation with an OBSERVER, see Figure 2-32. The <code>Sensor</code> derives from a class named <code>Subject</code>, and <code>Meter</code> derives from an interface called <code>Observer</code>. <code>Subject</code> contains a list of <code>Observers</code>. This list is loaded by the <code>Regsiter</code> method of <code>Subject</code>. In order to be told of events, our <code>Meter</code> must register with the <code>Subject</code> base class of the <code>Sensor</code>.</p>
+      <p>Figure 2-33 describes the dynamics of the collaboration. Some entity passes control to the <code>Sensor</code> who determines that its reading has changed. The <code>Sensor</code> calls <code>Notify</code> on its <code>Subject</code>. The <code>Subject</code> then cycles through all the <code>Observers</code></p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

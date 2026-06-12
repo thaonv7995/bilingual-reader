@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 4: Using pgAdmin (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page img.inline-icon {
+      display: inline;
+      vertical-align: middle;
+      width: 9pt;
+      height: auto;
+      margin: 0 0.5mm;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0087.html">← Trước</a>
+    <a href="page_0089.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">88</span>
+      </header>
+
+      <h3 class="section-title">pgScript</h3>
+      <p class="no-indent">pgScript là một công cụ lập trình kịch bản tích hợp sẵn trong pgAdmin. Nó rất hữu ích cho việc thực hiện các tác vụ SQL lặp đi lặp lại. pgScript có thể sử dụng bộ nhớ tốt hơn và do đó hiệu quả hơn so với các hàm PostgreSQL tương đương. Điều này là do các hàm lưu trữ duy trì tất cả công việc của chúng trong bộ nhớ và cam kết tất cả kết quả của một hàm trong một lô duy nhất. Ngược lại, pgScript cam kết mỗi câu lệnh chèn hoặc cập nhật SQL khi nó chạy qua kịch bản. Điều này làm cho pgScript đặc biệt tiện lợi cho các quy trình tiêu tốn bộ nhớ mà bạn không cần hoàn thành như một giao dịch duy nhất. Khi một giao dịch cụ thể được cam kết, bộ nhớ sẽ có sẵn cho giao dịch tiếp theo. Bạn có thể xem một ví dụ về nơi chúng tôi sử dụng nó cho mã địa lý hàng loạt tại <span class="accent-word">Sử dụng pgScript cho Geocoding</span>.</p>
+
+      <p class="no-indent">Ngôn ngữ pgScript được kiểu lười và hỗ trợ các điều kiện, vòng lặp, bộ sinh dữ liệu, các câu lệnh in cơ bản và các biến bản ghi. Cú pháp chung tương tự như của Transact SQL, ngôn ngữ thủ tục lưu trữ của Microsoft SQL Server. Các biến, được thêm vào bằng <code>@</code>, có thể chứa các giá trị vô hướng hoặc mảng, bao gồm cả kết quả của các lệnh SQL. Các lệnh như <code>DECLARE</code> và <code>SET</code>, và các cấu trúc điều khiển như <code>IF-ELSE</code> và <code>WHILE</code> là một phần của ngôn ngữ pgScript.</p>
+
+      <p class="no-indent">Khởi động pgScript bằng cách mở một cửa sổ truy vấn SQL thông thường. Sau khi nhập kịch bản của bạn, thực thi nó bằng cách nhấp vào biểu tượng pgScript (<img class="inline-icon" src="../assets/images/page_0088_icon_pgscript.png" width="53" height="47" alt="pgScript icon">).</p>
+
+      <p class="no-indent">Chúng tôi sẽ cho bạn thấy một số ví dụ về pgScripts. <span class="accent-word">Ví dụ 4-1</span> minh họa cách sử dụng các biến bản ghi và vòng lặp pgScript để xây dựng một bảng chéo, sử dụng bảng <code>lu_fact_types</code> mà chúng tôi tạo trong <span class="accent-word">Ví dụ 7-18</span>. pgScript tạo một bảng trống có tên <code>census.hisp_pop</code> với các cột số: <code>hispanic_or_latino</code>, <code>white_alone</code>, <code>black_or_african_american_alone</code>, và nhiều hơn nữa.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 4-1.</strong> Tạo bảng sử dụng các biến bản ghi trong pgScript</figcaption>
+        <pre class="code-block"><code>DECLARE @I, @labels, @tdef;
+SET @I = 0;
+
+Labels sẽ giữ các bản ghi.
+SET @labels =
+    SELECT
+          quote_ident(
+                replace(
+                     replace(lower(COALESCE(fact_subcats[4], fact_subcats[3])), ' ',
+'_'),':',''
+                )
+          ) As col_name,
+    fact_type_id
+    FROM census.lu_fact_types
+    WHERE category = 'Population' AND fact_subcats[3] ILIKE 'Hispanic or Latino%'
+    ORDER BY short_name;
+
+SET @tdef = 'census.hisp_pop(tract_id varchar(11) PRIMARY KEY ';</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">70<span class="sep">|</span>Chương 4: Sử dụng pgAdmin</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

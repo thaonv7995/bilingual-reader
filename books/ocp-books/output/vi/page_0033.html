@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 12: Luồng điều khiển chương trình</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0032.html">← Trước</a>
+    <a href="page_0034.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">33</span>
+      </header>
+
+      <p class="no-indent">1. Cú pháp.</p>
+
+      <p class="no-indent">2. Giá trị của một biểu thức switch được tạo ra bởi các biểu thức được sử dụng cùng với các nhãn switch
+      bằng cách sử dụng câu lệnh <code>yield</code> hoặc bằng cách trực tiếp sử dụng một biểu thức ở phía bên phải
+      của <code>-&gt;</code> .</p>
+
+      <p class="no-indent">3. Cú pháp cũ yêu cầu một câu lệnh <code>yield</code>, trong khi cú pháp mới không yêu cầu điều đó. Nếu
+      bạn muốn sử dụng <code>yield</code> với cú pháp mới, bạn cần đặt mã nguồn bên trong <code>{</code> và <code>}</code> .</p>
+
+      <p class="no-indent">4. Bạn có thể sử dụng <strong>bất kỳ</strong> biểu thức nào trong các khối switch (chứ không chỉ các câu lệnh biểu thức, như
+      trong trường hợp của các câu lệnh switch) miễn là kiểu của biểu thức tương thích với
+      kiểu của giá trị được mong đợi từ biểu thức switch.</p>
+
+      <p>Bây giờ, chúng ta sẽ đi vào những khía cạnh tinh tế của biểu thức switch, vốn không được thể hiện rõ ràng trong đoạn mã trên.</p>
+
+      <h3 class="section-title section-title--sub">Giá trị của một biểu thức switch<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Hãy nhớ rằng một biểu thức phải có một giá trị. Vì biểu thức switch là một biểu thức, nó
+      cũng phải luôn có một giá trị. Điều này ngụ ý rằng mã nguồn bên trong một biểu thức switch phải
+      tạo ra một giá trị cho mọi giá trị có thể có của biểu thức bộ chọn. Do đó, bạn không thể có một
+      biểu thức switch có một đường dẫn thực thi không tạo ra bất kỳ giá trị nào. Ví dụ, biểu thức
+      sau đây là không hợp lệ.</p>
+
+      <pre class="code-block ocp-code-line"><code>return income * switch(taxBracket){
+  case 0 -&gt; 0.1;
+  case 1 -&gt; 0.2;
+};</code></pre>
+
+      <p>Điều gì sẽ xảy ra nếu <code>taxBracket</code> không phải là <code>0</code> cũng không phải là <code>1</code> ? Ồ, không có hướng dẫn nào về việc
+      phải làm gì trong trường hợp đó và do đó, biểu thức đã cho không thể được đánh giá nếu giá trị của
+      <code>taxBracket</code> không phải là <code>1</code> cũng không phải là <code>2</code> ! Để tránh vấn đề này, Java bắt buộc một biểu thức switch
+      phải "<strong>đầy đủ (exhaustive)</strong>", nghĩa là, nó phải cung cấp một đường dẫn thực thi trả về một giá trị cho
+      mọi giá trị có thể có của biểu thức bộ chọn. Do đó, bạn</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

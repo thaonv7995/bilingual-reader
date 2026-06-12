@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Services gateway là gì?</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page figure.diagram figcaption + p,
+    .prose-page.chapter-page p + ul.manning-bullets {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0179.html">← Trước</a>
+    <a href="page_0181.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Services gateway là gì?</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">155</span>
+      </header>
+
+      <figure class="diagram" aria-label="Hình 6.1">
+        <img src="../assets/images/page_0180_fig_6_1.png" width="1313" height="864" alt="Hình 6.1 — Khi không có service gateway, service client sẽ gọi các endpoint riêng biệt cho từng dịch vụ">
+        <figcaption><strong>Hình 6.1</strong><br>Khi không có service gateway, service client sẽ gọi các endpoint riêng biệt cho từng dịch vụ.</figcaption>
+      </figure>
+
+      <p class="no-indent">Service gateway hoạt động như trung gian giữa service client và dịch vụ được gọi. Service client chỉ giao tiếp với một <em>URL</em> duy nhất do service gateway quản lý. Service gateway tách phần path từ lời gọi của service client và xác định dịch vụ mà service client đang cố gọi. Hình 6.2 minh họa cách giống như cảnh sát giao thông điều phối lưu lượng, service gateway hướng người dùng tới microservice mục tiêu và instance tương ứng. Service gateway đóng vai trò người gác cổng cho toàn bộ lưu lượng đi vào các lời gọi microservice trong ứng dụng của bạn. Khi đã có service gateway, các service client của bạn không bao giờ gọi trực tiếp <em>URL</em> của một dịch vụ riêng lẻ, mà thay vào đó chuyển mọi lời gọi tới service gateway.</p>
+
+      <figure class="diagram" aria-label="Hình 6.2">
+        <img src="../assets/images/page_0180_fig_6_2.png" width="1313" height="454" alt="Hình 6.2 — Service gateway nằm giữa service client và các service instance tương ứng">
+        <figcaption><strong>Hình 6.2</strong><br>Service gateway nằm giữa service client và các service instance tương ứng. Mọi lời gọi dịch vụ (cả hướng nội bộ lẫn hướng ngoài) đều phải đi qua service gateway.</figcaption>
+      </figure>
+
+      <p>Vì service gateway nằm giữa mọi lời gọi từ client tới các dịch vụ riêng lẻ, nó cũng đóng vai trò Policy Enforcement Point (<em>PEP</em>) trung tâm cho các lời gọi dịch vụ. Việc sử dụng <em>PEP</em> tập trung có nghĩa là các mối quan tâm xuyên suốt dịch vụ (cross-cutting service concerns) có thể được triển khai ở một nơi duy nhất mà không cần từng nhóm phát triển riêng lẻ phải tự triển khai những mối quan tâm này. Ví dụ về các mối quan tâm xuyên suốt có thể triển khai trong service gateway gồm</p>
+
+      <ul class="manning-bullets" aria-label="Các mối quan tâm xuyên suốt triển khai trong service gateway">
+        <li><strong class="run-in">Định tuyến tĩnh</strong>&mdash;Service gateway đặt mọi lời gọi dịch vụ sau một <em>URL</em> và route <em>API</em> duy nhất. Điều này đơn giản hóa việc phát triển vì developer chỉ cần biết một service endpoint cho tất cả các dịch vụ của họ.</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

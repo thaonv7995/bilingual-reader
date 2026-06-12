@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0619.html">← Trước</a>
+    <a href="page_0621.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">620</span>
+      </header>
+
+      <p>Vì <code>sb</code>&nbsp;không phải là một Đối tượng (Object) thread-safe (an toàn luồng), việc gọi <code>sb.length()</code>&nbsp;và <code>sb.append(s)</code>&nbsp;từ nhiều Thread (Luồng) đồng thời sẽ tạo ra các kết quả không thể dự đoán trước.</p>
+
+      <p>Việc loại bỏ <code>parallel()</code>&nbsp;sẽ đảm bảo rằng chỉ có một Thread (Luồng) duy nhất được sử dụng để truy cập <code>sb</code>&nbsp;và trong trường hợp đó, chính xác 2000 số sẽ được thêm vào nó. Do đó, <strong>B</strong>&nbsp;và <strong>C</strong> là các đáp án đúng.</p>
+
+      <p>Một Ngoại lệ runtime (Runtime Exception) cũng có thể bị ném ra bởi các phương thức của <code>StringBuilder</code>&nbsp;khi nhiều Thread (Luồng) cố gắng thay đổi nó đồng thời. Do đó, <strong>D</strong> cũng đúng.</p>
+
+      <h3 class="section-title">21.4 Bài tập<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">1. Tạo một <code>IntStream</code>&nbsp;vô hạn có phần tử đầu tiên là 2 và phần tử tiếp theo bằng phần tử trước đó + 3.</p>
+
+      <p class="no-indent">2. Tìm tổng của các phần tử từ thứ 10 đến thứ 15 (bao gồm cả hai phần tử này) của stream trên.</p>
+
+      <p class="no-indent">3. Tạo một <code>IntStream</code>&nbsp;gồm 100 số nguyên (int) ngẫu nhiên. Tìm giá trị lớn nhất (maximum), nhỏ nhất (minimum) và trung bình (average) của các giá trị này.</p>
+
+      <p class="no-indent">4. Tìm tổng của các số chẵn cũng như các số lẻ của stream trên bằng cách sử dụng các phương thức <code>reduce</code>&nbsp;cũng như <code>collect</code>. Sử dụng bất kỳ Lớp (Class) nào có hai trường <code>int</code>&nbsp;để lưu trữ các tổng đó.</p>
+
+      <p class="no-indent">5. Từ một stream gồm 100.000 số nguyên ngẫu nhiên, hãy lọc bỏ các số là bội số của 5 và in ra các phần tử còn lại theo thứ tự tăng dần. Thực hiện tương tự bằng cách sử dụng cả stream tuần tự lẫn song song và so sánh hiệu năng của chúng.</p>
+
+      <p class="no-indent">6. Tạo một stream gồm 100 chuỗi (string) ngẫu nhiên có độ dài từ 2 đến 10. Tìm số lượng từ trong stream cho mỗi độ dài. In ra một map trong đó key là độ dài và value là danh sách các từ duy nhất có độ dài đó.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

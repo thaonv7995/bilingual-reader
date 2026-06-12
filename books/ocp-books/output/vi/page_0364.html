@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0363.html">← Trước</a>
+    <a href="page_0365.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">364</span>
+      </header>
+
+      <p class="no-indent">Đừng lo lắng bởi kiểu <code>Map.Entry</code> trông có vẻ kỳ lạ trong đoạn mã trên. <code>Entry</code> là một Interface (Giao diện) static được định nghĩa bên trong <code>Map</code> và nó cung cấp các phương thức để truy cập và sửa đổi một cặp key-value (khóa-giá trị) duy nhất của map.</p>
+
+      <p>Dĩ nhiên, nếu bạn có key, bạn có thể sử dụng các phương thức <code>get(Object key)</code> hoặc
+      <code>getOrDefault(Object key, Object defaultValue)</code> của <code>Map</code> để lấy ra giá trị
+      liên kết tương ứng. Phương thức <code>get</code> trả về <code>null</code> nếu không tìm thấy key và <code>getOrDefault</code> trả về
+      <code>defaultValue</code>. Vì <code>HashMap</code> cho phép các giá trị <code>null</code>, việc trả về giá trị <code>null</code> có thể không đồng nghĩa
+      với việc key đó không tồn tại trong map. Nó cũng có thể có nghĩa là key đó được liên kết với giá trị <code>null</code>.</p>
+
+      <p>Để phân biệt giữa hai tình huống này, bạn cần sử dụng phương thức <code>containsKey</code>, phương thức này
+      chỉ trả về <code>true</code> nếu key được tìm thấy trong map.</p>
+
+      <h3 class="section-title">Truy cập SequencedMap<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Tương tự như <code>SequencedCollection</code>, <code>SequencedMap</code> có các phương thức <code>firstEntry()</code> và <code>lastEntry()</code>
+      để lấy entry (phần tử) đầu tiên và cuối cùng trong map mà không xóa chúng khỏi map.
+      Chúng trả về các đối tượng <code>Map.Entry&lt;K,V&gt;</code>. Nó cũng có các phương thức <code>pollFirstEntry()</code> và
+      <code>pollLastEntry()</code> thực hiện điều tương tự nhưng chúng xóa các entry được trả về khỏi
+      map. Tuy nhiên, khác với <code>SequencedCollection</code>, các phương thức này chỉ trả về <code>null</code> nếu
+      map rỗng.</p>
+
+      <p>Nó có một phương thức <code>reversed()</code> cung cấp một view (khung nhìn) có thứ tự đảo ngược của map.</p>
+
+      <h3 class="section-title">18.3 Thay đổi các collection<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Việc thêm và xóa các phần tử vào và ra khỏi một <code>Collection</code> có thể được thực hiện bằng cách sử dụng các phương thức <code>add</code>, <code>addAll</code>,
+      <code>remove</code>, <code>removeAll</code>, <code>removeIf</code>, <code>retainAll</code>, và <code>clear</code> được khai báo trong
+      <code>Collection</code>. Các collection chuyên biệt như <code>List</code> và <code>Deque</code> cung cấp nhiều cách hơn nữa để
+      sửa đổi nội dung của chúng. Bạn cũng có thể xóa một phần tử bằng phương thức <code>remove</code> của <code>Iterator</code>
+      khi bạn đang duyệt qua một <code>Collection</code>.</p>
+
+      <p>Một lần nữa, kỳ thi không yêu cầu bạn phải học thuộc lòng tất cả các phương thức và nó không</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

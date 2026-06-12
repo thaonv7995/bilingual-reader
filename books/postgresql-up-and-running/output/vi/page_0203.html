@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài — Truy vấn Tệp phẳng</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page code.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0202.html">← Trước</a>
+    <a href="page_0204.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">203</span>
+      </header>
+
+      <p class="no-indent">Tại thời điểm này, phần mở rộng FDW tự động cài đặt hai wrapper theo mặc định:
+      <code class="accent-word">file_fdw</code> và <code class="accent-word">postgres_fdw</code>. Nếu bạn cần bọc các nguồn dữ liệu bên ngoài, hãy bắt đầu bằng cách truy cập
+      hai liên kết này để xem liệu ai đó đã thực hiện công việc tạo wrapper chưa.
+      Nếu không, hãy thử tạo một cái cho riêng bạn. Nếu bạn thành công, hãy chắc chắn chia sẻ nó với người khác.</p>
+
+      <p>Trong PostgreSQL 9.1 và 9.2, bạn bị giới hạn chỉ có các truy vấn SELECT đối với FDW. PostgreSQL 9.3 đã giới thiệu một tính năng API để cập nhật các bảng ngoại. <code>postgres_fdw</code> là
+      FDW duy nhất được cung cấp cùng với PostgreSQL hỗ trợ tính năng mới này.</p>
+
+      <p>Trong phần này, chúng tôi sẽ trình bày cách đăng ký các máy chủ ngoại, người dùng ngoại và
+      các bảng ngoại, và cuối cùng, cách truy vấn các bảng ngoại. Mặc dù chúng tôi sử dụng SQL để tạo
+      và xóa các đối tượng trong các ví dụ của chúng tôi, bạn có thể thực hiện các lệnh giống hệt như vậy bằng
+      pgAdmin III.</p>
+
+      <h3 class="subsection-title">Truy vấn Tệp phẳng</h3>
+
+      <p class="no-indent">Wrapper <code>file_fdw</code> được đóng gói dưới dạng một phần mở rộng. Để cài đặt, hãy sử dụng SQL:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE EXTENSION file_fdw;</code></pre>
+      </figure>
+
+      <p>Mặc dù <code>file_fdw</code> chỉ có thể đọc từ các đường dẫn tệp có thể truy cập bởi máy chủ cục bộ của bạn, bạn
+      vẫn cần định nghĩa một máy chủ cho nó vì lý do nhất quán. Thực hiện lệnh sau
+      để tạo một máy chủ ngoại "giả" trong cơ sở dữ liệu của bạn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE SERVER my_server FOREIGN DATA WRAPPER file_fdw;</code></pre>
+      </figure>
+
+      <p>Tiếp theo, bạn phải đăng ký các bảng. Bạn có thể đặt các bảng ngoại trong bất kỳ schema nào bạn muốn.
+      Chúng tôi thường tạo một schema riêng để chứa dữ liệu ngoại. Trong ví dụ này, chúng tôi sẽ sử dụng
+      schema staging của chúng tôi, như được hiển thị trong <span class="accent-word">Ví dụ 10-1</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 10-1.</strong> Tạo một bảng ngoại từ một tệp phân cách</figcaption>
+        <pre class="code-block"><code>CREATE FOREIGN TABLE staging.devs (developer VARCHAR(150), company VARCHAR(150))
+SERVER my_server
+OPTIONS (format 'csv', header 'true', filename '/postgresql_book/ch10/devs.psv',
+    delimiter '|', null ''
+);</code></pre>
+      </figure>
+
+      <p>Trong ví dụ của chúng tôi, mặc dù chúng tôi đang đăng ký một tệp phân cách bằng dấu ống, chúng tôi vẫn sử dụng tùy chọn csv.
+      Một tệp CSV, theo quan điểm của FDW, đại diện cho bất kỳ tệp nào được phân cách bởi các ký tự đã chỉ định, bất kể dấu phân cách.</p>
+
+      <p>Khi việc thiết lập hoàn tất, bạn có thể cuối cùng truy vấn tệp phân cách bằng dấu ống của mình trực tiếp:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM staging.devs WHERE developer LIKE 'T%';</code></pre>
+      </figure>
+
+      <p>Khi bạn không còn cần bảng ngoại của chúng tôi, bạn có thể xóa nó:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>DROP FOREIGN TABLE staging.devs;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các Wrapper Dữ liệu Ngoại<span class="sep">|</span>185</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

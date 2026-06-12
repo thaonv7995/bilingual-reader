@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 8: Viết Hàm — PL/CoffeeScript và PL/LiveScript</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p .run-in {
+      font-weight: 700;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page ul.bullets code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0173.html">← Trước</a>
+    <a href="page_0175.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">174</span>
+      </header>
+
+      <p class="no-indent"><strong class="run-in">PL/CoffeeScript (plcoffee)</strong> Ngôn ngữ này cho phép bạn viết hàm trong CoffeeScript. CoffeeScript là JavaScript
+      với cấu trúc cú pháp ngắn gọn hơn giống như Python. Giống như Python, nó dựa
+      vào việc thụt lề để truyền đạt ngữ cảnh nhưng loại bỏ những dấu ngoặc nhọn phiền phức.</p>
+
+      <p class="no-indent"><strong class="run-in">PL/LiveScript (plls)</strong> PL/LiveScript cho phép bạn viết hàm trong LiveScript, một nhánh của CoffeeScript.
+      LiveScript tương tự như CoffeeScript nhưng có một số gia vị cú pháp bổ sung.
+      Bài viết này khuyến khích LiveScript như một lựa chọn vượt trội hơn CoffeeScript: <span class="accent-word">10 Lý do để Chuyển từ CoffeeScript sang LiveScript</span>. Nếu có gì, LiveScript có
+      nhiều tính năng của Python, F#, và Haskell hơn CoffeeScript. Nếu bạn đang tìm kiếm một
+      ngôn ngữ có trọng lượng nhẹ hơn PL/Python và được tin cậy, bạn có thể
+      muốn thử LiveScript.</p>
+
+      <p>PL/CoffeeScript và PL/LiveScript được biên dịch bằng cùng một thư viện PL/V8. Do đó,
+      chức năng của chúng hoàn toàn giống với PL/V8. Thực tế, bạn có thể dễ dàng chuyển đổi lại
+      sang PL/V8 nếu chúng không phù hợp với sở thích của bạn. Cả ba ngôn ngữ đều được tin cậy. Điều này có nghĩa là
+      chúng không thể truy cập vào hệ thống tệp OS, nhưng chúng có thể được sử dụng bởi người dùng không phải siêu người dùng để tạo ra các hàm.</p>
+
+      <p><span class="accent-word">Ví dụ 8-15</span> có các lệnh để cài đặt ba ngôn ngữ bằng cách sử dụng các tiện ích mở rộng. Đối với
+      mỗi cơ sở dữ liệu mà bạn muốn cài đặt hỗ trợ, bạn phải chạy những dòng này. Bạn không cần
+      cài đặt cả ba nếu bạn không muốn.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 8-15.</strong> Cài đặt tất cả các ngôn ngữ trong gia đình PL/V8</figcaption>
+        <pre class="code-block"><code>CREATE EXTENSION plv8;
+CREATE EXTENSION plcoffee;
+CREATE EXTENSION plls;</code></pre>
+      </figure>
+
+      <p>Gia đình ngôn ngữ PL/V8 có nhiều đặc điểm chính khiến chúng nổi bật so với
+      PL/pgSQL, một số trong số đó bạn chỉ tìm thấy ở các ngôn ngữ quy trình cao cấp khác như
+      PL/R:</p>
+
+      <ul class="bullets">
+        <li>Thường nhanh hơn trong xử lý số liệu so với SQL và PL/pgSQL.</li>
+        <li>Có khả năng tạo ra các hàm cửa sổ. Bạn không thể làm điều này bằng SQL, PL/pgSQL, hoặc
+        PL/Python. (Bạn có thể làm điều này trong PL/R và C.)</li>
+        <li>Có khả năng tạo ra các trigger và hàm tổng hợp.</li>
+        <li>Hỗ trợ cho các câu lệnh đã chuẩn bị, giao dịch con, hàm bên trong, lớp, và xử lý lỗi try-catch.</li>
+        <li>Có khả năng tạo mã thực thi động bằng cách sử dụng hàm eval.</li>
+        <li>Hỗ trợ JSON, cho phép lặp qua và lọc các đối tượng JSON.</li>
+        <li>Truy cập vào các hàm từ các lệnh DO.</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">156<span class="sep">|</span>Chương 8: Viết Hàm</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

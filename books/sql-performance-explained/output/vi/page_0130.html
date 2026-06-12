@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 5: Clustering Data</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 5: Nhóm Dữ Liệu</p>
+
+      <p class="no-indent">Các chỉ mục dựa trên hàm cũng có thể gây ra những bất ngờ không mong muốn liên quan đến quét chỉ mục chỉ. Một chỉ mục trên <code>UPPER(last_name)</code> không thể được sử dụng cho một quét chỉ mục chỉ khi chọn cột <code>LAST_NAME</code>. Trong phần trước, chúng ta nên đã lập chỉ mục cho cột <code>LAST_NAME</code> để hỗ trợ bộ lọc LIKE và cho phép nó được sử dụng cho một quét chỉ mục chỉ khi chọn cột <code>LAST_NAME</code>.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Luôn cố gắng lập chỉ mục cho dữ liệu gốc vì đó thường là thông tin hữu ích nhất mà bạn có thể đưa vào một chỉ mục.</p>
+        <p>Tránh lập chỉ mục dựa trên hàm cho các biểu thức không thể được sử dụng làm điều kiện truy cập.</p>
+      </aside>
+
+      <p>Các truy vấn tổng hợp như truy vấn được hiển thị ở trên là những ứng cử viên tốt cho các quét chỉ mục chỉ. Chúng truy vấn nhiều hàng nhưng chỉ một vài cột, làm cho một chỉ mục mỏng đủ để hỗ trợ một quét chỉ mục chỉ. Càng nhiều cột bạn truy vấn, bạn càng phải thêm nhiều cột vào chỉ mục để hỗ trợ một quét chỉ mục chỉ. Do đó, với tư cách là một nhà phát triển, bạn chỉ nên chọn các cột mà bạn thực sự cần.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Tránh <code>select *</code> và chỉ lấy các cột bạn cần.</p>
+      </aside>
+
+      <p>Bất kể việc lập chỉ mục nhiều hàng cần nhiều không gian, bạn cũng có thể đạt đến giới hạn của cơ sở dữ liệu của bạn. Hầu hết các cơ sở dữ liệu áp đặt giới hạn khá cứng nhắc về số lượng cột trên mỗi chỉ mục và kích thước tổng thể của một mục chỉ mục. Điều đó có nghĩa là bạn không thể lập chỉ mục cho một số lượng cột tùy ý cũng như các cột dài tùy ý. Bảng tổng quan sau đây liệt kê các hạn chế quan trọng nhất. Tuy nhiên, vẫn có các chỉ mục bao phủ toàn bộ bảng như chúng ta sẽ thấy trong phần tiếp theo.</p>
+
+      <aside class="sidebar-note">
+        <h3>Suy nghĩ về điều đó</h3>
+        <p>Các truy vấn không chọn bất kỳ cột nào của bảng thường được thực hiện với các quét chỉ mục chỉ.</p>
+        <p>Bạn có thể nghĩ ra một ví dụ có ý nghĩa không?</p>
+      </aside>
+
+      <p class="page-folio page-folio--left">120</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

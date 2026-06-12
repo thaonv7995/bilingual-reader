@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 10mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0268.html">← Trước</a>
+    <a href="page_0270.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">269</span>
+      </header>
+
+      <p class="no-indent">ví dụ, <code>Collection</code>&nbsp;khai báo các phương thức <code>add(Object e)</code>&nbsp;và <code>remove(Object e)</code>&nbsp;nhưng không
+      khai báo <code>add(int index, Object e)</code>&nbsp;và <code>remove(int index)</code>&nbsp;bởi vì khái niệm về
+      thứ tự không áp dụng cho tất cả các collection. Chúng ta sử dụng interface <code>Collection</code>&nbsp;khi chúng ta không
+      muốn đưa ra bất kỳ giả định nào về các đặc tính của nhóm đối tượng. Nói cách khác, nếu
+      chúng ta nhận được một đối tượng <code>Collection</code>&nbsp;, tất cả những gì chúng ta biết là nó chứa một nhóm các phần tử. Chúng ta không
+      biết liệu các phần tử đó có được sắp xếp theo bất kỳ cách nào hay không, nhóm đó có chứa các phần tử null hay
+      trùng lặp hay không, hoặc cấu trúc dữ liệu nào được sử dụng để lưu giữ các phần tử trong collection đó.</p>
+
+      <p>Tại thời điểm này, tôi khuyến khích bạn nên xem qua phần mô tả API JavaDoc của
+      interface <code>Collection</code>&nbsp;và kiểm tra các phương thức được khai báo trong interface này. Tên của
+      các phương thức khá rõ nghĩa và các phương thức thực hiện đúng những gì tên của chúng gợi ý. Một số phương thức
+      mà bạn nên chú ý là: <code>add</code>&nbsp;, <code>addAll</code>&nbsp;, <code>remove</code>&nbsp;, <code>removeAll</code>&nbsp;, <code>removeIf</code>&nbsp;,
+      <code>contains</code>&nbsp;, <code>containsAll</code>&nbsp;, <code>isEmpty</code>&nbsp;, và <code>clear</code>&nbsp;.</p>
+
+      <h3 class="section-title section-title--minor">API List<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Interface <code>java.util.List</code>&nbsp;định nghĩa hành vi của các collection duy trì các đối tượng theo một thứ tự.
+      Các phần tử của một list có thể được truy cập bằng chỉ số (index). Nó cũng cho phép chèn hoặc
+      xóa các phần tử tại bất kỳ chỉ số nào được chỉ định. Các phần tử trùng lặp cũng như các giá trị null đều được phép. Vì đây chỉ
+      là một interface nên nó không chỉ định cách thức hoạt động được triển khai như thế nào. Các lớp triển khai thực tế
+      như <code>ArrayList</code>&nbsp;và <code>LinkedList</code>&nbsp;sử dụng các cơ chế khác nhau để triển khai
+      hành vi đó. Như bạn sẽ thấy sau này với <code>ArrayList</code>&nbsp;, các lớp triển khai có thể cung cấp
+      thêm các tính năng bổ sung bên trên các tính năng được định nghĩa trong <code>List</code>&nbsp;.</p>
+
+      <p>Một lần nữa, bạn nên xem qua tất cả các phương thức của interface <code>List</code>&nbsp;trong JavaDoc. Kỳ
+      thi không đánh đố bạn về tên phương thức và không yêu cầu bạn phải nhớ liệu một phương thức cụ thể
+      có tồn tại trong <code>List</code>&nbsp;hay không. Các câu hỏi trong kỳ thi dựa trên việc hiểu cách thức hoạt động của một
+      phương thức nhất định. Bạn được kỳ vọng sẽ biết điều gì xảy ra với danh sách đối tượng hiện tại
+      sau khi gọi một phương thức. Điểm mấu chốt là hiểu rõ các "điều kiện biên". Ví dụ,
+      điều gì xảy ra nếu bạn cố gắng xóa một đối tượng không tồn tại hoặc một giá trị <code>null</code>&nbsp;khỏi một list, hoặc điều gì xảy ra
+      nếu bạn cố gắng thêm <code>null</code>&nbsp;.</p>
+
+      <p>Tôi sẽ liệt kê các phương thức quan trọng của interface <code>List</code>&nbsp;dưới đây. Hãy nhớ rằng chỉ số (index) là</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

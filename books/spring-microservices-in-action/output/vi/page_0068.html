@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Giao tiếp với nhau: giao diện dịch vụ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0067.html">← Trước</a>
+    <a href="page_0069.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Câu chuyện của kiến trúc sư: thiết kế kiến trúc microservice</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">43</span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="Dấu hiệu nhận biết microservice không tốt (tiếp theo)">
+        <p><em>Các microservice của bạn phụ thuộc lẫn nhau rất nhiều</em>&mdash;Bạn thấy rằng các microservice ở một phần miền nghiệp vụ liên tục gọi qua lại lẫn nhau để hoàn thành một yêu cầu người dùng đơn lẻ.</p>
+        <p><em>Các microservice của bạn trở thành một tập hợp các dịch vụ CRUD (Create, Replace, Update, Delete) đơn giản</em>&mdash;Microservice là sự thể hiện của logic nghiệp vụ chứ không phải lớp trừu tượng trên các nguồn dữ liệu của bạn. Nếu các microservice của bạn chỉ làm logic liên quan đến CRUD, chúng có lẽ quá mịn.</p>
+      </aside>
+
+      <p class="no-indent">Kiến trúc microservice nên được phát triển với tư duy tiến hóa, nơi bạn biết rằng mình sẽ không thiết kế đúng ngay lần đầu. Đó là lý do tốt hơn nên bắt đầu với bộ dịch vụ đầu tiên mang mức thô hơn là mức mịn. Cũng quan trọng là không nên cứng nhắc với thiết kế của bạn. Bạn có thể gặp các ràng buộc vật lý trên dịch vụ của mình, nơi bạn cần tạo một dịch vụ tổng hợp (aggregation service) để kết hợp dữ liệu vì hai dịch vụ riêng biệt sẽ giao tiếp quá nhiều, hoặc nơi không có ranh giới rõ ràng giữa các đường ranh giới miền của một dịch vụ.</p>
+
+      <p>Cuối cùng, hãy tiếp cận theo cách thực dụng và giao sản phẩm, thay vì lãng phí thời gian cố gắng làm cho thiết kế hoàn hảo rồi không có gì để thể hiện cho nỗ lực của bạn.</p>
+
+      <h4 class="subsection-title">2.1.3 Giao tiếp với nhau: giao diện dịch vụ</h4>
+
+      <p>Phần cuối cùng trong đầu vào của kiến trúc sư là về việc định nghĩa cách các microservice trong ứng dụng của bạn sẽ giao tiếp với nhau. Khi xây dựng logic nghiệp vụ với microservice, các giao diện cho dịch vụ nên trực quan và developer nên nắm được nhịp điệu cách tất cả các dịch vụ hoạt động trong ứng dụng bằng cách học một hoặc hai dịch vụ trong ứng dụng.</p>
+
+      <p>Nói chung, các hướng dẫn sau có thể được dùng khi suy nghĩ về thiết kế giao diện dịch vụ:</p>
+
+      <ol class="manning-numbered">
+        <li><em>Áp dụng triết lý REST</em>&mdash;Cách tiếp cận REST đối với dịch vụ về bản chất là áp dụng HTTP làm giao thức gọi dịch vụ và sử dụng các động từ HTTP tiêu chuẩn (GET, PUT, POST và DELETE). Mô hình hóa các hành vi cơ bản của bạn xung quanh các động từ HTTP này.</li>
+        <li><em>Dùng URI để truyền đạt ý định</em>&mdash;URI bạn dùng làm endpoint cho dịch vụ nên mô tả các tài nguyên khác nhau trong miền vấn đề của bạn và cung cấp cơ chế cơ bản cho các quan hệ giữa tài nguyên trong miền vấn đề của bạn.</li>
+        <li><em>Dùng JSON cho request và response của bạn</em>&mdash;JavaScript Object Notation (nói cách khác, JSON) là giao thức tuần tự hóa dữ liệu cực kỳ nhẹ và dễ sử dụng hơn nhiều so với XML.</li>
+        <li><em>Dùng mã trạng thái HTTP để truyền đạt kết quả</em>&mdash;Giao thức HTTP có một bộ phong phú các mã phản hồi tiêu chuẩn để chỉ ra thành công hay thất bại của dịch vụ. Hãy học các mã trạng thái này và quan trọng nhất là dùng chúng nhất quán trên tất cả các dịch vụ của bạn.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

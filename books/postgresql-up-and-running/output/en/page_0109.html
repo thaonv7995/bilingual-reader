@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types — Arrays</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0108.html">← Prev</a>
+    <a href="page_0110.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">109</span>
+      </header>
+
+      <p>You can convert delimited strings to an array with the <code>string_to_array</code> function, as
+      demonstrated in <span class="accent-word">Example 5-13</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-13.</strong> Converting a delimited string to an array</figcaption>
+        <pre class="code-block"><code>SELECT string_to_array('ca.ma.tx', '.') As estados;
+estados
+----------
+{ca,ma,tx}</code></pre>
+      </figure>
+
+      <p><code>array_agg</code> is a variant aggregate function that can take a set of any data type and convert
+      it to an array, as demonstrated in <span class="accent-word">Example 5-14</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-14.</strong> Using array_agg</figcaption>
+        <pre class="code-block"><code>SELECT array_agg(log_ts ORDER BY log_ts) As x
+FROM logs
+WHERE log_ts BETWEEN '2011-01-01'::timestamptz AND '2011-01-15'::timestamptz;
+x
+------------------------------------------
+{'2011-01-01', '2011-01-13', '2011-01-14'}</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Referencing Elements in an Array</h3>
+      <p class="no-indent">Elements in arrays are most commonly referenced using the index of the element. Post‐
+      greSQL array indexes start at 1. If you try to access an element above the upper bound,
+      you won’t get an error—only NULL will be returned. The next example grabs the first
+      and last element of our array column:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     SELECT fact_subcats[1] AS primero,
+      fact_subcats[array_upper(fact_subcats, 1)] As segundo
+     FROM census.lu_fact_types;</code></pre>
+      </figure>
+
+      <p>We used the <code>array_upper</code> function to get the upper bound of the array. The second,
+      required parameter of the function indicates the dimension. In our case, our array is
+      one-dimensional, but PostgreSQL does support multidimensional arrays.</p>
+
+      <h3 class="subsection-title">Array Slicing and Splicing</h3>
+      <p class="no-indent">PostgreSQL also supports array slicing using the <code>start:end</code> syntax. It returns another
+      array that is a subarray of the original. For example, to return new arrays that just contain
+      elements 2 through 4 of each original array, type:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     SELECT fact_subcats[2:4] FROM census.lu_fact_types;</code></pre>
+      </figure>
+
+      <p>To glue two arrays together end to end, use the concatenation operator <code>||</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     SELECT fact_subcats[1:2] || fact_subcats[3:4] FROM census.lu_fact_types;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Arrays<span class="sep">|</span>91</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

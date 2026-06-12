@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 8: Durability, scalability, and flexibility</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0258.html">← Prev</a>
+    <a href="page_0260.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">234</span>
+        <span class="rh-center">CHAPTER 8 <em>Event-driven architecture with Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">one another. As you saw with the synchronous design proposed earlier, a synchronous HTTP response creates a hard dependency between the licensing and organization service. We can&rsquo;t eliminate these dependencies completely, but we can try to minimize dependencies by only exposing endpoints that directly manage the data owned by the service. A messaging approach allows you to decouple the two services because when it comes to communicating state changes, neither service knows about each other. When the organization service needs to publish a state change, it writes a message to a queue. The licensing service only knows that it gets a message; it has no idea who has published the message.</p>
+
+      <h3 class="section-title">Durability</h3>
+
+      <p>The presence of the queue allows you to guarantee that a message will be delivered even if the consumer of the service is down. The organization service can keep publishing messages even if the licensing service in unavailable. The messages will be stored in the queue and will stay there until the licensing service is available. Conversely, with the combination of a cache and the queuing approach, if the organization service is down, the licensing service can degrade gracefully because at least part of the organization data will be in its cache. Sometimes old data is better than no data.</p>
+
+      <h3 class="section-title">Scalability</h3>
+
+      <p>Since messages are stored in a queue, the sender of the message doesn&rsquo;t have to wait for a response back from the consumer of the message. They can go on their way and continue their work. Likewise, if a consumer reading a message off the queue isn&rsquo;t processing messages fast enough, it&rsquo;s a trivial task to spin up more consumers and have them process those messages off the queue. This scalability approach fits well within a microservices model because one of the things I&rsquo;ve been emphasizing through this book is that it should be trivial to spin up new instances of a microservice and have that additional microservice become another service that can process work off the message queue holding the messages. This is an example of scaling horizontally. Traditional scaling mechanisms for reading messages off a queue involved increasing the number of threads that a message consumer could process at one time. Unfortunately, with this approach, you were ultimately limited by the number of CPUs available to the message consumer. A microservice model doesn&rsquo;t have this limitation because you&rsquo;re scaling by increasing the number of machines hosting the service consuming the messages.</p>
+
+      <h3 class="section-title">Flexibility</h3>
+
+      <p>The sender of a message has no idea who is going to consume it. This means you can easily add new message consumers (and new functionality) without impacting the original sending service. This is an extremely powerful concept because new functionality can be added to an application without having to touch existing services. Instead, the new code can listen for events being published and react to them accordingly.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

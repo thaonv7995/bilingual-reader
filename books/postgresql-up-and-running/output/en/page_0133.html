@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Indexes</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0132.html">← Prev</a>
+    <a href="page_0134.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">133</span>
+      </header>
+
+      <p class="no-indent">class system table provides a complete listing of available operator classes, both from
+      your original install and from extensions. A particular index method will work only
+      against a given set of opclasses. To see this complete list, you can either open up pgAdmin
+      and look under operators, or execute the query in <span class="accent-word">Example 6-7</span> against the system
+      catalog to get a comprehensive view.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 6-7.</strong> Which data types and operator classes does B-Tree support?</figcaption>
+        <pre class="code-block"><code>SELECT am.amname AS index_method, opc.opcname AS opclass_name,
+opc.opcintype::regtype AS indexed_type, opc.opcdefault AS is_default
+FROM pg_am am INNER JOIN pg_opclass opc ON opc.opcmethod = am.oid
+WHERE am.amname = 'btree'
+ORDER BY index_method, indexed_type, opclass_name;
+index_method |    opclass_name     |        indexed_type         | is_default
+-------------+---------------------+-----------------------------+------------
+btree        | bool_ops            | boolean                     | t
+:
+btree        | text_ops            | text                        | t
+btree        | text_pattern_ops    | text                        | f
+btree        | varchar_ops         | text                        | f
+btree        | varchar_pattern_ops | text                        | f
+  :</code></pre>
+      </figure>
+
+      <p>In <span class="accent-word">Example 6-7</span>, we limit our result to B-Tree. Notice that one opclass per indexed data
+      type is marked as the default. When you create an index without specifying the opclass,
+      PostgreSQL chooses the default opclass for the index. Generally, this is good enough,
+      but not always.</p>
+
+      <p>For instance, B-Tree against <code>text_ops</code> (aka <code>varchar_ops</code>) doesn&rsquo;t include the <code>~~</code> oper‐
+      ator (the <code>LIKE</code> operator), so none of your <code>LIKE</code> searches can use an index in the <code>text_ops</code>
+      opclass. If you plan on doing many wildcard searches on <code>varchar</code> or <code>text</code> columns,
+      you&rsquo;d be better off explicitly choosing the <code>text_pattern_ops</code>/<code>varchar_pattern_ops</code>
+      opclass for your index. To specify the opclass, just append the opclass after the column
+      name, as in:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx1 ON census.lu_tracts USING btree (tract_name text_pattern_ops);</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0133_icon_tip.png" width="43" height="57" alt="Tip">
+        </figure>
+        <p class="callout-text">You will notice there are both <code>varchar_ops</code> and <code>text_ops</code> in the list,
+        but they map only to <code>text</code>. <code>character varying</code> doesn&rsquo;t have B-Tree
+        operators of its own, because it is essentially <code>text</code> with a length con‐
+        straint. <code>varchar_ops</code> and <code>varchar_pattern_ops</code> are just aliases for
+        <code>text_ops</code> and <code>text_pattern_ops</code> to satisfy the desire of some to
+        maintain this symmetry of opclasses starting with the name of the
+        type they support.</p>
+      </div>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Indexes<span class="sep">|</span>115</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

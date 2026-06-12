@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Single Table Views</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0137.html">← Trước</a>
+    <a href="page_0139.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">138</span>
+      </header>
+
+      <p class="no-indent">Phiên bản 9.3 cũng đã giới thiệu các chế độ xem vật liệu. Khi bạn đánh dấu một chế độ xem là vật liệu,
+      nó sẽ truy vấn lại dữ liệu chỉ khi bạn phát lệnh REFRESH. Điểm cộng là bạn không lãng phí tài nguyên để chạy các truy vấn phức tạp nhiều lần; điểm trừ là bạn có thể không có dữ liệu mới nhất khi sử dụng chế độ xem.</p>
+
+      <p>Phiên bản 9.4 cho phép người dùng truy cập các chế độ xem vật liệu trong khi nó đang làm mới. Nó cũng đã giới thiệu
+      bộ sửa đổi WITH CHECK OPTION, ngăn chặn việc chèn và cập nhật ngoài phạm vi của chế độ xem.</p>
+
+      <h3 class="subsection-title">Chế độ xem bảng đơn</h3>
+      <p class="no-indent">Chế độ xem đơn giản nhất lấy dữ liệu từ một bảng duy nhất. Luôn bao gồm khóa chính nếu bạn
+      dự định ghi dữ liệu trở lại bảng, như được thể hiện trong <span class="accent-word">Ví dụ 7-1</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-1.</strong> Chế độ xem bảng đơn</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE VIEW census.vw_facts_2011 AS
+SELECT fact_type_id, val, yr, tract_id FROM census.facts WHERE yr = 2011;</code></pre>
+      </figure>
+
+      <p>Tính từ phiên bản 9.3, bạn có thể thay đổi dữ liệu trong chế độ xem này bằng cách sử dụng lệnh INSERT, UPDATE, hoặc
+      DELETE. Các cập nhật và xóa sẽ tuân theo bất kỳ điều kiện WHERE nào bạn có như một phần của chế độ xem. Ví dụ, lệnh xóa sau sẽ chỉ xóa các bản ghi có yr là 2011:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>DELETE FROM census.vw_facts_2011 WHERE val = 0;</code></pre>
+      </figure>
+
+      <p>Và lệnh sau sẽ không cập nhật bất kỳ bản ghi nào:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>UPDATE census.vw_facts_2011 SET val = 1 WHERE val = 0 AND yr = 2012;</code></pre>
+      </figure>
+
+      <p>Hãy lưu ý rằng bạn có thể chèn và cập nhật dữ liệu mà đưa nó ra ngoài điều kiện WHERE của chế độ xem:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>UPDATE census.vw_facts_2011 SET yr = 2012 WHERE yr = 2011;</code></pre>
+      </figure>
+
+      <p>Cập nhật không vi phạm điều kiện WHERE. Nhưng một khi nó được thực thi, bạn sẽ làm trống chế độ xem của mình. Vì lý do hợp lý, bạn có thể thấy cần thiết để ngăn chặn các cập nhật
+      hoặc chèn có thể đưa các bản ghi ra ngoài phạm vi của WHERE. Phiên bản 9.4 đã giới thiệu
+      WITH CHECK OPTION để thực hiện điều này. Bao gồm bộ sửa đổi này khi tạo chế độ xem và PostgreSQL sẽ mãi mãi từ chối bất kỳ nỗ lực nào để thêm bản ghi ra ngoài chế độ xem
+      và cập nhật các bản ghi sẽ đưa chúng ra ngoài chế độ xem. Trong chế độ xem ví dụ của chúng tôi, mục tiêu của chúng tôi
+      là giới hạn vw_facts_2011 chỉ cho phép chèn dữ liệu năm 2011 và không cho phép cập nhật yr thành thứ khác ngoài 2011. Để thêm hạn chế này, chúng tôi sửa đổi định nghĩa chế độ xem của mình như được thể hiện trong <span class="accent-word">Ví dụ 7-2</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-2.</strong> Chế độ xem bảng đơn VỚI TÙY CHỌN KIỂM TRA</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE VIEW census.vw_facts_2011 AS
+SELECT fact_type_id, val, yr, tract_id
+FROM census.facts WHERE yr = 2011 WITH CHECK OPTION;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">120<span class="sep">|</span>Chương 7: SQL: Cách PostgreSQL</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

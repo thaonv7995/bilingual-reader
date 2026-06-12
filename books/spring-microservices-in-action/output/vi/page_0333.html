@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Các mẫu cốt lõi CI/CD và máy chủ Phoenix</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note > p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note > p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note p.continued-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-style: italic;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + .sidebar-note {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0332.html">← Trước</a>
+    <a href="page_0334.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">308</span>
+        <span class="rh-center">CHƯƠNG 10 <em>Triển khai microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note continued" aria-label="Kiểm thử đơn vị vs. kiểm thử tích hợp vs. kiểm thử nền tảng (tiếp theo)">
+        <p class="no-indent continued-label">(tiếp theo)</p>
+        <p class="no-indent">các lời gọi sẽ kích hoạt một dịch vụ từ xa được mock hoặc stub để các lời gọi không bao giờ rời khỏi build server.</p>
+        <p class="no-indent"><strong class="run-in">Kiểm thử nền tảng—</strong>Các kiểm thử nền tảng được chạy ngay trước khi một dịch vụ được triển khai lên một môi trường. Các kiểm thử này thường kiểm thử toàn bộ luồng nghiệp vụ và cũng gọi tất cả các phụ thuộc bên thứ ba mà bình thường sẽ được gọi trong hệ thống production. Kiểm thử nền tảng chạy trực tiếp trong một môi trường cụ thể và không liên quan đến bất kỳ dịch vụ nào được mock. Kiểm thử nền tảng được chạy để xác định các vấn đề tích hợp với các dịch vụ bên thứ ba mà bình thường sẽ không được phát hiện khi một dịch vụ bên thứ ba bị stub trong kiểm thử tích hợp.</p>
+      </aside>
+
+      <p class="no-indent">Quy trình build/triển khai này được xây dựng trên bốn mẫu cốt lõi. Các mẫu này không phải do tôi sáng tạo ra mà đã nổi lên từ kinh nghiệm tập thể của các đội phát triển xây dựng ứng dụng microservice và dựa trên đám mây. Các mẫu này bao gồm</p>
+
+      <ul class="manning-bullets" aria-label="Các mẫu cốt lõi build và triển khai">
+        <li><strong class="run-in">Tích hợp liên tục/Triển khai liên tục (CI/CD)—</strong>Với CI/CD, mã ứng dụng của bạn không chỉ được build và kiểm thử khi được commit; nó cũng liên tục được triển khai. Việc triển khai mã của bạn nên diễn ra như sau: nếu mã vượt qua các kiểm thử đơn vị, tích hợp và nền tảng, nó nên được promote ngay lập tức lên môi trường tiếp theo. Điểm dừng duy nhất ở hầu hết các tổ chức là bước đẩy lên production.</li>
+        <li><strong class="run-in">Infrastructure as code—</strong>Artifact phần mềm cuối cùng sẽ được đẩy lên development và các môi trường cao hơn là một ảnh máy (machine image). Ảnh máy và microservice được cài đặt trên đó sẽ được cấp phát ngay sau khi mã nguồn microservice được biên dịch và kiểm thử. Việc cấp phát ảnh máy diễn ra thông qua một loạt script được chạy với mỗi lần build. Không ai được can thiệp thủ công vào máy chủ sau khi nó đã được build. Các script cấp phát được giữ trong source control và quản lý như bất kỳ đoạn mã nào khác.</li>
+        <li><strong class="run-in">Máy chủ bất biến—</strong>Một khi ảnh máy chủ được build, cấu hình của máy chủ và microservice sẽ không bao giờ bị thay đổi sau quy trình cấp phát. Điều này đảm bảo môi trường của bạn sẽ không phải chịu &ldquo;configuration drift&rdquo; (sự lệch cấu hình) nơi một nhà phát triển hoặc quản trị hệ thống thực hiện &ldquo;một thay đổi nhỏ&rdquo; sau này gây ra sự cố. Nếu cần thay đổi, các script cấp phát máy chủ được sửa đổi và một build mới được khởi động.</li>
+      </ul>
+
+      <aside class="sidebar-note" aria-labelledby="phoenix-heading">
+        <h3 id="phoenix-heading">Về tính bất biến và sự xuất hiện của máy chủ Phoenix</h3>
+        <p>Với khái niệm máy chủ bất biến, chúng ta luôn được đảm bảo rằng cấu hình của một máy chủ khớp chính xác với những gì ảnh máy của máy chủ mô tả. Một máy chủ nên có thể bị dừng và khởi động lại từ ảnh máy mà không có bất kỳ thay đổi nào trong hành vi của dịch vụ hoặc microservice. Việc dừng và tái tạo một máy chủ mới này được Martin Fowler gọi là &ldquo;Phoenix Server&rdquo;</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

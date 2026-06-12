@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Concatenated Indexes</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .prose-page .sidebar-note figure.code-snippet {
+      margin: 2.5mm 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">25</span>
+      </header>
+      <p class="chapter-running-head">Concatenated Indexes</p>
+
+      <aside class="sidebar-note">
+        <h3>Tip</h3>
+        <p>Visualizing an index helps in understanding what queries the index supports. You can query the database to retrieve the entries in index order (SQL:2008 syntax, see page&nbsp;144 for proprietary solutions using <code>LIMIT</code>, <code>TOP</code> or <code>ROWNUM</code>):</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>SELECT &lt;INDEX COLUMN LIST&gt;
+  FROM &lt;TABLE&gt;
+ ORDER BY &lt;INDEX COLUMN LIST&gt;
+ FETCH FIRST 100 ROWS ONLY;</code></pre>
+        </figure>
+        <p>If you put the index definition and table name into the query, you will get a sample from the index. Ask yourself if the requested rows are clustered in a central place. If not, the index tree cannot help find that place.</p>
+      </aside>
+
+      <p class="no-indent">We could, of course, add another index on <code>SUBSIDIARY_ID</code> to improve query speed. There is however a better solution&mdash;at least if we assume that searching on <code>EMPLOYEE_ID</code> alone does not make sense.</p>
+
+      <p>We can take advantage of the fact that the first index column is always usable for searching. Again, it is like a telephone directory: you don&rsquo;t need to know the first name to search by last name. The trick is to reverse the index column order so that the <code>SUBSIDIARY_ID</code> is in the first position:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE UNIQUE INDEX EMPLOYEES_PK
+    ON EMPLOYEES (SUBSIDIARY_ID, EMPLOYEE_ID);</code></pre>
+      </figure>
+
+      <p>Both columns together are still unique so queries with the full primary key can still use an <code>INDEX UNIQUE SCAN</code> but the sequence of index entries is entirely different. The <code>SUBSIDIARY_ID</code> has become the primary sort criterion. That means that all entries for a subsidiary are in the index consecutively so the database can use the B-tree to find their location.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">15</p>
+    </article>
+  </main>
+</body>
+</html>

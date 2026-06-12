@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 0 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0418.html">← Trước</a>
+    <a href="page_0420.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">419</span>
+      </header>
+
+      <p class="no-indent">quá trình chuyển đổi trên Windows bị thiếu ký tự ổ đĩa <code>c:</code>&nbsp;, nhưng trừ khi bạn muốn nhắm mục tiêu đến một tệp trên một
+      ổ đĩa khác với ổ đĩa mà chương trình của bạn đang được thực thi, ký tự ổ đĩa là không bắt buộc
+      để chỉ định đường dẫn tuyệt đối. Bất kỳ đường dẫn nào bắt đầu bằng ký tự phân tách đều được coi là
+      bắt đầu từ thư mục gốc của hệ thống tệp (trên tất cả các hệ điều hành). Do đó, trên máy Windows, nếu đường dẫn của bạn
+      bắt đầu bằng <code>\</code>&nbsp;và thư mục hiện tại của bạn nằm trên ổ <code>C</code>&nbsp;, thì <code>\temp\test.txt</code>&nbsp;sẽ tham chiếu
+      đến <code>c:\temp\test.txt</code>&nbsp;.</p>
+
+      <p>Lớp (Class) <code>File</code>&nbsp;có thêm hai trường public static khác để phân tách các đường dẫn theo cách độc lập
+      với nền tảng.&nbsp;Đó là:</p>
+
+      <ol class="numbered">
+        <li><code>public static char pathSeparatorChar</code>&nbsp;: Đây là ký tự phân tách đường dẫn phụ thuộc
+        vào hệ thống. Trên Windows, nó là <code>;</code>&nbsp;và trên Linux, nó là <code>:</code>&nbsp;.</li>
+        <li><code>public static String pathSeparator</code>&nbsp;: Một phiên bản <code>String</code>&nbsp;của <code>pathSeparatorChar</code>&nbsp;để
+        thuận tiện. Nó chứa cùng một ký tự với <code>pathSeparatorChar</code>.</li>
+      </ol>
+
+      <p>Mặc dù hoàn toàn nằm ngoài phạm vi của kỳ thi, nhưng cũng nên biết rằng các trường này sẽ rất hữu ích
+      khi bạn muốn thực thi động một lệnh yêu cầu một danh sách các đường dẫn làm đối số.</p>
+
+      <h3 class="section-title section-title--minor">Lấy thông tin đường dẫn</h3>
+
+      <p>Lớp (Class) <code>File</code>&nbsp;có các phương thức như <code>getAbsolutePath</code>&nbsp;và <code>getCanonicalPath</code>&nbsp;để lần lượt lấy
+      đường dẫn tuyệt đối và đường dẫn chuẩn tắc của tệp. Chúng có thể được sử dụng như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>File f = new File(".");
+String ap = f.getAbsolutePath();
+String cp = f.getCanonicalPath();
+System.out.println(ap+" "+cp);</code></pre>
+      </figure>
+
+      <p>Đoạn mã trên sử dụng một đường dẫn tương đối khi tạo đối tượng (Object) <code>File</code>&nbsp;( <code>.</code>&nbsp;là tương đối vì nó
+      không bắt đầu bằng thư mục gốc). Đường dẫn này tương đối so với thư mục hiện tại. Do đó, về mặt hiệu quả, đoạn mã
+      trên hiển thị cho bạn thư mục hiện tại. Nếu bạn chạy đoạn mã trên từ <code>c:\temp</code>&nbsp;, nó sẽ
+      in ra <code>C:\temp\. C:\temp</code>&nbsp;. Hãy quan sát rằng đường dẫn chuẩn tắc không chứa dấu chấm ở cuối
+      vì dấu chấm đó là dư thừa.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

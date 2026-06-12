@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0457.html">← Trước</a>
+    <a href="page_0459.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">458</span>
+      </header>
+
+      <p class="no-indent">các món ăn khác nhau. Dưới góc nhìn của nhà hàng, đó là <strong>multi-processing</strong> (đa xử lý) bởi vì
+      có nhiều &ldquo;bộ xử lý&rdquo;, mỗi bộ xử lý đang thực hiện nhiệm vụ của riêng mình. Nó cũng có thể được gọi là <strong>parallel
+      processing</strong> (xử lý song song) vì có nhiều hơn một đơn hàng thực sự đang được chuẩn bị song song. Mặt khác, một
+      người vận hành xe đẩy thức ăn có thể vừa lật bánh burger ở giây này và thái salad ở giây tiếp theo. Người
+      vận hành xe đẩy đó cũng đang đa nhiệm (multi-tasking) nhưng vì anh ta chỉ là một &ldquo;bộ xử lý&rdquo;, anh ta không phải là đa
+      xử lý (multi-processing). Anh ta cũng đang chuẩn bị nhiều đơn hàng cùng một lúc nhưng bằng cách hoạt động
+      tạo ra ảo giác như thể có nhiều bộ xử lý. Vì nhiều đơn hàng được chuẩn bị trong cả hai trường hợp,
+      chúng đều là các ví dụ của xử lý &ldquo;đồng thời&rdquo; (concurrent).</p>
+
+      <p>Chỉ khoảng một thập kỷ trước hoặc lâu hơn, một chip CPU chỉ có thể thực thi một chỉ thị tại một
+      thời điểm. Nhưng các hệ điều hành như Windows và Linux vẫn có thể thực thi nhiều
+      chương trình cùng một lúc. Chúng có thể làm được điều đó bằng cách chia sẻ thời gian CPU giữa tất cả
+      các chương trình. Ngày nay, ngay cả những máy tính cá nhân cấu hình cơ bản cũng có các bộ xử lý đa nhân,
+      trong đó mỗi nhân hoạt động như một CPU độc lập. Hơn nữa, các chip cũng có thể áp dụng các kỹ thuật
+      như <strong>hyperthreading</strong> (siêu phân luồng) để tạo ra ảo giác có nhiều CPU logic bên trong mỗi nhân.
+      Vì vậy, dưới góc nhìn của một hệ điều hành, ngay cả một chip đơn nhân cũng có thể được xem như là một chip
+      đa xử lý. Do đó, trên các hệ thống như vậy, một hệ điều hành thực hiện xử lý song song khi thực thi
+      hai chương trình cùng một lúc trên các CPU khác nhau.</p>
+
+      <p>Nhiều chương trình máy tính thực hiện các nhiệm vụ mất một khoảng thời gian để hoàn thành. Những
+      nhiệm vụ như vậy đòi hỏi nhiều thời gian hoặc do chúng liên quan đến nhiều hoạt động tính toán hoặc vì chúng
+      bị tắc nghẽn bởi các yếu tố bên ngoài như dữ liệu nhập từ người dùng hoặc Vào/Ra (I/O) mạng. Trong cả hai trường hợp,
+      chúng ta hoàn toàn có thể viết chương trình theo cách để các nhiệm vụ độc lập được thực thi đồng thời.
+      Ví dụ, khi bạn nhấp vào một liên kết tải xuống trên trình duyệt, chuột vẫn hoạt động bình thường trong khi
+      trình duyệt đang tải tệp tin xuống. Di chuyển chuột và tải tệp tin là hai nhiệm vụ độc lập có thể được thực thi
+      <strong>đồng thời (concurrently)</strong>. Việc hai nhiệm vụ này có thực sự thực thi song song hay không
+      còn phụ thuộc vào tài nguyên sẵn có bên dưới hệ thống.</p>
+
+      <p>Viết các chương trình có thể thực hiện các nhiệm vụ đồng thời không phải là việc dễ dàng.
+      Trước tiên, bạn cần xác định và tách riêng các nhiệm vụ có thể thực thi đồng thời, sau đó sử dụng
+      các kỹ thuật được cung cấp bởi ngôn ngữ lập trình để thực thi chúng đồng thời. Bạn</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

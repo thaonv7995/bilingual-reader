@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 17: Lambda Expressions and Method References</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: lambda-param;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="3"] {
+      counter-reset: lambda-param 2;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: lambda-param;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(lambda-param) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li strong {
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li figure.code-snippet {
+      margin: 1.5mm 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0317.html">← Prev</a>
+    <a href="page_0319.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">318</span>
+      </header>
+
+      <ol class="numbered" start="3">
+        <li><strong>More than one parameter</strong> - If a lambda expression takes more than one parameter, all
+        the parameter names must be specified within the parentheses, i.e., <code>( pName1, pName2,
+        pName3 )</code>. For example,
+          <figure class="code-snippet">
+            <pre class="code-block"><code>(a, b, c) -&gt; a + b + c //valid</code></pre>
+          </figure>
+          <figure class="code-snippet code-snippet--warn">
+            <pre class="code-block"><code>a, b -&gt; a+b //invalid, parameters must be within ( )</code></pre>
+          </figure>
+          Again, parameter types are optional. For example.
+          <figure class="code-snippet">
+            <pre class="code-block"><code>(int a, int b, int c) -&gt; a + b + c //valid</code></pre>
+          </figure>
+          If you are specifying parameter types, you must specify them for all the parameters. Thus,
+          <code>(int a, int b, c) -&gt; a + b + c</code> would be invalid because it does not specify the
+          type of <code>c</code>
+          Java 11 has added one more way to declare the parameters. You can use the <code>var</code> type for
+          declaring the parameters like this:
+          <figure class="code-snippet">
+            <pre class="code-block"><code>(var a) -&gt; a*a //valid. Observe the parentheses, they are required
+if you are using var.</code></pre>
+          </figure>
+          Normally, there is no need to specify the type for the lambda parameters. However, it is not
+          possible to apply annotations on the parameters unless you specify the type. For example, the
+          following will not compile because annotations cannot be specified directly on a variable:
+          <code>(@NotNull a) -&gt; a*a.</code>
+          To be able to apply an annotation, you need to have a type for the variable, like this: <code>(@NotNull
+          Integer a) -&gt; a*a</code> . So, if you want to use an annotation on a lambda parameter but don&rsquo;t
+          want to specify the type, you can use the <code>var</code> declaration, like this: <code>(@NotNull var a) -&gt;
+          a*a</code> .
+          Remember that since a lambda expression essentially provides an implementation of an
+          interface, the rules for implementing an interface discussed in the previous chapter
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0049.html">← Prev</a>
+    <a href="page_0051.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">50</span>
+      </header>
+
+      <p class="no-indent">To read more about default privileges, see <span class="accent-word">ALTER DEFAULT PRIVILEGES</span>.</p>
+
+      <h3 class="section-title">Privilege Idiosyncrasies</h3>
+      <p class="no-indent">Before we unleash you to explore privileges on your own, we do want to point out a few
+      quirks that may not be apparent.</p>
+
+      <p>Unlike in other database products, being the owner of a PostgreSQL database does not
+      give you access to all objects in the database, but it does grant you privileges to whatever
+      objects you create and allows you to drop the database. Another role can create objects
+      that you can’t access in your owned database. Interestingly, though, you can still drop
+      the whole database.</p>
+
+      <p>People often forget to set <code>GRANT USAGE ON SCHEMA</code> or <code>GRANT ALL ON SCHEMA</code>. Even if
+      your tables and functions have rights assigned to a role, these tables and functions will
+      still not be accessible if the role has no <code>USAGE</code> rights to the schema.</p>
+
+      <h3 class="section-title">Extensions</h3>
+      <p class="no-indent">Extensions, formerly called contribs, are add-ons that you can install in a PostgreSQL
+      database to extend functionality beyond the base offerings. They exemplify the best of
+      open source software: people collaborating, building, and freely sharing new features.
+      Since version 9.1, the new PostgreSQL extension model has made adding extensions a
+      cinch.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0050_icon_tip.png" width="43" height="57" alt="Tip">
+        </figure>
+        <p class="callout-text">As a note on terminology, older add-ons outside the extension mod‐
+        el should still be called <code>contribs</code>, but with an eye toward the future,
+        we’ll call them all <code>extensions</code>.</p>
+      </div>
+
+      <p class="no-indent">Not all extensions need to be in all databases. You should install extensions to your
+      individual database on an as-needed basis. If you want all your databases to have a certain
+      set of extensions, you can develop a template database, as discussed in <span class="accent-word">“Template Da‐
+      tabases” on page 27</span>, with all the the extensions installed, and then beget future databases
+      from that template.</p>
+
+      <p>Occasionally prune extensions that you no longer need, to avoid bloat. Some extensions
+      take up quite a bit of space.</p>
+
+      <p>To see which extensions you have already installed on your server, run the query in
+      <span class="accent-word">Example 2-7</span>. Your list could vary significantly from ours.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">32<span class="sep">|</span>Chapter 2: Database Administration</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

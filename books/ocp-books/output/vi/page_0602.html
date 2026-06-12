@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option {
+      margin: 0 0 2mm;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0601.html">← Trước</a>
+    <a href="page_0603.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">602</span>
+      </header>
+
+      <div class="quiz-option">
+        <p class="no-indent"><strong>C.</strong> <code>//2</code> có thể in ra <code>[ ]</code>.</p>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent"><strong>D.</strong> <code>//2</code> có thể in ra <code>[b, , a]</code>.</p>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent"><strong>E.</strong> <code>//2</code> sẽ <strong>không bao giờ</strong> in ra <code>[ , a, b]</code>.</p>
+      </div>
+
+      <p class="no-indent">Đáp án đúng là A, D, E.</p>
+
+      <p>Phương thức <code>dropWhile(Predicate p)</code> loại bỏ các phần tử của một stream cho đến khi gặp một phần tử không thỏa mãn predicate. Trong trường hợp này, predicate kiểm tra xem chuỗi có trống hay không. Do đó, nó sẽ loại bỏ các phần tử từ đầu cho đến khi gặp một chuỗi không trống. Một khi tìm thấy một phần tử chuỗi không trống, nó sẽ chuyển các phần tử còn lại cho thao tác tiếp theo trong pipeline. Bây giờ, hãy nhớ rằng List có thứ tự trong khi Set thì không. Do đó, stream tại <code>//1</code> sẽ luôn gặp các phần tử theo thứ tự của các phần tử trong list nguồn, trong khi stream tại <code>//2</code> có thể gặp các phần tử theo bất kỳ thứ tự nào. Nếu phần tử đầu tiên mà stream tại <code>//2</code> gặp không phải là một chuỗi trống, predicate sẽ không thỏa mãn và tất cả các phần tử sẽ nằm trong stream kết quả. Do đó, các tùy chọn A và D là đúng. B và C là sai vì nếu phần tử đầu tiên trong stream là một chuỗi trống, nó sẽ bị loại bỏ, nghĩa là phần tử đầu tiên của stream kết quả không bao giờ có thể là một chuỗi trống. Vì lý do tương tự, tùy chọn E là đúng.</p>
+
+      <h3 class="section-title section-title--sub">21.3.3 Stream song song<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Tôi tin rằng câu hỏi trắc nghiệm trong phần &ldquo;Using Collectors&rdquo;, trong đó một multi-map được tạo ra chỉ bằng một dòng mã duy nhất, đã thuyết phục bạn về sức mạnh của Stream API. Nhưng lợi ích của việc giảm kích thước mã nguồn không là gì so với lợi ích mà stream mang lại trong việc song song hóa việc thực thi logic nghiệp vụ mà không cần viết một dòng mã đa luồng (multi-threading) nào.</p>
+
+      <p>Theo mặc định, các stream là tuần tự, có nghĩa là stream framework chỉ sử dụng một thread (luồng) để thực thi một stream pipeline. Đây là thread lấy các phần tử từ nguồn, thực thi các hàm được cung cấp cho các thao tác trung gian (intermediate operations), và sau đó thực thi thao tác kết thúc (terminal operation). Nó làm mọi thứ. Điều này được thể hiện rõ ràng từ kết quả đầu ra của đoạn mã sau:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

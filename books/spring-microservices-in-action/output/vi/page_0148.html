@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Tại sao khả năng phục hồi phía client quan trọng</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0147.html">← Trước</a>
+    <a href="page_0149.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Tại sao khả năng phục hồi phía client quan trọng</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">123</span>
+      </header>
+
+      <p class="no-indent">các khoang kín nước (vách ngăn — bulkhead), vách ngăn sẽ giữ nước chỉ trong khu vực của con tàu nơi xảy ra thủng và ngăn toàn bộ con tàu bị ngập nước rồi chìm.</p>
+
+      <p>Cùng khái niệm đó có thể áp dụng cho một dịch vụ phải tương tác với nhiều tài nguyên từ xa. Bằng cách dùng mẫu vách ngăn (bulkhead pattern), bạn có thể tách các cuộc gọi tới tài nguyên từ xa vào các thread pool riêng và giảm nguy cơ sự cố do một cuộc gọi tài nguyên từ xa chậm sẽ làm sập toàn bộ ứng dụng. Các thread pool đóng vai trò như vách ngăn cho dịch vụ của bạn. Mỗi tài nguyên từ xa được tách biệt và gán vào một thread pool. Nếu một dịch vụ phản hồi chậm, thread pool cho loại cuộc gọi dịch vụ đó sẽ bị bão hòa và ngừng xử lý yêu cầu. Các cuộc gọi dịch vụ tới dịch vụ khác sẽ không bị bão hòa vì chúng được gán vào các thread pool khác.</p>
+
+      <h4 class="subsection-title">5.2 Tại sao khả năng phục hồi phía client quan trọng</h4>
+
+      <p>Chúng ta đã nói về các mẫu khác nhau này ở mức trừu tượng; tuy nhiên, hãy đi sâu vào một ví dụ cụ thể hơn về nơi các mẫu này có thể được áp dụng. Hãy cùng đi qua một tình huống phổ biến mà tôi từng gặp và xem vì sao các mẫu khả năng phục hồi phía client như mẫu ngắt mạch (circuit breaker pattern) lại quan trọng để triển khai kiến trúc dựa trên dịch vụ, đặc biệt là kiến trúc microservice chạy trên đám mây.</p>
+
+      <p>Trong hình 5.2, tôi trình bày một tình huống điển hình liên quan đến việc dùng tài nguyên từ xa như cơ sở dữ liệu và dịch vụ từ xa.</p>
+
+      <p>Trong tình huống ở hình 5.2, ba ứng dụng giao tiếp theo cách này hay cách khác với ba dịch vụ khác nhau. Application A và B giao tiếp trực tiếp với Service A. Service A lấy dữ liệu từ cơ sở dữ liệu và gọi Service B để thực hiện công việc. Service B lấy dữ liệu từ một nền tảng cơ sở dữ liệu hoàn toàn khác và gọi tới một dịch vụ khác, Service C, từ nhà cung cấp đám mây bên thứ ba, dịch vụ này phụ thuộc nhiều vào thiết bị Network Area Storage (NAS) nội bộ để ghi dữ liệu vào hệ thống tệp dùng chung. Ngoài ra, Application C gọi trực tiếp Service C.</p>
+
+      <p>Cuối tuần, một quản trị viên mạng đã chỉnh một thay đổi nhỏ mà họ cho là không đáng kể trên cấu hình của NAS, như được đánh đậm trong hình 5.2. Thay đổi này có vẻ hoạt động ổn, nhưng sáng thứ Hai, mọi thao tác đọc tới một hệ thống con ổ đĩa cụ thể bắt đầu chạy cực kỳ chậm.</p>
+
+      <p>Nhà phát triển viết Service B không bao giờ lường trước việc các cuộc gọi tới Service C chạy chậm. Họ viết mã sao cho các thao tác ghi vào cơ sở dữ liệu và đọc từ dịch vụ xảy ra trong cùng một giao dịch. Khi Service C bắt đầu chạy chậm, không chỉ thread pool cho các yêu cầu tới Service C bắt đầu bị tắc nghẽn, số kết nối cơ sở dữ liệu trong các connection pool của service container cũng bị cạn kiệt vì các kết nối này bị giữ mở do các cuộc gọi tới Service C không bao giờ hoàn tất.</p>
+
+      <p>Cuối cùng, Service A bắt đầu hết tài nguyên vì nó gọi Service B, mà Service B chạy chậm do Service C. Rồi cuối cùng, cả ba ứng dụng ngừng phản hồi vì hết tài nguyên trong khi chờ các yêu cầu hoàn tất.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

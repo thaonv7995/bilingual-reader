@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Hình 5.6 fallback Hystrix</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .topic-box {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page p.list-continuation {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p.list-continuation::before {
+      content: "1";
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .topic-box ol.manning-numbered {
+      margin: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 1;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p.list-continuation + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page figure.diagram + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0159.html">← Prev</a>
+    <a href="page_0161.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Xử lý fallback</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">135</span>
+      </header>
+
+      <div class="topic-box" aria-label="Các điều cần lưu ý về chiến lược fallback (tiếp theo)">
+        <p class="no-indent list-continuation">ngoại lệ và chỉ ghi log lỗi rồi dừng lại, thì bạn có lẽ nên dùng khối try..catch chuẩn bọc quanh lời gọi dịch vụ, bắt <code>HystrixRuntimeException</code>, và đặt logic ghi log trong khối try..catch.</p>
+
+        <ol class="manning-numbered continued" aria-label="Các điều cần lưu ý về chiến lược fallback (tiếp theo)">
+          <li>Hãy lưu ý các hành động bạn thực hiện trong các hàm fallback. Nếu trong dịch vụ fallback bạn gọi ra một dịch vụ phân tán khác, bạn có thể cần bọc fallback bằng annotation <code>@HystrixCommand</code>. Hãy nhớ rằng cùng một lỗi mà bạn gặp với hướng xử lý chính cũng có thể ảnh hưởng đến phương án fallback phụ. Hãy lập trình phòng thủ. Tôi đã từng phải trả giá đắt khi không tính đến điều này khi dùng fallback.</li>
+        </ol>
+      </div>
+
+      <p class="no-indent">Giờ khi đã có fallback, hãy gọi lại endpoint của bạn. Lần này khi bạn gọi và gặp lỗi timeout (nhớ rằng bạn có xác suất 1 trên 3), bạn sẽ không nhận ngoại lệ từ lời gọi dịch vụ, mà thay vào đó nhận các giá trị license giả trả về.</p>
+
+      <figure class="diagram" aria-label="Hình 5.6">
+        <img src="../assets/images/page_0160_fig_5_6.png" width="1313" height="1318" alt="Hình 5.6 — Lời gọi dịch vụ của bạn dùng fallback Hystrix">
+        <figcaption><strong>Hình 5.6</strong><br>Lời gọi dịch vụ của bạn dùng fallback Hystrix.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

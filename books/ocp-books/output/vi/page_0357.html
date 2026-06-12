@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table {
+      width: 100%;
+      margin: 0 0 5mm;
+      border-collapse: collapse;
+      font-size: 12pt;
+      line-height: 1.35;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td {
+      border: 0.25mm solid #888;
+      padding: 1.5mm 2mm;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td p:last-child {
+      margin-bottom: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__class {
+      width: 18%;
+      line-height: 1.25;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__features {
+      width: 42%;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__usage {
+      width: 40%;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p.subsection-heading {
+      margin: 0 0 3.2mm;
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: collection-exception;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: collection-exception;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(collection-exception) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0356.html">← Trước</a>
+    <a href="page_0358.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">357</span>
+      </header>
+
+      <table class="data-table collection-implementation-table">
+        <tbody>
+          <tr>
+            <td class="collection-implementation-table__class">
+              <p>Các Map được trả về bởi các phương thức <code>of</code>, <code>ofEntries</code>, và <code>copyOf</code> của <code>Map</code></p>
+            </td>
+            <td class="collection-implementation-table__features">
+              <p>1. Không thể sửa đổi (Unmodifiable)</p>
+              <p>2. Không có thứ tự (Unordered)</p>
+              <p>3. Không cho phép key hoặc value null</p>
+            </td>
+            <td class="collection-implementation-table__usage">
+              <p>Ví dụ: <code>Map&lt;String,</code></p>
+              <p><code>String&gt; m = Map.of("key1",</code></p>
+              <p><code>"value1");</code></p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="no-indent subsection-heading"><strong>Các Exception (Ngoại lệ) được ném ra bởi các phương thức của collection</strong></p>
+
+      <p>Như bạn có thể thấy từ các bảng trên, các lớp triển khai (implementation class) có thể áp đặt các ràng buộc riêng của chúng bên cạnh những ràng buộc được chỉ định thông qua các định nghĩa Interface (Giao diện) của chúng. Ví dụ, <code>ArrayDeque</code> không cho phép null và các danh sách không thể sửa đổi (unmodifiable list) không cho phép thêm/xóa, và vân vân. Vì các ràng buộc đó không thể được biểu diễn trong các Interface (Giao diện) hoặc chữ ký phương thức (method signature), trình biên dịch không thể kiểm tra các vi phạm của chúng trong mã nguồn tại thời điểm biên dịch (compile time). Những vi phạm như vậy được kiểm tra tại thời điểm chạy (runtime) thông qua việc sử dụng năm ngoại lệ unchecked (Unchecked Exception) sau đây:</p>
+
+      <ol class="numbered">
+        <li><code>UnsupportedOperationException</code> : Nếu thao tác không được hỗ trợ bởi collection này.
+          <p>Ví dụ, việc cố gắng thêm một phần tử vào danh sách được tạo bằng phương thức <code>List.of</code> sẽ khiến một <code>UnsupportedOperationException</code> bị ném ra tại thời điểm chạy (runtime).</p>
+        </li>
+        <li><code>NullPointerException</code> : Nếu phần tử được chỉ định là null và collection này không cho phép các phần tử null.</li>
+        <li><code>IllegalArgumentException</code> : Nếu một số thuộc tính của phần tử ngăn cản nó được thêm vào collection này.</li>
+        <li><code>ClassCastException</code> : Nếu Lớp (Class) của phần tử được chỉ định ngăn cản việc thêm nó vào collection này.</li>
+        <li><code>IllegalStateException</code> : Nếu phần tử không thể được thêm hoặc xóa tại thời điểm này do các hạn chế về việc chèn/xóa.</li>
+      </ol>
+
+      <p>Vì thông tin này chỉ có sẵn trong mô tả JavaDoc của Lớp (Class)/phương thức, điều quan trọng là phải đọc kỹ nó trước khi sử dụng Lớp (Class)/phương thức đó.</p>
+
+      <p>Kỳ thi không yêu cầu bạn phải biết tất cả các kịch bản gây ra việc ném các ngoại lệ trên, nhưng nó kỳ vọng bạn phát hiện được liệu một <code>UnsupportedOperationException</code> hoặc một <code>NullPointerException</code> sẽ bị</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

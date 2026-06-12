@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 10mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title,
+    .prose-page.ocp-chapter-page h3.section-title + ol.numbered {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      margin: 0;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0269.html">← Trước</a>
+    <a href="page_0271.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">270</span>
+      </header>
+
+      <p class="no-indent">bắt đầu từ số 0 (zero-based), nghĩa là, chỉ số của phần tử đầu tiên là 0.</p>
+
+      <ol class="numbered">
+        <li><code>E get(int index)</code>&nbsp;: Trả về phần tử tại chỉ số index.</li>
+        <li><code>E set(int index, E e)</code>&nbsp;: Thay thế phần tử hiện tại ở chỉ số index bằng đối tượng được truyền vào
+        <p>và trả về phần tử ban đầu đã bị thay thế.</p></li>
+        <li><code>boolean add(E e)</code>&nbsp;: Thêm một đối tượng vào cuối danh sách. Trả về <code>true</code>&nbsp;.</li>
+        <li><code>void add(int index, E e)</code>&nbsp;: Thêm một đối tượng tại chỉ số được chỉ định và dịch chuyển
+        <p>các phần tử hiện có ở chỉ số cao hơn sang bên phải.</p></li>
+        <li><code>boolean addAll(Collection&lt;? extends E&gt; c)</code>&nbsp;: Thêm tất cả các phần tử của collection
+        đã cho vào cuối danh sách này. Trả về <code>true</code>&nbsp; nếu danh sách này thay đổi do kết quả của lệnh gọi.</li>
+        <li><code>void addAll(int index, Collection&lt;? extends E&gt; c)</code>&nbsp;: Thêm tất cả các phần tử của
+        collection đã cho tại chỉ số được chỉ định. Trả về <code>true</code>&nbsp; nếu danh sách này thay đổi do kết quả của
+        <p>lệnh gọi.</p></li>
+        <li><code>E remove(int index)</code>&nbsp;: Xóa một đối tượng khỏi chỉ số được chỉ định và dịch chuyển
+        <p>các phần tử hiện có ở chỉ số cao hơn sang bên trái. Nó trả về phần tử ban đầu đã bị</p>
+        <p>xóa khỏi danh sách.</p></li>
+        <li><code>boolean remove(Object obj)</code>&nbsp;: Xóa bỏ lần xuất hiện đầu tiên của đối tượng đã cho khỏi
+        danh sách. Trả về <code>true</code>&nbsp; nếu đối tượng được tìm thấy. Đối tượng được truyền vào được so khớp với các đối tượng
+        <p>trong danh sách bằng phương thức equals.</p></li>
+        <li><code>boolean removeAll(Collection&lt;?&gt; c)</code>&nbsp;: Xóa khỏi danh sách này tất cả các phần tử có mặt
+        trong collection được truyền vào. Trả về <code>true</code>&nbsp; nếu danh sách này thay đổi do kết quả của
+        <p>lệnh gọi.</p></li>
+        <li><code>boolean retainAll(Collection c)</code>&nbsp;: Xóa khỏi danh sách này tất cả các phần tử không có
+        trong collection được truyền vào. Trả về <code>true</code>&nbsp; nếu danh sách này thay đổi do kết quả của lệnh gọi.</li>
+        <li><code>void clear()</code>&nbsp;: Xóa tất cả các phần tử khỏi danh sách này.</li>
+        <li><code>int size()</code>&nbsp;: Trả về số lượng phần tử trong danh sách này.</li>
+        <li><code>default void forEach(Consumer&lt;? super T&gt; action)</code>&nbsp;: Được kế thừa từ
+        <code>java.lang.Iterable</code>&nbsp;. Thực hiện hành động đã cho đối với từng phần tử của Iterable cho đến khi
+        <p>tất cả các phần tử đã được xử lý hoặc hành động đó ném ra một Exception (Ngoại lệ).</p></li>
+      </ol>
+
+      <p>Bạn sẽ thấy phương thức này được sử dụng rất nhiều với Biểu thức Lambda (Lambda expression).</p>
+
+      <p>Hãy nhớ rằng đối với các phương thức <code>get</code>&nbsp; và <code>remove</code>&nbsp;, <code>index</code>&nbsp; phải nằm trong khoảng từ 0</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

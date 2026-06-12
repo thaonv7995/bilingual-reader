@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 3mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-size: 10pt;
+      font-weight: 600;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9.5pt;
+      line-height: 1.25;
+    }
+    .prose-page.chapter-page p .run-in {
+      font-weight: 700;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0038.html">← Trước</a>
+    <a href="page_0040.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">39</span>
+      </header>
+
+      <p class="no-indent">Một nguyên nhân phổ biến là thiết lập <code>shared_buffers</code> quá cao. Một nghi phạm khác là một
+      <code>postmaster.pid</code> cũ còn sót lại từ một lần tắt máy không thành công. Bạn có thể an toàn xóa tệp này, nằm trong thư mục cụm dữ liệu, và thử khởi động lại.</p>
+
+      <h3 class="tool-title">pg_hba.conf</h3>
+      <p>Tệp <code>pg_hba.conf</code> kiểm soát ai và cách người dùng có thể kết nối với cơ sở dữ liệu PostgreSQL. Các thay đổi trong tệp yêu cầu phải tải lại hoặc khởi động lại máy chủ để có hiệu lực. Một
+      <code>pg_hba.conf</code> điển hình trông giống như <span class="accent-word">Ví dụ 2-3</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 2-3</strong><br>Mẫu pg_hba.conf</figcaption>
+        <pre class="code-block"><code># LOẠI  CƠ SỞ DỮ LIỆU  NGƯỜI DÙNG  ĐỊA CHỈ  PHƯƠNG THỨC
+# Kết nối cục bộ IPv4:
+host    all       all   127.0.0.1/32    ident ①
+# Kết nối cục bộ IPv6:
+host    all       all   ::1/128         ② trust
+host    all       all   192.168.54.0/24 ③ md5
+hostssl ④ all       all   0.0.0.0/0       md5
+# Cho phép kết nối sao chép từ localhost, bởi một người dùng có quyền
+# sao chép. ⑤
+#host    replication  postgres  127.0.0.1/32  trust
+#host    replication  postgres  ::1/128       trust</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong class="run-in">Phương thức xác thực.</strong> Các lựa chọn thông thường là <code>ident</code>, <code>trust</code>, <code>md5</code>, và <code>password</code>.
+      Phiên bản 9.1 đã giới thiệu phương thức xác thực <code>peer</code>. Các tùy chọn <code>ident</code> và <code>peer</code>
+      chỉ có sẵn trên Linux, Unix, và Mac, không có trên Windows.
+      Các tùy chọn kỳ quặc hơn, chẳng hạn như <code>gss</code>, <code>radius</code>, <code>ldap</code>, và <code>pam</code>, có thể không luôn được
+      cài đặt.</p>
+
+      <p class="no-indent"><strong class="run-in">Cú pháp IPv4 để xác định phạm vi mạng.</strong> Phần đầu tiên—trong trường hợp này,
+      192.168.54.0—là địa chỉ mạng, theo sau là <code>/24</code> như là mặt nạ bit. Trong
+      <code>pg_hba.conf</code> của chúng tôi, chúng tôi cho phép bất kỳ ai trong subnet 192.168.54.0 kết nối miễn là
+      họ cung cấp một mật khẩu đã được băm <code>md5</code> hợp lệ.</p>
+
+      <p class="no-indent"><strong class="run-in">Cú pháp IPv6 để xác định phạm vi mạng.</strong> Điều này chỉ áp dụng cho các máy chủ có hỗ trợ IPv6
+      và có thể ngăn <code>pg_hba.conf</code> tải nếu bạn thêm phần này
+      mà không thực sự có mạng IPv6.</p>
+
+      <p class="no-indent"><strong class="run-in">Quy tắc kết nối SSL.</strong> Trong ví dụ của chúng tôi, chúng tôi cho phép bất kỳ ai kết nối với máy chủ của chúng tôi
+      miễn là họ kết nối bằng SSL và có một mật khẩu <code>md5</code> hợp lệ.</p>
+
+      <p class="no-indent"><strong class="run-in">Định nghĩa một phạm vi địa chỉ IP được phép sao chép với máy chủ này.</strong> Điều này
+      là mới trong phiên bản 9.0. Những dòng này đã được chú thích trong ví dụ này.</p>
+
+      <p>Đối với mỗi yêu cầu kết nối, dịch vụ <code>postgres</code> kiểm tra tệp <code>pg_hba.conf</code> từ
+      trên xuống dưới. Ngay khi một quy tắc cấp quyền truy cập được gặp, quá trình dừng lại và
+      kết nối được cho phép. Ngay khi một quy tắc từ chối quyền truy cập được gặp, quá trình dừng lại
+      và kết nối bị từ chối. Nếu kết thúc tệp mà không có bất kỳ quy tắc nào phù hợp</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">Tệp cấu hình<span class="sep">|</span>21</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

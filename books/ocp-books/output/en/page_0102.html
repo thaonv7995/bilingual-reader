@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0101.html">← Prev</a>
+    <a href="page_0103.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">102</span>
+      </header>
+
+      <p class="no-indent">talking about its static methods because static methods define the behavior of a class and not the
+      behavior of the object. (Yes, it is true that you can access a static method using an object
+      reference instead of the class name but that is just a peculiarity of the Java language and has
+      nothing to do with polymorphism). We are not talking about instance variables either because
+      variables merely store data (either primitive data or references to other objects) and do not
+      possess any behavior. Also, the variables would not be visible to any other class anyway if the
+      class is well encapsulated.</p>
+
+      <h3 class="section-title section-title--sub">Polymorphism in Java<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Java allows objects to be polymorphic by letting a class extend another class and/or implement
+      interfaces. Since every class in Java implicitly extends <code>java.lang.Object</code>, you can say that
+      every object is polymorphic because every object exhibits the behavior of at least two classes
+      (except an instance of <code>java.lang.Object</code>, of course).</p>
+
+      <p>Thus, an object can be as polymorphic as the number of classes it extends (directly as well as
+      indirectly) and the number of interfaces it implements (directly as well as indirectly through
+      ancestors).</p>
+
+      <h3 class="section-title section-title--sub">Importance of Polymorphism<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">In the &ldquo;Kickstarter for Beginners&rdquo; chapter I talked about how a component can be easily
+      replaced with another component if they promise to honor the same behavior. This is made
+      possible only because of <strong>polymorphism</strong>. If an object is allowed to behave only as a single type,
+      then you can never replace that object with another object of a different type.</p>
+
+      <p>For example, if all you want is a <code>Fruit</code>, then it shouldn&rsquo;t matter whether you are given an <code>Apple</code>
+      or an <code>Orange</code>. Both of them promise to honor the behavior described by <code>Fruit</code> and are, therefore,
+      equally acceptable fruits. The situation is illustrated by the following code:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>abstract class Fruit{ //must be declared abstract because it has an
+abstract method</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

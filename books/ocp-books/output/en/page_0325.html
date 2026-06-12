@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 17: Lambda Expressions and Method References</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="2"] {
+      counter-reset: list-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="3"] {
+      counter-reset: list-step 2;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0324.html">← Prev</a>
+    <a href="page_0326.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">325</span>
+      </header>
+
+      <p class="no-indent">ever seen anyone getting any question on these but, it is better to be aware of these methods.</p>
+
+      <ol class="numbered">
+        <li><code>default Predicate&lt;T&gt; and(Predicate&lt;? super T&gt; other)</code>&nbsp;: Returns a composed
+        predicate that represents a short-circuiting logical AND of this predicate and another. This
+        is helpful when you have more than one checks to be performed. For example, the
+        following code checks whether a <code>Car</code> satisfies two predicates using two separate
+        invocations of <code>test()</code>:</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Predicate&lt;Car&gt; p1 = c -&gt; c.company.equals(&quot;Honda&quot;);
+Predicate&lt;Car&gt; p2 = c -&gt; c.price&gt;(20000.0);
+Car c = ...
+if(p1.test(c) &amp;&amp; p2.test(c)) System.out.println(&quot;yes&quot;);</code></pre>
+      </figure>
+
+      <p class="no-indent">Instead of making two calls to <code>test()</code>, you could combine the two predicates into one
+      and use only one call to test, like this:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Predicate&lt;Car&gt; p3 = p1.and(p2);
+Car c = ...
+if( p3.test(c) ) System.out.println(&quot;yes&quot;);</code></pre>
+      </figure>
+
+      <p class="no-indent">The&nbsp;<code>? super T</code> part is related to &ldquo;bounded types&rdquo; in generics, which I will talk about
+      shortly.</p>
+
+      <ol class="numbered" start="2">
+        <li><code>default Predicate&lt;T&gt; negate()</code>&nbsp;: Returns a predicate that represents the logical
+        negation of this predicate. For example, if you have <code>Predicate&lt;Car&gt; p = c -&gt;
+        c.price&lt;20000;</code> then <code>Predicate&lt;Car&gt; notP = p.negate();</code> represents a predicate
+        where price is &gt;= 20000 .</li>
+      </ol>
+
+      <ol class="numbered" start="3">
+        <li><code>default Predicate&lt;T&gt; or(Predicate&lt;? super T&gt; other)</code>&nbsp;: Returns a composed
+        predicate that represents a short-circuiting logical OR of this predicate and another. For
+        example, if you have <code>Predicate&lt;Car&gt; isHonda</code></li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

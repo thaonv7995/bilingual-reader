@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm;
+      padding-left: 1.5em;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0532.html">← Prev</a>
+    <a href="page_0534.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">533</span>
+      </header>
+
+      <p class="no-indent">future. This is actually a root interface that describes what an <code>Executor</code>&nbsp;is meant for. It does
+      not provide any method for managing the lifecycle of an <code>Executor</code>&nbsp;itself. There is no publicly
+      defined class in the JDK that implements <code>Executor</code>&nbsp;. You can, of course, define one yourself
+      but that is usually not required.</p>
+
+      <p class="no-indent"><strong class="run-in">ExecutorService</strong> - <code>ExecutorService</code>&nbsp;is an interface that extends <code>Executor</code>&nbsp;(as well as
+      <code>AutoCloseable</code>&nbsp;since Java 19). It enhances the <code>Executor</code>&nbsp;interface with methods such
+      as <code>shutdown()</code>&nbsp;, <code>shutdownNow()</code>&nbsp;, and <code>close()</code>&nbsp;for managing its termination. There are
+      subtle differences in how these three methods behave.</p>
+
+      <ol class="numbered">
+        <li><code>void shutdown()</code>&nbsp;- Initiates an orderly shutdown in which previously submitted tasks
+        are executed, but no new tasks will be accepted.</li>
+        <li><code>List&lt;Runnable&gt; shutdownNow()</code>&nbsp;- Attempts to stop all actively executing tasks
+        (typically, by calling <code>interrupt()</code>&nbsp;on its worker threads), halts the processing of waiting
+        tasks, and returns a list of the tasks that were awaiting execution.</li>
+        <li><code>void close()</code>&nbsp;- Initiates an orderly shutdown in which previously submitted tasks are
+        executed, but no new tasks will be accepted. This method waits until all tasks have
+        completed execution and the executor has terminated.</li>
+      </ol>
+
+      <p>Note that the <code>shutdown</code>&nbsp;and <code>shutdownNow</code>&nbsp;methods do not cause the current thread (i.e., the
+      thread that calls one of these methods) to block or wait for the shutdown of the
+      <code>ExecutorService</code>&nbsp;. But the <code>close</code>&nbsp;method, which has been available only since Java 19,
+      does. If you want the current thread to wait for the termination of the <code>ExecutorService</code>&nbsp;after
+      calling <code>shutdown</code>&nbsp;or <code>shutdownNow</code>&nbsp;, then you may call the
+      <code>awaitTermination(long timeout, TimeUnit unit)</code>&nbsp;method on the <code>ExecutorService</code>&nbsp;instance. Not shutting down
+      an <code>ExecutorService</code>&nbsp;through one of these methods may cause its worker threads to remain
+      alive and that, in turn, will keep the Java program from terminating. Some executors such as the
+      one created by the <code>newWorkStealingPool()</code>&nbsp;method, do not keep any idling thread and so, do
+      not need shutting down but it is a good idea to do so anyway. Java 19 onwards, using an
+      executor service with a try-with-resources block handles this requirement cleanly.</p>
+
+      <p>An <code>ExecutorService</code>&nbsp;also allows submission of tasks that return a value through its
+      <code>Future&lt;T&gt; submit(Callable&lt;T&gt; c)</code>&nbsp;, <code>Future&lt;T&gt; submit(Runnable r)</code>&nbsp;and</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Hash Join</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Hash Join</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">Hash Join</h3>
+
+      <p class="no-indent">The hash join algorithm aims for the weak spot of the nested loops join: the many B-tree traversals when executing the inner query. Instead it loads the candidate records from one side of the join into a hash table that can be probed very quickly for each row from the other side of the join. Tuning a hash join requires an entirely different indexing approach than the nested loops join. Beyond that, it is also possible to improve hash join performance by selecting fewer <i>columns</i>&mdash;a challenge for most ORM tools.</p>
+
+      <p>The indexing strategy for a hash join is very different because there is no need to index the join columns. Only indexes for <i>independent</i> <code><strong>where</strong></code> predicates improve hash join performance.</p>
+
+      <aside class="sidebar-note">
+        <h3>Tip</h3>
+        <p>Index the <i>independent</i> <code><strong>where</strong></code> predicates to improve hash join performance.</p>
+      </aside>
+
+      <p>Consider the following example. It selects all sales for the past six months with the corresponding employee details:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM sales s
+  JOIN employees e ON (s.subsidiary_id = e.subsidiary_id
+                  AND  s.employee_id   = e.employee_id  )
+ WHERE <strong>s.sale_date > trunc(sysdate) - INTERVAL '6' MONTH</strong></code></pre>
+      </figure>
+
+      <p>The <code>SALE_DATE</code> filter is the only independent <code><strong>where</strong></code> clause&mdash;that means it refers to one table only and does not belong to the join predicates.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">101</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa (Implementing Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets li {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0066.html">← Trước</a>
+    <a href="page_0068.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">67</span>
+      </header>
+
+      <p class="no-indent">1. Vì <code>Account</code> có quyền truy cập mặc định (default access), nó chỉ hiển thị trong package <code>accts</code>, và do đó <code>RetirementAccount</code> không thể truy cập hoặc kế thừa lớp (Class) <code>Account</code>.</p>
+
+      <p class="no-indent">2. Vì <code>accountNumber</code> có quyền truy cập mặc định (default access), nó chỉ hiển thị trong package <code>accts</code>, và do đó, nó sẽ được kế thừa bởi tất cả các lớp con (subclass) của <code>Account</code> thuộc cùng một package. Như vậy, <code>accountNumber</code> sẽ được kế thừa bởi <code>CheckingAccount</code> và <code>SavingsAccount</code>.</p>
+
+      <p class="no-indent">3. Vì <code>balance</code> có quyền truy cập protected (protected access), nó hiển thị trong tất cả các lớp (class) thuộc package <code>accts</code> và tất cả các lớp con (subclass) của lớp (Class) <code>Account</code> bất kể package của chúng là gì. Do đó, nó sẽ được kế thừa bởi <code>CheckingAccount</code> và <code>SavingsAccount</code>. Vì <code>Account</code> không hiển thị bên ngoài package <code>accts</code>, việc khai báo <code>balance</code> là protected dường như không có nhiều ý nghĩa, nhưng thực tế thì có. Hãy quan sát những gì xảy ra với <code>RetirementAccount</code>.</p>
+
+      <p class="no-indent">4. Vì <code>RetirementAccount</code> kế thừa (extends) <code>SavingsAccount</code> nhưng thuộc một package khác, nó chỉ kế thừa các thành phần public và protected (nhưng không phải mặc định) của <code>SavingsAccount</code>. Điều này có nghĩa là, trường (field) protected <code>balance</code> cũng được truyền sang cho <code>RetirementAccount</code>. Vì trường (field) <code>interestRate</code> của <code>SavingsAccount</code> có quyền truy cập mặc định (default access), nó không hiển thị trong <code>RetirementAccount</code> và do đó, không được kế thừa bởi <code>RetirementAccount</code>.</p>
+
+      <p class="no-indent">5. Mặc dù trường (field) <code>balance</code> của <code>Account</code> hiển thị và được kế thừa trong <code>RetirementAccount</code>, <code>sa.balance</code> vẫn sẽ không biên dịch được vì lớp (Class) <code>RetirementAccount</code> không sở hữu <code>balance</code> của <code>SavingsAccount</code> như đã giải thích ở chương trước. Về mặt kỹ thuật, mã nguồn của lớp (Class) <code>RetirementAccount</code> không chịu trách nhiệm cho việc triển khai lớp (Class) <code>SavingsAccount</code>, và vì vậy, <code>RetirementAccount</code> không thể truy cập <code>balance</code> của <code>SavingsAccount</code>. Nó có thể truy cập <code>balance</code> của chính nó, vốn được kế thừa từ <code>SavingsAccount</code>, và đó là lý do tại sao <code>ra.balance</code> biên dịch bình thường, nhưng không truy cập được <code>balance</code> của <code>SavingsAccount</code>.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

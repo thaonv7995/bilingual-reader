@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Quét Chỉ Mục Chỉ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Quét Chỉ Mục Chỉ</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="operation-label">MySQL</p>
+
+      <p class="no-indent">MySQL 5.6 với InnoDB giới hạn mỗi cột đơn lẻ là 767 byte và tất cả các cột cùng nhau là 3072 byte. Các chỉ mục MyISAM bị giới hạn ở 16 cột và độ dài khóa tối đa là 1000 byte.</p>
+
+      <p>MySQL có một tính năng độc đáo gọi là &ldquo;chỉ mục tiền tố&rdquo; (đôi khi cũng được gọi là &ldquo;chỉ mục một phần&rdquo;). Điều này có nghĩa là chỉ mục chỉ các ký tự đầu tiên của một cột&mdash;do đó nó không liên quan gì đến các chỉ mục một phần được mô tả trong Chương&nbsp;2. Nếu bạn chỉ mục một cột vượt quá độ dài cột cho phép (767 byte cho InnoDB), MySQL sẽ tự động cắt ngắn cột cho phù hợp. Đây là lý do mà câu lệnh tạo chỉ mục thành công với cảnh báo &ldquo;Khóa chỉ định quá dài; độ dài khóa tối đa là 767 byte&rdquo; nếu bạn vượt quá giới hạn. Điều đó có nghĩa là chỉ mục không còn chứa bản sao đầy đủ của cột nữa và do đó có giá trị hạn chế cho một quét chỉ mục chỉ (tương tự như một chỉ mục dựa trên hàm).</p>
+
+      <p>Bạn có thể sử dụng chỉ mục tiền tố của MySQL một cách rõ ràng để ngăn chặn việc vượt quá giới hạn tổng độ dài khóa nếu bạn nhận được thông báo lỗi &ldquo;Khóa chỉ định quá dài; độ dài khóa tối đa là [1000/3072] byte.&rdquo; Ví dụ sau chỉ chỉ mục mười ký tự đầu tiên của cột <code>LAST_NAME</code>.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX .. ON employees (last_name(10));</code></pre>
+      </figure>
+
+      <p class="operation-label">Oracle Database</p>
+
+      <p class="no-indent">Độ dài khóa chỉ mục tối đa phụ thuộc vào kích thước khối và các tham số lưu trữ chỉ mục (75% kích thước khối cơ sở dữ liệu trừ một số chi phí). Một chỉ mục B-tree bị giới hạn ở 32 cột.</p>
+
+      <p>Khi sử dụng Oracle 11g với tất cả các mặc định được thiết lập (khối 8k), độ dài khóa chỉ mục tối đa là 6398 byte. Việc vượt quá giới hạn này gây ra thông báo lỗi &ldquo;ORA-01450: độ dài khóa tối đa (6398) đã vượt quá.&rdquo;</p>
+
+      <p class="operation-label">PostgreSQL</p>
+
+      <p class="no-indent">Cơ sở dữ liệu PostgreSQL hỗ trợ quét chỉ mục chỉ từ phiên bản 9.2.</p>
+
+      <p>Độ dài khóa của các chỉ mục B-tree bị giới hạn ở 2713 byte (cố định, khoảng <code>BLCKSZ/3</code>). Thông báo lỗi tương ứng &ldquo;kích thước hàng chỉ mục ... vượt quá tối đa btree, 2713&rdquo; chỉ xuất hiện khi thực hiện một chèn hoặc cập nhật vượt quá giới hạn. Các chỉ mục B-tree có thể chứa tối đa 32 cột.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">121</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

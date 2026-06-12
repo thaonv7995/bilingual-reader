@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ul.bullets code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0438.html">← Trước</a>
+    <a href="page_0440.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">439</span>
+      </header>
+
+      <p class="no-indent">các định nghĩa được chứa trong các class file và để một định nghĩa class khả dụng đối với phương thức
+      <code>readObject</code>, class file tương ứng (và tất cả các class file khác có thể được tham chiếu
+      bởi class này) phải có mặt trên classpath. Vì vậy, nếu <code>readObject</code> không thể tìm thấy
+      bất kỳ định nghĩa class nào cần thiết để tạo đối tượng (Object) đã cho, nó sẽ ném ra một
+      <code>java.lang.ClassNotFoundException</code>. <code>ClassNotFoundException</code> là một ngoại lệ checked (Checked Exception) nhưng nó
+      không kế thừa từ <code>IOException</code> và do đó nó phải được xử lý riêng biệt với <code>IOException</code> bằng cách
+      sử dụng mệnh đề <code>catch</code> hoặc bằng cách khai báo nó trong mệnh đề <code>throws</code>, như đã làm trong ví dụ trên.</p>
+
+      <h3 class="section-title section-title--minor">Từ khóa <code>transient</code><span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Nếu có các trường instance (instance fields) của một lớp (Class) mà chúng ta không muốn xuất hiện trong dữ liệu tuần tự hóa, chẳng
+      hạn như trường <code>securityKey</code> trong đoạn mã trên, chúng ta cần đánh dấu chúng là <code>transient</code>. Cơ chế tuần tự hóa
+      (Serialization) bỏ qua tất cả các trường transient của một lớp (Class) trong quá trình tuần tự hóa. Vì dữ liệu tuần tự hóa
+      không chứa bất kỳ giá trị nào cho các trường transient, các trường đó sẽ được khởi tạo về giá trị mặc định của chúng
+      (nghĩa là <code>0</code>, <code>false</code>, hoặc <code>null</code>) trong quá trình giải tuần tự hóa (Deserialization) dữ liệu. Hãy quan sát trong kết quả đầu ra ở trên rằng trường
+      <code>securityKey</code> có giá trị là <code>null</code> sau khi giải tuần tự hóa.</p>
+
+      <h3 class="section-title section-title--minor">Vai trò của các constructor và khối khởi tạo instance (instance initializers) trong quá trình giải tuần tự hóa (Deserialization)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn có thể đã quan sát thấy từ kết quả đầu ra ở trên rằng câu lệnh in (print statement) từ constructor không
+      được thực thi khi đối tượng (Object) <code>AppPreferences</code> được giải tuần tự hóa. Đó là bởi vì các constructor và
+      khối khởi tạo instance (instance initializers) của một lớp (Class) có thể tuần tự hóa (serializable) không được thực thi khi một đối tượng (Object)
+      của lớp (Class) đó được tạo ra thông qua giải tuần tự hóa. Lý do rất đơn giản. Mục đích của các constructor và khối
+      khởi tạo instance (instance initializers) là để khởi tạo giá trị của các trường instance về các giá trị hợp lý theo logic nghiệp vụ
+      (business logic) của lớp (Class). Tuy nhiên, những giá trị này có thể thay đổi trong quá trình thực thi chương trình. Do đó,
+      tại thời điểm tuần tự hóa (Serialization), giá trị của các trường instance có thể không giống với các giá trị đã được gán
+      cho các trường đó bởi constructor và/hoặc các khối khởi tạo instance. Vì vậy, việc thực thi các constructor và khối
+      khởi tạo instance sẽ không có ý nghĩa khi chúng ta đang cố gắng thiết lập giá trị cho các trường của đối tượng (Object)
+      từ dữ liệu tuần tự hóa.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

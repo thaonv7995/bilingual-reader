@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets li {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0070.html">← Trước</a>
+    <a href="page_0072.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">71</span>
+      </header>
+
+      <p class="no-indent">Trước hết, Tính kế thừa (Inheritance) cho phép bạn nhóm các lớp (class) lại với nhau bằng cách cho chúng kế thừa một lớp cha chung. Các chức năng chung cho tất cả các lớp đó chỉ cần được định nghĩa một lần trong lớp cha. Ví dụ, trong hệ thống phân cấp lớp bao gồm các lớp <code>Account</code>,
+      <code>CheckingAccount</code>, và <code>SavingsAccount</code> mà tôi đã sử dụng ở đầu chương này,
+      tôi đã đặt các chức năng chung như số tài khoản và phương thức kiểm tra số dư vào một
+      lớp cha có tên là <code>Account</code> và tôi đặt các đặc trưng riêng của từng loại tài khoản này vào
+      các lớp con (subclass) riêng biệt.</p>
+
+      <p>Có một số ưu điểm đối với cách tiếp cận này. Hãy cùng lần lượt xem xét chúng.</p>
+
+      <h3 class="section-title section-title--sub">Tái sử dụng mã nguồn<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn có thể viết logic cho các trường chung tại một nơi duy nhất và chia sẻ logic đó với tất cả các lớp. Trong
+      ví dụ trên, chỉ có duy nhất một bản sao của mã nguồn quản lý số tài khoản. Vì logic này
+      nằm ở lớp cha, nó sẽ tự động được kế thừa bởi tất cả các lớp con.</p>
+
+      <p>Việc có một lớp cơ sở chung cũng giúp bạn dễ dàng thêm chức năng mới hoặc sửa đổi chức năng
+      hiện tại chung cho tất cả các lớp. Điều này giúp mã nguồn trở nên dễ mở rộng và
+      dễ bảo trì hơn về tổng thể.</p>
+
+      <h3 class="section-title section-title--sub">Che giấu thông tin<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Việc tách biệt các đặc tính chung vào một lớp cha chung giúp bạn che giấu các đặc tính của
+      từng lớp con (subclass) đối với các tiến trình không cần biết đến các đặc tính đó. Như đã thảo luận
+      trước đây, việc bộc lộ nhiều thông tin hơn đồng nghĩa với rủi ro phụ thuộc vô ý cao hơn, tức là
+      liên kết chặt hơn (tighter coupling), điều vốn không mong muốn. Ví dụ, nếu bạn có một tiến trình lặp
+      qua tất cả các tài khoản và in ra số tài khoản cùng số dư của chúng, thì tiến trình này không cần phải biết về
+      hạn mức thấu chi (overdraft limit), lãi suất (interest rate) hoặc ngày đáo hạn (maturity date). Nếu bạn chỉ cần truyền
+      một mảng các <code>Account</code> cho tiến trình này, điều đó là đủ. Dạng như thế này:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public class DumpAccountInfo{</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 14: Tạo và sử dụng Interface (Giao diện)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0168.html">← Trước</a>
+    <a href="page_0170.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">169</span>
+      </header>
+
+      <p class="no-indent">5. Tạo một Lớp (Class) mới tên là <code>Nutritionist</code> với một phương thức tên là
+      <code>printCalories</code>. Phương thức này nhận vào bất kỳ loại <code>Pie</code> nào và in ra số lượng calo chính xác tương ứng với loại <code>Pie</code> đó.</p>
+
+      <p class="no-indent">6. Cho hai Lớp (Class) sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class XMLTransformer {
+public String transform(String Data){ return "xmldata"; }
+}
+class NetworkTransformer {
+public String transform(String Data) throws IOException { return
+"data from network"; }
+}</code></pre>
+      </figure>
+
+      <p>Tái cấu trúc hai Lớp (Class) trên bằng cách thêm một kiểu cha trừu tượng (abstract super type) tên là <code>Transformer</code>.</p>
+
+      <p class="no-indent">7. Tạo một Lớp (Class) tên là <code>TransformerFactory</code> với một phương thức tên là
+      <code>getTransformer</code>. Phương thức này sẽ trả về các loại transformer khác nhau dựa trên một đối số (argument). Sử dụng Lớp (Class) factory này để lấy các loại transformer khác nhau và gọi phương thức transform trên chúng.</p>
+
+      <p class="no-indent">8. Tạo một phương thức nhận vào một mảng các chuỗi (strings) và trả về một <code>ArrayList</code>
+      chứa cùng các chuỗi đó.</p>
+
+      <p class="no-indent">9. Cập nhật phương thức trên để loại bỏ các phần tử trùng lặp khỏi <code>ArrayList</code>
+      trước khi trả về.</p>
+
+      <p class="no-indent">10. Tạo một phương thức với signature <code>switchIt(ArrayList al, int a, int b)</code>.
+      Phương thức này sẽ trả về cùng một danh sách đó nhưng sau khi hoán đổi các phần tử tại các vị trí <code>a</code> và
+      <code>b</code>.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

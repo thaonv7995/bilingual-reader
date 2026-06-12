@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0289.html">← Trước</a>
+    <a href="page_0291.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">290</span>
+      </header>
+
+      <p><code>DataHolder&lt;Number&gt;</code>&nbsp;hoặc <code>DataHolder&lt;Integer&gt;</code>&nbsp;đều ổn nhưng <code>DataHolder&lt;String&gt;</code>&nbsp;sẽ không thể biên dịch.</p>
+
+      <p>Bằng cách sử dụng từ khóa <code>extends</code>&nbsp;, về cơ bản chúng ta đang thiết lập một giới hạn cho kiểu cha (super type) của <code>E</code>.
+      Vì trong sơ đồ UML, lớp cha (superclass) được vẽ ở phía trên lớp con (subclass) và mũi tên hướng lên trên
+      từ lớp con đến lớp cha, chúng ta gọi đây là &ldquo;giới hạn trên (upper bound) của <code>E</code>&rdquo;, nghĩa là <code>Number</code>&nbsp;là giới hạn trên (upper bound) của <code>E</code>.</p>
+
+      <p>Hãy nhớ lại rằng tôi đã sử dụng cùng một phép tương tự khi giải thích về upcast và downcast
+      (việc ép kiểu một biến sang kiểu cha (super type) được gọi là upcasting). Một cách nhìn nhận khác là, kiểu cao nhất
+      trong hệ thống phân cấp kiểu khớp với mẫu <code>E extends Number</code>&nbsp;là <code>Number</code>. Bất kỳ
+      kiểu nào nằm thấp hơn <code>Number</code> trong hệ thống phân cấp kiểu, chẳng hạn như <code>Integer</code>&nbsp;và <code>Double</code>,
+      cũng đều khớp, nhưng bất kỳ lớp (class) nào nằm phía trên <code>Number</code>, trong trường hợp này chỉ có <code>Object</code>, thì
+      không.</p>
+
+      <p>Cần lưu ý ở đây rằng từ khóa được sử dụng để chỉ định giới hạn trên (upper bound) luôn là
+      <code>extends</code>&nbsp;ngay cả khi chúng ta muốn chỉ định một tên giao diện (interface) làm giới hạn trên. Vì vậy, ví dụ, <code>&lt;E
+      extends CharSequence&gt;</code>&nbsp;là một tham số kiểu có giới hạn trên (upper bounded type parameter) hợp lệ và <code>String</code>&nbsp;khớp với nó
+      vì <code>String</code>&nbsp;triển khai (implement) <code>CharSequence</code>.</p>
+
+      <p>Được rồi, tiếp tục nào, liệu chúng ta có thể áp dụng giới hạn dưới (lower bound) cho tham số kiểu không? Chúng ta có thể đặt một giới hạn
+      lên <code>E</code>&nbsp;sao cho <code>E</code>&nbsp;không bao giờ là kiểu con (subtype) của <code>Number</code> không? Kiểu như <code>&lt;E super Number&gt;</code>?</p>
+
+      <p>Làm như vậy không phải là hoàn toàn vô lý, nhưng không, Java không cho phép thiết lập giới hạn dưới (lower bound) cho
+      tham số kiểu vì những lý do không được tài liệu chính thức ghi nhận. Theo tôi, lý do khả thi nhất là
+      vì nó không quá hữu ích và sẽ khiến ngữ pháp ngôn ngữ trở nên quá phức tạp để triển khai.</p>
+
+      <h3 class="section-title section-title--sub">Có nhiều giới hạn trên<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Như đã thảo luận trước đó, Java cho phép đa kế thừa kiểu thông qua việc sử dụng các giao diện (interface).
+      Do đó, nếu một lớp (class) triển khai (implement) hai giao diện (interface) không liên quan, nó sẽ thuộc về hai dòng kế thừa khác nhau.
+      Vì thế, chúng ta có thể áp dụng một giới hạn trên (upper bound) cho từng dòng kế thừa của nó. Ví dụ,
+      lớp <code>DataHolder</code>&nbsp;có thể được định nghĩa như sau:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

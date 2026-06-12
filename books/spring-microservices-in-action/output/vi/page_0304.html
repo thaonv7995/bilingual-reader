@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Hình 9.11 màn hình truy vấn Zipkin</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p + figure.diagram,
+    .prose-page.chapter-page figure.diagram + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0303.html">← Trước</a>
+    <a href="page_0305.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Theo dõi phân tán với Open Zipkin</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">279</span>
+      </header>
+
+      <p class="no-indent">chỉ gọi tới một cơ sở dữ liệu duy nhất. Bạn sẽ dùng POSTMAN để gửi hai lời gọi tới dịch vụ organization (GET <code>http://localhost:5555/api/organization/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a</code>).</p>
+
+      <p>Các lời gọi tới dịch vụ organization sẽ đi qua Zuul API gateway trước khi được định tuyến xuống một instance dịch vụ organization.</p>
+
+      <p>Sau khi bạn đã thực hiện hai lời gọi tới dịch vụ organization, hãy truy cập <code>http://localhost:9411</code> và xem Zipkin đã ghi nhận gì cho kết quả trace. Chọn &ldquo;organization service&rdquo; trong hộp dropdown ở góc trên cùng bên trái màn hình rồi nhấn nút Find traces. Hình 9.11 cho thấy màn hình truy vấn Zipkin sau khi bạn thực hiện các thao tác này.</p>
+
+      <figure class="diagram" aria-label="Hình 9.11">
+        <img src="../assets/images/page_0304_fig_9_11.png" width="1313" height="703" alt="Hình 9.11 — Màn hình truy vấn Zipkin">
+        <figcaption><strong>Hình 9.11</strong><br>Màn hình truy vấn Zipkin cho phép bạn chọn dịch vụ muốn theo dõi, cùng với một số bộ lọc truy vấn cơ bản.</figcaption>
+      </figure>
+
+      <p class="no-indent">Giờ nếu bạn nhìn vào ảnh chụp màn hình trong hình 9.11, bạn sẽ thấy Zipkin đã ghi nhận hai giao dịch. Mỗi giao dịch được chia thành một hoặc nhiều span. Trong Zipkin, span đại diện cho một dịch vụ hoặc lời gọi cụ thể mà thông tin thời gian đang được ghi nhận. Mỗi giao dịch trong hình 9.11 có ba span được ghi nhận: hai span trong Zuul gateway, rồi một span cho dịch vụ organization. Hãy nhớ, Zuul gateway không chuyển tiếp một lời gọi HTTP một cách mù quáng. Nó nhận lời gọi HTTP đến, kết thúc lời gọi đến đó, rồi tạo một lời gọi mới ra tới dịch vụ đích (trong trường hợp này là dịch vụ organization). Việc kết thúc lời gọi ban đầu này là cách Zuul có thể thêm pre-, response và post filter vào mỗi lời gọi đi vào gateway. Đó cũng là lý do chúng ta thấy hai span trong dịch vụ Zuul.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

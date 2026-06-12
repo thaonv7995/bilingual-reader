@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Shorthand Casting</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0143.html">← Prev</a>
+    <a href="page_0145.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">144</span>
+      </header>
+
+      <h3 class="subsection-title">Shorthand Casting</h3>
+      <p class="no-indent">ANSI SQL defines a construct called CAST that allows you to morph one data type to
+      another. For example, CAST('2011-1-11' AS date) casts the text 2011-1-1 to a date.
+      PostgreSQL has a shorthand for doing this using a pair of colons, as in
+      '2011-1-1'::date. This syntax is shorter and easier to apply for cases in which you
+      can&rsquo;t directly cast from one type to another and have to intercede with one or more
+      intermediary types, such as someXML::text::integer.</p>
+
+      <h3 class="subsection-title">Multirow Insert</h3>
+      <p class="no-indent">PostgreSQL supports the multirow constructor to insert more than one record at a time.
+      <span class="accent-word">Example 7-11</span> demonstrates how to use a multirow construction to insert data into the
+      table we created in <span class="accent-word">Example 6-2</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-11.</strong> Using multirow constructor to insert data</figcaption>
+        <pre class="code-block"><code>INSERT INTO logs_2011 (user_name, description, log_ts)
+VALUES
+    ('robe', 'logged in', '2011-01-10 10:15 AM EST'),
+    ('lhsu', 'logged out', '2011-01-11 10:20 AM EST');</code></pre>
+      </figure>
+
+      <p>The latter portion of the multirow constructor starting with the VALUES keyword is often
+      referred to as a values list. A values list can stand alone and effectively creates a table on
+      the fly, as in <span class="accent-word">Example 7-12</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-12.</strong> Using multirow constructor as a virtual table</figcaption>
+        <pre class="code-block"><code>SELECT *
+FROM (
+    VALUES
+        ('robe', 'logged in', '2011-01-10 10:15 AM EST'::timestamptz),
+        ('lhsu', 'logged out', '2011-01-11 10:20 AM EST'::timestamptz)
+    ) AS l (user_name, description, log_ts);</code></pre>
+      </figure>
+
+      <p>When you use VALUES as stand-in for a virtual table, you need to specify the names for
+      the columns and explicitly cast the values to the data types in the table, if the parser can&rsquo;t
+      infer the data type from the data.</p>
+
+      <h3 class="subsection-title">ILIKE for Case-Insensitive Search</h3>
+      <p class="no-indent">PostgreSQL is case-sensitive. However, it does have mechanisms in place to do a case-
+      insensitive search. You can apply the upper function to both sides of the ANSI LIKE
+      operator, or you can simply use the ILIKE (~) operator found only in PostgreSQL:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT tract_name FROM census.lu_tracts WHERE tract_name ILIKE '%duke%';
+
+tract_name
+------------------------------------------------
+Census Tract 2001, Dukes County, Massachusetts</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">126<span class="sep">|</span>Chapter 7: SQL: The PostgreSQL Way</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

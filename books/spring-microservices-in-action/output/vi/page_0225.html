@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Cấu hình người dùng EagleEye và Listing 7.3</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0224.html">← Trước</a>
+    <a href="page_0226.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">200</span>
+        <span class="rh-center">CHƯƠNG 7 <em>Bảo mật microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Vì vậy, bạn sẽ đăng ký ứng dụng EagleEye với cùng tên ứng dụng và khóa bí mật, nhưng ứng dụng web sẽ chỉ dùng phạm vi &ldquo;webclient&rdquo;, còn phiên bản ứng dụng trên điện thoại di động sẽ dùng phạm vi &ldquo;mobileclient&rdquo;. Bằng cách dùng phạm vi (scope), bạn có thể định nghĩa các quy tắc phân quyền trong các dịch vụ được bảo vệ để giới hạn hành động mà ứng dụng client có thể thực hiện dựa trên ứng dụng mà họ dùng để đăng nhập. Điều này sẽ không phụ thuộc vào quyền mà người dùng có. Ví dụ, bạn có thể muốn hạn chế dữ liệu mà người dùng được xem dựa trên việc họ dùng trình duyệt bên trong mạng doanh nghiệp hay duyệt bằng ứng dụng trên thiết bị di động. Thực hành hạn chế dữ liệu dựa trên cơ chế truy cập dữ liệu khá phổ biến khi xử lý thông tin khách hàng nhạy cảm (như hồ sơ sức khỏe hoặc thông tin thuế).</p>
+
+      <p class="block-indent">Tại thời điểm này, bạn đã đăng ký một ứng dụng duy nhất, EagleEye, với máy chủ OAuth2 của mình. Tuy nhiên, vì bạn đang dùng password grant, bạn cần thiết lập tài khoản người dùng và mật khẩu cho những người dùng đó trước khi bắt đầu.</p>
+
+      <h4 class="subsection-title">7.2.3 Cấu hình người dùng EagleEye</h4>
+
+      <p class="no-indent">Bạn đã định nghĩa và lưu trữ tên khóa cấp ứng dụng và secret. Giờ bạn sẽ thiết lập thông tin đăng nhập của từng người dùng và các vai trò mà họ thuộc về. Vai trò người dùng sẽ được dùng để định nghĩa các hành động mà một nhóm người dùng có thể thực hiện với một dịch vụ.</p>
+
+      <p>Spring có thể lưu trữ và truy xuất thông tin người dùng (thông tin đăng nhập của từng người dùng và các vai trò được gán cho người dùng) từ kho lưu trữ dữ liệu in-memory, cơ sở dữ liệu quan hệ hỗ trợ JDBC, hoặc máy chủ LDAP.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Tôi muốn cẩn trọng ở đây về mặt định nghĩa. Thông tin ứng dụng OAuth2 của Spring có thể lưu dữ liệu trong cơ sở dữ liệu in-memory hoặc cơ sở dữ liệu quan hệ. Thông tin đăng nhập người dùng và vai trò bảo mật của Spring có thể được lưu trong cơ sở dữ liệu in-memory, cơ sở dữ liệu quan hệ, hoặc máy chủ LDAP (Active Directory). Để giữ mọi thứ đơn giản vì mục đích chính của chúng ta là đi qua OAuth2, bạn sẽ dùng kho lưu trữ dữ liệu in-memory.</p>
+      </aside>
+
+      <p>Trong các ví dụ code của chương này, bạn sẽ định nghĩa vai trò người dùng bằng kho lưu trữ dữ liệu in-memory. Bạn sẽ định nghĩa hai tài khoản người dùng: <code>john.carnell</code> và <code>william.woodward</code>. Tài khoản <code>john.carnell</code> sẽ có vai trò USER và tài khoản <code>william.woodward</code> sẽ có vai trò ADMIN.</p>
+
+      <p>Để cấu hình máy chủ OAuth2 xác thực user ID, bạn phải thiết lập một class mới: <code>authentication-service/src/main/com/thoughtmechanix/authentication/security/WebSecurityConfigurer.java</code>. Listing sau đây trình bày code cho class này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.3</strong><br>Định nghĩa User ID, mật khẩu và vai trò cho ứng dụng của bạn</figcaption>
+        <pre class="code-block"><code>package com.thoughtmechanix.authentication.security;
+
+//Imports removed for conciseness
+
+@Configuration</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

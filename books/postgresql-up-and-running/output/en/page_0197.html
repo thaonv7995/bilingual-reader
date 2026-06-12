@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 10: Replication and External Data</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page code.accent-word {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word,
+    .prose-page.chapter-page code.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0196.html">← Prev</a>
+    <a href="page_0198.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">197</span>
+      </header>
+
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHAPTER 10</p>
+        <h1 class="chapter-title no-indent">Replication and External Data</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="no-indent">PostgreSQL has a number of options for sharing data with external servers or data
+      sources. The first option is the built-in replication options of PostgreSQL, which allows
+      you to create a copy of your server ready to run on another PostgreSQL server. The
+      second option is to use third-party add-ons, many of which are freely available and
+      time-tested. The third option, unveiled in version 9.1, is to use <i>foreign data wrappers</i>
+      (FDW). FDWs gives you the flexibility to query from a wide array of external data
+      sources. Since version 9.3, some FDWs such as <code class="accent-word">postgres_fdw</code> and <code class="accent-word">hadoop_fdw</code> also
+      permit updating.</p>
+
+      <h3 class="section-title">Replication Overview</h3>
+      <p class="no-indent">The seemingly countless reasons for the need to replicate your databases all distill down
+      to two: availability and scalability. If your main server goes down, you want another to
+      immediately assume its role. For small databases, you could just make sure you have
+      another physical server ready and restore the database onto it. But for large databases
+      (in the terabytes), the restore itself could take many hours. To avoid downtime, you&rsquo;ll
+      need to replicate. The other main reason is scalability. You set up a database to breed
+      fancy <span class="accent-word">elephant shrews</span> for profit. After a few years of breeding, you now have thousands
+      of shrews. People all over the world come to your site to gawk and purchase. You&rsquo;re
+      overwhelmed by the traffic. Replication comes to your aid; you set up a read-only slave
+      server to replicate with your main server. You direct the countless gawkers to the slave,
+      and only let serious buyers onto the master server to finalize their purchases.</p>
+
+      <h3 class="section-title">Replication Jargon</h3>
+      <p class="no-indent">Before we get too carried away with replication, we had better introduce some common
+      lingo used in connection with it:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">179</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

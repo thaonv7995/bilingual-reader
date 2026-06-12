@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 6: Bảng, Ràng buộc và Chỉ mục</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0124.html">← Trước</a>
+    <a href="page_0126.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">125</span>
+      </header>
+
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHƯƠNG 6</p>
+        <h1 class="chapter-title no-indent">Bảng, Ràng buộc và Chỉ mục</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="no-indent">Các bảng tạo thành khối xây dựng của lưu trữ cơ sở dữ liệu quan hệ. Cấu trúc các bảng sao cho
+      chúng tạo thành các mối quan hệ có ý nghĩa là chìa khóa cho thiết kế cơ sở dữ liệu quan hệ. Trong Post‐
+      greSQL, các ràng buộc thực thi các mối quan hệ giữa các bảng. Để phân biệt một bảng với
+      chỉ là một đống dữ liệu, chúng ta thiết lập các chỉ mục. Giống như các chỉ mục bạn tìm thấy ở cuối
+      sách hoặc danh sách người thuê tại lối vào của các tòa nhà văn phòng lớn, các chỉ mục chỉ đến
+      các vị trí trong bảng để bạn không phải tìm kiếm toàn bộ bảng từ trên xuống dưới mỗi khi
+      bạn đang tìm kiếm một cái gì đó.</p>
+
+      <p>Trong chương này, chúng tôi giới thiệu cú pháp để tạo bảng và thêm hàng. Sau đó, chúng tôi chuyển
+      sang các ràng buộc để đảm bảo rằng dữ liệu của bạn không bị lệch lạc. Cuối cùng, chúng tôi sẽ chỉ cho bạn
+      cách thêm các chỉ mục vào các bảng của bạn để tăng tốc tìm kiếm. Việc lập chỉ mục một bảng cũng là một
+      nhiệm vụ lập trình như là một nỗ lực thử nghiệm. Một chỉ mục bị sử dụng sai còn tệ hơn là vô dụng. Không phải
+      tất cả các chỉ mục đều được tạo ra như nhau. Các nhà thuật toán đã phát triển nhiều loại chỉ mục khác nhau
+      cho các loại dữ liệu khác nhau, tất cả nhằm cố gắng khai thác tốc độ tối đa từ một truy vấn.</p>
+
+      <h3 class="section-title">Bảng</h3>
+      <p class="no-indent">Ngoài các bảng dữ liệu thông thường, PostgreSQL cung cấp một số loại bảng khá hiếm: tạm thời, không ghi, kế thừa, kiểu và ngoại (được đề cập trong
+      <span class="accent-word">Chương 10</span>).</p>
+
+      <h3 class="subsection-title">Tạo Bảng Cơ Bản</h3>
+      <p class="no-indent"><span class="accent-word">Ví dụ 6-1</span> cho thấy cú pháp tạo bảng, tương tự như những gì bạn sẽ tìm thấy trong tất cả
+      các cơ sở dữ liệu SQL.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">107</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

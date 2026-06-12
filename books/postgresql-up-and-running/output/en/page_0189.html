@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — Caching</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page ul.bullets code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0188.html">← Prev</a>
+    <a href="page_0190.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">189</span>
+      </header>
+
+      <p class="no-indent">Details about this setting can be found at <a href="http://bit.ly/15SZdrT" class="accent-word">Random Page Cost Revisited</a>. The article
+      suggests the following settings:</p>
+
+      <ul class="bullets">
+        <li>High-end NAS/SAN: 2.5 or 3.0</li>
+        <li>Amazon EBS and Heroku: 2.0</li>
+        <li>iSCSI and other mediocre SANs: 6.0, but varies widely</li>
+        <li>SSDs: 2.0 to 2.5</li>
+        <li>NvRAM (or NAND): 1.5</li>
+      </ul>
+
+      <h3 class="subsection-title">Caching</h3>
+
+      <p class="no-indent">If you execute a complex query that takes a while to run, subsequent runs are often
+      much faster. Thank caching. If the same query executes in sequence, by the same user
+      or different users, and no changes have been made to the underlying data, you should
+      get back the same result. As long as there&rsquo;s space in memory to cache the data, the planner
+      can skip replanning or reretrieving. Using common table expressions and immutable
+      functions in your queries encourages caching.</p>
+
+      <p>How do you check what&rsquo;s in the current cache? If you are running PostgreSQL 9.1 or
+      later, you can install the <code>pg_buffercache</code> extension:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE EXTENSION pg_buffercache;</code></pre>
+      </figure>
+
+      <p>You can then run a query against the <code>pg_buffercache</code> view, as shown in <span class="accent-word">Example 9-11</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-11.</strong> Are my table rows in buffer cache?</figcaption>
+        <pre class="code-block"><code>SELECT
+    C.relname,
+    COUNT(CASE WHEN B.isdirty THEN 1 ELSE NULL END) As dirty_buffers,
+    COUNT(*) As num_buffers
+FROM
+    pg_class AS C INNER JOIN
+    pg_buffercache B ON C.relfilenode = B.relfilenode INNER JOIN
+    pg_database D ON B.reldatabase = D.oid AND D.datname = current_database()
+WHERE C.relname IN ('facts','lu_fact_types')
+GROUP BY C.relname;</code></pre>
+      </figure>
+
+      <p><span class="accent-word">Example 9-11</span> returns the number of buffered pages of the <code>facts</code> and <code>lu_fact_types</code>
+      tables. Of course, to actually see buffered rows, you need to run a query. Try this one:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT T.fact_subcats[2], COUNT(*) As num_fact
+FROM census.facts As F INNER JOIN census.lu_fact_types AS T ON F.fact_type_id =
+T.fact_type_id
+GROUP BY T.fact_subcats[2];</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">Caching<span class="sep">|</span>171</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

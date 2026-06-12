@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 6: Sorting and Grouping</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chapter 6: Sorting and Grouping</p>
+
+      <h3 class="section-title">Indexing Order By</h3>
+
+      <p class="no-indent">SQL queries with an <code><strong>order by</strong></code> clause do not need to sort the result explicitly if the relevant index already delivers the rows in the required order. That means the same index that is used for the <code><strong>where</strong></code> clause must also cover the <code><strong>order by</strong></code> clause.</p>
+
+      <p>As an example, consider the following query that selects yesterday&rsquo;s sales ordered by sale data and product ID:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT sale_date, product_id, quantity
+  FROM sales
+ WHERE sale_date = TRUNC(sysdate) - INTERVAL '1' DAY
+ <strong>ORDER BY</strong> sale_date, product_id;</code></pre>
+      </figure>
+
+      <p>There is already an index on <code>SALE_DATE</code> that can be used for the <code><strong>where</strong></code> clause. The database must, however, perform an explicit sort operation to satisfy the <code><strong>order by</strong></code> clause:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id | Operation                    | Name       | Rows | Cost |
+---------------------------------------------------------------
+| 0 | SELECT STATEMENT             |            |  320 |   18 |
+| 1 |  <strong>SORT ORDER BY</strong>               |            |  320 |   18 |
+| 2 |   TABLE ACCESS BY INDEX ROWID| SALES      |  320 |   17 |
+|*3 |    INDEX RANGE SCAN          | SALES_DATE |  320 |    3 |
+---------------------------------------------------------------</code></pre>
+      </figure>
+
+      <p>An <code>INDEX RANGE SCAN</code> delivers the result in index order anyway. To take advantage of this fact, we just have to extend the index definition so it corresponds to the <code><strong>order by</strong></code> clause:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  DROP INDEX sales_date;
+CREATE INDEX sales_dt_pr ON sales (<strong>sale_date, product_id</strong>);</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id | Operation                   | Name        | Rows | Cost |
+---------------------------------------------------------------
+| 0 | SELECT STATEMENT            |             |  320 |  300 |
+| 1 |  TABLE ACCESS BY INDEX ROWID| SALES       |  320 |  300 |
+|*2 |   INDEX RANGE SCAN          | SALES_DT_PR |  320 |    4 |
+---------------------------------------------------------------</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">130</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

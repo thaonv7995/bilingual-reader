@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 4: The Join Operation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .language-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .footnotes {
+      margin-top: 4mm;
+      padding-top: 0;
+      border-top: none;
+      font-size: 9.5pt;
+      line-height: 1.35;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chapter 4: The Join Operation</p>
+
+      <p class="language-label">Perl</p>
+
+      <p>The DBIx::Class framework does not act as entity manager so that inheritance doesn&rsquo;t cause aliasing problems<sup>1</sup>. The cookbook supports this approach. The following schema definition defines the Sales class on two levels:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>package UseTheIndexLuke::Schema::Result::SalesHead;
+use base qw/DBIx::Class::Core/;
+
+__PACKAGE__->table('sales');
+__PACKAGE__->add_columns(qw/sale_id employee_id subsidiary_id
+                            sale_date eur_value/);
+__PACKAGE__->set_primary_key(qw/sale_id/);
+__PACKAGE__->belongs_to('employee', 'Employees',
+           {'foreign.employee_id'   => 'self.employee_id'
+           ,'foreign.subsidiary_id' => 'self.subsidiary_id'});
+
+package UseTheIndexLuke::Schema::Result::Sales;
+use base qw/UseTheIndexLuke::Schema::Result::SalesHead/;
+
+__PACKAGE__->table('sales');
+__PACKAGE__->add_columns(qw/junk/);</code></pre>
+      </figure>
+
+      <p>The Sales class is derived from the SalesHead class and adds the missing attribute. You can use both classes as you need them. Please note that the table setup is required in the derived class as well.</p>
+
+      <p>You can fetch all employee details via prefetch or just selected columns as shown below:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>my @sales =
+   $schema->resultset('SalesHead')
+          ->search($cond
+                  ,{      join => 'employee'
+                   ,'+columns' => ['employee.first_name'
+                                  ,'employee.last_name']
+                   }
+                  );</code></pre>
+      </figure>
+
+      <p>It is not possible to load only selected columns from the root table&mdash;SalesHead in this case.</p>
+
+      <div class="footnotes">
+        <p><sup>1</sup> http://en.wikipedia.org/wiki/Aliasing_%28computing%29</p>
+      </div>
+
+      <p class="page-folio page-folio--left">106</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0066.html">← Prev</a>
+    <a href="page_0068.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">67</span>
+      </header>
+
+      <h3 class="subsection-title">Timing Executions</h3>
+      <p class="no-indent">You may find it instructive to have psql output the time it took for each query to execute.
+      Use the <code>\timing</code> command to toggle it on and off.</p>
+
+      <p>When that is enabled, each query you run will report the duration at the end. For ex‐
+      ample, with <code>\timing</code> on, executing <code>SELECT COUNT(*) FROM pg_tables;</code> outputs:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>count
+-------
+73
+(1 row)
+Time: 18.650 ms</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Autocommit Commands</h3>
+      <p class="no-indent">By default, AUTOCOMMIT is on, meaning any SQL command you issue that changes data
+      will immediately commit. Each command is its own transaction and is irreversible. If
+      you are running a large batch of precarious updates, you may want a safety net. Start by
+      turning off autocommit: <code>\set AUTOCOMMIT off</code>. Now, you have the option to roll back
+      your statements:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>UPDATE</strong> census.facts <strong>SET</strong> short_name = <em>'This is a mistake.'</em>;</code></pre>
+      </figure>
+
+      <p class="no-indent">To undo the update, run:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>ROLLBACK</strong>;</code></pre>
+      </figure>
+
+      <p class="no-indent">To make the update permanent, run</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>COMMIT</strong>;</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0067_icon_warning.png" width="92" height="87" alt="Warning">
+        </figure>
+        <p class="callout-text">Don’t forget to commit your changes; otherwise, they’ll automati‐
+        cally roll back if you exit psql.</p>
+      </div>
+
+      <h3 class="subsection-title">Shortcuts</h3>
+      <p class="no-indent">You can use the <code>\set</code> command to create useful typing shortcuts. Store universally
+      applicable shortcuts in your psqlrc file. For example, if you use EXPLAIN ANALYZE VER‐
+      BOSE once every 10 minutes and you’re tired of typing it all out each time, set a variable:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>\set eav 'EXPLAIN ANALYZE VERBOSE'</code></pre>
+      </figure>
+
+      <p class="no-indent">Now, whenever you want to enter EXPLAIN ANALYZE VERBOSE, simply type <code>:eav</code> (the
+      colon resolves the variable):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>:eav SELECT COUNT(*) FROM pg_tables;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">psql Customizations<span class="sep">|</span>49</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

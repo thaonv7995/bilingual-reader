@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Hình 3.9 và mã hóa phía client</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page figure.diagram + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0117.html">← Trước</a>
+    <a href="page_0119.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Bảo vệ thông tin cấu hình nhạy cảm</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">93</span>
+      </header>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0118_fig_3_9.png" width="1313" height="621" alt="Hình 3.9 — thuộc tính spring.datasource.password được lưu dưới dạng giá trị đã mã hóa">
+        <figcaption><strong>Hình 3.9</strong><br>Mặc dù <code>spring.datasource.password</code> được mã hóa trong tệp thuộc tính, nó được giải mã khi cấu hình cho licensing service được truy xuất. Điều này vẫn gây vấn đề.</figcaption>
+      </figure>
+
+      <p class="no-indent">Theo mặc định, Spring Cloud Config sẽ thực hiện toàn bộ việc giải mã thuộc tính trên máy chủ và trả kết quả về cho các ứng dụng tiêu thụ thuộc tính dưới dạng văn bản thuần, chưa mã hóa. Tuy nhiên, bạn có thể yêu cầu Spring Cloud Config không giải mã trên máy chủ và giao trách nhiệm giải mã các thuộc tính đã mã hóa cho ứng dụng truy xuất dữ liệu cấu hình.</p>
+
+      <h4 class="subsection-title">3.4.4 Cấu hình microservice để dùng mã hóa phía client</h4>
+
+      <p>Để bật giải mã phía client cho các thuộc tính, bạn cần thực hiện ba việc:</p>
+
+      <ol class="manning-numbered" aria-label="Các bước để bật giải mã phía client">
+        <li>Cấu hình Spring Cloud Config để không giải mã thuộc tính phía máy chủ.</li>
+        <li>Thiết lập khóa đối xứng trên licensing server.</li>
+        <li>Thêm các JAR <code>spring-security-rsa</code> vào tệp <code>pom.xml</code> của licensing service.</li>
+      </ol>
+
+      <p>Việc đầu tiên bạn cần làm là tắt giải mã phía máy chủ cho các thuộc tính trong Spring Cloud Config. Điều này được thực hiện bằng cách thiết lập tệp <code>src/main/resources/application.yml</code> của Spring Cloud Config để đặt thuộc tính <code>spring.cloud.config.server.encrypt.enabled: false</code>. Đó là tất cả những gì bạn phải làm trên máy chủ Spring Cloud Config.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

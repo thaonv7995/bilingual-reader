@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Listing 7.13 TokenEnhancer and Section 7.4.4</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--713 .listing-callouts-right {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-annotated--713 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 11mm;
+    }
+    .prose-page.chapter-page .listing-annotated--713 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0246.html">← Prev</a>
+    <a href="page_0248.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">222</span>
+        <span class="rh-center">CHAPTER 7 <em>Securing your microservices</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="code-snippet" aria-label="Listing 7.12 (continued)">
+        <pre class="code-block"><code>    public TokenEnhancer jwtTokenEnhancer() {
+        return new JWTTokenEnhancer();
+    }
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Once you&rsquo;ve exposed the <code>JWTTokenEnhancer</code> as a bean, you can hook it into the <code>JWTOAuth2Config</code> class from listing 7.9. This is done in the <code>configure()</code> method of the class. The following listing shows the modification to the <code>configure()</code> method of the <code>JWTOAuth2Config</code> class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.13</strong><br>Hooking in your TokenEnhancer</figcaption>
+        <div class="listing-annotated listing-annotated--713" aria-label="Listing 7.13 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.authentication.security;
+@Configuration
+public class JWTOAuth2Config extends AuthorizationServerConfigurerAdapter {
+    //Rest of code removed for conciseness
+    @Autowired
+    private TokenEnhancer jwtTokenEnhancer;
+
+    @Override
+    public void configure(
+      AuthorizationServerEndpointsConfigurer endpoints)
+         ➥ throws Exception {
+     TokenEnhancerChain tokenEnhancerChain =
+         new TokenEnhancerChain();
+     tokenEnhancerChain.setTokenEnhancers(
+            Arrays.asList(jwtTokenEnhancer, jwtAccessTokenConverter));
+      endpoints.tokenStore(tokenStore)
+                .accessTokenConverter(jwtAccessTokenConverter)
+                .tokenEnhancer(tokenEnhancerChain)
+                .authenticationManager(authenticationManager)
+                .userDetailsService(userDetailsService);
+    }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 7.13 annotation callouts">
+            <p class="listing-callout">Auto-wire in the TokenEnhancer class.</p>
+            <p class="listing-callout">Spring OAuth allows you to hook in multiple token enhancers, so add your token enhancer to a TokenEnhancerChain class.</p>
+            <p class="listing-callout">Hook your token enhancer chain to the endpoints parameter passed into the configure() call.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>At this point you&rsquo;ve added a custom field to your JWT token. The next question you should have is, &ldquo;How do I parse a custom field out of a JWT token?&rdquo;</p>
+
+      <h4 class="subsection-title">7.4.4 Parsing a custom field out of a JavaScript token</h4>
+
+      <p class="no-indent">We&rsquo;re going to turn to your Zuul gateway for an example of how to parse out a custom field in the JWT token. Specifically, you&rsquo;re going to modify the <code>TrackingFilter</code> class we introduced in chapter 6 to decode the <code>organizationId</code> field out of the JWT token flowing through gateway.</p>
+
+      <p>To do this you&rsquo;re going to pull in a JWT parser library and add to the Zuul server&rsquo;s <code>pom.xml</code> file. Multiple token parsers are available and I chose the JJWT library</p>
+
+      <p class="license-watermark no-indent">Licensed to Jianjun Shou &lt;seanshou@gmail.com&gt;</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

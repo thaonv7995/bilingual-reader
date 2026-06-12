@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option {
+      margin: 0 0 2mm;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option-label {
+      margin: 0 0 0.8mm;
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option figure.code-snippet {
+      margin: 0 0 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0412.html">← Trước</a>
+    <a href="page_0414.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">413</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>world</code></pre>
+      </figure>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">B.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>hello
+worldwor</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">C.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>hello
+world
+w</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">D.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>hello
+world
+wor</code></pre>
+        </figure>
+      </div>
+
+      <p class="no-indent">Đáp án đúng là B.</p>
+
+      <p>Có tổng cộng 12 ký tự trong <code>test1.txt</code>&nbsp;(đừng quên hai ký tự được dùng để
+      kết thúc dòng đầu tiên). Trong lần lặp đầu tiên của vòng lặp while, phương thức <code>read</code>&nbsp;sẽ điền vào <code>buff</code>
+      với 5 ký tự đầu tiên, tức là <code>hello</code>. Hãy lưu ý rằng chúng ta chưa chỉ định các đối số offset và length
+      cho phương thức <code>write</code>&nbsp;. Vì vậy, nó sẽ ghi tất cả các ký tự trong <code>buff</code>&nbsp;vào <code>test2.txt</code>.</p>
+
+      <p>Như vậy, <code>hello</code>&nbsp;được ghi vào file. Trong lần lặp thứ hai, phương thức <code>read</code>&nbsp;đọc 5
+      ký tự tiếp theo, tức là <code>\r\nwor</code>, các ký tự này sau đó được ghi vào file. Lúc này chỉ còn lại 2 ký tự nữa
+      cần đọc từ file. Do đó, trong lần lặp thứ ba, phương thức <code>read</code>&nbsp;chỉ đọc những ký tự
+      đó và đặt chúng vào hai vị trí đầu tiên của <code>buff</code>. Ba vị trí còn lại trong
+      <code>buff</code>&nbsp;không bị ảnh hưởng và vẫn chứa các ký tự đã đọc từ lần lặp trước đó, tức là <code>wor</code>.</p>
+
+      <p>Vì vậy, <code>buff</code>&nbsp;bây giờ chứa <code>ldwor</code>. Do đó, phương thức <code>write</code>&nbsp;ghi <code>ldwor</code>&nbsp;vào file. Lần lặp thứ
+      tư không xảy ra vì phương thức <code>read</code>&nbsp;trả về <code>-1</code>.</p>
+
+      <p>Nếu chúng ta sử dụng <code>fw.write(buff, 0, count)</code>&nbsp;thay vì <code>fw.write(buff)</code>, chương trình
+      sẽ sao chép nội dung một cách chính xác.</p>
+
+      <h3 class="section-title section-title--sub">19.1.8 Hiểu về tên file và đường dẫn<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Tôi chắc chắn rằng bạn đã và đang quản lý các file trên máy tính của mình bằng File Explorer</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

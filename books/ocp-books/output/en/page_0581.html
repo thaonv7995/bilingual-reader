@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0580.html">← Prev</a>
+    <a href="page_0582.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">581</span>
+      </header>
+
+      <p class="no-indent">The mutable reduction operation, which is done using <code>Stream</code>&rsquo;s <code>collect</code>&nbsp;method, is by far
+      the most commonly used operation of all stream operations. Although the <code>collect</code>&nbsp;method
+      that you saw earlier offers a great deal of flexibility in implementation, it gets a bit too verbose.
+      Specifically, since the supplier, the accumulator, and the combiner functions are passed to the
+      <code>collect</code>&nbsp;method as three separate arguments, the call to <code>collect</code>&nbsp;can easily have a lot of
+      repetition. For example, if I want to collect all the elements of a stream of strings into a <code>List</code>&nbsp;,
+      my method call would look like this:</p>
+
+      <pre class="code-block ocp-code-line"><code>ArrayList&lt;String&gt; listOfWords = words.collect(ArrayList::new, ArrayList::add,
+ArrayList::addAll);</code></pre>
+
+      <p>Since every invocation of <code>collect</code>&nbsp;invariably requires the three arguments (you can&rsquo;t omit any
+      of the supplier, accumulator, and combiner functions), it would be a lot easier if the <code>collect</code>
+      method accepted just one argument and retrieved the three functions by calling methods on that
+      argument. That would also make it easy to organize the creation and management of the three
+      functions.</p>
+
+      <p>This is exactly what the <code>Stream</code>&rsquo;s <code>collect(Collector c)</code>&nbsp;method does.</p>
+
+      <p><code>java.util.stream.Collector</code>&nbsp;is an interface that acts as a repository of the three functions
+      required by the mutable reduction operation. Instead of supplying the three functions
+      separately, we ask the <code>collect</code>&nbsp;method to get the three functions from this repository. Not
+      only does this approach reduces the verbosity of the method call, it also increases code
+      maintainability by letting us put the code for the three functions into a separate reusable class.</p>
+
+      <p>But Java SDK doesn&rsquo;t stop at that. It also includes a utility class called <code>Collectors</code>&nbsp;, which
+      contains implementations for a lot of commonly used mechanisms for mutable reductions. In
+      other words, the <code>Collectors</code>&nbsp;class contains implementations for a lot of <code>Collector</code>&nbsp;s! You
+      can get an instance of any of those <code>Collector</code>&nbsp;implementations by calling its static methods.
+      Here is how the call to <code>collect</code>&nbsp;looks using this approach:</p>
+
+      <pre class="code-block ocp-code-line"><code>List&lt;String&gt; listOfWords = words.collect(Collectors.toList());</code></pre>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

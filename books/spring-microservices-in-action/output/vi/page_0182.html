@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Giới thiệu Spring Cloud và Netflix Zuul</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0181.html">← Trước</a>
+    <a href="page_0183.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Giới thiệu Spring Cloud và Netflix Zuul</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">157</span>
+      </header>
+
+      <h4 class="subsection-title">6.2 Giới thiệu Spring Cloud và Netflix Zuul</h4>
+
+      <p class="no-indent">Spring Cloud tích hợp với dự án mã nguồn mở Zuul của Netflix. Zuul là service gateway rất dễ thiết lập và sử dụng thông qua các annotation của Spring Cloud. Zuul cung cấp nhiều khả năng, gồm</p>
+
+      <ul class="manning-bullets" aria-label="Khả năng của Zuul">
+        <li>Ánh xạ route của tất cả các dịch vụ trong ứng dụng về một URL duy nhất&mdash;Zuul không giới hạn ở một URL. Trong Zuul, bạn có thể định nghĩa nhiều mục route, giúp ánh xạ route chi tiết đến mức rất nhỏ (mỗi service endpoint có route mapping riêng). Tuy vậy, trường hợp sử dụng đầu tiên và phổ biến nhất của Zuul là xây dựng một điểm vào duy nhất mà mọi lời gọi từ service client sẽ đi qua.</li>
+        <li>Xây dựng các filter có thể kiểm tra và xử lý các request đi qua gateway&mdash;Các filter này cho phép bạn chèn các điểm thực thi chính sách (policy enforcement point) vào mã và thực hiện nhiều thao tác trên mọi lời gọi dịch vụ một cách nhất quán.</li>
+      </ul>
+
+      <p>Để bắt đầu với Zuul, bạn sẽ làm ba việc sau:</p>
+
+      <ol class="manning-numbered" aria-label="Các bước bắt đầu với Zuul">
+        <li>Thiết lập dự án Zuul Spring Boot và cấu hình các dependency Maven phù hợp.</li>
+        <li>Sửa dự án Spring Boot bằng các annotation Spring Cloud để khai báo đây sẽ là dịch vụ Zuul.</li>
+        <li>Cấu hình Zuul giao tiếp với Eureka (tùy chọn).</li>
+      </ol>
+
+      <h4 class="subsection-title">6.2.1 Thiết lập dự án Zuul Spring Boot</h4>
+
+      <p class="no-indent">Nếu bạn đã đọc các chương trước theo thứ tự, phần việc sắp làm sẽ quen thuộc. Để xây dựng máy chủ Zuul, bạn cần thiết lập một dịch vụ Spring Boot mới và định nghĩa các dependency Maven tương ứng. Bạn có thể tìm mã nguồn dự án cho chương này trong kho GitHub của sách (https://github.com/carnellj/spmia-chapter6). May mắn là không cần nhiều thứ để thiết lập Zuul trong Maven. Bạn chỉ cần định nghĩa một dependency trong tệp <code>zuulsvr/pom.xml</code> của bạn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-cloud-starter-zuul&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <p>Dependency này báo cho framework Spring Cloud biết dịch vụ này sẽ chạy Zuul và khởi tạo Zuul thích hợp.</p>
+
+      <h4 class="subsection-title">6.2.2 Dùng annotation Spring Cloud cho dịch vụ Zuul</h4>
+
+      <p class="no-indent">Sau khi định nghĩa các dependency Maven, bạn cần gắn annotation cho lớp bootstrap của các dịch vụ Zuul. Lớp bootstrap cho triển khai dịch vụ Zuul nằm trong lớp <code>zuulsvr/src/main/java/com/thoughtmechanix/zuulsvr/Application.java</code>.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

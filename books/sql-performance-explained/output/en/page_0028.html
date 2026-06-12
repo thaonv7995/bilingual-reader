@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Slow Indexes, Part II</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--chapter {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--chapter .rh-left,
+    .prose-page .running-head--chapter .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--chapter .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--head {
+      margin-bottom: 4mm;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--chapter">
+        <span class="rh-left"></span>
+        <span class="rh-center">Chapter 2: The Where Clause</span>
+        <span class="rh-right"></span>
+      </header>
+      <hr class="chapter-rule chapter-rule--head" aria-hidden="true">
+
+      <h3 class="section-title">Slow Indexes, Part II</h3>
+
+      <p class="no-indent">The previous section explained how to gain additional benefits from an existing index by changing its column order, but the example considered only two SQL statements. Changing an index, however, may affect all queries on the indexed table. This section explains the way databases pick an index and demonstrates the possible side effects when changing existing indexes.</p>
+
+      <p>The adopted <code>EMPLOYEE_PK</code> index improves the performance of all queries that search by subsidiary only. It is however usable for all queries that search by <code>SUBSIDIARY_ID</code>&mdash;regardless of whether there are any additional search criteria. That means the index becomes usable for queries that used to use another index with another part of the <code>where</code> clause. In that case, if there are multiple access paths available it is the optimizer&rsquo;s job to choose the best one.</p>
+
+      <aside class="sidebar-note">
+        <h3>The Query Optimizer</h3>
+        <p>The query optimizer, or query planner, is the database component that transforms an SQL statement into an execution plan. This process is also called <i>compiling</i> or <i>parsing</i>. There are two distinct optimizer types.</p>
+        <p><i>Cost-based optimizers</i> (CBO) generate many execution plan variations and calculate a <i>cost</i> value for each plan. The cost calculation is based on the operations in use and the estimated row numbers. In the end the cost value serves as the benchmark for picking the &ldquo;best&rdquo; execution plan.</p>
+        <p><i>Rule-based optimizers</i> (RBO) generate the execution plan using a hard-coded rule set. Rule based optimizers are less flexible and are seldom used today.</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">18</p>
+    </article>
+  </main>
+</body>
+</html>

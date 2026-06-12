@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 17</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0016.html">← Prev</a>
+      <span>Page 17 / 30</span>
+      <a href="page_0018.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<figure class="code-snippet"><pre class="code-block"><code>sadd friends_of:chani leto paul</code></pre></figure><p class="lead no-indent">Maintenance cost aside, if you are anything like me, you might cringe at the processing and memory cost of having these extra indexed values. In the next section we'll talk about ways to reduce the performance cost of having to do extra round trips (we briefly talked about it in the first chapter).</p><p>If you actually think about it though, relational databases have the same overhead. Indexes take memory, must be scanned or ideally seeked and then the corresponding records must be looked up. The overhead is neatly abstracted away (and they do a lot of optimizations in terms of the processing to make it very efficient).</p><p>Again, having to manually deal with references in Redis is unfortunate. But any initial concerns you have about the performance or memory implications of this should be tested. I think you'll find it a non-issue.</p><h3 class="section-title">Round Trips and Pipelining</h3><p>We already mentioned that making frequent trips to the server is a common pattern in Redis. Since it is something you'll do often, it's worth taking a closer look at what features we can leverage to get the most out of it.</p><p>First, many commands either accept one or more set of parameters or have a sister-command which takes multiple parameters. We saw <code>mget</code> earlier, which takes multiple keys and returns the values:</p><figure class="code-snippet"><pre class="code-block"><code>keys = redis.lrange('newusers', 0, 10)
+redis.mget(*keys.map {|u| "users:#{u}"})</code></pre></figure><p>Or the <code>sadd</code> command which adds 1 or more members to a set:</p><figure class="code-snippet"><pre class="code-block"><code>sadd friends:vladimir piter
+sadd friends:paul jessica leto "leto II" chani</code></pre></figure><p>Redis also supports pipelining. Normally when a client sends a request to Redis it waits for the reply before sending the next request. With pipelining you can send a number of requests without waiting for their responses. This reduces the networking overhead and can result in significant performance gains.</p><p>It's worth noting that Redis will use memory to queue up the commands, so it's a good idea to batch them. How large a batch you use will depend on what commands you are using, and more specifically, how large the parameters are. But, if you are issuing commands against ~50 character keys, you can probably batch them in thousands or tens of thousands.</p><p>Exactly how you execute commands within a pipeline will vary from driver to driver. In Ruby you pass a block to the <code>pipelined</code> method:</p><figure class="code-snippet"><pre class="code-block"><code>redis.pipelined do
+  9001.times do
+    redis.incr('powerlevel')
+  end
+end</code></pre></figure><p>As you can probably guess, pipelining can really speed up a batch import!</p>
+      <p class="page-folio">16</p>
+    </article>
+  </main>
+</body>
+</html>

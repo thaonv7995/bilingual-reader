@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Phụ lục A: Kế hoạch thực thi</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title + p + h3.section-title,
+    .prose-page h3.section-title + h3.section-title {
+      margin-top: 5mm;
+    }
+
+    .prose-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .method-label {
+      margin: 2.5mm 0 0;
+      font-weight: 700;
+      text-indent: 0;
+    }
+
+    .prose-page .indented-block {
+      margin: 0 0 2.5mm 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 3mm;
+      max-width: 100%;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phụ lục A: Kế hoạch thực thi</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">SQL Server</h3>
+
+      <p class="no-indent">Phương pháp được mô tả trong phần này áp dụng cho SQL Server Management Studio 2005 và các phiên bản sau.</p>
+
+      <h3 class="section-title">Lấy Kế Hoạch Thực Thi</h3>
+
+      <p class="no-indent">Với SQL Server, có một số cách để lấy kế hoạch thực thi. Hai phương pháp quan trọng nhất là:</p>
+
+      <p class="no-indent method-label">Đồ họa</p>
+
+      <p class="indented-block">Biểu diễn đồ họa của các kế hoạch thực thi SQL Server dễ dàng truy cập trong Management Studio nhưng khó chia sẻ vì thông tin điều kiện chỉ hiển thị khi di chuột qua thao tác cụ thể (&ldquo;hover&rdquo;).</p>
+
+      <p class="no-indent method-label">Dạng bảng</p>
+
+      <p class="indented-block">Kế hoạch thực thi dạng bảng khó đọc nhưng dễ sao chép vì nó hiển thị tất cả thông tin liên quan cùng một lúc.</p>
+
+      <h3 class="subsection-title">Đồ họa</h3>
+
+      <p class="no-indent">Kế hoạch giải thích đồ họa được tạo ra với một trong hai nút được làm nổi bật bên dưới.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0190_fig_ssms_toolbar.png" width="900" height="96" alt="Thanh công cụ SQL Server Management Studio với các nút kế hoạch thực thi được làm nổi bật">
+      </figure>
+
+      <p>Nút bên trái giải thích câu lệnh được làm nổi bật trực tiếp. Nút bên phải sẽ ghi lại kế hoạch khi một câu lệnh SQL được thực thi lần tiếp theo.</p>
+
+      <p>Trong cả hai trường hợp, biểu diễn đồ họa của kế hoạch thực thi xuất hiện trong tab &ldquo;Kế hoạch thực thi&rdquo; của bảng &ldquo;Kết quả&rdquo;.</p>
+
+      <footer class="book-footer">
+        <span class="page-folio">180</span>
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

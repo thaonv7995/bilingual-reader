@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 1: Những Điều Cơ Bản (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h4.term-title {
+      margin: 2.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-weight: 600;
+      line-height: 1.2;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.term-title:first-child {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page h4.term-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Courier New", Courier, monospace);
+      font-size: 0.92em;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0023.html">← Trước</a>
+    <a href="page_0025.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h4 class="term-title">mở rộng</h4>
+      <p>Được giới thiệu trong PostgreSQL 9.1, tính năng này cho phép các nhà phát triển đóng gói các hàm,
+      kiểu dữ liệu, chuyển đổi, loại chỉ mục tùy chỉnh, bảng, GUCs, v.v. để cài đặt hoặc gỡ bỏ
+      như một đơn vị. Các mở rộng tương tự về khái niệm với các gói của Oracle và là phương pháp
+      ưa thích để phân phối các tiện ích bổ sung. Bạn nên làm theo hướng dẫn của nhà phát triển về
+      cách cài đặt các tệp mở rộng lên máy chủ của bạn. Điều này thường liên quan đến việc cài đặt
+      các tệp nhị phân và kịch bản mở rộng. Khi hoàn tất, bạn phải kích hoạt mở rộng cho
+      từng cơ sở dữ liệu riêng biệt.</p>
+
+      <p>Bạn không cần phải kích hoạt mọi mở rộng bạn sử dụng trong tất cả các cơ sở dữ liệu. Ví dụ, nếu
+      bạn cần tìm kiếm văn bản nâng cao chỉ trong một trong các cơ sở dữ liệu của bạn, hãy kích hoạt <code>fuzzystrmatch</code>
+      chỉ cho cơ sở dữ liệu đó. Khi bạn thêm các mở rộng, bạn có sự lựa chọn về các
+      lược đồ mà chúng sẽ được đưa vào. Nếu bạn chọn mặc định, các đối tượng mở rộng sẽ làm lộn xộn
+      lược đồ <code>public</code>. Điều này có thể làm cho lược đồ đó trở nên khó quản lý, đặc biệt nếu bạn lưu trữ các
+      đối tượng cơ sở dữ liệu của riêng bạn ở đó. Chúng tôi khuyên bạn nên tạo một lược đồ riêng
+      để chứa tất cả các mở rộng và thậm chí tạo một lược đồ riêng để chứa mỗi mở rộng lớn.
+      Bao gồm các lược đồ mới trong biến <code>search_path</code> của cơ sở dữ liệu để
+      bạn có thể sử dụng các hàm mà không cần chỉ định lược đồ mà chúng nằm trong đó. Một số mở
+      rộng quy định lược đồ mà chúng nên được cài đặt. Đối với những cái đó, bạn sẽ không thể
+      thay đổi lược đồ. Ví dụ, nhiều mở rộng ngôn ngữ, chẳng hạn như <code>plv8</code>,
+      phải được cài đặt trong <code>pg_catalog</code>.</p>
+
+      <h4 class="term-title">bảng</h4>
+      <p>Các bảng là những con ngựa làm việc của bất kỳ cơ sở dữ liệu nào. Trong PostgreSQL, các bảng trước hết là
+      công dân của các lược đồ tương ứng của chúng, trước khi trở thành công dân của cơ sở dữ liệu.</p>
+
+      <p>Các bảng PostgreSQL có hai tài năng đáng chú ý. Đầu tiên, chúng nhận ra cha mẹ và
+      con cái. Cấu trúc phân cấp này giúp đơn giản hóa thiết kế cơ sở dữ liệu của bạn và có thể tiết kiệm cho bạn vô số
+      dòng mã lặp khi truy vấn các bảng tương tự. Chúng tôi sẽ đề cập đến kế thừa trong
+      <span class="accent-word">Ví dụ 6-2</span>.</p>
+
+      <p>Thứ hai, việc tạo một bảng tự động dẫn đến việc tạo ra một kiểu dữ liệu tùy chỉnh đi kèm.
+      Nói cách khác, bạn có thể định nghĩa một cấu trúc dữ liệu hoàn chỉnh dưới dạng một
+      bảng và sau đó sử dụng nó như một cột trong một bảng khác. Xem <span class="accent-word">“Các Kiểu Dữ Liệu Tùy Chỉnh và Tổ Hợp”
+      trên trang 103</span> để thảo luận kỹ lưỡng về các kiểu tổ hợp.</p>
+
+      <h4 class="term-title">bảng ngoại <strong>và</strong> bộ bao bọc dữ liệu ngoại</h4>
+      <p><strong>Các bảng ngoại</strong> đã xuất hiện trong phiên bản 9.1. Đây là các bảng ảo liên kết với
+      dữ liệu bên ngoài một cơ sở dữ liệu PostgreSQL. Khi bạn đã cấu hình liên kết, bạn có thể truy vấn
+      chúng như bất kỳ bảng nào khác. Các bảng ngoại có thể liên kết đến các tệp CSV, một bảng PostgreSQL
+      trên máy chủ khác, một bảng trong một sản phẩm khác như SQL Server hoặc Oracle, một
+      cơ sở dữ liệu NoSQL như Redis, hoặc thậm chí một dịch vụ web như Twitter hoặc Salesforce.
+      Việc cấu hình các bảng ngoại được thực hiện thông qua <strong>bộ bao bọc dữ liệu ngoại</strong> (FDWs). FDWs
+      chứa sự bắt tay kỳ diệu giữa PostgreSQL và các nguồn dữ liệu bên ngoài. Chúng</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">6<span class="sep">|</span>Chương 1: Những Điều Cơ Bản</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

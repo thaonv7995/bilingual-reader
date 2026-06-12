@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 5: Listing 5.7 circuit breaker configuration</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0164.html">← Prev</a>
+    <a href="page_0166.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">140</span>
+        <span class="rh-center">CHAPTER 5 <em>When bad things happen: client resiliency patterns with Spring Cloud and Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">of the calls have occurred for them to &ldquo;trip&rdquo; the circuit breaker even if all 15 calls failed. Hystrix will continue letting calls go through to the remote service.</p>
+
+      <p>When the minimum number of remote resource calls has occurred within the 10-second window, Hystrix will begin looking at the percentage of overall failures that have occurred. If the overall percentage of failures is over the threshold, Hystrix will trigger the circuit breaker and fail almost all future calls. As we&rsquo;ll discuss shortly, Hystrix will let part of the calls through to &ldquo;test&rdquo; and see if the service is backing up. The default value for the error threshold is 50%.</p>
+
+      <p>If that percentage has been exceeded, Hystrix will &ldquo;trip&rdquo; the circuit breaker and prevent further calls from hitting the remote resource. If that percentage of remote calls hasn&rsquo;t been triggered and the 10-second window has been passed, Hystrix will reset the circuit breaker statistics.</p>
+
+      <p>When Hystrix has &ldquo;tripped&rdquo; the circuit breaker on a remote call, it will try to start a new window of activity. Every five seconds (this value is configurable), Hystrix will let a call through to the struggling service. If the call succeeds, Hystrix will reset the circuit breaker and start letting calls through again. If the call fails, Hystrix will keep the circuit breaker closed and try again in another five seconds.</p>
+
+      <p>Based on this, you can see that there are five attributes you can use to customize the circuit breaker behavior. The <code>@HystrixCommand</code> annotation exposes these five attributes via the <code>commandPoolProperties</code> attribute. While the <code>threadPoolProperties</code> attribute allows you to set the behavior of the underlying thread pool used in the Hystrix command, the <code>commandPoolProperties</code> attribute allows you to customize the behavior of the circuit breaker associated with Hystrix command. The following listing shows the names of the attributes along with how to set values in each of them.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.7</strong><br>Configuring the behavior of a circuit breaker</figcaption>
+        <pre class="code-block"><code>@HystrixCommand(
+   fallbackMethod = "buildFallbackLicenseList",
+   threadPoolKey = "licenseByOrgThreadPool",
+   threadPoolProperties ={
+        @HystrixProperty(name = "coreSize",value="30"),
+        @HystrixProperty(name="maxQueueSize"value="10"),
+   },
+   commandPoolProperties ={
+     @HystrixProperty(
+      name="circuitBreaker.requestVolumeThreshold",
+      ➥ value="10"),
+      ➥ @HystrixProperty(
+      name="circuitBreaker.errorThresholdPercentage",
+      ➥ value="75"),
+
+         @HystrixProperty(
+           name="circuitBreaker.sleepWindowInMilliseconds",
+           value="7000"),
+           ➥ @HystrixProperty(</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 10: Replication and External Data — Querying a Flat File as Jagged Arrays</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word,
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0203.html">← Prev</a>
+    <a href="page_0205.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">204</span>
+      </header>
+
+      <h3 class="section-title">Querying a Flat File as Jagged Arrays</h3>
+
+      <p class="no-indent">Often, flat-file data sources have a different number of columns in each line and contain
+      multiple header rows and footer rows. These kinds of files tend to be prevalent when
+      the flat files originated as spreadsheets. Our favorite flat-file FDW for handling these
+      unstructured flat files is <code>file_textarray_fdw</code>. This wrapper can handle any kind of
+      delimited flat file, even if the number of elements in each row is inconsistent. It brings
+      in each row as a text array (<code>text[]</code>).</p>
+
+      <p>Unfortunately, <code>file_textarray_fdw</code> is not part of the core PostgreSQL offering, so
+      you&rsquo;ll need to compile it yourself. First, install PostgreSQL with PostgreSQL develop&shy;ment
+      headers. Then download the <code>file_textarray_fdw</code> source code from the Adun&shy;stan
+      <a href="https://github.com/adunstan/file_text_array_fdw" class="accent-word">GitHub site</a>. There is a different branch for each version of PostgreSQL, so make
+      sure to pick the right branch. Once you&rsquo;ve compiled the code, install it as an extension,
+      as you would any other FDW.</p>
+
+      <p>If you are on Linux/Unix, it&rsquo;s an easy compile if you have the <code>postgresql-dev</code> package
+      installed. We did the work of compiling for Windows; you can download our binaries
+      from <a href="http://bit.ly/1FUkLPQ" class="accent-word">Windows-32 9.1 FDWs</a>, <a href="http://bit.ly/1yn35Z6" class="accent-word">Windows-32 9.2 FDWs</a>, <a href="http://bit.ly/1u0c0NF" class="accent-word">Windows-64 9.2 FDWs</a>,
+      <a href="http://bit.ly/1rX3aG7" class="accent-word">Windows-32 9.3 FDWs</a>, and <a href="http://bit.ly/1yn3cne" class="accent-word">Windows-64 9.3 FDWs</a>.</p>
+
+      <p>The first step to perform after you have installed an FDW is to create an extension in
+      your database:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE EXTENSION file_textarray_fdw;</code></pre>
+      </figure>
+
+      <p>Then create a a foreign server as you would with any FDW:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE SERVER file_taserver FOREIGN DATA WRAPPER file_textarray_fdw;</code></pre>
+      </figure>
+
+      <p>Next, register the tables. You can place foreign tables in any schema you want. In
+      <span class="accent-word">Example 10-2</span>, we use our staging schema again.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 10-2.</strong> Make a file text array foreign table from delimited file</figcaption>
+        <pre class="code-block"><code>CREATE FOREIGN TABLE staging.factfinder_array (x text[])
+SERVER file_taserver
+OPTIONS (format 'csv', filename '/postgresql_book/ch10/
+DEC_10_SF1_QTH1_with_ann.csv',
+header 'false', delimiter ',', quote '"', encoding 'latin1', null ''
+);</code></pre>
+      </figure>
+
+      <p>Our example CSV begins with eight header rows and has more columns than we care
+      to count. When the setup is finished, you can finally query our delimited file directly.
+      This following query will give us the names of the header rows where the first column
+      header is <code>GEO.id</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT unnest(x) FROM staging.factfinder_array WHERE x[1] = 'GEO.id'</code></pre>
+      </figure>
+
+      <p>This next query will give us the first two columns of our data:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">186<span class="sep">|</span>Chapter 10: Replication and External Data</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

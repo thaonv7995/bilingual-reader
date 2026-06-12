@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0645.html">← Trước</a>
+    <a href="page_0647.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">646</span>
+      </header>
+
+      <p class="no-indent">4. Kết quả in ra là &ndash; 2019-01-01 P1M . Từ kết quả đầu ra, có vẻ như lời gọi hàm <code>ofDays(1)</code>&nbsp;trên
+      <code>p1</code>&nbsp;không có tác dụng!</p>
+
+      <p>Thực tế, lời gọi hàm <code>of(2018, 1, 31)</code>&nbsp;trên <code>LocalDate</code>&nbsp;cũng không có tác dụng, nhưng kết quả
+      được tạo ra trong trường hợp của một <code>Period</code>&nbsp;đáng lo ngại hơn.</p>
+
+      <p>Trong cả hai trường hợp, các phương thức <code>ofXXX</code> là các phương thức static và tạo ra một đối tượng (Object) mới
+      từ đầu. Không giống như các phương thức instance (ví dụ: <code>with</code>, <code>plus</code>, <code>minus</code>, ), các phương thức static (<code>of</code> và
+      <code>parse</code>) không xây dựng &ldquo;dựa trên&rdquo; một đối tượng (Object) trước đó. Như bạn đã biết, về mặt kỹ thuật, việc gọi một phương thức static trên một biến tham chiếu là hợp lệ
+      nhưng việc gọi một phương thức static trên một tham chiếu cũng tương tự như gọi một phương thức static trên tên lớp (Class).&nbsp; Do đó, <code>LocalDate.of(2018,
+      1, 31)</code>&nbsp;tạo ra một instance <code>LocalDate</code>&nbsp;mới và việc chuỗi một phương thức <code>of</code>&nbsp;khác vào
+      instance <code>LocalDate</code>&nbsp;này thực chất cũng tương tự như gọi độc lập <code>LocalDate.of(2019, 1, 1)</code>.
+      Tuy nhiên, vì cả hai lời gọi đều cung cấp giá trị cho tất cả các trường của một
+      <code>LocalDate</code> , nên không có sự khác biệt trong kết quả cuối cùng.</p>
+
+      <p>Tương tự, trong trường hợp của <code>Period</code> , việc gọi <code>ofMonths(1)</code>&nbsp;trên một instance <code>Period</code>&nbsp;hiện có
+      cũng tương tự như gọi <code>Period.ofMonths(1)</code> . Tuy nhiên, vì phương thức <code>ofMonths</code>&nbsp;tạo ra
+      một <code>Period</code> với 0 năm và 0 ngày, nên có vẻ như lời gọi này đã làm mất giá trị của thuộc tính ngày
+      được thiết lập trước đó thông qua <code>Period.ofDays(1)</code> .</p>
+
+      <p>Trên thực tế, không có phương thức static nào sử dụng các giá trị của một instance ngày/giờ hiện có
+      ngay cả khi bạn gọi phương thức static bằng một tham chiếu thay vì tên lớp (Class). Nếu bạn
+      muốn tạo một <code>Period</code>&nbsp;với 1 tháng và 1 ngày, bạn nên sử dụng <code>Period.of(0, 1,
+      1);</code> .</p>
+
+      <h3 class="section-title">22.4 Chuyển đổi các đối tượng (Object) ngày/giờ sang các kiểu khác nhau và các múi giờ khác nhau<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Như đã giải thích trước đó, con người không thể hiểu được ý nghĩa của &ldquo;1735711200000 mili giây kể từ
+      mốc thời gian epoch&rdquo;. Ví dụ, bạn không thể bảo ai đó gọi cho bạn vào lúc</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

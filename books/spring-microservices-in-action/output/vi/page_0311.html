@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Listing 9.7 (tiếp) và Hình 9.19</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .diagram-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+      gap: 0 2mm;
+      margin: 0 0 1.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page .diagram-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .diagram-annotated--919 .diagram-callouts {
+      padding-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + .diagram-annotated,
+    .prose-page.chapter-page .diagram-annotated + figure.diagram.fig-caption-only {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0310.html">← Trước</a>
+    <a href="page_0312.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">286</span>
+        <span class="rh-center">CHƯƠNG 9 <em>Theo dõi phân tán với Spring Cloud Sleuth và Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="code-snippet" aria-label="Listing 9.7 (tiếp)">
+        <pre class="code-block"><code>  @Autowired
+  SimpleSourceBean simpleSourceBean;
+  private static final Logger logger =
+    ➥ LoggerFactory.getLogger(OrganizationService.class);
+  public Organization getOrg (String organizationId) {
+ Span newSpan = tracer.createSpan("getOrgDBCall");
+ logger.debug("In the organizationService.getOrg() call");
+ try {
+   return orgRepository.findById(organizationId);
+ }finally{
+   newSpan.tag("peer.service", "postgres");
+   newSpan
+      .logEvent(
+         org.springframework.cloud.sleuth.Span.CLIENT_RECV);
+   tracer.close(newSpan);
+ }
+}
+    //Removed the code for conciseness
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Sau khi đặt hai span tùy chỉnh này, hãy khởi động lại các dịch vụ rồi gọi endpoint GET <code>http://localhost:5555/api/licensing/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/licenses/f3831f8c-c338-4ebe-a82a-e2fc1d1ff78a</code>. Nếu bạn xem giao dịch trong Zipkin, bạn sẽ thấy hai span bổ sung được thêm vào. Hình 9.19 cho thấy các span tùy chỉnh bổ sung được thêm khi bạn gọi endpoint licensing service để truy xuất thông tin licensing.</p>
+
+      <div class="diagram-annotated diagram-annotated--919" aria-label="Hình 9.19 trace Zipkin có chú thích">
+        <figure class="diagram">
+          <img src="../assets/images/page_0311_fig_9_19.png" width="1313" height="534" alt="Hình 9.19 — Trace Zipkin hiển thị các span tùy chỉnh readLicensingDataFromRedis và getOrgDBCall">
+        </figure>
+        <div class="diagram-callouts" aria-label="Chú thích Hình 9.19">
+          <p class="listing-callout">Các span tùy chỉnh của bạn giờ đã xuất hiện trong trace giao dịch.</p>
+        </div>
+      </div>
+
+      <figure class="diagram fig-caption-only" aria-label="Chú thích Hình 9.19">
+        <figcaption><strong>Hình 9.19</strong><br>Khi các span tùy chỉnh đã được định nghĩa, chúng giờ sẽ xuất hiện trong trace giao dịch.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

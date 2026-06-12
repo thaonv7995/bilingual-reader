@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 4: Cân bằng tải phía client</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered li p {
+      margin: 0 0 1.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered li p.continued {
+      padding-left: 3mm;
+    }
+    .prose-page.chapter-page .footnotes {
+      margin: 0 0 2.5mm;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+    .prose-page.chapter-page .footnotes p {
+      text-indent: 0;
+      margin: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0126.html">← Trước</a>
+    <a href="page_0128.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">102</span>
+        <span class="rh-center">CHƯƠNG 4 <em>Về service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>Tùy vào cách triển khai khám phá dịch vụ, cơ chế lan truyền có thể dùng danh sách dịch vụ được mã hóa cứng để lan truyền tới hoặc dùng giao thức multi-casting như giao thức &ldquo;gossip&rdquo;<sup>2</sup> hoặc giao thức &ldquo;infection-style&rdquo;<sup>3</sup> để cho phép các node khác &ldquo;khám phá&rdquo; các thay đổi trong cluster.</p>
+
+      <p>Cuối cùng, mỗi instance dịch vụ sẽ đẩy trạng thái lên hoặc có trạng thái được kéo từ dịch vụ khám phá dịch vụ. Bất kỳ dịch vụ nào không trả về health check tốt sẽ bị loại khỏi pool các instance dịch vụ khả dụng.</p>
+
+      <p>Khi một dịch vụ đã đăng ký với dịch vụ khám phá dịch vụ, nó sẵn sàng để được ứng dụng hoặc dịch vụ cần dùng các khả năng của nó sử dụng. Tồn tại nhiều mô hình để client &ldquo;khám phá&rdquo; một dịch vụ. Client có thể phụ thuộc hoàn toàn vào engine khám phá dịch vụ để phân giải vị trí dịch vụ mỗi lần dịch vụ được gọi. Với cách tiếp cận này, engine khám phá dịch vụ sẽ được gọi mỗi lần thực hiện lời gọi tới một instance microservice đã đăng ký. Thật không may, cách tiếp cận này dễ gãy vì service client hoàn toàn phụ thuộc vào engine khám phá dịch vụ đang chạy để tìm và gọi dịch vụ.</p>
+
+      <p>Một cách tiếp cận mạnh mẽ hơn là dùng cái gọi là cân bằng tải phía client.<sup>4</sup> Hình 4.3 minh họa cách tiếp cận này.</p>
+
+      <p class="no-indent">Trong mô hình này, khi actor tiêu thụ cần gọi một dịch vụ</p>
+
+      <ol class="manning-numbered" aria-label="Các bước cân bằng tải phía client">
+        <li>Nó sẽ liên hệ dịch vụ khám phá dịch vụ để lấy tất cả instance dịch vụ mà service consumer yêu cầu, rồi cache dữ liệu cục bộ trên máy của service consumer.</li>
+        <li>Mỗi lần client muốn gọi dịch vụ, service consumer sẽ tra thông tin vị trí của dịch vụ từ cache. Thường thì cache phía client sẽ dùng thuật toán cân bằng tải đơn giản như thuật toán cân bằng tải &ldquo;round-robin&rdquo; để đảm bảo các lần gọi dịch vụ được phân bổ trên nhiều instance dịch vụ.</li>
+        <li>Client sau đó sẽ định kỳ liên hệ dịch vụ khám phá dịch vụ và làm mới cache instance dịch vụ của mình. Cache phía client có tính nhất quán cuối cùng (eventually consistent), nhưng luôn có rủi ro là giữa lúc client liên hệ instance khám phá dịch vụ để làm mới và các lần gọi được thực hiện, các lần gọi có thể bị định tuyến tới instance dịch vụ không khỏe mạnh.
+          <p class="continued">Nếu, trong quá trình gọi dịch vụ, lời gọi dịch vụ thất bại, cache khám phá dịch vụ cục bộ sẽ bị vô hiệu hóa và service discovery client sẽ cố làm mới các mục từ service discovery agent.</p>
+        </li>
+      </ol>
+
+      <p>Giờ hãy áp dụng mẫu khám phá dịch vụ tổng quát vào miền bài toán EagleEye của bạn.</p>
+
+      <div class="footnotes">
+        <p><sup>2</sup> <a href="https://en.wikipedia.org/wiki/Gossip_protocol">https://en.wikipedia.org/wiki/Gossip_protocol</a></p>
+        <p><sup>3</sup> <a href="https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf">https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf</a></p>
+        <p><sup>4</sup> <a href="https://en.wikipedia.org/wiki/Load_balancing_(computing)#Client-Side_Random_Load_Balancing">https://en.wikipedia.org/wiki/Load_balancing_(computing)#Client-Side_Random_Load_Balancing</a></p>
+      </div>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

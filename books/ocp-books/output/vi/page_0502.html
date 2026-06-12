@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0501.html">← Trước</a>
+    <a href="page_0503.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">502</span>
+      </header>
+
+      <p class="no-indent">lớp và do đó, có sẵn trong tất cả các Đối tượng (Object). Chỉ một Thread (Luồng) đã khóa monitor liên kết với Đối tượng (Object) mới được phép gọi các phương thức này trên Đối tượng (Object) đó, nếu không Thread (Luồng) sẽ nhận một <code>java.lang.IllegalMonitorStateException</code>, vốn là một Ngoại lệ unchecked (Unchecked Exception). Trước hết, chúng ta hãy xem các phương thức này làm gì và sau đó xem cách sử dụng của chúng.</p>
+
+      <ol class="numbered">
+        <li>
+          <p><code>void</code> <code>wait()</code>&nbsp;và <code>void</code> <code>wait(long timeoutMillis)</code>&nbsp;và <code>wait(long
+          timeoutMillis, int nanos)</code>&nbsp;- Khi một Thread (Luồng) gọi bất kỳ phương thức nào trong số này trên một Đối tượng (Object),
+          <strong>ba</strong> điều sẽ xảy ra. <strong>Đầu tiên</strong>, Thread (Luồng) được đưa vào một &ldquo;danh sách chờ&rdquo; gồm các Thread (Luồng) do JVM duy trì cho Đối tượng (Object) đó, <strong>thứ hai</strong>, monitor của Đối tượng (Object) mà phương thức này được gọi
+          sẽ được mở khóa, và <strong>thứ ba</strong>, Thread (Luồng) này sẽ chuyển sang trạng thái <code>WAIT</code>&nbsp;(hoặc trạng thái&nbsp;<code>TIMED_WAIT</code>&nbsp;nếu đối số timeout cũng được truyền vào). Điều này có nghĩa là bộ lập lịch (scheduler) sẽ không lập lịch cho Thread (Luồng)
+          đang gọi để thực thi cho đến khi nó được đưa trở lại trạng thái <code>RUNNABLE</code>.</p>
+          <p>Kết quả của việc gọi phương thức này là bất kỳ Thread (Luồng) <code>RUNNABLE</code>&nbsp;nào muốn khóa
+          cùng một monitor đều có thể khóa nó vì monitor hiện đã được mở khóa.</p>
+        </li>
+        <li>
+          <p><code>void</code> <code>notify()</code>&nbsp;và <code>void</code> <code>notifyAll()</code>&nbsp;- Khi một Thread (Luồng) gọi <code>notify()</code>&nbsp;trên một
+          Đối tượng (Object), JVM sẽ chuyển <strong>bất kỳ một</strong> Thread (Luồng) nào khác trong số các Thread (Luồng) đã được đưa vào danh sách chờ
+          của Đối tượng (Object) này thành&nbsp;<code>RUNNABLE</code>. Không có gì đảm bảo Thread (Luồng) nào sẽ được chuyển thành <code>RUNNABLE</code>. Nó
+          có thể là bất kỳ Thread (Luồng) nào trong số đó. Phương thức <code>notifyAll()</code>&nbsp;hoạt động theo cách tương tự, ngoại trừ việc
+          JVM sẽ chuyển <strong>tất cả</strong>&nbsp;các Thread (Luồng) đang chờ trên Đối tượng (Object) này thành&nbsp;<code>RUNNABLE</code>.</p>
+        </li>
+      </ol>
+
+      <p>Bí quyết khi sử dụng các phương thức này là phải hiểu rằng chỉ vì một Thread (Luồng) trở thành
+      <code>RUNNABLE</code>&nbsp;không có nghĩa là nó đã giành được monitor và sẽ có thể tiếp tục thực thi
+      phần mã găng (critical section). Nó chỉ có nghĩa là Thread (Luồng) đó hiện đang cạnh tranh để khóa cùng một monitor
+      cùng với các Thread (Luồng) khác đang cố gắng khóa cùng một monitor đó. Chỉ một Thread (Luồng) có thể
+      khóa monitor và tất cả các Thread (Luồng) khác sẽ bị đưa vào trạng thái <code>BLOCKED</code>. Chúng sẽ trở thành <code>RUNNABLE</code>
+      trở lại khi monitor được mở khóa.</p>
+
+      <p>Hãy để tôi chỉ cho bạn cách kỹ thuật này có thể được sử dụng để triển khai chương trình tính giai thừa của chúng ta:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class Factorial implements Runnable{</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

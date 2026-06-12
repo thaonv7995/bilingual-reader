@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 22: Date and Time API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      border-left-color: #b91c1c;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0632.html">← Prev</a>
+    <a href="page_0634.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">633</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>PT24H</code></pre>
+      </figure>
+
+      <h3 class="section-title section-title--sub">The <code>from</code>&nbsp;methods<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The <code>from</code>&nbsp;methods are similar to the <code>of</code>&nbsp;methods except that instead of specifying a value for
+      each property individually, you specify another <code>TemporalAccessor</code>&nbsp;object. This
+      <code>TemporalAccessor</code>&nbsp;object is used as a source for all properties that are required to create the
+      desired object. For example:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>LocalDateTime ldt = LocalDateTime.now();
+LocalDate ld1 = LocalDate.from(ldt);
+LocalTime lt =  LocalTime.from(ldt);
+OffsetDateTime odt1 = OffsetDateTime.from(ZonedDateTime.now());</code></pre>
+      </figure>
+
+      <p>Observe that a <code>LocalDateTime</code>&nbsp;has a date as well as a time component and therefore, it is
+      possible to use a <code>LocalDateTime</code>&nbsp;to create a <code>LocalDate</code>&nbsp;as well as a <code>LocalTime</code>&nbsp;. But it is
+      not possible to use a <code>LocalDate</code>&nbsp;to create a <code>LocalDateTime</code>&nbsp;or a <code>LocalTime</code>&nbsp;because
+      <code>LocalDate</code>&nbsp;does not have a time component. Similarly, you can&rsquo;t create a <code>ZonedDateTime</code>
+      using a <code>LocalDateTime</code>&nbsp;because <code>LocalDateTime</code>&nbsp;doesn&rsquo;t have zone information. Thus, the
+      following code will throw a <code>DateTimeException</code>&nbsp;at run time:</p>
+
+      <figure class="code-snippet code-snippet--error">
+        <pre class="code-block"><code>LocalDate ld =  LocalDate.now();
+LocalDateTime ldt = LocalDateTime.from(ld); //DateTimeException at run
+time
+LocalTime lt = LocalTime.from(ld); //DateTimeException at run time
+ZonedDateTime zdt = ZonedDateTime.from(LocalDateTime.now());
+//DateTimeException at run time</code></pre>
+      </figure>
+
+      <p>Similarly, you can create a <code>Period</code>&nbsp;using another <code>Period</code>&nbsp;but you can&rsquo;t create a <code>Period</code>
+      using a <code>Duration</code>&nbsp;because <code>Duration</code>&nbsp;deals with hours, minutes, and</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

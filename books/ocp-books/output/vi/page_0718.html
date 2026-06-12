@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--major {
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0717.html">← Trước</a>
+    <a href="page_0719.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">718</span>
+      </header>
+
+      <p class="no-indent"><code>ALL-UNNAMED</code>. Điều này hữu ích khi một module không export một package thông qua mệnh đề exports
+      trong <code>module-info</code>&nbsp;nhưng một module khác có sự phụ thuộc tại thời điểm biên dịch (compile-time dependency) vào nó.</p>
+
+      <p class="no-indent"><strong class="run-in">2. <code>--add-reads module=other-module(,other-module)*</code> :</strong> Tùy chọn này chỉ định
+      các module bổ sung được coi là bắt buộc bởi một module nhất định.</p>
+
+      <p>Cũng có một vài tùy chọn khác nữa nhưng bạn có thể bỏ qua chúng cho mục đích của kỳ thi.
+      Kỳ thi không đi sâu vào chi tiết của các tùy chọn này nhưng một số thí sinh đã báo cáo rằng họ đã gặp
+      các tùy chọn này trong kỳ thi và do đó, tốt hơn là nên biết về chúng.</p>
+
+      <h3 class="section-title section-title--major">23.7 Tìm hiểu về Modular JDK và các Công cụ<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--minor">23.7.1 Modular JDK<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Nếu bạn nhìn vào kích thước của thư viện runtime Java, thật khó tin rằng ban đầu Java được
+      thiết kế để chạy trên cả những thiết bị nhỏ nhất. Giờ đây, ba mươi năm sau, Java đã tiến xa
+      hơn mục tiêu của nó. Nó đã trở nên cực kỳ hữu ích trong việc xây dựng các ứng dụng lớn, cực kỳ quan trọng (mission-critical)
+      cũng như các ứng dụng desktop nhỏ. Một trong những lý do cho sự thành công của nó là sự tiến hóa liên tục của
+      các tính năng, công cụ và thư viện được đóng gói đi kèm với Java.</p>
+
+      <p>Một cam kết quan trọng khác của Java là WORA, &ldquo;Write Once Run Anywhere&rdquo; (Viết một lần, chạy mọi nơi). Java đi kèm với một
+      bộ API duy nhất mà bạn có thể sử dụng để viết một ứng dụng hoạt động giống hệt nhau trên mọi nền tảng.
+      Java đã đạt được thành tựu này bằng cách phát triển một môi trường runtime giúp ẩn đi sự khác biệt của
+      phần cứng bên dưới và cung cấp một tập hợp các tính năng chung.</p>
+
+      <p>Qua nhiều năm, các loại và khả năng của các thiết bị có sự khác biệt rất lớn và nó trở nên</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • CHỨNG CHỈ JAVA SE 17 &amp; 21</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

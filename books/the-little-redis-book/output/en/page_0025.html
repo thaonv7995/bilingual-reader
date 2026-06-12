@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 25</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0024.html">← Prev</a>
+      <span>Page 25 / 30</span>
+      <a href="page_0026.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<p class="lead">The above code gets the details for all of Leto's male friends. Notice that to call Redis commands within our script we use the <code>redis.call("command", ARG1, ARG2, ...)</code> method.</p><p>If you are new to Lua, you should go over each line carefully. It might be useful to know that {} creates an empty table (which can act as either an array or a dictionary), #TABLE gets the number of elements in the TABLE, and .. is used to concatenate strings.</p><p><code>eval</code> actually take 4 parameters. The second parameter should actually be the number of keys; however the Ruby driver automatically creates this for us. Why is this needed? Consider how the above looks like when executed from the CLI:</p><figure class="code-snippet"><pre class="code-block"><code>eval "....." "friends:leto" "m"
+vs
+eval "....." 1 "friends:leto" "m"</code></pre></figure><p>In the first (incorrect) case, how does Redis know which of the parameters are keys and which are simply arbitrary arguments? In the second case, there is no ambiguity.</p><p>This brings up a second question: why must keys be explicitly listed? Every command in Redis knows, at execution time, which keys are going to needed. This will allow future tools, like Redis Cluster, to distribute requests amongst multiple Redis servers. You might have spotted that our above example actually reads from keys dynamically (without having them passed to eval). An hget is issued on all of Leto's male friends. That's because the need to list keys ahead of time is more of a suggestion than a hard rule. The above code will run fine in a single-instance setup, or even with replication, but won't in the yet-released Redis Cluster.</p><h3 class="section-title">Script Management</h3><p>Even though scripts executed via <code>eval</code> are cached by Redis, sending the body every time you want to execute something isn't ideal. Instead, you can register the script with Redis and execute it's key. To do this you use the <code>script load</code> command, which returns the SHA1 digest of the script:</p><figure class="code-snippet"><pre class="code-block"><code>redis = Redis.new
+script_key = redis.script(:load, "THE_SCRIPT")</code></pre></figure><p>Once we've loaded the script, we can use <code>evalsha</code> to execute it:</p><figure class="code-snippet"><pre class="code-block"><code>redis.evalsha(script_key, ['friends:leto'], ['m'])</code></pre></figure><p><code>script kill</code>, <code>script flush</code> and <code>script exists</code> are the other commands that you can use to manage Lua scripts. They are used to kill a running script, removing all scripts from the internal cache and seeing if a script already exists within the cache.</p><h3 class="section-title">Libraries</h3><p>Redis' Lua implementation ships with a handful of useful libraries. While <code>table.lib</code>, <code>string.lib</code> and <code>math.lib</code> are quite useful, for me, <code>cjson.lib</code> is worth singling out. First, if you find yourself having to pass multiple arguments to a</p>
+      <p class="page-folio">24</p>
+    </article>
+  </main>
+</body>
+</html>

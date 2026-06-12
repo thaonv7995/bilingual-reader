@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0458.html">← Trước</a>
+    <a href="page_0460.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">459</span>
+      </header>
+
+      <p class="no-indent">có thể đã từng sử dụng các ứng dụng bị &ldquo;treo&rdquo; một lúc khi bạn nhấp vào một nút. Đó là do
+      ứng dụng có lẽ đang bận thực hiện tác vụ liên quan đến cú nhấp nút đó và không thể
+      phản hồi các di chuyển chuột. Nó không thể xử lý hai tác vụ cùng một lúc vì nó được viết
+      không tốt hoặc ngôn ngữ hay nền tảng mà ứng dụng được xây dựng trên đó không hỗ trợ
+      lập trình đồng thời. May mắn thay, hầu hết các ngôn ngữ lập trình hiện đại đều hỗ trợ
+      lập trình đồng thời.</p>
+
+      <p><strong>Multi-threading</strong> và <strong>Asynchronous functions (Hàm bất đồng bộ)</strong> là hai kỹ thuật khác nhau được
+      các ngôn ngữ lập trình cung cấp để thực thi các tác vụ một cách đồng thời. <strong>Java</strong> cung cấp multi-threading, trong khi
+      <strong>JavaScript</strong> và <strong>Dart</strong> cung cấp các hàm bất đồng bộ. <strong>C#</strong> cung cấp cả hai. Nhiệm vụ của
+      ngôn ngữ và nền tảng là ánh xạ việc thực thi các hoạt động đồng thời tới các resource (tài nguyên)
+      được cung cấp bởi phân hệ bên dưới. Ví dụ, JVM ánh xạ nhiều thread (luồng) được tạo bởi
+      một chương trình Java tới nhiều thread (luồng) của hệ điều hành (OS) bên dưới. Đến lượt mình, hệ điều hành
+      thực thi các thread (luồng) của nó trên một hoặc nhiều CPU logic được cung cấp bởi phần cứng bên dưới trên cơ sở
+      chia sẻ thời gian (time sharing). Các CPU logic có thể sử dụng công nghệ siêu phân luồng (hyperthreading) bên trong để thực thi
+      các chỉ thị trên một hoặc nhiều CPU vật lý bên trong chip. Không có quy tắc chung cố định nào về cách ánh xạ này. Nó
+      thực sự phụ thuộc vào kinh nghiệm và mục tiêu của các kiến trúc sư ngôn ngữ và nền tảng.</p>
+
+      <h3 class="section-title">20.1.1 Tổng quan về đa nhiệm trong thế giới Java<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Sơ đồ dưới đây cung cấp một cái nhìn tổng quan về các thành phần khác nhau liên quan đến việc đạt được
+      đa nhiệm trong thế giới Java.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

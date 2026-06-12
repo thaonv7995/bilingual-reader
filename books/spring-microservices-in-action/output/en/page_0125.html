@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: 4.2 On service discovery in the cloud</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0124.html">← Prev</a>
+    <a href="page_0126.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">100</span>
+        <span class="rh-center">CHAPTER 4 <em>On service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">4.2 On service discovery in the cloud</h4>
+
+      <p>The solution for a cloud-based microservice environment is to use a service-discovery mechanism that&rsquo;s</p>
+
+      <ul class="manning-bullets" aria-label="Cloud service discovery requirements">
+        <li><strong class="run-in">Highly available</strong>&mdash;Service discovery needs to be able to support a &ldquo;hot&rdquo; clustering environment where service lookups can be shared across multiple nodes in a service discovery cluster. If a node becomes unavailable, other nodes in the cluster should be able to take over.</li>
+        <li><strong class="run-in">Peer-to-peer</strong>&mdash;Each node in the service discovery cluster shares the state of a service instance.</li>
+        <li><strong class="run-in">Load balanced</strong>&mdash;Service discovery needs to dynamically load balance requests across all service instances to ensure that the service invocations are spread across all the service instances managed by it. In many ways, service discovery replaces the more static, manually managed load balancers used in many early web application implementations.</li>
+        <li><strong class="run-in">Resilient</strong>&mdash;The service discovery&rsquo;s client should &ldquo;cache&rdquo; service information locally. Local caching allows for gradual degradation of the service discovery feature so that if service discovery service does become unavailable, applications can still function and locate the services based on the information maintained in its local cache.</li>
+        <li><strong class="run-in">Fault-tolerant</strong>&mdash;Service discovery needs to detect when a service instance isn&rsquo;t healthy and remove the instance from the list of available services that can take client requests. It should detect these faults with services and take action without human intervention.</li>
+      </ul>
+
+      <p class="no-indent">In the following section(s) we&rsquo;re going to</p>
+
+      <ul class="manning-bullets" aria-label="Topics covered in this section">
+        <li>Walk through the conceptual architecture of how a cloud-based service discovery agent will work</li>
+        <li>Show how client-side caching and load-balancing allows a service to continue to function even when the service discovery agent is unavailable</li>
+        <li>See how to implement service discovery using Spring Cloud and Netflix&rsquo;s Eureka service discovery agent</li>
+      </ul>
+
+      <h4 class="subsection-title">4.2.1 The architecture of service discovery</h4>
+
+      <p>To begin our discussion around service discovery architecture, we need to understand four concepts. These general concepts are shared across all service discovery implementations:</p>
+
+      <ul class="manning-bullets" aria-label="Service discovery architecture concepts">
+        <li><strong class="run-in">Service registration</strong>&mdash;How does a service register with the service discovery agent?</li>
+        <li><strong class="run-in">Client lookup of service address</strong>&mdash;What&rsquo;s the means by which a service client looks up service information?</li>
+        <li><strong class="run-in">Information sharing</strong>&mdash;How is service information shared across nodes?</li>
+        <li><strong class="run-in">Health monitoring</strong>&mdash;How do services communicate their health back to the service discovery agent?</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

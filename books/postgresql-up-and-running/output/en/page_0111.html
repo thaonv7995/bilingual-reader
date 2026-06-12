@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0110.html">← Prev</a>
+    <a href="page_0112.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">111</span>
+      </header>
+
+      <p class="no-indent">can appear only in the FROM clause. <span class="accent-word">Example 5-18</span> revisits our unbalanced arrays using
+      the version 9.4 construct.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-18.</strong> Unnesting unbalanced arrays with multiargument unnest</figcaption>
+        <pre class="code-block"><code>SELECT * FROM unnest('{blind,mouse}'::text[], '{1,2,3}'::int[]) As f(t,i);
+ t      | i
+-------+---
+ blind  | 1
+ mouse  | 2
+&lt;NULL&gt; | 3</code></pre>
+      </figure>
+
+      <h3 class="section-title">Range Types</h3>
+      <p class="no-indent">Range data types are data types introduced in version 9.2 that define a range of values.
+      Besides adding the convenience of having to deal with one fewer field, PostgreSQL also
+      rolled out many operators and functions to identify overlapping ranges, check to see if
+      a value falls inside the range, and combine adjacent smaller ranges into larger ranges.</p>
+
+      <p>Prior to range types, we had to kludge our own functions. These often were clumsy and
+      slow, and didn’t always produce the expected results. We’ve been so happy with ranges
+      that we’ve converted all of our temporal tables to use them where possible. We hope you
+      share our joy.</p>
+
+      <p>Range types replace the need to use two separate fields to represent ranges. Suppose we
+      want all integers between -2 and 2, but not including 2. The range representation would
+      be [-2,2). The square bracket indicates a range that is closed on that end, whereas a
+      parenthesis indicates a range that is open on that end. Thus, [-2,2) includes exactly
+      four integers: -2, -1, 0, 1. Similarly:</p>
+
+      <ul class="bullets">
+        <li>The range (-2,2] would have four integers: -1, 0, 1, 2.</li>
+        <li>The range (-2,2) would have three integers: -1, 0, 1.</li>
+        <li>The range [-2,2] would have five integers: -2, -1, 0, 1, 2.</li>
+      </ul>
+
+      <h3 class="subsection-title">Discrete Versus Continuous Ranges</h3>
+      <p class="no-indent">PostgreSQL makes a distinction between discrete and continuous ranges. A range of
+      integers or dates is discrete because you can enumerate each value within the range.
+      Think of dots on a number line. A range of numerics or timestamps is continuous,
+      because an infinite number of values lie between the end points.</p>
+
+      <p>A discrete range has multiple representations. Our earlier example of [-2,2) can be
+      represented in the following ways and still include the same number of values in the
+      range: [-2,1], (-3,1], (-3,2), [-2,2). Of these four representations, the one with
+      [) is considered the canonical form. There’s nothing magical about closed-open ranges</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Range Types<span class="sep">|</span>93</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

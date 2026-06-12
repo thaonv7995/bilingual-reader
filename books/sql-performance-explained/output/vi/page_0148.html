@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 6: Sorting and Grouping</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.matrix-figure {
+      margin: 2mm 0 0;
+      max-width: 100%;
+    }
+
+    .prose-page figure.matrix-figure figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+      text-indent: 0;
+    }
+
+    .prose-page figure.matrix-figure table.data-table {
+      font-size: 9.5pt;
+      line-height: 1.2;
+    }
+
+    .prose-page figure.matrix-figure table.data-table th,
+    .prose-page figure.matrix-figure table.data-table td {
+      text-align: center;
+      vertical-align: middle;
+      padding: 1.4mm 1.5mm;
+    }
+
+    .prose-page figure.matrix-figure table.data-table th:first-child,
+    .prose-page figure.matrix-figure table.data-table td:first-child {
+      text-align: left;
+      font-weight: 400;
+    }
+
+    .prose-page figure.matrix-figure table.data-table thead th {
+      font-weight: 700;
+      background: transparent;
+    }
+
+    .prose-page figure.matrix-figure .mark-yes {
+      color: #2e7d32;
+      font-weight: 700;
+    }
+
+    .prose-page figure.matrix-figure .mark-no {
+      color: #c62828;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 6: Sắp xếp và Nhóm</p>
+
+      <p class="no-indent"><code>NULLS FIRST</code>. Chỉ có cơ sở dữ liệu PostgreSQL (kể từ phiên bản 8.3) hỗ trợ bộ sửa đổi <code>NULLS</code> trong cả câu lệnh <code><strong>order by</strong></code> và định nghĩa chỉ mục.</p>
+
+      <p>Tổng quan sau đây tóm tắt các tính năng được cung cấp bởi các cơ sở dữ liệu khác nhau.</p>
+
+      <figure class="matrix-figure">
+        <figcaption>Hình&nbsp;6.5.&nbsp;Ma trận Cơ sở dữ liệu/Tính năng</figcaption>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">MySQL</th>
+              <th scope="col">Oracle</th>
+              <th scope="col">PostgreSQL</th>
+              <th scope="col">SQL Server</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Đọc chỉ mục ngược</th>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Sắp xếp theo <code>ASC</code>/<code>DESC</code></th>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Chỉ mục <code>ASC</code>/<code>DESC</code></th>
+              <td><span class="mark-no" aria-label="no">&#10007;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Sắp xếp theo <code>NULLS FIRST</code>/<code>LAST</code></th>
+              <td><span class="mark-no" aria-label="no">&#10007;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-no" aria-label="no">&#10007;</span></td>
+            </tr>
+            <tr>
+              <th scope="row">Thứ tự mặc định <code>NULLS</code></th>
+              <td>Đầu tiên</td>
+              <td>Cuối cùng</td>
+              <td>Cuối cùng</td>
+              <td>Đầu tiên</td>
+            </tr>
+            <tr>
+              <th scope="row">Chỉ mục <code>NULLS FIRST</code>/<code>LAST</code></th>
+              <td><span class="mark-no" aria-label="no">&#10007;</span></td>
+              <td><span class="mark-no" aria-label="no">&#10007;</span></td>
+              <td><span class="mark-yes" aria-label="yes">&#10003;</span></td>
+              <td><span class="mark-no" aria-label="no">&#10007;</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">138</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

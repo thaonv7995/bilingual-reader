@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Hình 5.10 correlation ID</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page figure.diagram figcaption + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0171.html">← Prev</a>
+    <a href="page_0173.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Ngữ cảnh thread và Hystrix</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">147</span>
+      </header>
+
+      <figure class="diagram" aria-label="Hình 5.10">
+        <img src="../assets/images/page_0172_fig_5_10.png" width="1001" height="250" alt="Hình 5.10 — Thêm correlation ID vào HTTP header của lời gọi dịch vụ licensing">
+        <figcaption><strong>Hình 5.10</strong><br>Thêm correlation ID vào HTTP header của lời gọi dịch vụ licensing</figcaption>
+      </figure>
+
+      <p class="no-indent">Sau khi lời gọi này được gửi, bạn sẽ thấy ba thông báo log ghi ra correlation ID đã truyền vào khi nó đi qua các class UserContext, LicenseServiceController và LicenseServer:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>UserContext Correlation id: TEST-CORRELATION-ID
+LicenseServiceController Correlation id: TEST-CORRELATION-ID
+LicenseService.getLicenseByOrg Correlation:</code></pre>
+      </figure>
+
+      <p>Như mong đợi, khi lời gọi chạm tới phương thức được Hystrix bảo vệ trên LicenseService.getLicensesByOrder(), bạn sẽ không thấy giá trị correlation ID nào được ghi ra. May mắn là Hystrix và Spring Cloud cung cấp cơ chế để truyền ngữ cảnh của thread cha sang các thread do Hystrix thread pool quản lý. Cơ chế này được gọi là HystrixConcurrencyStrategy.</p>
+
+      <h4 class="subsection-title">5.9.2 HystrixConcurrencyStrategy trong thực tế</h4>
+
+      <p>Hystrix cho phép bạn định nghĩa chiến lược đồng thời tùy chỉnh để bọc các lời gọi Hystrix và cho phép bạn inject thêm ngữ cảnh thread cha vào các thread do lệnh Hystrix quản lý. Để triển khai HystrixConcurrencyStrategy tùy chỉnh, bạn cần thực hiện ba bước:</p>
+
+      <ol class="manning-numbered" aria-label="Các bước triển khai HystrixConcurrencyStrategy tùy chỉnh">
+        <li>Định nghĩa class Hystrix Concurrency Strategy tùy chỉnh của bạn</li>
+        <li>Định nghĩa class Java Callable để inject UserContext vào Hystrix Command</li>
+        <li>Cấu hình Spring Cloud để dùng Hystrix Concurrency Strategy tùy chỉnh của bạn</li>
+      </ol>
+
+      <p>Tất cả ví dụ về HystrixConcurrencyStrategy có thể tìm thấy trong package licensing-service/src/main/java/com/thoughtmechanix/licenses/hystrix.</p>
+
+      <h3 class="section-title">Định nghĩa class chiến lược đồng thời Hystrix tùy chỉnh của bạn</h3>
+
+      <p>Việc đầu tiên bạn cần làm là định nghĩa HystrixConcurrencyStrategy của bạn. Theo mặc định, Hystrix chỉ cho phép bạn định nghĩa một HystrixConcurrencyStrategy cho mỗi ứng dụng. Spring Cloud đã định nghĩa sẵn một chiến lược đồng thời dùng để xử lý việc truyền thông tin bảo mật Spring. May mắn là Spring Cloud cho phép bạn nối chuỗi các chiến lược đồng thời Hystrix để bạn có thể định nghĩa và dùng chiến lược đồng thời riêng bằng cách &ldquo;gắn&rdquo; nó vào chiến lược đồng thời Hystrix.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

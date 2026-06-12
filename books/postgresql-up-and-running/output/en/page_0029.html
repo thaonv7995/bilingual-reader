@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 1: The Basics (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ul.bullets figure.code-snippet {
+      margin: 1.5mm 0 1.5mm 4.5mm;
+    }
+    .prose-page.chapter-page ul.bullets figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10pt;
+      line-height: 1.25;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0028.html">← Prev</a>
+    <a href="page_0030.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <ul class="bullets">
+        <li>You can easily move all assets from one tablespace to another using the syntax
+        <code>ALTER TABLESPACE old_space MOVE ALL TO new_space;</code>.</li>
+        <li>You can use a number for set-returning functions. Often, you need a row number
+        when extracting denormalized data stored in arrays, <code>hstore</code>, composite types, and
+        so on. Now you can add the system column <code>ordinality</code> (an ANSI SQL standard)
+        to your output. Here is an example using an <code>hstore</code> object and the <code>each</code> function
+        that returns a key-value pair:
+          <figure class="code-snippet">
+            <pre class="code-block"><code><strong>SELECT</strong> ordinality, key, value
+ <strong>FROM</strong> each('breed=&gt;pug,cuteness=&gt;high'::hstore) <strong>WITH</strong> ordinality;</code></pre>
+          </figure>
+        </li>
+        <li>You can use SQL to alter system-configuration settings. The <code>ALTER system SET ...</code>
+        construct allows you to set global-system settings normally set in <i>postgresql.conf</i>,
+        as detailed in <span class="accent-word">“postgresql.conf” on page 18</span>.</li>
+        <li>Triggers can be used on foreign tables. When someone half a world away edits data,
+        your trigger will catch this event. We’re not sure how well this will perform with the
+        expected latency in foreign tables when the foreign table is very far away.</li>
+        <li>A new <code>unnest</code> function predictably allocates arrays of different sizes into columns.</li>
+        <li>A <code>ROWS FROM</code> construct allows the easy use of multiple set-returning functions in a
+        series, even if they have an unbalanced set of elements in each set:
+          <figure class="code-snippet">
+            <pre class="code-block"><code><strong>SELECT</strong> * <strong>FROM</strong> <strong>ROWS</strong> <strong>FROM</strong> (
+jsonb_each('{"a":"foo1","b":"bar"}'::jsonb),
+jsonb_each('{"c":"foo2"}'::jsonb)) x
+(a1,a1_val,a2_val);</code></pre>
+          </figure>
+        </li>
+        <li>You can code dynamic background workers in C to do work as needed. A trivial
+        example is available in the version 9.4 source code in the <i>contrib/worker_spi</i> direc‐
+        tory.</li>
+      </ul>
+
+      <h3 class="tool-title">PostgreSQL 9.3: New Features</h3>
+      <p class="no-indent">The notable features that first appeared in version 9.3 (released in 2013) are:</p>
+
+      <ul class="bullets">
+        <li>The ANSI SQL standard <code>LATERAL</code> clause was added. A <code>LATERAL</code> construct allows
+        <code>FROM</code> clauses with joins to reference variables on the other side of the join. Without
+        this, cross-referencing can take place only in the join conditions. <code>LATERAL</code> is indis‐
+        pensable when you work with functions that return sets, such as <code>unnest</code>, <code>generate_series</code>,
+        regular expression table returns, and numerous others. See <span class="accent-word">“Lateral
+        Joins” on page 139</span>.</li>
+        <li>Parallel <code>pg_dump</code> is available. Version 8.4 brought us parallel restore, and now we
+        have parallel backup to expedite backing up of huge databases.</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">What’s New in Latest Versions of PostgreSQL?<span class="sep">|</span>11</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

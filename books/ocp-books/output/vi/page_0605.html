@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0604.html">← Trước</a>
+    <a href="page_0606.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">605</span>
+      </header>
+
+      <ol class="numbered">
+        <li>Làm thế nào để tạo một stream song song?</li>
+        <li>Một stream song song sử dụng bao nhiêu Thread (Luồng)?</li>
+        <li>Việc xử lý được phân chia giữa nhiều Thread (Luồng) như thế nào?</li>
+        <li>Điều gì xảy ra với thứ tự của các phần tử?</li>
+        <li>Điều gì xảy ra khi các phép toán stream có trạng thái (stateful)?</li>
+        <li>Điều gì xảy ra khi các hàm có trạng thái (stateful) được truyền dưới dạng đối số hành vi (behavioral arguments)?</li>
+        <li>Kết quả của một phép toán thu gọn (reduction operation) được tạo ra như thế nào khi sử dụng một parallel stream?</li>
+        <li>Tính an toàn luồng (thread safety) được đảm bảo như thế nào khi sử dụng các phép toán thu gọn có thể biến đổi (mutable reduction)?</li>
+      </ol>
+
+      <p class="no-indent">Hãy cùng lần lượt tìm hiểu các điểm trên.</p>
+
+      <h3 class="section-title">Tạo các stream song song<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--sub">Các intermediate operation <code>parallel()</code>&nbsp;và <code>sequential()</code></h3>
+
+      <p class="no-indent">Cách dễ nhất để tạo một stream song song là thêm intermediate operation <code>parallel()</code>&nbsp;vào
+      pipeline của stream. Việc nó được thêm vào vị trí nào trong pipeline không quan trọng, miễn là trước
+      terminal operation. Vị trí thêm không quan trọng bởi vì việc gọi
+      <code>parallel()</code>&nbsp;thực chất không làm gì ngoài việc thiết lập một cờ (flag) để báo cho stream framework
+      xử lý pipeline của stream song song. Một stream hoặc là song song, hoặc là không; và tất cả các
+      intermediate operation, cho dù xuất hiện trước hay sau lời gọi <code>parallel()</code>&nbsp;đều
+      bị ảnh hưởng bởi thiết lập này.</p>
+
+      <p>Bạn có thể kiểm tra xem một stream có song song hay không bằng cách gọi method <code>isParallel()</code>&nbsp;trên
+      <code>Stream</code>&nbsp;và nếu bạn không muốn một stream được xử lý song song (bạn sẽ sớm thấy rằng
+      có những lý do thực sự chính đáng để không muốn xử lý song song một stream), bạn có thể thêm
+      intermediate operation <code>sequential()</code>&nbsp;vào pipeline của stream. Việc bạn thêm các phép toán
+      <code>parallel()</code>&nbsp;và <code>sequential()</code>&nbsp;bao nhiêu lần trong pipeline của stream không quan trọng. Số phận của
+      stream được quyết định bởi phép toán cuối cùng mà bạn thêm vào bởi vì, như tôi đã đề cập trước đó, những
+      phép toán này chỉ bật hoặc tắt một cờ nội bộ.</p>
+
+      <h3 class="section-title section-title--sub">Method <code>parallelStream()</code></h3>
+
+      <p class="no-indent">Bên cạnh method <code>stream()</code>, interface <code>Collection</code>&nbsp;cũng có một default method tên là
+      <code>parallelStream()</code>&nbsp;trả về một stream song song. Method này chủ yếu</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

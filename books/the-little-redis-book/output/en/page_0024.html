@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 24</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0023.html">← Prev</a>
+      <span>Page 24 / 30</span>
+      <a href="page_0025.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<h3 class="section-title">Chapter 5 - Lua Scripting</h3><p class="lead">Redis 2.6 includes a built-in Lua interpreter which developers can leverage to write more advanced queries to be executed within Redis. It wouldn't be wrong of you to think of this capability much like you might view stored procedures available in most relational databases.</p><p>The most difficult aspect of mastering this feature is learning Lua. Thankfully, Lua is similar to most general purpose languages, is well documented, has an active community and is useful to know beyond Redis scripting. This chapter won't cover Lua in any detail; but the few examples we look at should hopefully serve as a simple introduction.</p><h3 class="section-title">Why?</h3><p>Before looking at how to use Lua scripting, you might be wondering why you'd want to use it. Many developers dislike traditional stored procedures, is this any different? The short answer is no. Improperly used, Redis' Lua scripting can result in harder to test code, business logic tightly coupled with data access or even duplicated logic.</p><p>Properly used however, it's a feature that can simplify code and improve performance. Both of these benefits are largely achieved by grouping multiple commands, along with some simple logic, into a custom-build cohesive function. Code is made simpler because each invocation of a Lua script is run without interruption and thus provides a clean way to create your own atomic commands (essentially eliminating the need to use the cumbersome watch command). It can improve performance by removing the need to return intermediary results - the final output can be calculated within the script.</p><p>The examples in the following sections will better illustrate these points.</p><h3 class="section-title">Eval</h3><p>The <code>eval</code> command takes a Lua script (as a string), the keys we'll be operating against, and an optional set of arbitrary arguments. Let's look at a simple example (executed from Ruby, since running multi-line Redis commands from its command-line tool isn't fun):</p><figure class="code-snippet"><pre class="code-block"><code>script = &lt;&lt;-eos
+local friend_names = redis.call('smembers', KEYS[1])
+local friends = {}
+for i = 1, #friend_names do
+  local friend_key = 'user:' .. friend_names[i]
+  local gender = redis.call('hget', friend_key, 'gender')
+  if gender == ARGV[1] then
+    table.insert(friends, redis.call('hget', friend_key, 'details'))
+  end
+end
+return friends
+eos
+Redis.new.eval(script, ['friends:leto'], ['m'])</code></pre></figure>
+      <p class="page-folio">23</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu — Kiểu Tùy Chỉnh</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0121.html">← Trước</a>
+    <a href="page_0123.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">122</span>
+      </header>
+
+      <p class="no-indent">Chúng tôi tạo một thể hiện của một con gà mà không thêm nó vào bảng gà; do đó
+      chúng tôi có thể lặp lại id mà không sợ hãi. Chúng tôi lấy mảng hai con gà, nhét chúng vào
+      một con vịt, và thêm nó vào bảng vịt. Chúng tôi lấy con vịt mà chúng tôi đã thêm và nhét nó vào bảng
+      gà tây.</p>
+
+      <p>Cuối cùng, hãy xem chúng ta có gì trong gà tây của mình:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM turkeys;
+output
+------------------------
+id |         ducks
+---+-----------------------
+ 1 | {"(1,\"{(1),(1)}\")"}</code></pre>
+      </figure>
+
+      <p>Chúng tôi cũng có thể thay thế các phần tử con của turducken của mình. Ví dụ tiếp theo thay thế con gà thứ hai trong gà tây đầu tiên của chúng tôi bằng một con gà khác:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>UPDATE turkeys SET ducks[1].chickens[2] = ROW(3)::chickens
+WHERE id = 1 RETURNING *;
+output
+--------------
+id |         ducks
+---+-----------------------
+ 1 | {"(1,\"{(1),(3)}\")"}</code></pre>
+      </figure>
+
+      <p>Chúng tôi đã sử dụng mệnh đề RETURNING như đã thảo luận trong <span class="accent-word">“Trả Về Các Bản Ghi Bị Ảnh Hưởng cho Người Dùng”</span> trên trang 128 để xuất bản ghi đã thay đổi.</p>
+
+      <p>PostgreSQL theo dõi nội bộ các phụ thuộc đối tượng. Cột <code>ducks.chickens</code>
+      phụ thuộc vào bảng <code>chickens</code>. Cột <code>turkeys.ducks</code> phụ thuộc vào bảng
+      <code>ducks</code>. Bạn sẽ không thể xóa bảng <code>chickens</code> mà không chỉ định CASCADE
+      hoặc trước tiên xóa cột <code>ducks.chickens</code>. Nếu bạn thực hiện CASCADE, cột <code>ducks.chick</code>‐
+      <code>ens</code> sẽ biến mất, và không có cảnh báo, gà tây của bạn sẽ không có gà trong
+      vịt của chúng.</p>
+
+      <h3 class="subsection-title">Xây Dựng Các Kiểu Dữ Liệu Tùy Chỉnh</h3>
+      <p class="no-indent">Mặc dù bạn có thể dễ dàng tạo các kiểu hợp thành chỉ bằng cách tạo một bảng, nhưng vào một thời điểm nào đó,
+      bạn có thể muốn xây dựng kiểu của riêng mình từ đầu. Ví dụ, hãy xây dựng một kiểu dữ liệu số phức với câu lệnh sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TYPE complex_number AS (r double precision, i double precision);</code></pre>
+      </figure>
+
+      <p>Chúng tôi có thể sử dụng số phức này làm kiểu cột:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE circuits (circuit_id serial PRIMARY KEY, ac_volt complex_number);</code></pre>
+      </figure>
+
+      <p>Chúng tôi có thể truy vấn bảng của mình với các câu lệnh như:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT circuit_id, (ac_volt).* FROM circuits;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">104<span class="sep">|</span>Chương 5: Kiểu Dữ Liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

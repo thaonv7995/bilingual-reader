@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Protecting the organization service using OAuth2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + figure.code-snippet {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0229.html">← Prev</a>
+    <a href="page_0231.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Protecting the organization service using OAuth2</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">205</span>
+      </header>
+
+      <p class="no-indent">create an HTTP header called <code>Authorization</code> and with a value of <code>Bearer XXXXX</code>. In the case of your call in figure 7.5, the HTTP header will be of the value <code>Bearer e9decabc-165b-4677-9190-2e0bf8341e0b</code>. The access token passed in is the access token returned when you called the <code>/auth/oauth/token</code> endpoint in figure 7.4.</p>
+
+      <p>If the OAuth2 access token is valid, the <code>/auth/user</code> endpoint will return information about the user, including what roles are assigned to them. For instance, from figure 7.10, you can see that the user <code>john.carnell</code> has the role of <code>USER</code>.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>Spring assigns the prefix of <code>ROLE_</code> to user&rsquo;s roles, so <code>ROLE_USER</code> means that <code>john.carnell</code> has the <code>USER</code> role.</p>
+      </aside>
+
+      <h3 class="section-title">7.3 Protecting the organization service using OAuth2</h3>
+
+      <p>Once you&rsquo;ve registered an application with your OAuth2 authentication service and set up individual user accounts with roles, you can begin exploring how to protect a resource using OAuth2. While the creation and management of OAuth2 access tokens is the responsibility of the OAuth2 server, in Spring, the definition of what user roles have permissions to do what actions occurs at the individual service level.</p>
+
+      <p class="block-indent">To set up a protected resource, you need to take the following actions:</p>
+
+      <ul class="manning-bullets" aria-label="Steps to set up a protected resource">
+        <li>Add the appropriate Spring Security and OAuth2 jars to the service you&rsquo;re protecting</li>
+        <li>Configure the service to point to your OAuth2 authentication service</li>
+        <li>Define what and who can access the service</li>
+      </ul>
+
+      <p>Let&rsquo;s start with one of the simplest examples of setting up a protected resource by taking your organization service and ensuring that it can only be called by an authenticated user.</p>
+
+      <h4 class="subsection-title">7.3.1 Adding the Spring Security and OAuth2 jars to the individual services</h4>
+
+      <p>As usual with Spring microservices, you have to add a couple of dependencies to the organization service&rsquo;s Maven <code>organization-service/pom.xml</code> file. Two dependencies are being added: Spring Cloud Security and Spring Security OAuth2. The Spring Cloud Security jars are the core security jars. They contain framework code, annotation definitions, and interfaces for implementing security within Spring Cloud. The Spring Security OAuth2 dependency contains all the classes needed to implement an OAuth2 authentication service. The maven entries for these two dependencies are</p>
+
+      <figure class="code-snippet" aria-label="Maven dependencies for Spring Cloud Security and Spring Security OAuth2">
+        <pre class="code-block"><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-cloud-security&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

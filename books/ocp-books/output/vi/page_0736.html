@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 24: Triển khai Bản địa hóa</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: 14pt;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      font-size: 10pt;
+      line-height: 1.35;
+      background: #e2e9f0;
+      border-left: none;
+      white-space: pre-wrap;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0735.html">← Trước</a>
+    <a href="page_0737.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">736</span>
+      </header>
+
+      <p class="no-indent">Có một vài bộ phận chuyển động trong đoạn mã trên. Tôi sẽ giải thích tất cả chúng, nhưng trước hết hãy làm cho nó chạy đã. Nếu bạn biên dịch và chạy nó, bạn sẽ nhận được một Exception (Ngoại lệ) với thông báo sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>java.util.MissingResourceException: Can't find bundle for base name
+helloapp, locale en_IN</code></pre>
+      </figure>
+
+      <p>Bạn có thể thấy một tên locale khác trong kết quả đầu ra vì nó phụ thuộc vào locale trên máy của bạn. Bây giờ, hãy tạo một tệp tin tên là <code>helloapp.properties</code> trong cùng thư mục chứa <code>HelloApp.class</code> với nội dung như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>What\ is\ your\ name?=What is your name?
+Hi=Hi</code></pre>
+      </figure>
+
+      <p>Nếu bạn chạy nó bây giờ, nó sẽ hoạt động như mong đợi. Kết quả đầu ra không có gì khác biệt so với phiên bản trước đó nhưng chúng ta đã hoàn thành một việc quan trọng trong đoạn mã trên. Chúng ta đã tìm cách tra cứu các khóa (key) được sử dụng trong chương trình và hiển thị các giá trị kết quả cho người dùng. Mặc dù nó vẫn in ra các thông điệp bằng tiếng Anh, nhưng ứng dụng hiện đã được quốc tế hóa! Tất cả những gì chúng ta cần làm bây giờ là bản địa hóa nó cho các locale mà chúng ta muốn chạy ứng dụng này. Nhưng trước khi thực hiện điều đó, hãy để tôi giải thích một vài điểm về đoạn mã trên:</p>
+
+      <p class="no-indent">1. Một đối tượng <code>ResourceBundle</code> chứa các đối tượng đặc trưng cho từng locale. Mỗi resource bundle có một tên gọi và chương trình sử dụng tên đó để tải các tệp tin liên quan chứa các mục nhập đặc trưng cho locale đó. Khi các mục nhập trong các tệp tin được tải vào resource bundle, chương trình chỉ cần tra cứu một khóa (key) trong resource bundle đó và sử dụng giá trị đặc trưng cho locale được trả về. Một resource bundle không bị giới hạn chỉ chứa các chuỗi (string) nhưng đối với mục đích của kỳ thi, chúng ta sẽ chỉ tập trung vào các chuỗi.</p>
+
+      <p class="no-indent">2. <code>java.util.ResourceBundle</code> là một lớp trừu tượng (abstract class) nhưng JDK cũng cung cấp một vài lớp con cụ thể (concrete subclass). Một trong những lớp con (subclass) đó là <code>PropertyResourceBundle</code>, lớp này có thể tải các cặp khóa - giá trị (key-value) từ một tệp tin properties. Tuy nhiên, thay vì khởi tạo trực tiếp lớp <code>PropertyResourceBundle</code>, chúng ta sử dụng phương thức <code>getBundle</code> của <code>ResourceBundle</code> vì phương thức này đủ thông minh để xác định chính xác các tệp tin properties nào là cần thiết để tạo ra resource bundle mong muốn dựa trên locale của người dùng, đó chính là điều chúng ta muốn.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

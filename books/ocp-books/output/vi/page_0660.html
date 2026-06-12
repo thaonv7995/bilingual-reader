@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0659.html">← Trước</a>
+    <a href="page_0661.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">660</span>
+      </header>
+
+      <p class="no-indent">được tạo bằng cách sử dụng cùng một <code>LocalDateTime</code>, chúng biểu diễn các thời điểm khác nhau. Để so sánh chúng, bạn
+      cần quy đổi các thời gian này về cùng một mốc thời gian UTC. Vì NYC chậm hơn UTC 4 giờ, bạn
+      phải cộng 4 vào giờ NYC để có được giờ UTC và vì Calcutta nhanh hơn UTC 5:30 giờ, bạn
+      phải trừ 5:30 từ giờ Calcutta để có được giờ UTC. (Lưu ý rằng xét về mặt các giá trị &quot;offset&quot;, offset của NYC là <strong>-4</strong> và offset của Calcutta là <strong>+5:30</strong>). Do đó, <code>z3</code>&nbsp;có
+      thể được tính là 10:30+4, tức là 14:30, và vì thế <code>z3</code>&nbsp;là <code>2024/7/1 14:30Z</code>&nbsp;và <code>z4</code>&nbsp;là <code>2024/7/1
+      05:00Z</code>&nbsp;(10:30-5:30). Vì 14:30 là <strong>sau</strong> 5:00, <code>z3.isAfter(z4)</code>&nbsp;sẽ trả về <code>true</code>.</p>
+
+      <p><code>d1.plusMinutes(10)</code>&nbsp;tạo ra một <code>LocalDateTime</code>&nbsp;có giá trị là <code>24/7/1 10:40:30</code>, giá trị này được gán
+      cho <code>d2</code>. <code>d2.truncatedTo(ChronoUnit.MINUTES)</code>&nbsp;tạo ra một <code>LocalDateTime</code>&nbsp;có giá trị là <code>2024/7/1
+      10:40:00</code>. Giá trị này không giống với <code>d1</code>&nbsp;vốn chứa <code>2024/7/1 10:30:30</code>. Do đó,
+      câu lệnh cuối cùng sẽ in ra <code>false</code>.</p>
+
+      <p class="no-indent"><strong>Q 2.</strong> Biết rằng Amsterdam bình thường nhanh hơn UTC 1 giờ nhưng áp dụng giờ mùa hè (Daylight savings time)
+      từ 2 giờ sáng ngày 31 tháng 3 năm 2024 đến 3 giờ sáng ngày 27 tháng 10 năm 2024, đoạn mã sau
+      đây sẽ in ra kết quả gì?</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ZoneId zid = ZoneId.of("Europe/Amsterdam");
+LocalDate ld = LocalDate.of(2024, 10, 27);
+LocalTime lt = LocalTime.of(2, 30, 0);
+ZonedDateTime amsterdamBefore = ZonedDateTime.of(ld, lt, zid);
+ZonedDateTime amsterdamAfter = amsterdamBefore.plusHours(1);
+System.out.println(amsterdamBefore.getOffset()+" "+amsterdamAfter.getOffset());
+System.out.println(amsterdamBefore.getHour()+" "+amsterdamAfter.getHour());
+System.out.println(amsterdamAfter.isAfter(amsterdamBefore));</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong>Đáp án đúng là:</strong></p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>+02:00 +01:00
+2 2
+true</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step 7;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      margin: 0;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0271.html">← Prev</a>
+    <a href="page_0273.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">272</span>
+      </header>
+
+      <ol class="numbered" start="8">
+        <li><code>&lt;T&gt; T[] toArray(T[] a)</code>&nbsp;: Returns an array of the type specified in the argument
+        containing all the elements of this list. The objects of the list must be of the type passed in
+        the argument. This method is helpful when you want to convert a list into an array of a
+        specific type. For example, <code>String[] strArray = listOfString.toArray(new
+        String[0]);</code>&nbsp;will return a <code>String[]</code>&nbsp;containing all the elements of the list.</li>
+      </ol>
+
+      <p class="no-indent">The <code>subList(int fromIndex, int toIndex)</code>&nbsp;method in the above list of methods is
+      particularly interesting. It does not return a new independent list but just a view into the
+      original list. Thus, any change you do to the view is reflected in the original list as shown the
+      example below:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>List&lt;String&gt; al = new ArrayList&lt;String&gt;();
+al.addAll(Arrays.asList( new String[]{"a", "b", "c", "d", "e" } ));
+List&lt;String&gt; al2 = al.subList(2, 4);
+System.out.println(al2); //prints [c, d]
+al2.add("x");
+System.out.println(al2); //prints [c, d, x]
+System.out.println(al); //prints [a, b, c, d, x, e]
+al.add("y"); //structural modification to the original list
+System.out.println(al2); //throws
+java.util.ConcurrentModificationException</code></pre>
+      </figure>
+
+      <p>Observe the output of the last two lines of the output. <code>x</code>&nbsp;was added to the end of the list
+      pointed to by <code>al2</code>&nbsp;. However, since <code>al2</code>&nbsp;is just a view of a portion of the original list pointed
+      to by <code>al</code>&nbsp;, <code>x</code>&nbsp;is visible in the middle of this list. Furthermore, all structural modifications must
+      be done through the view. If you structurally modify the backing list and then try to use the
+      view, the results will be unpredictable. Structural modification means any change in size of the
+      list. That is why, the last line of the above code throws a
+      <code>java.util.ConcurrentModificationException</code>&nbsp;exception.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

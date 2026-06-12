@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: generic-syntax 2;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: generic-syntax;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(generic-syntax) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li figure.code-snippet {
+      margin: 1.5mm 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0255.html">← Trước</a>
+    <a href="page_0257.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">256</span>
+      </header>
+
+      <figure class="code-snippet code-snippet--warn">
+        <pre class="code-block"><code>new ArrayList&lt;? super com.acme.Person&gt;();</code></pre>
+      </figure>
+
+      <ol class="numbered">
+        <li>Nếu bạn đang khởi tạo một ArrayList an toàn kiểu (type-safe) trong khi gán nó cho một biến an toàn kiểu trên
+        cùng một câu lệnh, thì bạn có thể bỏ qua tên kiểu từ câu lệnh khởi tạo như hiển thị
+        bên dưới:
+          <figure class="code-snippet">
+            <pre class="code-block"><code>ArrayList&lt;String&gt; al = new ArrayList&lt;&gt;();</code></pre>
+          </figure>
+          Khi bắt gặp <code>&lt;&gt;</code>, trình biên dịch sẽ suy luận kiểu của Đối tượng (Object) ArrayList từ kiểu
+          của biến mà nó được gán cho. Toán tử <code>&lt;&gt;</code> được gọi là &ldquo;toán tử kim cương&rdquo;
+          (diamond operator), và đã được giới thiệu trong Java 7. Nó chỉ có thể được sử dụng trong một câu lệnh <code>new</code>. Do đó,
+          câu lệnh <code>ArrayList&lt;&gt; al;</code> sẽ không biên dịch được vì trình biên dịch không có cơ sở nào để
+          suy luận kiểu của <code>al</code>. Mặc dù thật ngạc nhiên là <code>var al = new ArrayList&lt;&gt;
+          ();</code>, vốn cũng không có nhiều thông tin để trình biên dịch suy luận kiểu dữ liệu, lại biên dịch
+          thành công. Trình biên dịch suy luận kiểu của <code>al</code> là <code>ArrayList&lt;Object&gt;</code>.
+          Tương tự, trình biên dịch cũng có thể suy luận đối số kiểu (type argument) trong các lời gọi phương thức. Ví
+          dụ,
+          <figure class="code-snippet">
+            <pre class="code-block"><code>Object oValue = ListProcessor.processList(new ArrayList&lt;&gt;());//Object inferred
+Integer iValue1 = ListProcessor.processList(new ArrayList&lt;&gt;());//Integer inferred
+Integer ivalue2 = ListProcessor.&lt;Integer&gt;processList(new ArrayList&lt;&gt;());//Integer inferred</code></pre>
+          </figure>
+          Lời gọi phương thức cuối cùng ở trên cho thấy cách chỉ định đối số kiểu một cách tường minh nhưng
+          điều này hiếm khi cần thiết trong thực tế. Trong hầu hết các trường hợp, trình biên dịch có thể tự xác định đối số
+          kiểu từ ngữ cảnh. Vì vậy, ở đây, do giá trị trả về của processList được gán
+          cho một biến Integer, trình biên dịch suy luận chính xác đối số kiểu là
+          Integer.
+          Hãy nhớ rằng bạn không thể áp dụng cú pháp <code>&lt;&gt;</code> cho bất kỳ Lớp (Class) ngẫu nhiên nào. Bạn có thể
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

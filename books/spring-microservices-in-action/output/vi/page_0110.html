@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Listing 3.7 LicenseRepository và Listing 3.8 LicenseService</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(1) {
+      margin-bottom: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(2) {
+      margin-bottom: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(3) {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0109.html">← Trước</a>
+    <a href="page_0111.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Tích hợp Spring Cloud Config với một client Spring Boot</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">85</span>
+      </header>
+
+      <p class="no-indent">khi khởi động sẽ phân tích tên các phương thức từ interface Repository, chuyển đổi chúng thành câu lệnh SQL dựa trên tên phương thức, rồi sinh một lớp proxy động bên dưới để thực hiện công việc. Repository cho licensing service được trình bày trong listing sau.</p>
+
+      <div class="listing-annotated">
+        <figure class="listing">
+          <figcaption><strong>Listing 3.7</strong><br>Interface LicenseRepository định nghĩa các phương thức truy vấn</figcaption>
+          <pre class="code-block"><code>package com.thoughtmechanix.licenses.repository;
+
+import com.thoughtmechanix.licenses.model.License;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface LicenseRepository
+    extends CrudRepository&lt;License,String&gt;
+{
+    public List&lt;License&gt; findByOrganizationId
+        (String organizationId);
+    public License findByOrganizationIdAndLicenseId
+        (String organizationId,String licenseId);
+}</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Chú thích cho Listing 3.7">
+          <p class="listing-callout">Báo cho Spring Boot biết đây là một lớp repository JPA</p>
+          <p class="listing-callout">Xác định rằng bạn đang mở rộng Spring CrudRepository</p>
+          <p class="listing-callout">Các phương thức truy vấn riêng lẻ được Spring phân tích thành truy vấn SELECT&hellip;FROM.</p>
+        </div>
+      </div>
+
+      <p>Interface repository, LicenseRepository, được đánh dấu bằng annotation <code>@Repository</code>, báo cho Spring biết rằng nó nên coi interface này là một repository và sinh một proxy động cho nó. Spring cung cấp nhiều loại repository khác nhau để truy cập dữ liệu. Bạn đã chọn dùng lớp cơ sở Spring CrudRepository để mở rộng lớp LicenseRepository của mình. Lớp cơ sở CrudRepository chứa các phương thức CRUD cơ bản. Ngoài phương thức CRUD được kế thừa từ CrudRepository, bạn đã thêm hai phương thức truy vấn tùy chỉnh để lấy dữ liệu từ bảng licensing. Spring Data framework sẽ phân tích tên các phương thức để xây dựng truy vấn truy cập dữ liệu bên dưới.</p>
+
+      <aside class="sidebar-note" aria-label="Lưu ý">
+        <h3>LƯU Ý</h3>
+        <p>Spring Data framework cung cấp một lớp trừu tượng trên nhiều nền tảng cơ sở dữ liệu khác nhau và không giới hạn ở cơ sở dữ liệu quan hệ. Các cơ sở dữ liệu NoSQL như MongoDB và Cassandra cũng được hỗ trợ.</p>
+      </aside>
+
+      <p class="no-indent">Khác với phiên bản trước của licensing service ở chương 2, giờ bạn đã tách logic nghiệp vụ và logic truy cập dữ liệu cho licensing service ra khỏi LicenseController và đưa vào một lớp Service độc lập tên là LicenseService.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 3.8</strong><br>Lớp LicenseService dùng để thực thi các lệnh cơ sở dữ liệu</figcaption>
+        <pre class="code-block"><code>package com.thoughtmechanix.licenses.services;
+
+import com.thoughtmechanix.licenses.config.ServiceConfig;
+import com.thoughtmechanix.licenses.model.License;
+import com.thoughtmechanix.licenses.repository.LicenseRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

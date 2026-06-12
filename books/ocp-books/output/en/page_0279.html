@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="3"] {
+      counter-reset: list-step 2;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0278.html">← Prev</a>
+    <a href="page_0280.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">279</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>new Integer[]{1, 2, 3 } ));
+list.remove(1);
+System.out.println(list);
+
+list = new ArrayList&lt;&gt;(Arrays.asList( new Integer[]{1, 2, 3 } ));
+list.remove(new Integer(1));
+System.out.println(list);
+The output is:
+[1, 3]
+[2, 3]</code></pre>
+      </figure>
+
+      <p>Recall the rules of method selection in the case of overloaded methods. When you call&nbsp;<code>remove(1)</code>&nbsp;,
+      the argument is an <code>int</code>&nbsp;and since a remove method with <code>int</code>&nbsp;parameter is available, this method
+      will be preferred over the other remove method with <code>Object</code>&nbsp;parameter because invoking the other
+      method requires boxing <code>1</code>&nbsp;into an <code>Integer</code>&nbsp;.</p>
+
+      <p>This method returns <code>true</code>&nbsp;if an element was actually removed from the list as a result of this call.
+      In other words, if there is no element in the list that matches the argument, the method will return
+      <code>false</code>&nbsp;.</p>
+
+      <ol class="numbered" start="3">
+        <li><code>boolean removeAll(Collection&lt;?&gt; c)</code>&nbsp;: Removes from this list all of its elements that
+        are contained in the specified collection. For example the following code prints <code>[ c ]</code>&nbsp;:</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ArrayList&lt;String&gt; al1 = new ArrayList&lt;&gt;(Arrays.asList( new String[]
+{"a", "b", "c", "a" } ));
+ArrayList&lt;String&gt; al2 = new ArrayList&lt;&gt;(Arrays.asList( new String[]
+{"a", "b" } ));
+al1.removeAll(al2);
+System.out.println(al1); //prints [ c ]</code></pre>
+      </figure>
+
+      <p>Observe that unlike the <code>remove(Object obj)</code>&nbsp;method, which removes only</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

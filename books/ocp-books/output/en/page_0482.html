@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0481.html">← Prev</a>
+    <a href="page_0483.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">482</span>
+      </header>
+
+      <p class="no-indent">unusable. In fact, the program doesn&rsquo;t even terminate on my machine and there is a good
+      chance that it will not terminate on yours either. The problem is that the main thread keeps
+      seeing the original value (<code>null</code>) of the <code>result</code>&nbsp;field even after the factorial thread assigns a
+      new value to it. It is not a bug. It is how the Java language is designed to work. To fix this
+      problem, you need know about the Java &ldquo;Memory Model&rdquo;. Although the OCP exam objectives do
+      not include this topic explicitly, you can write bug free multi-threaded Java programs without
+      understanding it only accidentally. So, I am going to the go through the important points about
+      this topic briefly.</p>
+
+      <h3 class="section-title section-title--sub">20.2.1 Memory Model<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>As I mentioned before, all threads share the heap space of the program. They access objects
+      within this heap space through object references, which are nothing but addresses of virtual
+      memory locations. When a Java program reads or writes an object field, this call is translated
+      by the JVM and the OS to a CPU instruction to read from or write to an actual memory
+      location as per the CPU&rsquo;s addressing scheme. Now, recall that a system may have multiple
+      logical CPUs and multiple OS threads may run in parallel on those CPUs. To ensure that
+      multiple CPUs can execute instructions simultaneously with high efficiency, CPUs tend to store
+      the contents of memory locations in multilevel caches as well as in CPU registers. So, it is
+      possible that while one CPU has cached the value of a memory location into its register, another
+      CPU changes the value at the actual memory location. Thus, a value cached by one CPU can
+      become &ldquo;out of sync&rdquo; with the value at the memory location or with the value cached by another
+      CPU. At the top most layer, i.e., in the Java program, an out of sync cached value results in one
+      or more threads seeing a stale value of the shared variable. This is exactly what happens in the
+      above program. The factorial thread updates the value of the <code>result</code>&nbsp;variable but the main
+      thread never sees the updated value because both the threads are most likely being run on
+      different CPUs and their caches are out of sync. This situation is very common on multi-core
+      CPUs.</p>
+
+      <p>Another reason why a thread may not observe the updated value of a variable immediately after
+      being updated by another thread is &ldquo;instruction reordering&rdquo;.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

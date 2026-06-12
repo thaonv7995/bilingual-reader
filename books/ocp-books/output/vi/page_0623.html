@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0622.html">← Trước</a>
+    <a href="page_0624.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">623</span>
+      </header>
+
+      <p class="no-indent">Ngày 1 tháng 1 năm 1970 00:00:00.000 tại Greenwich. (Greenwich là tên của thị trấn ở Vương quốc Anh nơi đặt Đài thiên văn Hoàng gia. Thời gian tại vị trí này được chọn vì các lý do lịch sử). Thời gian tại vị trí này được gọi là Greenwich Mean Time (GMT). Mốc thời gian tương tự đã được áp dụng trên toàn cầu làm thời gian tham chiếu và còn được gọi là Coordinated Universal Time hay gọi tắt là UTC. Bạn có thể coi thời gian như một chuỗi các mili giây được vẽ trên trục x, trong đó điểm 0 được gọi là Ngày 1 tháng 1 năm 1970 00:00:00.000 GMT. Mỗi mili giây trôi qua kể từ epoch sẽ đưa bạn tiến về phía trước trên trục này.</p>
+
+      <p>Mặt khác, con người nhìn nhận thời gian dưới dạng giờ, phút và giây của một ngày, tháng và năm cụ thể, tại một địa điểm xác định. Ví dụ, đối với máy tính, điểm <code>1735711200000</code>&nbsp;trên dòng thời gian có nghĩa là 1735711200000 mili giây đã trôi qua kể từ epoch. Nhưng đối với con người, điểm này thực chất là <code>6AM</code>&nbsp;<code>1st</code>&nbsp;<code>January</code>&nbsp;<code>2025</code>&nbsp;tại <strong>Greenwich</strong>. Cùng một thời điểm đó cũng có thể được hiểu là <code>1AM</code>&nbsp;vào <code>January</code>&nbsp;<code>1st</code>&nbsp;<code>2025</code> ở <strong>New York</strong> hoặc <code>10PM</code>&nbsp;vào <code>Dec</code>&nbsp;<code>31st</code>&nbsp;<code>2024</code> ở <strong>Los Angeles</strong>. Các Lớp (Class) Java cũ trộn lẫn hai ý tưởng rất khác nhau này trong cùng một Lớp (Class). Điều này thể hiện rõ qua thực tế là&nbsp;<code>java.util.Date</code>&nbsp;thực chất chỉ lưu trữ số mili giây đã trôi qua kể từ epoch và không hề biết gì về ngày tháng. Thế nhưng, tên của Lớp (Class) này lại là <strong>Date</strong>!</p>
+
+      <p>API Ngày và Giờ (Date and Time API) mới giải quyết tốt mối bận tâm này và giúp việc thực hiện các thao tác thường nhật như tính toán ngày tháng và in ra màn hình trở nên dễ dàng hơn nhiều. Framework ngày/giờ mới này được tổ chức trong package&nbsp;<code>java.time</code>&nbsp;và có rất nhiều Lớp (Class) và Interface (Giao diện). Sơ đồ dưới đây hiển thị một vài Lớp (Class) và Interface (Giao diện) quan trọng của API này. Các hộp nét đứt chứa các Interface (Giao diện) và các hộp nét liền chứa các Lớp (Class).</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

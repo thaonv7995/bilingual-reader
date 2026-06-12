@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page pre.code-block code,
+    .prose-page.ocp-chapter-page ol.numbered code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-size: 9.8pt;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm;
+      padding-left: 1.5em;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0396.html">← Prev</a>
+    <a href="page_0398.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">397</span>
+      </header>
+
+      <ol class="numbered" start="4">
+        <li>returned value to <code>byte</code>. Recall that casting an <code>int</code>&nbsp;value to <code>byte</code>&nbsp;removes 24 most
+        significant bits (i.e. three higher order bytes) and leaves the 8 least significant bits of the
+        given value intact.</li>
+        <li>We keep reading from the input stream until we get a <code>-1</code>. A <code>-1</code>&nbsp;indicates that the
+        stream has ended and there is no more data available to read from the input stream.</li>
+        <li>Encountering exceptional situations while performing I/O is common. For example, the
+        file that you are trying to open may not be present or the file that you are trying to write to
+        may be marked read only by the OS. There are several specialized exception classes such as
+        <code>FileNotFoundException</code>&nbsp;or <code>EOFException</code>&nbsp;defined in the standard library for this
+        purpose, but all of them are rooted under the checked exception
+        class&nbsp;<code>java.io.IOException</code>&nbsp;and so, the&nbsp;<code>throws IOException</code>&nbsp;clause in main satisfies
+        all of them.</li>
+        <li>The writing part is unremarkable. It is just writing a thousand bytes one by one.</li>
+        <li>Finally, we use the <code>close()</code>&nbsp;method to close the input and output streams. Closing I/O
+        streams using the <code>close()</code>&nbsp;method is important because it allows any system resources
+        associated with the streams such as file locks to be reclaimed by the OS. Closing an output
+        stream also flushes all data remaining in the output pipeline to the destination. Since
+        <code>InputStream</code>&nbsp;and <code>OutputStream</code>&nbsp;implement <code>AutoCloseable</code>, the preferable
+        approach is to let the try-with-resources statement close the streams automatically.</li>
+      </ol>
+
+      <p>The Java API designers decided to return an <code>int</code>&nbsp;from <code>read()</code>&nbsp;instead of <code>byte</code>&nbsp;because an
+      extra value was needed to signify the end of the stream. The total number of values returned by
+      the method is 257, which includes 256 values (<code>00000000</code>&nbsp;to <code>11111111</code>) represented by a byte
+      and an extra value of <code>-1</code>&nbsp;to denote the end of the stream. Since a <code>byte</code>&nbsp;cannot represent 257
+      values, a larger data type was needed. This could have been achieved using a <code>short</code>&nbsp;as well,
+      but <code>int</code>&nbsp;was used to remain consistent with the C language.</p>
+
+      <p>Similarly, even though the <code>write(int)</code>&nbsp;method accepts an <code>int</code>&nbsp;parameter, only the lower 8
+      bits are actually written to the file. Although <code>byte</code>&nbsp;would have sufficed in this case, <code>int</code>&nbsp;was
+      used</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

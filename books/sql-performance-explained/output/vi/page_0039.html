@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Hàm do người dùng định nghĩa</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">39</span>
+      </header>
+      <p class="chapter-running-head">Hàm do người dùng định nghĩa</p>
+
+      <p class="no-indent">Chỉ mục dựa trên hàm là một phương pháp rất tổng quát. Ngoài các hàm như <code>UPPER</code>, bạn cũng có thể chỉ mục các biểu thức như <code>A + B</code> và thậm chí sử dụng các hàm do người dùng định nghĩa trong định nghĩa chỉ mục.</p>
+
+      <p>Có một ngoại lệ quan trọng. Ví dụ, không thể tham chiếu đến thời gian hiện tại trong định nghĩa chỉ mục, cả trực tiếp lẫn gián tiếp, như trong ví dụ sau.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE FUNCTION get_age(date_of_birth DATE)
+RETURN NUMBER
+AS
+BEGIN
+  RETURN
+    TRUNC(MONTHS_BETWEEN(SYSDATE, date_of_birth)/12);
+END;
+/</code></pre>
+      </figure>
+
+      <p>Hàm <code>GET_AGE</code> sử dụng ngày hiện tại (<code>SYSDATE</code>) để tính tuổi dựa trên ngày sinh đã cung cấp. Bạn có thể sử dụng hàm này trong tất cả các phần của truy vấn SQL, chẳng hạn như trong các câu lệnh select và where:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, get_age(date_of_birth)
+  FROM employees
+ WHERE get_age(date_of_birth) = 42;</code></pre>
+      </figure>
+
+      <p>Truy vấn này liệt kê tất cả nhân viên 42 tuổi. Sử dụng chỉ mục dựa trên hàm là một ý tưởng rõ ràng để tối ưu hóa truy vấn này, nhưng bạn không thể sử dụng hàm <code>GET_AGE</code> trong định nghĩa chỉ mục vì nó không phải là xác định. Điều đó có nghĩa là kết quả của cuộc gọi hàm không hoàn toàn được xác định bởi các tham số của nó. Chỉ những hàm luôn trả về cùng một kết quả cho cùng một tham số&mdash;những hàm xác định&mdash;mới có thể được chỉ mục.</p>
+
+      <p>Lý do đằng sau sự hạn chế này rất đơn giản. Khi chèn một hàng mới, cơ sở dữ liệu gọi hàm và lưu trữ kết quả trong chỉ mục và ở đó nó sẽ ở lại, không thay đổi. Không có quá trình định kỳ nào cập nhật chỉ mục. Cơ sở dữ liệu chỉ cập nhật tuổi đã chỉ mục khi ngày sinh được thay đổi bởi một câu lệnh cập nhật. Sau sinh nhật tiếp theo, tuổi được lưu trong chỉ mục sẽ sai.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">29</p>
+    </article>
+  </main>
+</body>
+</html>

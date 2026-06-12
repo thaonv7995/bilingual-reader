@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Listing 7.8 JWT token store</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.bullet-continuation {
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm 3mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--78 .listing-callouts-right {
+      padding-top: 36mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0238.html">← Trước</a>
+    <a href="page_0240.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">214</span>
+        <span class="rh-center">CHƯƠNG 7 <em>Bảo mật microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="bullet-continuation">nội dung (như thời gian hết hạn của token và thông tin người dùng) có thể được microservice nhận kiểm tra.</p>
+
+      <ul class="manning-bullets" aria-label="Đặc điểm JWT token (tiếp theo)">
+        <li><strong class="run-in">Mở rộng—</strong>Khi dịch vụ xác thực tạo token, nó có thể đặt thêm thông tin vào token trước khi token được niêm phong. Dịch vụ nhận có thể giải mã payload của token và trích xuất ngữ cảnh bổ sung đó.</li>
+      </ul>
+
+      <p>Spring Cloud Security hỗ trợ JWT ngay từ đầu. Tuy nhiên, để sử dụng và tiêu thụ JWT token, dịch vụ xác thực OAuth2 của bạn và các dịch vụ được bảo vệ bởi dịch vụ xác thực phải được cấu hình theo cách khác. Việc cấu hình không khó, vậy hãy cùng xem qua các thay đổi.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Tôi đã chọn giữ cấu hình JWT trên một nhánh riêng (gọi là JWT_Example) trong kho GitHub của chương này (<a href="https://github.com/carnellj/spmia-chapter7">https://github.com/carnellj/spmia-chapter7</a>) vì cấu hình OAuth2 Spring Cloud Security tiêu chuẩn và cấu hình OAuth2 dựa trên JWT yêu cầu các class cấu hình khác nhau.</p>
+      </aside>
+
+      <h4 class="subsection-title">7.4.1 Sửa đổi dịch vụ xác thực để cấp JavaScript Web Tokens</h4>
+
+      <p class="no-indent">Đối với cả dịch vụ xác thực và hai microservice (licensing và organization service) sẽ được bảo vệ bởi OAuth2, bạn cần thêm dependency Spring Security mới vào các tệp Maven <code>pom.xml</code> của chúng để bao gồm các thư viện JWT OAuth2. Dependency mới này là</p>
+
+      <figure class="code-snippet" aria-label="Dependency Maven cho spring-security-jwt">
+        <pre class="code-block"><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.security&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-security-jwt&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <p>Sau khi thêm dependency Maven, trước tiên bạn cần cho dịch vụ xác thực biết cách nó sẽ tạo và chuyển đổi JWT token. Để làm điều này, bạn sẽ thiết lập trong dịch vụ xác thực một class cấu hình mới tên là <code>authentication-service/src/java/com/thoughtmechanix/authentication/security/JWTTokenStoreConfig.java</code>. Listing sau đây cho thấy code của class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.8</strong><br>Thiết lập JWT token store</figcaption>
+        <div class="listing-annotated listing-annotated--78" aria-label="Code có chú thích Listing 7.8">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>@Configuration
+public class JWTTokenStoreConfig {
+
+    @Autowired
+    private ServiceConfig serviceConfig;
+
+    @Bean
+    public TokenStore tokenStore() {
+        return new JwtTokenStore(jwtAccessTokenConverter());
+    }
+
+    @Bean
+    @Primary</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 7.8">
+            <p class="listing-callout">Annotation <code>@Primary</code> được dùng để báo cho Spring rằng nếu có nhiều hơn một bean của một loại cụ thể (trong trường hợp này là <code>DefaultTokenService</code>), hãy dùng bean được đánh dấu <code>@Primary</code> để auto-injection.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0517.html">← Prev</a>
+    <a href="page_0519.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">518</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>synchronize(u){ //lock the User object
+ synchronize(t){  //lock the Ticket object
+  ticket.setPassengerId(null);
+  u.removeTicket(t);}
+ }}</code></pre>
+      </figure>
+
+      <p>If two threads execute the above two methods for the same Ticket and User objects at about the
+      same time, due to an unfortunate interleaving of the two threads, thread 1 could lock the ticket
+      and before it could lock the user, thread 2 could lock the user and proceed to lock the ticket. It is
+      clear that neither of the threads will be able to proceed and the application will appear stuck.</p>
+
+      <p>Java does not provide any standard way to prevent deadlocks but a common strategy used to
+      avoid them is to always acquire locks in the same order. In the above example, if both the
+      methods lock the Ticket and the User objects in the same order, a deadlock would not happen.</p>
+
+      <h3 class="section-title section-title--sub">Livelock<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>A Livelock is similar to a deadlock except that in a livelock, threads keep executing the same
+      sequence of actions in a loop without actually making any headway in executing the business
+      logic. For example, let's say thread T<sub>1</sub>&nbsp;locks object O<sub>1</sub>&nbsp;and finds that O<sub>2</sub>&nbsp;is already locked.
+      Similarly, thread T<sub>2</sub>&nbsp;locks O<sub>2</sub>&nbsp;and finds that O<sub>1</sub>&nbsp;is already locked. To prevent a deadlock,
+      the threads T<sub>1</sub>&nbsp;and T<sub>2</sub>&nbsp;unlock objects O<sub>1</sub>&nbsp;and O<sub>2</sub>&nbsp;respectively and try to lock objects O<sub>2</sub>
+      and O<sub>1</sub>&nbsp;respectively. So, now, T<sub>1</sub>&nbsp;has O<sub>2</sub>&nbsp;and T<sub>2</sub>&nbsp;has O<sub>1</sub>&nbsp;. This sequence of execution
+      keeps repeating. Thus, the threads appear to be running but neither of the threads is able to lock
+      both the objects and neither of the threads is able to execute the business logic.</p>
+
+      <p>Although this situation is not possible while using synchronized blocks because a thread always
+      gets BLOCKED at the synchronized statement if the lock is not available (i.e., there is no way to
+      take a different path of execution if the object is</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

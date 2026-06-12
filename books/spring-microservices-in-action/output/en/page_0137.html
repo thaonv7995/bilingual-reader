@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: Listing 4.6 and Spring DiscoveryClient</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0136.html">← Prev</a>
+    <a href="page_0138.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">112</span>
+        <span class="rh-center">CHAPTER 4 <em>On service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>Because I&rsquo;m using the same code for all three types of client, you might see situations where you&rsquo;ll see annotations for certain clients even when they don&rsquo;t seem to be needed. For example, you&rsquo;ll see both the <code>@EnableDiscoveryClient</code> and <code>@EnableFeignClients</code> annotations in the code, even when the text is only explaining one of the client types. This is so I can use one code base for my examples. I&rsquo;ll call out these redundancies and code whenever they are encountered.</p>
+      </aside>
+
+      <p>In the <code>src/main/java/com/thoughtmechanix/licenses/services/LicenseService.java</code> class, I&rsquo;ve added a simple method called <code>retrieveOrgInfo()</code> that will resolve based on the <code>clientType</code> passed into the route the type of client that will be used to look up an organization service instance. The <code>getLicense()</code> method on the <code>LicenseService</code> class will use <code>retrieveOrgInfo()</code> to retrieve the organization data from the Postgres database.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 4.6</strong> <code>getLicense()</code> function will use multiple methods to perform a REST call</figcaption>
+        <pre class="code-block"><code>public License getLicense(String organizationId, String licenseId, String
+     clientType) {
+    License license = licenseRepository.findByOrganizationIdAndLicenseId(
+              organizationId, licenseId);
+
+    Organization org = retrieveOrgInfo(organizationId, clientType);
+
+    return license
+        .withOrganizationName( org.getName())
+        .withContactName( org.getContactName())
+        .withContactEmail( org.getContactEmail() )
+        .withContactPhone( org.getContactPhone() )
+        .withComment(config.getExampleProperty());
+  }</code></pre>
+      </figure>
+
+      <p>You can find each of the clients we built using the Spring DiscoveryClient, the Spring RestTemplate, or the Feign libraries in the <code>src/main/java/com/thoughtmechanix/licenses/clients</code> package of the licensing-service source code.</p>
+
+      <h4 class="subsection-title">4.5.1 Looking up service instances with Spring DiscoveryClient</h4>
+
+      <p>The Spring DiscoveryClient offers the lowest level of access to Ribbon and the services registered within it. Using the DiscoveryClient, you can query for all the services registered with the ribbon client and their corresponding URLs.</p>
+
+      <p>Next, you&rsquo;ll build a simple example of using the DiscoveryClient to retrieve one of the organization service URLs from Ribbon and then call the service using a standard RestTemplate class. To begin using the DiscoveryClient, you first need to annotate the <code>src/main/java/com/thoughtmechanix/licenses/Application.java</code> class with the <code>@EnableDiscoveryClient</code> annotation, as shown in the next listing.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 4: The Join Operation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 4: Phép nối (Join)</p>
+
+      <p>Mặc dù phương pháp &ldquo;chọn lồng nhau&rdquo; là một mẫu chống ví dụ, nó vẫn giải thích khá tốt về phép nối vòng lặp lồng nhau. Cơ sở dữ liệu thực hiện phép nối chính xác như các công cụ ORM ở trên. Việc lập chỉ mục cho phép nối vòng lặp lồng nhau do đó giống như việc lập chỉ mục cho các câu lệnh chọn được hiển thị ở trên. Đó là một chỉ mục dựa trên hàm trên bảng <code>EMPLOYEES</code> và một chỉ mục nối cho các điều kiện nối trên bảng <code>SALES</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX emp_up_name ON employees (UPPER(last_name));
+CREATE INDEX sales_emp ON sales (subsidiary_id, employee_id);</code></pre>
+      </figure>
+
+      <p>Một phép nối SQL vẫn hiệu quả hơn so với phương pháp chọn lồng nhau&mdash;ngay cả khi nó thực hiện cùng một tìm kiếm chỉ mục&mdash;bởi vì nó tránh được nhiều giao tiếp mạng. Nó thậm chí còn nhanh hơn nếu tổng lượng dữ liệu được truyền tải lớn hơn do sự trùng lặp của các thuộc tính nhân viên cho mỗi giao dịch. Điều này là do hai chiều của hiệu suất: thời gian phản hồi và băng thông; trong mạng máy tính, chúng ta gọi chúng là độ trễ và băng thông. Băng thông chỉ có tác động nhỏ đến thời gian phản hồi nhưng độ trễ có tác động lớn. Điều đó có nghĩa là số lượng lượt đi lượt lại của cơ sở dữ liệu quan trọng hơn đối với thời gian phản hồi so với lượng dữ liệu được truyền tải.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Thực hiện phép nối trong cơ sở dữ liệu.</p>
+      </aside>
+
+      <p>Hầu hết các công cụ ORM cung cấp một cách nào đó để tạo các phép nối SQL. Chế độ lấy dữ liệu eager fetching được gọi là chế độ quan trọng nhất. Nó thường được cấu hình ở cấp độ thuộc tính trong các ánh xạ thực thể&mdash;ví dụ, cho thuộc tính <code>employees</code> trong lớp <code>Sales</code>. Công cụ ORM sẽ luôn nối bảng <code>EMPLOYEES</code> khi truy cập bảng <code>SALES</code>. Việc cấu hình eager fetching trong các ánh xạ thực thể chỉ có ý nghĩa nếu bạn luôn cần thông tin chi tiết về nhân viên cùng với dữ liệu giao dịch.</p>
+
+      <p>Eager fetching là không hiệu quả nếu bạn không cần các bản ghi con mỗi lần bạn truy cập đối tượng cha. Đối với một ứng dụng danh bạ điện thoại, việc tải các bản ghi <code>SALES</code> khi hiển thị thông tin chi tiết về nhân viên là không hợp lý. Bạn có thể cần dữ liệu giao dịch liên quan trong các trường hợp khác&mdash;nhưng không phải lúc nào cũng vậy. Một cấu hình tĩnh không phải là giải pháp.</p>
+
+      <p>Để đạt hiệu suất tối ưu, bạn cần kiểm soát hoàn toàn các phép nối. Các ví dụ sau đây cho thấy cách để có được sự linh hoạt lớn nhất bằng cách kiểm soát hành vi phép nối tại thời gian chạy.</p>
+
+      <p class="page-folio page-folio--left">96</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

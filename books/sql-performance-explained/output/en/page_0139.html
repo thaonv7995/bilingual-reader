@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 6: Sorting and Grouping</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-label {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .chapter-title {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 20.7pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">139</span>
+      </header>
+
+      <p class="chapter-label">Chapter 6</p>
+      <h1 class="chapter-title">Sorting and Grouping</h1>
+
+      <p class="no-indent">Sorting is a very resource intensive operation. It needs a fair amount of CPU time, but the main problem is that the database must temporarily buffer the results. After all, a sort operation must read the complete input before it can produce the first output. Sort operations cannot be executed in a pipelined manner&mdash;this can become a problem for large data sets.</p>
+
+      <p>An index provides an ordered representation of the indexed data: this principle was already described in Chapter 1. We could also say that an index stores the data in a presorted fashion. The index is, in fact, sorted just like when using the index definition in an order by clause. It is therefore no surprise that we can use indexes to avoid the sort operation to satisfy an order by clause.</p>
+
+      <p>Ironically, an <code>INDEX RANGE SCAN</code> also becomes inefficient for large data sets&mdash;especially when followed by a table access. This can nullify the savings from avoiding the sort operation. A <code>FULL TABLE SCAN</code> with an explicit sort operation might be even faster in this case. Again, it is the optimizer&rsquo;s job to evaluate the different execution plans and select the best one.</p>
+
+      <p>An indexed order by execution not only saves the sorting effort, however; it is also able to return the first results without processing all input data. The order by is thus executed in a pipelined manner. Chapter 7, &ldquo;Partial Results&rdquo;, explains how to exploit the pipelined execution to implement efficient pagination queries. This makes the pipelined order by so important that I refer to it as the third power of indexing.</p>
+
+      <p>This chapter explains how to use an index for a pipelined order by execution. To this end we have to pay special attention to the interactions with the where clause and also to ASC and DESC modifiers. The chapter concludes by applying these techniques to group by clauses as well.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">129</p>
+    </article>
+  </main>
+</body>
+</html>

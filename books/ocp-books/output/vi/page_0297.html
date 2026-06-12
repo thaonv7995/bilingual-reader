@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0296.html">← Trước</a>
+    <a href="page_0298.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">297</span>
+      </header>
+
+      <p class="no-indent">vòng lặp for được viết trong <code>loadValuesFromDB()</code>&nbsp;bị lỗi biên dịch nhưng vòng lặp viết trong
+      <code>loadValuesFromFile()</code>&nbsp;thì biên dịch thành công. Điều này cho thấy khi một giới hạn dưới được áp dụng cho một
+      đối số kiểu, thông tin kiểu liên kết với biến kiểu generic sẽ bị ẩn đi. Điều này
+      ngăn cản lập trình viên truy cập vào bất kỳ phương thức hoặc thuộc tính cụ thể của kiểu nào <strong>bằng cách
+      sử dụng biến đó</strong>. Một lần nữa, đây không phải là một cơ chế bảo mật hoàn hảo. Đó thậm chí không phải là
+      mục tiêu của Generics. Mục tiêu duy nhất của nó chỉ là giảm thiểu các cơ hội viết mã nguồn dễ vỡ và nhiều lỗi.</p>
+
+      <h3 class="section-title section-title--sub">Sử dụng wildcard không giới hạn (unbounded wildcard)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Giống như việc chúng ta đã sử dụng tham số kiểu không giới hạn <code>E</code>&nbsp;khi định nghĩa lớp (Class) <code>DataHolder&lt;E&gt;</code>&nbsp;trước đó,
+      chúng ta có thể sử dụng wildcard không giới hạn làm đối số khi tham số hóa một kiểu generic
+      để biểu thị rằng đối số kiểu chính xác là chưa biết. Ví dụ: <code>DataHolder&lt;?&gt; dh = new
+      DataHolder&lt;&gt;();</code>&nbsp;Ở đây, <code>dh</code>&nbsp;được cho là sẽ trỏ đến một đối tượng (Object) <code>DataHolder</code>&nbsp;chứa một kiểu
+      hoàn toàn chưa biết đối với chúng ta. Kiểu đó có thể là bất kỳ thứ gì nhưng dù nó là gì đi nữa, chúng ta cũng không
+      biết. Vấn đề khi xử lý một kiểu chưa biết là chúng ta không thể làm được điều gì thú vị
+      với nó và lý do cũng giống như trước &mdash; điều gì sẽ xảy ra nếu đối tượng (Object) <code>DataHolder</code>&nbsp;mà <code>dh</code>&nbsp;đang
+      trỏ tới chứa một thứ gì đó khác với giả định của chúng ta? Vì nó không có giới hạn
+      dưới, không kiểu nào thỏa mãn tham số kiểu <code>E</code>&nbsp;yêu cầu cho phương thức <code>setData</code>&nbsp;và do đó, ví
+      dụ, chúng ta không thể thực hiện <code>dh.setData(&quot;string&quot;);</code>, và vì nó không có giới hạn trên nên chúng ta không thể
+      gán giá trị trả về của phương thức <code>getData</code>&nbsp;cho một biến thuộc bất kỳ kiểu nào ngoại trừ <code>Object</code>.
+      Về mặt hiệu quả, <code>&lt;?&gt;</code>&nbsp;cũng giống như <code>&lt;? extends Object&gt;</code>. Tất cả những gì chúng ta có thể làm là <code>Object obj =
+      dh.getData();</code></p>
+
+      <p>Vậy thì nó có ích lợi gì? Nếu logic nghiệp vụ của phương thức không phụ thuộc vào việc biết
+      thông tin về kiểu thực tế của đối số, thì đây là lựa chọn được khuyến nghị vì nó
+      không giới hạn phương thức của bạn vào việc sử dụng một kiểu tham số hóa cụ thể, đồng thời không bắt buộc người
+      dùng phải tiết lộ bất kỳ điều gì về kiểu của đối số mà họ đang truyền vào phương thức.
+      Ví dụ: nếu tất cả những gì bạn muốn làm là viết một phương thức tiện ích để ghi log nội dung của một
+      đối tượng (Object) <code>DataHolder</code>&nbsp;, bạn có thể định nghĩa nó như sau:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

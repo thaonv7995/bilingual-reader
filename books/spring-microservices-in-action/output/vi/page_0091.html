@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Về quản lý cấu hình</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num 2;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0090.html">← Trước</a>
+    <a href="page_0092.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">66</span>
+        <span class="rh-center">CHƯƠNG 3 <em>Kiểm soát cấu hình với Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">là đọc dữ liệu ra từ một file hoặc một database bằng JDBC), hãy để ứng dụng dùng một dịch vụ JSON dựa trên REST để truy xuất dữ liệu cấu hình.</p>
+
+      <ol class="manning-numbered" aria-label="Các nguyên tắc quản lý cấu hình (tiếp theo)">
+        <li><strong class="run-in">Centralize</strong>&mdash;Vì một ứng dụng chạy trên cloud có thể có hàng trăm dịch vụ, việc giảm thiểu số repository khác nhau dùng để lưu thông tin cấu hình là vô cùng quan trọng. Tập trung hóa cấu hình ứng dụng của bạn vào càng ít repository càng tốt.</li>
+        <li><strong class="run-in">Harden</strong>&mdash;Vì thông tin cấu hình ứng dụng của bạn sẽ được tách hoàn toàn khỏi dịch vụ đã triển khai và được tập trung hóa, điều quan trọng là bất kỳ giải pháp nào bạn sử dụng đều có thể được triển khai để đạt tính sẵn sàng cao và dự phòng.</li>
+      </ol>
+
+      <p>Một trong những điều quan trọng cần nhớ là khi bạn tách thông tin cấu hình ra khỏi mã nguồn thực tế, bạn đang tạo ra một phụ thuộc bên ngoài cần được quản lý và kiểm soát phiên bản. Tôi không thể nhấn mạnh đủ rằng dữ liệu cấu hình ứng dụng cần được theo dõi và kiểm soát phiên bản, vì cấu hình ứng dụng quản lý kém là môi trường màu mỡ để sinh ra các lỗi khó phát hiện và các sự cố ngoài kế hoạch.</p>
+
+      <aside class="sidebar-note" aria-label="Về độ phức tạp ngẫu nhiên">
+        <h3>Về độ phức tạp ngẫu nhiên</h3>
+        <p>Tôi đã trực tiếp trải qua những nguy hiểm của việc không có chiến lược quản lý dữ liệu cấu hình ứng dụng. Khi làm việc tại một công ty dịch vụ tài chính thuộc Fortune 500, tôi được yêu cầu giúp đưa một dự án nâng cấp WebSphere lớn trở lại đúng tiến độ.</p>
+        <p>Công ty nói trên có hơn 120 ứng dụng chạy trên WebSphere và cần nâng cấp hạ tầng từ WebSphere 6 lên WebSphere 7 trước khi toàn bộ môi trường ứng dụng hết hạn bảo trì từ phía nhà cung cấp.</p>
+        <p>Dự án đã tiến hành được một năm và mới chỉ triển khai được một trong 120 ứng dụng. Dự án đã tốn một triệu đô la chi phí nhân sự và phần cứng, và với quỹ đạo hiện tại, dự kiến sẽ mất thêm hai năm nữa mới hoàn tất nâng cấp.</p>
+        <p>Khi tôi bắt đầu làm việc với nhóm ứng dụng, một (và chỉ một) trong những vấn đề lớn tôi phát hiện ra là nhóm ứng dụng quản lý toàn bộ cấu hình cho database và endpoint của các dịch vụ bên trong các property file. Các property file này được quản lý thủ công và không nằm trong source control. Với 120 ứng dụng trải rộng trên bốn môi trường và nhiều node WebSphere cho mỗi ứng dụng, mớ hỗn độn các file cấu hình này khiến nhóm phải cố gắng di chuyển 12.000 file cấu hình trải rộng trên hàng trăm server và ứng dụng chạy trên các server đó. (Bạn đọc đúng con số đó: 12.000.) Những file này chỉ dành cho cấu hình ứng dụng, chưa kể cấu hình application server.</p>
+        <p>Tôi thuyết phục người tài trợ dự án dành hai tháng để gom toàn bộ thông tin ứng dụng về một kho lưu trữ cấu hình tập trung, có kiểm soát phiên bản, chỉ còn 20 file cấu hình. Khi tôi hỏi nhóm framework làm sao mọi thứ lại đến mức</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

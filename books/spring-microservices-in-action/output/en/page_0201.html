@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Correlation ID in Zuul and service calls</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0200.html">← Prev</a>
+    <a href="page_0202.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">176</span>
+        <span class="rh-center">CHAPTER 6 <em>Service routing with Spring Cloud and Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>In a normal Spring MVC or Spring Boot service, the RequestContext would be of type <code>org.springframework.web.servletsupport.RequestContext</code>. However, Zuul gives a specialized RequestContext that has several additional methods for accessing Zuul-specific values. This request context is part of the <code>com.netflix.zuul.context</code> package.</p>
+      </aside>
+
+      <p class="no-indent">If it isn&rsquo;t there, you then check the ZuulRequestHeaders. Zuul doesn&rsquo;t allow you to directly add or modify the HTTP request headers on an incoming request. If we add the <code>tmx-correlation-id</code> and then try to access it again later in the filter, it won&rsquo;t be available as part of the <code>ctx.getRequestHeader()</code> call. To work around this, you use the FilterUtils <code>getCorrelationId()</code> method. You may remember that earlier in the <code>run()</code> method on your TrackingFilter class, you did exactly this with the following code snippet:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>else{
+  filterUtils.setCorrelationId(generateCorrelationId());
+  logger.debug("tmx-correlation-id generated
+➥ in tracking filter: {}.",
+  filterUtils.getCorrelationId());
+}</code></pre>
+      </figure>
+
+      <p>The setting of the <code>tmx-correlation-id</code> occurs with the FilterUtils <code>setCorrelationId()</code> method:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public void setCorrelationId(String correlationId){
+  RequestContext ctx =
+    RequestContext.getCurrentContext();
+  ctx.addZuulRequestHeader(CORRELATION_ID, correlationId);
+}</code></pre>
+      </figure>
+
+      <p>In the FilterUtils <code>setCorrelationId()</code> method, when you want to add a value to the HTTP request headers, you use the RequestContext&rsquo;s <code>addZuulRequestHeader()</code> method. This method will maintain a separate map of HTTP headers that were added while a request was flowing through the filters with your Zuul server. The data contained within the ZuulRequestHeader map will be merged when the target service is invoked by your Zuul server.</p>
+
+      <h4 class="subsection-title">6.5.1 Using the correlation ID in your service calls</h4>
+
+      <p>Now that you&rsquo;ve guaranteed that a correlation ID has been added to every microservice call flowing through Zuul, how do you ensure that</p>
+
+      <ul class="manning-bullets" aria-label="Correlation ID propagation goals">
+        <li>The correlation-ID is readily accessible to the microservice that&rsquo;s being invoked</li>
+        <li>Any downstream service calls the microservice might make also propagate the correlation-ID on to the downstream call</li>
+      </ul>
+
+      <p>To implement this, you&rsquo;re going to build a set of three classes into each of your microservices. These classes will work together to read the correlation ID (along with other information you&rsquo;ll add later) off the incoming HTTP request, map it to a class that&rsquo;s easily accessible and useable by the business logic in the application, and then ensure that the correlation ID is propagated to any downstream service calls.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

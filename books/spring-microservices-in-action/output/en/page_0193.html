@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Dynamically reload route configuration</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p.continued-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-style: italic;
+      color: #476b85;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0192.html">← Prev</a>
+    <a href="page_0194.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">168</span>
+        <span class="rh-center">CHAPTER 6 <em>Service routing with Spring Cloud and Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="Spring Cloud Sidecar (continued)">
+        <p class="no-indent continued-label">(continued)</p>
+        <p class="no-indent">proxy them through Zuul. I don&rsquo;t cover Spring Sidecar in this book because you&rsquo;re not writing any non-JVM services, but it&rsquo;s extremely easy to set up a sidecar instance. Directions on how to do so can be found at the Spring Cloud website (<a href="http://cloud.spring.io/spring-cloud-netflix/spring-cloud-netflix.html#spring-cloud-ribbon-without-eureka">http://cloud.spring.io/spring-cloud-netflix/spring-cloud-netflix.html#spring-cloud-ribbon-without-eureka</a>).</p>
+      </aside>
+
+      <h4 class="subsection-title">6.3.4 Dynamically reload route configuration</h4>
+
+      <p>The next thing we&rsquo;re going to look at in terms of configuring routes in Zuul is how to dynamically reload routes. The ability to dynamically reload routes is useful because it allows you to change the mapping of routes without having to recycle the Zuul server(s). Existing routes can be modified quickly and new routes added without having to go through the act of recycling each Zuul server in your environment. In chapter 3, we covered how to use Spring Cloud Configuration service to externalize a microservices configuration data. You can use Spring Cloud configuration to externalize Zuul routes.</p>
+
+      <p>In the EagleEye examples you can set up a new application folder in your config-repo (<a href="http://github.com/carnellj/config-repo">http://github.com/carnellj/config-repo</a>) called <code>zuulservice</code>. Like your organization and licensing services, you&rsquo;ll create three files&mdash;<code>zuulservice.yml</code>, <code>zuulservice-dev.yml</code>, and <code>zuulservice-prod.yml</code>&mdash;that will hold your route configuration.</p>
+
+      <aside class="sidebar-note" aria-label="Route format note">
+        <p class="no-indent">To be consistent with the examples in the chapter 3 configuration, I&rsquo;ve changed the route formats to move from a hierarchical format to the &ldquo;.&rdquo; format. The initial route configuration will have a single entry in it:</p>
+      </aside>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>zuul.prefix=/api</code></pre>
+      </figure>
+
+      <p>If you hit the <code>/routes</code> endpoint, you should see all your Eureka-based services currently shown in Zuul with the prefix of <code>/api</code>. Now, if you wanted to add new route mappings on the fly, all you have to do is make the changes to the config file and then commit them back to the Git repository where Spring Cloud Config is pulling its configuration data from. For instance, if you wanted to disable all Eureka-based service registration and only expose two routes (one for the organization and one for the licensing service), you could modify the <code>zuulservice-*.yml</code> files to look like this:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>zuul.ignored-services: '*'
+zuul.prefix: /api
+zuul.routes.organizationservice: /organization/**
+zuul.routes.organizationservice: /licensing/**</code></pre>
+      </figure>
+
+      <p>Then you can commit the changes to GitHub. Zuul exposes a POST-based endpoint route <code>/refresh</code> that will cause it to reload its route configuration. Once this <code>/refresh</code> is hit, if you then hit the <code>/routes</code> endpoint, you&rsquo;ll see that the two new routes are exposed and all the Eureka-based routes are gone.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

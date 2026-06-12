@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0049.html">← Trước</a>
+    <a href="page_0051.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">50</span>
+      </header>
+
+      <p class="no-indent">Để đọc thêm về quyền mặc định, xem <span class="accent-word">ALTER DEFAULT PRIVILEGES</span>.</p>
+
+      <h3 class="section-title">Sự kỳ quặc của quyền</h3>
+      <p class="no-indent">Trước khi chúng tôi để bạn tự do khám phá quyền, chúng tôi muốn chỉ ra một vài
+      điều kỳ lạ có thể không rõ ràng.</p>
+
+      <p>Khác với các sản phẩm cơ sở dữ liệu khác, việc là chủ sở hữu của một cơ sở dữ liệu PostgreSQL không
+      cho bạn quyền truy cập vào tất cả các đối tượng trong cơ sở dữ liệu, nhưng nó cấp cho bạn quyền đối với bất kỳ
+      đối tượng nào bạn tạo và cho phép bạn xóa cơ sở dữ liệu. Một vai trò khác có thể tạo ra các đối tượng
+      mà bạn không thể truy cập trong cơ sở dữ liệu mà bạn sở hữu. Thú vị là, bạn vẫn có thể xóa
+      toàn bộ cơ sở dữ liệu.</p>
+
+      <p>Mọi người thường quên thiết lập <code>GRANT USAGE ON SCHEMA</code> hoặc <code>GRANT ALL ON SCHEMA</code>. Ngay cả khi
+      các bảng và hàm của bạn có quyền được gán cho một vai trò, các bảng và hàm này vẫn
+      sẽ không thể truy cập nếu vai trò đó không có quyền <code>USAGE</code> đối với schema.</p>
+
+      <h3 class="section-title">Mở rộng</h3>
+      <p class="no-indent">Mở rộng, trước đây được gọi là contribs, là các tiện ích bổ sung mà bạn có thể cài đặt trong một cơ sở dữ liệu PostgreSQL
+      để mở rộng chức năng vượt ra ngoài các dịch vụ cơ bản. Chúng thể hiện điều tốt nhất của
+      phần mềm mã nguồn mở: mọi người hợp tác, xây dựng và chia sẻ các tính năng mới một cách tự do.
+      Kể từ phiên bản 9.1, mô hình mở rộng PostgreSQL mới đã làm cho việc thêm mở rộng trở nên
+      dễ dàng.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0050_icon_tip.png" width="43" height="57" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Như một lưu ý về thuật ngữ, các tiện ích bổ sung cũ bên ngoài mô hình mở rộng
+        vẫn nên được gọi là <code>contribs</code>, nhưng với cái nhìn về tương lai,
+        chúng tôi sẽ gọi tất cả chúng là <code>extensions</code>.</p>
+      </div>
+
+      <p class="no-indent">Không phải tất cả các mở rộng đều cần có trong tất cả các cơ sở dữ liệu. Bạn nên cài đặt các mở rộng cho cơ sở dữ liệu
+      của riêng bạn khi cần thiết. Nếu bạn muốn tất cả các cơ sở dữ liệu của mình có một tập hợp
+      các mở rộng nhất định, bạn có thể phát triển một cơ sở dữ liệu mẫu, như đã thảo luận trong <span class="accent-word">“Cơ sở dữ liệu Mẫu” trên trang 27</span>, với tất cả các mở rộng đã được cài đặt, và sau đó tạo ra các cơ sở dữ liệu tương lai từ mẫu đó.</p>
+
+      <p>Thỉnh thoảng hãy cắt tỉa các mở rộng mà bạn không còn cần, để tránh tình trạng phình to. Một số mở rộng
+      chiếm khá nhiều không gian.</p>
+
+      <p>Để xem các mở rộng mà bạn đã cài đặt trên máy chủ của mình, hãy chạy truy vấn trong
+      <span class="accent-word">Ví dụ 2-7</span>. Danh sách của bạn có thể khác biệt đáng kể so với của chúng tôi.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">32<span class="sep">|</span>Chương 2: Quản trị cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

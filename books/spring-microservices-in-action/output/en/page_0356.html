@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Appendix A: A.5 Building the Docker image</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      padding-left: 1.25em;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 3mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A1 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A1 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 22mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0355.html">← Prev</a>
+    <a href="page_0357.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Building the Docker image</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">331</span>
+      </header>
+
+      <p class="no-indent">you want to compile the source code and build the Docker images for all the projects within a single chapter, you need to run the following at the root of the chapter:</p>
+
+      <figure class="code-snippet" aria-label="Maven Docker build command for all chapter services">
+        <pre class="code-block"><code>mvn clean package docker:build</code></pre>
+      </figure>
+
+      <p>This will execute the Maven <code>pom.xml</code> file in each of the service directories. It will also build the Docker images locally.</p>
+
+      <p>If you want to build a single service within the chapter, you can change to that specific service directory and run the <code>mvn clean package docker:build</code> command.</p>
+
+      <h4 class="subsection-title">A.5 Building the Docker image</h4>
+
+      <p class="no-indent">During the build process, all the services in the book are packaged as Docker images. This process is carried out by the Spotify Maven plugin. For an example of this plugin in action, you can look at the chapter 3 licensing service&rsquo;s <code>pom.xml</code> file (<code>chapter3/licensing-service</code>). The following listing shows the XML fragment that configures this plugin in each service&rsquo;s <code>pom.xml</code> file.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing A.1</strong><br>Spotify Docker Maven plugin used to create Dockerimage</figcaption>
+        <div class="listing-annotated listing-annotated--A1" aria-label="Listing A.1 annotated Spotify Docker Maven plugin configuration">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>&lt;plugin&gt;
+  &lt;groupId&gt;com.spotify&lt;/groupId&gt;
+  &lt;artifactId&gt;docker-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;0.4.10&lt;/version&gt;
+  &lt;configuration&gt;
+    &lt;imageName&gt;
+        ${docker.image.name}:
+          ${docker.image.tag}
+    &lt;/imageName&gt;
+    &lt;dockerDirectory&gt;
+        ${basedir}/target/dockerfile
+    &lt;/dockerDirectory&gt;
+    &lt;resources&gt;
+       &lt;resource&gt;
+         &lt;targetPath&gt;/&lt;/targetPath&gt;
+         &lt;directory&gt;${project.build.directory}&lt;/directory&gt;
+         &lt;include&gt;${project.build.finalName}.jar&lt;/include&gt;
+       &lt;/resource&gt;
+    &lt;/resources&gt;
+  &lt;/configuration&gt;
+ &lt;/plugin&gt;</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing A.1 annotation callouts">
+            <p class="listing-callout">Every Docker image created will have a tag associated with it. The Spotify plugin will name the created image with whatever is defined in the <code>${docker.image.tag}</code> tag.</p>
+            <p class="listing-callout">All Docker images are created in this book using a Dockerfile. A Dockerfile is used to give step-by-step instructions on how the Docker image should be provisioned.</p>
+            <p class="listing-callout">When the Spotify plugin is executed, it will copy the service&rsquo;s executable jar to the Docker image.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">The XML fragment does three things:</p>
+
+      <ol class="manning-numbered" aria-label="What the Spotify Docker Maven plugin XML fragment does">
+        <li>It copies the executable jar for the service, along with the contents of the <code>src/main/docker</code> directory, to <code>target/docker</code>.</li>
+        <li>It executes the Dockerfile defined in the <code>target/docker</code> directory. The Dockerfile is a list of commands that are executed whenever a new Docker image for that service is provisioned.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

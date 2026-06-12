@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Phụ lục B: Khôi phục cơ sở dữ liệu: pg_restore</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 8.5pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 8.5pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .version-legend {
+      margin: 4mm 0;
+    }
+    .prose-page.chapter-page .version-legend p {
+      margin: 0;
+      text-indent: 0;
+      text-align: left;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0215.html">← Trước</a>
+    <a href="page_0217.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">216</span>
+      </header>
+
+      <figure class="listing">
+        <pre class="code-block"><code>  -W, --password           buộc nhắc nhập mật khẩu (nên xảy ra tự động)
+  --role=ROLENAME          thực hiện SET ROLE trước khi dump
+Nếu không sử dụng -f/--file, thì tập lệnh SQL sẽ được ghi vào đầu ra tiêu chuẩn.</code></pre>
+      </figure>
+
+      <div class="version-legend">
+        <p class="no-indent">① Mới trong PostgreSQL 9.3.</p>
+      </div>
+
+      <h3 class="section-title">Khôi phục cơ sở dữ liệu: pg_restore</h3>
+
+      <p class="no-indent">Sử dụng <code>pg_restore</code> để khôi phục các tệp sao lưu ở định dạng tar, tùy chỉnh hoặc thư mục được tạo bằng
+      <code>pg_dump</code>. <span class="accent-word">Ví dụ B-3</span> cho thấy đầu ra trợ giúp của <code>pg_restore</code>. Xem <span class="accent-word">&ldquo;Khôi phục&rdquo; trên trang 40</span> để
+      biết thêm ví dụ.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ B-3.</strong> trợ giúp pg_restore</figcaption>
+        <pre class="code-block"><code>pg_restore --help
+
+pg_restore khôi phục một cơ sở dữ liệu PostgreSQL từ một kho lưu trữ được tạo bởi pg_dump.
+Cách sử dụng:
+  pg_restore [TÙY CHỌN]... [TỆP]
+
+Tùy chọn chung:
+  -d, --dbname=NAME        kết nối đến tên cơ sở dữ liệu
+  -f, --file=FILENAME      tên tệp đầu ra
+  -F, --format=c|d|t       định dạng tệp sao lưu (nên tự động)
+  -l, --list               in tóm tắt TOC của kho lưu trữ
+  -v, --verbose            chế độ chi tiết
+  -V, --version            xuất thông tin phiên bản, sau đó thoát
+  -?, --help               hiển thị trợ giúp này, sau đó thoát
+
+Tùy chọn điều khiển việc khôi phục:
+  -a, --data-only              chỉ khôi phục dữ liệu, không có lược đồ
+  -c, --clean                  làm sạch (xóa) các đối tượng cơ sở dữ liệu trước khi tái tạo
+  -C, --create                 tạo cơ sở dữ liệu mục tiêu
+  -e, --exit-on-error          thoát khi có lỗi, mặc định là tiếp tục
+  -I, --index=NAME             khôi phục chỉ mục được đặt tên
+  -j, --jobs=NUM               sử dụng số lượng công việc song song này để khôi phục
+  -L, --use-list=FILENAME      sử dụng bảng nội dung từ tệp này để
+                               chọn/sắp xếp đầu ra
+  -n, --schema=NAME            chỉ khôi phục các đối tượng trong lược đồ này
+  -O, --no-owner               bỏ qua khôi phục quyền sở hữu đối tượng
+  -P, --function=NAME(args)    khôi phục hàm được đặt tên
+  -s, --schema-only            chỉ khôi phục lược đồ, không có dữ liệu
+  -S, --superuser=NAME         tên người dùng siêu người dùng để sử dụng cho việc vô hiệu hóa các trigger
+  -t, --table=NAME             khôi phục bảng được đặt tên
+  -T, --trigger=NAME           khôi phục trigger được đặt tên
+  -x, --no-privileges          bỏ qua khôi phục quyền truy cập (cấp/thu hồi)
+  -1, --single-transaction     khôi phục như một giao dịch đơn
+  --disable-triggers           vô hiệu hóa các trigger trong quá trình khôi phục chỉ dữ liệu
+  --no-data-for-failed-tables  không khôi phục dữ liệu của các bảng không thể ①</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">198<span class="sep">|</span>Phụ lục B: Các công cụ dòng lệnh đóng gói PostgreSQL</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

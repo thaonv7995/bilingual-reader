@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.type-name {
+      margin: 0 0 1mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.type-desc {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0103.html">← Trước</a>
+    <a href="page_0105.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">104</span>
+      </header>
+
+      <p class="type-name no-indent"><code>tsrange</code></p>
+      <p class="type-desc">Mới trong phiên bản 9.2; cho phép bạn định nghĩa các khoảng thời gian mở và đóng của timestamp
+      mà không có múi giờ. Kiểu này bao gồm hai timestamp và các định nghĩa khoảng mở/đóng.
+      Ví dụ, <code>'[2012-01-01 14:00, 2012-01-01 15:00)'::tsrange</code>
+      định nghĩa một khoảng thời gian bắt đầu lúc 14:00 nhưng kết thúc trước 15:00. Tham khảo <span class="accent-word">Các loại khoảng</span> để biết thêm chi tiết.</p>
+
+      <p class="type-name no-indent"><code>tstzrange</code></p>
+      <p class="type-desc">Mới trong phiên bản 9.2; cho phép bạn định nghĩa các khoảng thời gian mở và đóng của timestamp
+      có múi giờ.</p>
+
+      <p class="type-name no-indent"><code>daterange</code></p>
+      <p class="type-desc">Mới trong phiên bản 9.2; cho phép bạn định nghĩa các khoảng thời gian mở và đóng của ngày tháng.</p>
+
+      <h3 class="subsection-title">Múi Giờ: Chúng Là Gì và Không Phải Là Gì</h3>
+      <p class="no-indent">Một hiểu lầm phổ biến với các kiểu dữ liệu nhận thức múi giờ của PostgreSQL là rằng Post‐
+      greSQL ghi lại một dấu thời gian bổ sung với giá trị datetime. Điều này là không chính xác. Nếu
+      bạn lưu <code>2012-2-14 18:08:00-8</code> (-8 là độ lệch Thái Bình Dương từ UTC), PostgreSQL
+      hoạt động nội bộ như sau:</p>
+
+      <ol class="numbered">
+        <li>Lấy thời gian UTC cho <code>2012-02-14 18:08:00-8</code>. Đây là <code>2012-02-15 04:08:00-0</code>.</li>
+        <li>Lưu giá trị <code>2012-02-15 04:08:00</code>.</li>
+      </ol>
+
+      <p>Khi bạn gọi lại dữ liệu để hiển thị, PostgreSQL hoạt động nội bộ như sau:</p>
+
+      <ol class="numbered">
+        <li>Tìm múi giờ mà máy chủ quan sát hoặc múi giờ được yêu cầu (ví dụ,
+        <code>America/New_York</code>).</li>
+        <li>Tính toán độ lệch cho múi giờ cho thời gian UTC này. (-5 cho <code>America/New_York</code>).</li>
+        <li>Xác định datetime với độ lệch (<code>2012-02-15 16:08:00</code> với độ lệch -5 trở thành <code>2012-02-15 21:08:00</code>).</li>
+        <li>Hiển thị kết quả (<code>2012-02-15 21:08:00-5</code>).</li>
+      </ol>
+
+      <p>Như bạn có thể thấy, PostgreSQL không lưu trữ múi giờ mà chỉ sử dụng nó để chuyển đổi
+      datetime sang UTC trước khi lưu trữ. Sau đó, thông tin về múi giờ sẽ biến mất. Khi
+      PostgreSQL hiển thị datetime, nó luôn làm như vậy trong múi giờ mặc định được quy định bởi
+      phiên, người dùng, cơ sở dữ liệu hoặc máy chủ, theo thứ tự đó. Nếu bạn sử dụng các kiểu dữ liệu nhận thức múi giờ,
+      chúng tôi khuyên bạn nên xem xét hậu quả của việc di chuyển máy chủ từ một múi giờ này sang
+      một múi giờ khác. Giả sử bạn đặt một máy chủ ở New York City và sau đó khôi phục cơ sở dữ liệu ở Los Angeles. Tất cả các timestamp với các trường múi giờ sẽ đột nhiên hiển thị
+      theo giờ Thái Bình Dương. Điều này là ổn miễn là bạn dự đoán được hành vi này.</p>
+
+      <p>Dưới đây là một ví dụ về cách mọi thứ có thể sai. Giả sử rằng McDonald’s có máy chủ của mình ở Bờ Đông và giờ mở cửa cho các cửa hàng là <code>timetz</code>. Một McDonald’s mới</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">86<span class="sep">|</span>Chương 5: Các loại dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

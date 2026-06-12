@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu — JSON</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0115.html">← Trước</a>
+    <a href="page_0117.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">116</span>
+      </header>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> Trả về phần tử đường dẫn thành viên/tên dưới dạng văn bản.</p>
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> Mở rộng mảng thành viên thành các đối tượng JSON riêng lẻ.</p>
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">④</span> Lấy danh sách thành viên dưới dạng một đối tượng JSON mới.</p>
+
+      <p class="no-indent">Các toán tử <code>-&gt;&gt;</code> và <code>#&gt;&gt;</code> là viết tắt cho <code>json_extract_path_text</code>. Toán tử <code>#&gt;&gt;</code> nhận
+      một mảng đường dẫn. <span class="accent-word">Ví dụ 5-25</span> viết lại <span class="accent-word">Ví dụ 5-24</span> sử dụng các toán tử biểu tượng này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-25.</strong> Các toán tử tương đương để trích xuất đường dẫn</figcaption>
+        <pre class="code-block"><code>SELECT profile-&gt;&gt;'name' As family, json_array_elements((profile-&gt;'members')) #&gt;&gt; '{member,name}'::text[] As member
+FROM families_j;</code></pre>
+      </figure>
+
+      <p>Có một hàm đi kèm, <code>json_extract_path</code>, có thể được biểu diễn dưới dạng <code>-&gt;</code> và <code>#&gt;</code>,
+      trả về một đối tượng JSON đại diện cho phần tử con. Hàm này đặc biệt hữu ích
+      để truyền các phần tử phức tạp như <code>members</code> vào một hàm khác để xử lý thêm.</p>
+
+      <p>Mặc dù không có hàm nào để dễ dàng truy vấn dữ liệu JSON trong phiên bản 9.2, bạn
+      có thể thực hiện nhiều điều mà phiên bản 9.3 hỗ trợ bằng cách viết các hàm PL/V8. Chúng tôi
+      minh họa cách tạo một hàm chọn tương tự như jQuery trong <span class="accent-word">Sử dụng PLV8 để Xây dựng Các Bộ chọn JSON
+      </span>.</p>
+
+      <p>Nhiều hàm có sẵn để làm việc với các mảng trong cấu trúc JSON. Bạn đã thấy
+      việc sử dụng <code>json_array_elements</code> trong <span class="accent-word">Ví dụ 5-25</span>. Ngoài <code>json_array_elements</code>, bạn có thể sử dụng <code>json_array_length</code> để đếm số phần tử và <code>-&gt;</code> với một vị trí chỉ mục
+      để trả về phần tử chỉ mục cụ thể. Bạn có thể nối các toán tử với nhau để đi sâu
+      vào đối tượng JSON, như được thể hiện trong <span class="accent-word">Ví dụ 5-26</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-26.</strong> Truy vấn các phần tử con của thành viên</figcaption>
+        <pre class="code-block"><code>SELECT id, json_array_length(profile-&gt;'members') As numero, profile-&gt;'members'-
+&gt;0#&gt;&gt;'{member,name}'::text[] As primero
+FROM families_j;
+ id | numero | primero
+---+--------+--------
+ 1 |    4   | Alex</code></pre>
+      </figure>
+
+      <p class="no-indent"><span class="accent-word">Ví dụ 5-26</span> sử dụng hai phiên bản của toán tử <code>-&gt;</code>. Toán tử <code>-&gt;</code> luôn trả về một
+      đối tượng <code>json</code> hoặc <code>jsonb</code>, nhưng nó nhận một đối số thứ hai là một trường <code>text</code> (viết tắt
+      cho <code>json_object_field</code>) hoặc một <code>integer</code> (viết tắt cho <code>json_array_element</code>). Vì vậy
+      <code>profile-&gt;'members'</code> trả về trường <code>members</code> của đối tượng JSON, mà thực sự là một
+      mảng JSON. <code>-&gt;0</code> hoạt động trên một trường mảng JSON và trả về phần tử đầu tiên. Trong ví dụ của chúng tôi, nó trả về thành viên đầu tiên của gia đình chúng tôi. <code>#&gt;&gt;'{member,name}'::text[]</code> là
+      viết tắt cho <code>json_extract_path_text</code>, vì vậy nó trả về giá trị văn bản tương ứng với
+      nút JSON member/name của thành viên đầu tiên của chúng tôi. Lưu ý cách chúng tôi có thể nối liền mạch</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">98<span class="sep">|</span>Chương 5: Kiểu Dữ Liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

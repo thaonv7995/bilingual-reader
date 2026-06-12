@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0517.html">← Trước</a>
+    <a href="page_0519.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">518</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>synchronize(u){ //lock the User object
+ synchronize(t){  //lock the Ticket object
+  ticket.setPassengerId(null);
+  u.removeTicket(t);}
+ }}</code></pre>
+      </figure>
+
+      <p>Nếu hai Thread (Luồng) thực thi hai phương thức trên cho cùng các Đối tượng (Object) Ticket và User tại cùng một thời điểm, do sự đan xen không mong muốn của hai Thread (Luồng), Thread 1 có thể khóa ticket và trước khi nó kịp khóa user, Thread 2 có thể khóa user và tiến hành khóa ticket. Rõ ràng là cả hai Thread (Luồng) đều không thể tiếp tục thực thi và ứng dụng sẽ có vẻ như bị treo.</p>
+
+      <p>Java không cung cấp bất kỳ cách tiêu chuẩn nào để ngăn chặn deadlock, nhưng một chiến lược phổ biến được sử dụng để tránh chúng là luôn chiếm giữ các khóa (lock) theo cùng một thứ tự. Trong ví dụ trên, nếu cả hai phương thức đều khóa các Đối tượng (Object) Ticket và User theo cùng một thứ tự, deadlock sẽ không xảy ra.</p>
+
+      <h3 class="section-title section-title--sub">Livelock<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một Livelock tương tự như deadlock, ngoại trừ việc trong một livelock, các Thread (Luồng) liên tục thực thi cùng một chuỗi các hành động trong một vòng lặp mà không thực sự đạt được bất kỳ tiến triển nào trong việc thực thi logic nghiệp vụ. Ví dụ, giả sử Thread (Luồng) T<sub>1</sub>&nbsp;khóa Đối tượng (Object) O<sub>1</sub>&nbsp;và nhận thấy rằng O<sub>2</sub>&nbsp;đã bị khóa. Tương tự, Thread (Luồng) T<sub>2</sub>&nbsp;khóa O<sub>2</sub>&nbsp;và nhận thấy rằng O<sub>1</sub>&nbsp;đã bị khóa. Để ngăn chặn deadlock, các Thread (Luồng) T<sub>1</sub>&nbsp;và T<sub>2</sub>&nbsp;lần lượt mở khóa các Đối tượng (Object) O<sub>1</sub>&nbsp;và O<sub>2</sub>&nbsp;, rồi cố gắng khóa các Đối tượng (Object) O<sub>2</sub> và O<sub>1</sub>&nbsp;tương ứng. Vì vậy, lúc này, T<sub>1</sub>&nbsp;nắm giữ O<sub>2</sub>&nbsp;và T<sub>2</sub>&nbsp;nắm giữ O<sub>1</sub>&nbsp;. Chuỗi thực thi này liên tục lặp lại. Do đó, các Thread (Luồng) có vẻ như đang chạy nhưng không Thread (Luồng) nào có thể khóa được cả hai đối tượng và cũng không Thread (Luồng) nào có thể thực thi được logic nghiệp vụ.</p>
+
+      <p>Mặc dù tình huống này không thể xảy ra khi sử dụng các khối synchronized bởi vì một Thread (Luồng) luôn bị chặn (BLOCKED) tại câu lệnh synchronized nếu khóa (lock) không khả dụng (nghĩa là không có cách nào để rẽ sang hướng thực thi khác nếu đối tượng</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0588.html">← Prev</a>
+    <a href="page_0590.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">589</span>
+      </header>
+
+      <p class="no-indent">As usual, since the <code>groupingBy</code>&nbsp;method only promises to collect the results in a <code>Map</code>&nbsp;, there is
+      no guarantee on the type, mutability, serializability, or thread-safety of the <code>Map</code>&nbsp;
+      implementation returned by the collector. It is possible to tell the <code>groupingBy</code>&nbsp;collector to use a
+      specific <code>Map</code>&nbsp;implementation class using an overloaded version of the <code>groupingBy</code>&nbsp;method but
+      since that method also involves the concept of chaining downstream collectors, I will talk about
+      it later.</p>
+
+      <h3 class="section-title section-title--sub">21.2.6 Nesting collectors<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>While going through the methods of the <code>Collectors</code>&nbsp;class, you will notice that it allows you to
+      create <code>Collector</code>&nbsp;s for <code>filtering</code>&nbsp;and <code>mapping</code>&nbsp;the elements of a stream and also for <code>reducing</code>&nbsp;
+      the elements of a stream through its <code>filtering</code>&nbsp;, <code>mapping</code>&nbsp;, and <code>reducing</code>&nbsp;methods. Recall
+      that filtering and mapping are intermediate operations and can be performed using <code>Stream</code>&nbsp;&rsquo;s
+      <code>filter</code>&nbsp;and <code>map</code>&nbsp;methods while reduction is a terminal operation that can be performed
+      using any of the&nbsp;<code>Stream</code>&nbsp;&rsquo;s overloaded <code>reduce</code>&nbsp;methods. For example, I can reduce a stream
+      of <code>Integer</code>&nbsp;s to the sum of their values using either of the following two statements:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Optional&lt;Integer&gt; sum = Stream.of(55,
+65).collect(Collectors.reducing(Math::addExact));
+Optional&lt;Integer&gt; sum = Stream.of(55, 65).reduce(Math::addExact);</code></pre>
+      </figure>
+
+      <p class="no-indent">One might wonder why the same functionality exists in <code>Stream</code>&nbsp;as well as in a&nbsp;<code>Collector</code>&nbsp;.
+      Well, first of all, there is nothing wrong with <code>Stream</code>&nbsp;&rsquo;s <code>reduce</code>&nbsp;method and, in fact, it is the
+      preferred way if you want to reduce a stream directly. The same goes for <code>Stream</code>&rsquo;s <code>filter</code>&nbsp;and
+      <code>map</code>&nbsp;methods. However, packaging these operations in a <code>Collector</code>&nbsp;allows the operation to
+      be nested inside another <code>Collector</code>&nbsp;.</p>
+
+      <p>Let&rsquo;s dig a bit deeper into what nesting really implies here. Imagine a stream of water flowing
+      from one point A to point B. We can say that from the perspective of point A,</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

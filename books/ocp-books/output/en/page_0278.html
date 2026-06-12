@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0277.html">← Prev</a>
+    <a href="page_0279.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">278</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ArrayList&lt;String&gt; sList1 = new ArrayList&lt;&gt;();
+sList1.add("a"); //[a]
+ArrayList&lt;String&gt; sList3 = new ArrayList&lt;&gt;();
+sList3.add("b"); //[b]
+sList3.addAll(0, sList1); //sList3 now contains [a, b]</code></pre>
+      </figure>
+
+      <p class="no-indent">Methods that remove elements from an <code>ArrayList</code>&nbsp;:</p>
+
+      <ol class="numbered">
+        <li><code>E remove(int index)</code>&nbsp;: Removes the element at the specified position in this list. For
+        example,</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ArrayList&lt;String&gt; list = ... // an ArrayList containing [a, b, c]
+String s = list.remove(1); //list now has [a, c]</code></pre>
+      </figure>
+
+      <p>It returns the element that has been removed from the list. Therefore, <code>s</code>&nbsp;will be assigned
+      the element that was removed, i.e., <code>&quot;b&quot;</code>&nbsp;. If you pass an invalid <code>int</code>&nbsp;value as an argument
+      (such as a negative value or a value that is beyond the range of the list, i.e., <code>size-1</code>&nbsp;), an
+      <code>IndexOutOfBoundsException</code>&nbsp;will be thrown.</p>
+
+      <ol class="numbered" start="2">
+        <li><code>boolean remove(Object o)</code>&nbsp;: Removes the first occurrence of the specified element
+        from this list, if it is present. For example,</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ArrayList&lt;String&gt; list = ... // an ArrayList containing [a, b, a]
+list.remove("a"); //[b, a]</code></pre>
+      </figure>
+
+      <p>Observe that only the first <code>a</code>&nbsp;is removed.</p>
+
+      <p>You have to pay attention while using this method on an <code>ArrayList</code>&nbsp;of <code>Integers</code>&nbsp;. Can
+      you guess what the following code will print?</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ArrayList&lt;Integer&gt; list = new ArrayList&lt;&gt;(Arrays.asList(</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

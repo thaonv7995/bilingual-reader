@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Thiết lập độ chi tiết dịch vụ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note p.sidebar-subhead {
+      font-style: italic;
+      font-weight: 700;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0066.html">← Trước</a>
+    <a href="page_0068.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">42</span>
+        <span class="rh-center">CHƯƠNG 2 <em>Xây dựng microservice với Spring Boot</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Sau khi phân tách miền nghiệp vụ thành các phần riêng biệt, bạn thường gặp khó khăn khi xác định liệu mình đã đạt được mức độ chi tiết phù hợp cho các dịch vụ hay chưa. Một microservice quá thô hoặc quá mịn sẽ có nhiều dấu hiệu đặc trưng mà chúng ta sẽ thảo luận ngay sau đây.</p>
+
+      <p>Khi xây dựng kiến trúc microservice, câu hỏi về độ chi tiết rất quan trọng, nhưng bạn có thể dùng các khái niệm sau để xác định giải pháp phù hợp:</p>
+
+      <ol class="manning-numbered">
+        <li><em>Tốt hơn là bắt đầu rộng với microservice của bạn rồi tái cấu trúc thành các dịch vụ nhỏ hơn</em>&mdash;Rất dễ đi quá đà khi bạn bắt đầu hành trình microservice và biến mọi thứ thành microservice. Nhưng việc phân rã miền nghiệp vụ thành các dịch vụ nhỏ thường dẫn đến độ phức tạp sớm vì các microservice rơi vào trạng thái không hơn gì các dịch vụ dữ liệu mức chi tiết cao.</li>
+        <li><em>Trước hết hãy tập trung vào cách các dịch vụ của bạn tương tác với nhau</em>&mdash;Điều này sẽ giúp thiết lập các giao diện mức thô của miền nghiệp vụ. Tái cấu trúc từ mức quá thô sang mức quá mịn thường dễ hơn.</li>
+        <li><em>Trách nhiệm của dịch vụ sẽ thay đổi theo thời gian khi hiểu biết của bạn về miền nghiệp vụ ngày càng sâu</em>&mdash;Thường thì một microservice sẽ nhận thêm trách nhiệm khi có yêu cầu chức năng ứng dụng mới. Thứ khởi đầu như một microservice duy nhất có thể phát triển thành nhiều dịch vụ, với microservice ban đầu đóng vai trò tầng điều phối cho các dịch vụ mới này và đóng gói chức năng của chúng khỏi các phần khác của ứng dụng.</li>
+      </ol>
+
+      <aside class="sidebar-note">
+        <h3>Dấu hiệu nhận biết microservice không tốt</h3>
+        <p>Làm sao biết các microservice của bạn có kích thước phù hợp? Nếu một microservice quá thô, bạn có thể thấy những điều sau:</p>
+        <ul class="manning-bullets">
+          <li><em>Một dịch vụ có quá nhiều trách nhiệm</em>&mdash;Luồng logic nghiệp vụ tổng thể trong dịch vụ phức tạp và dường như đang thực thi một tập hợp quá đa dạng các quy tắc nghiệp vụ.</li>
+          <li><em>Dịch vụ quản lý dữ liệu trên số lượng lớn bảng</em>&mdash;Một microservice là hệ thống ghi nhận chính thức (system of record) cho dữ liệu nó quản lý. Nếu bạn thấy mình lưu trữ dữ liệu vào nhiều bảng hoặc truy cập các bảng ngoài cơ sở dữ liệu trực tiếp, đây là manh mối cho thấy dịch vụ quá lớn. Tôi thích dùng nguyên tắc rằng một microservice chỉ nên sở hữu không quá ba đến năm bảng. Nếu nhiều hơn, dịch vụ của bạn có thể đang gánh quá nhiều trách nhiệm.</li>
+          <li><em>Quá nhiều test case</em>&mdash;Dịch vụ có thể phát triển về kích thước và trách nhiệm theo thời gian. Nếu một dịch vụ bắt đầu với ít test case nhưng cuối cùng có hàng trăm test case đơn vị và tích hợp, bạn có thể cần tái cấu trúc.</li>
+        </ul>
+        <p class="sidebar-subhead">Còn microservice quá mịn thì sao?</p>
+        <ul class="manning-bullets">
+          <li><em>Các microservice ở một phần miền nghiệp vụ sinh sản như thỏ</em>&mdash;Nếu mọi thứ đều trở thành microservice, việc ghép logic nghiệp vụ từ các dịch vụ trở nên phức tạp và khó khăn vì số lượng dịch vụ cần thiết để hoàn thành một công việc tăng vọt. Một dấu hiệu phổ biến là khi bạn có hàng chục microservice trong một ứng dụng và mỗi dịch vụ chỉ tương tác với một bảng cơ sở dữ liệu duy nhất.</li>
+        </ul>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

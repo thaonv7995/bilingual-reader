@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý Thực thi Mã nguồn Đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0472.html">← Trước</a>
+    <a href="page_0474.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">473</span>
+      </header>
+
+      <p>Một thực tế quan trọng về virtual thread (luồng ảo) là kể từ Java 21, một virtual thread luôn là một daemon
+      thread. Việc gọi <code>setDaemon(false)</code>&nbsp;trên một virtual thread sẽ ném ra một
+      <code>java.lang.IllegalArgumentException</code>. Tại sao? Câu hỏi hay đấy. Mặc dù tôi không tìm thấy lý do được
+      tài liệu hóa chính thức cho việc này, tôi có đọc được các bình luận từ những nhà thiết kế ngôn ngữ Java rằng
+      vì các virtual thread được dùng để thực thi các tác vụ nghiệp vụ ngắn hạn vốn có thể được thu dọn bởi bộ thu dọn rác (Garbage Collection) giống như bất kỳ
+      đối tượng (Object) nào khác, chúng nên là daemon thread. Hơn nữa, nếu tìm thấy một lý do chính đáng để biến chúng thành
+      non-daemon, hạn chế này có thể được gỡ bỏ trong tương lai. Cá nhân tôi thấy hạn chế này không hợp lý. Nếu một
+      virtual thread đang thực thi một tác vụ nghiệp vụ, bất kể thời gian chạy ngắn ngủi thế nào, nó cũng phải được trao cơ hội
+      để hoàn thành tác vụ đó thay vì bị chấm dứt đột ngột vì điều đó có thể làm cho trạng thái nghiệp vụ không nhất quán.</p>
+
+      <p>Được rồi, vậy thì, vì một virtual thread luôn là một daemon thread, nên rất dễ hiểu tại sao việc gọi
+      <code>t.join()</code>&nbsp;là bắt buộc trong đoạn mã trên. Nếu không có cuộc gọi này, thread (luồng) main sẽ kết thúc sau khi
+      câu lệnh in được thực thi. Một khi thread main đã kết thúc, sẽ không còn thread non-daemon nào trong chương trình đã cho.
+      Vì các daemon thread không thể ngăn chương trình kết thúc, chương trình trên sẽ kết thúc trong khi thread tính giai thừa
+      vẫn đang chạy. Do đó, câu lệnh in từ thread tính giai thừa rất có thể sẽ không được thực thi. Việc gọi join
+      khiến thread main phải đợi thread tính giai thừa kết thúc.</p>
+
+      <h3 class="section-title section-title--sub">20.1.3 Thread API<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Dưới đây, tôi liệt kê một vài phương thức của lớp (Class) <code>Thread</code>&nbsp;thường được sử dụng trong thực tế hoặc
+      quan trọng đối với kỳ thi. Bạn đã thấy một số phương thức này trong các ví dụ trên. Bạn sẽ thấy
+      cách sử dụng các phương thức khác trong phần còn lại của chương.</p>
+
+      <p class="no-indent">Các phương thức <strong>Static</strong> của <code>java.lang.Thread</code></p>
+
+      <ol class="numbered">
+        <li><code>Thread currentThread()</code>&nbsp;- Trả về đối tượng (Object) <code>Thread</code>&nbsp;cho thread hiện tại. Phương thức này
+        rất hữu ích khi bạn muốn in ra id hoặc tên của</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

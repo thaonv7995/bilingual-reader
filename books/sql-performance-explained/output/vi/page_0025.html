@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục phân cụm</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .prose-page .sidebar-note figure.code-snippet {
+      margin: 2.5mm 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">25</span>
+      </header>
+      <p class="chapter-running-head">Chỉ mục phân cụm</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Hình dung một chỉ mục giúp hiểu những truy vấn mà chỉ mục hỗ trợ. Bạn có thể truy vấn cơ sở dữ liệu để lấy các mục theo thứ tự chỉ mục (cú pháp SQL:2008, xem trang&nbsp;144 cho các giải pháp độc quyền sử dụng <code>LIMIT</code>, <code>TOP</code> hoặc <code>ROWNUM</code>):</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>SELECT &lt;DANH SÁCH CỘT CHỈ MỤC&gt;
+  FROM &lt;BẢNG&gt;
+ ORDER BY &lt;DANH SÁCH CỘT CHỈ MỤC&gt;
+ FETCH FIRST 100 ROWS ONLY;</code></pre>
+        </figure>
+        <p>Nếu bạn đưa định nghĩa chỉ mục và tên bảng vào truy vấn, bạn sẽ nhận được một mẫu từ chỉ mục. Hãy tự hỏi liệu các hàng được yêu cầu có được tập trung ở một nơi trung tâm không. Nếu không, cây chỉ mục không thể giúp tìm thấy nơi đó.</p>
+      </aside>
+
+      <p class="no-indent">Chúng ta có thể, tất nhiên, thêm một chỉ mục khác trên <code>SUBSIDIARY_ID</code> để cải thiện tốc độ truy vấn. Tuy nhiên, có một giải pháp tốt hơn&mdash;ít nhất nếu chúng ta giả định rằng việc tìm kiếm trên <code>EMPLOYEE_ID</code> một mình là không hợp lý.</p>
+
+      <p>Chúng ta có thể tận dụng thực tế rằng cột chỉ mục đầu tiên luôn có thể sử dụng để tìm kiếm. Một lần nữa, nó giống như một danh bạ điện thoại: bạn không cần biết tên đầu tiên để tìm kiếm theo họ. Mẹo là đảo ngược thứ tự cột chỉ mục sao cho <code>SUBSIDIARY_ID</code> ở vị trí đầu tiên:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE UNIQUE INDEX EMPLOYEES_PK
+    ON EMPLOYEES (SUBSIDIARY_ID, EMPLOYEE_ID);</code></pre>
+      </figure>
+
+      <p>Cả hai cột cùng nhau vẫn là duy nhất nên các truy vấn với khóa chính đầy đủ vẫn có thể sử dụng <code>INDEX UNIQUE SCAN</code> nhưng thứ tự của các mục chỉ mục hoàn toàn khác. <code>SUBSIDIARY_ID</code> đã trở thành tiêu chí sắp xếp chính. Điều đó có nghĩa là tất cả các mục cho một công ty con đều nằm liên tiếp trong chỉ mục nên cơ sở dữ liệu có thể sử dụng B-tree để tìm vị trí của chúng.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">15</p>
+    </article>
+  </main>
+</body>
+</html>

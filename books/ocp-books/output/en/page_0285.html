@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + ol.numbered,
+    .prose-page.ocp-chapter-page p.no-indent + ol.numbered {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0284.html">← Prev</a>
+    <a href="page_0286.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">285</span>
+      </header>
+
+      <p class="no-indent">map of student id and student name will allow you to look up a student name using the student
+      id, and so on. Here, countrycode and student id are the keys and country name and student
+      name are the values. In that sense, a <code>Map</code>&nbsp;is a collection of key-value pairs.</p>
+
+      <p>The <code>java.util.Map</code>&nbsp;interface of the Collections API captures this behavior. There are several
+      implementation classes that implement the <code>Map</code>&nbsp;interface. The one that is used the most is
+      <code>java.util.HashMap</code>&nbsp;.</p>
+
+      <p>It is important to know that <code>Map</code>&nbsp;does not extend <code>Collection</code>&nbsp;interface. <code>Map</code>&nbsp;is the root of a
+      separate hierarchy of classes and interfaces that is unrelated to the <code>Collection</code>&nbsp;hierarchy. You
+      need to know the following methods of <code>Map</code>&nbsp;:</p>
+
+      <ol class="numbered">
+        <li><code>V get(Object key)</code>&nbsp;: Returns the value to which the specified key is mapped, or <code>null</code>&nbsp;if
+        this map contains no mapping for the key.</li>
+        <li><code>V put(K key, V value)</code>&nbsp;: Associates the specified value with the specified key in this
+        map. If the map previously contained a mapping for the key, the old value is replaced by
+        the specified value and the old value is returned. It returns <code>null</code>&nbsp;if there was no mapping
+        for key.</li>
+        <li><code>V remove(Object key)</code>&nbsp;: Removes the mapping for a key from this map if it is present.
+        Returns the value or <code>null</code>, if not present.</li>
+        <li><code>Set&lt;K&gt; keySet()</code>&nbsp;: Returns a <code>Set</code>&nbsp;of keys present in the map. Observe that keys are
+        unique, so the return type is <code>Set</code>&nbsp;(not <code>Collection</code>&nbsp;or <code>List</code>&nbsp;).</li>
+        <li><code>Collection&lt;V&gt; values()</code>&nbsp;: Returns a <code>Collection</code>&nbsp;of the values present in the map.
+        Observe that values may be duplicate, so, the return type is <code>Collection</code>&nbsp;.</li>
+        <li><code>void clear()</code>&nbsp;: Removes all entries stored in the map.</li>
+        <li><code>int size()</code>&nbsp;: Returns the number of entries stored in the map.</li>
+        <li><code>default void forEach(BiConsumer&lt;? super K, ? super V&gt; action)</code>&nbsp;: Performs
+        the given action for each entry in this map until all entries have been processed or the
+        action throws an exception.</li>
+      </ol>
+
+      <p>The above methods and their descriptions are enough for the exam but there are several
+      interesting and useful methods in <code>Map</code>&nbsp;and it would be a good idea to go through the JavaDoc
+      to learn more.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0512.html">← Prev</a>
+    <a href="page_0514.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">513</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>        ticket.setPassengerId(userId);
+    }
+  }
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Note that guarding the critical section is in addition to the guards placed on the methods of the
+      object that is being updated. So, for example, synchronizing the above critical section will be
+      helpful only if the <code>getPassengerId</code>&nbsp;and <code>setPassengerId</code>&nbsp;methods of the <code>Ticket</code>&nbsp;class are
+      also synchronized.</p>
+
+      <p>You may wonder at this point that if the ticket object has already been locked at the beginning of
+      the critical section then how it is possible to invoke the <code>getPassengerId</code>&nbsp;and
+      <code>setPassengerId</code>&nbsp;methods from inside the critical section when they both need to lock the
+      same ticket object. This is possible because intrinsic locks are &ldquo;reentrant&rdquo;. Meaning, if a thread
+      has already locked an object, it can relock that object any number of times. Locking the same
+      object again just increases the lock count of that object and the thread must unlock the monitor
+      the same number of times to make the monitor available for locking to other threads. Thus, in
+      the above example, when a thread calls <code>ticket.getPassengerId()</code>, it simply relocks the
+      ticket object and that causes the lock count of the ticket object to increase to two. When the
+      thread exits the <code>getPassengerId</code>&nbsp;method, the lock count is reduced back to one. Since the
+      lock count is not zero yet, the ticket object remains locked by the same thread. Other threads
+      will be able to lock the same ticket object once the first thread exits the synchronized block.</p>
+
+      <h3 class="section-title section-title--sub">20.4.6 Use atomic classes<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Many programs routinely use an <code>int</code>&nbsp;field for keeping a count of something such as the
+      number of active threads, the number of queries fired, the number of connections, and so on.
+      They also have statements such as <code>count++;</code>&nbsp;that contain pre and post increment and
+      decrement operators to manage the count. Such statements actually involve three actions &mdash; read
+      the current value of the variable, add 1 to the value, and</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

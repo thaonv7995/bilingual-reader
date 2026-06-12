@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Using Triggers to Update Views</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0138.html">← Trước</a>
+    <a href="page_0140.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">139</span>
+      </header>
+
+      <p class="no-indent">Bây giờ hãy thử chạy một cập nhật như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>UPDATE census.vw_facts_2011 SET yr = 2012 WHERE val &gt; 2942;</code></pre>
+      </figure>
+
+      <p>Bạn sẽ nhận được một lỗi:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ERROR:  new row violates WITH CHECK OPTION for view "vw_facts_2011"
+DETAIL:  Failing row contains (1, 25001010500, 2012, 2985.000, 100.00).</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Sử dụng Triggers để Cập nhật Views</h3>
+      <p class="no-indent">Views bao gồm các phép nối giữa các bảng. Khi một view lấy dữ liệu từ nhiều hơn một bảng,
+      việc cập nhật dữ liệu cơ sở với một lệnh đơn giản không còn khả thi. Việc có nhiều hơn một bảng tạo ra một sự mơ hồ vốn có khi bạn cố gắng thay đổi dữ liệu cơ sở, và PostgreSQL sẽ không đưa ra quyết định tùy ý cho bạn.
+      Ví dụ, nếu bạn có một view nối một bảng các quốc gia với một bảng các tỉnh,
+      và sau đó quyết định xóa một trong các hàng, PostgreSQL sẽ không biết bạn có ý định
+      xóa chỉ một quốc gia, một tỉnh, hay một cặp quốc gia-tỉnh cụ thể. Tuy nhiên, bạn vẫn có thể sửa đổi dữ liệu cơ sở thông qua view—sử dụng triggers.</p>
+
+      <p>Hãy bắt đầu bằng cách tạo một view lấy dữ liệu từ bảng facts và một bảng tra cứu, như được hiển thị
+      trong <span class="accent-word">Example 7-3</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-3.</strong> Tạo view vw_facts</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE VIEW census.vw_facts AS
+SELECT y.fact_type_id, y.category, y.fact_subcats, y.short_name, x.tract_id, x.yr,
+x.val, x.perc
+FROM census.facts As x INNER JOIN census.lu_fact_types As y
+ON x.fact_type_id = y.fact_type_id;</code></pre>
+      </figure>
+
+      <p>Để làm cho view này có thể cập nhật được với một trigger, bạn có thể định nghĩa một hoặc nhiều
+      triggers INSTEAD OF. Chúng ta đầu tiên định nghĩa hàm trigger để xử lý ba thao tác: INSERT, UPDATE,
+      DELETE. Bạn có thể sử dụng bất kỳ ngôn ngữ nào để viết hàm, và bạn có thể đặt tên cho nó
+      bất cứ điều gì bạn thích. Chúng tôi đã chọn PL/pgSQL trong <span class="accent-word">Example 7-4</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-4.</strong> Hàm trigger cho vw_facts để chèn, cập nhật, xóa</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION census.trig_vw_facts_ins_upd_del() RETURNS trigger AS
+$$
+BEGIN
+    IF (TG_OP = 'DELETE') THEN
+        DELETE FROM census.facts AS f
+        WHERE
+            f.tract_id = OLD.tract_id AND f.yr = OLD.yr AND
+            f.fact_type_id = OLD.fact_type_id;
+        RETURN OLD;
+    END IF;
+    IF (TG_OP = 'INSERT') THEN
+        INSERT INTO census.facts(tract_id, yr, fact_type_id, val, perc)
+        SELECT NEW.tract_id, NEW.yr, NEW.fact_type_id, NEW.val, NEW.perc;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Views<span class="sep">|</span>121</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

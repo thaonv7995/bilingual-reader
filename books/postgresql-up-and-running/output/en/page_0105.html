@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0104.html">← Prev</a>
+    <a href="page_0106.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">105</span>
+      </header>
+
+      <p>opens up in San Francisco. The new franchisee phones McDonald’s headquarters to add
+      its store to the master directory with an opening time of 7 a.m. The data entry dude
+      entered the information as he is told: 7 a.m. The East Coast PostgreSQL server interprets
+      this to mean 7 a.m. Eastern, and now early risers in San Francisco are lining up at the
+      door wondering why they can’t get their McBreakfasts at 4 a.m. Being hungry is one
+      thing, but we can imagine many situations in which confusion over a difference of three
+      hours could mean life or death.</p>
+
+      <p>Given the pitfalls, why would anyone want to use time-zone-aware data types? First, it
+      does spare you from having to do time zone conversions manually. For example, if a
+      flight leaves Boston at 8 a.m. and arrives in Los Angeles at 11 a.m., and your server is
+      in Europe, you don’t want to have to figure out the offset for each manually. You could
+      just enter the data with the Boston and Los Angeles local times. There’s another con‐
+      vincing reason to use time-zone-aware data types: the automatic handling of DST. With
+      countries deviating more and more from one another in DST schedules, manually
+      keeping track of DST changes for a globally used database would require a dedicated
+      programmer who does nothing but keep up to date with the latest DST schedules and
+      map them to geographic enclaves.</p>
+
+      <p>Here’s an interesting example: a traveling salesperson catches a flight home from San
+      Francisco to nearby Oakland. When she boards the plane, the clock at the terminal reads
+      2012-03-11 1:50 a.m. When she lands, the clock in the terminal reads 2012-03-11 3:10
+      a.m. How long was the flight? The key to the solution is that the change to DST occurred
+      during the flight—the clocks sprang forward. With time-zone-aware timestamps, you
+      get 20 minutes, which the plausible answer for a short flight across the Bay. We get the
+      wrong answer if we don’t use time-zone-aware timestamps:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    SELECT '2012-03-11 3:10 AM America/Los_Angeles'::timestamptz
+     - '2012-03-11 1:50 AM America/Los_Angeles'::timestamptz;</code></pre>
+      </figure>
+
+      <p>gives you 20 minutes, whereas:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    SELECT '2012-03-11 3:10 AM'::timestamp - '2012-03-11 1:50 AM'::timestamp;</code></pre>
+      </figure>
+
+      <p>gives you 1 hour and 20 minutes.</p>
+
+      <p>Let’s drive the point home with more examples, using a Boston server. For
+      <span class="accent-word">Example 5-8</span>, I input my time in Los Angeles local time, but because my server is in
+      Boston, I get a time returned in Boston local time. Note that it does give me the offset,
+      but that is merely display information. The timestamp is internally stored in UTC.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-8.</strong> Inputting time in one time zone and output in another</figcaption>
+        <pre class="code-block"><code>SELECT '2012-02-28 10:00 PM America/Los_Angeles'::timestamptz;
+2012-02-29 01:00:00-05</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Temporals<span class="sep">|</span>87</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

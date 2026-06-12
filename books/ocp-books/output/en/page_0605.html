@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0604.html">← Prev</a>
+    <a href="page_0606.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">605</span>
+      </header>
+
+      <ol class="numbered">
+        <li>How do you make a stream parallel?</li>
+        <li>How many threads does a parallel stream use?</li>
+        <li>How is the processing split among multiple threads?</li>
+        <li>What happens to the order of the elements?</li>
+        <li>What happens when stream operations are stateful?</li>
+        <li>What happens when stateful functions are passed as behavioral arguments?</li>
+        <li>How is the result of a reduction operation produced while using a parallel stream?</li>
+        <li>How is thread safety ensured while using mutable reduction operations?</li>
+      </ol>
+
+      <p class="no-indent">Let&rsquo;s go over the above points one by one.</p>
+
+      <h3 class="section-title">Creating parallel streams<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--sub">The <code>parallel()</code>&nbsp;and <code>sequential()</code>&nbsp;intermediate operations</h3>
+
+      <p class="no-indent">The easiest way to create a parallel stream is to add the intermediate operation <code>parallel()</code>&nbsp;in
+      a the stream pipeline. It doesn&rsquo;t matter where in the pipeline it is added as long it is added
+      before the terminal operation. The place where it is added is not important because the call to
+      <code>parallel()</code>&nbsp;actually doesn&rsquo;t do anything except set a flag that tells the stream framework to
+      process the stream pipeline in parallel. A stream is either parallel or it is not and all
+      intermediate operations, whether they appear before or after the call to <code>parallel()</code>&nbsp;are
+      affected by this setting.</p>
+
+      <p>You can check if a stream is parallel or not by calling the <code>isParallel()</code>&nbsp;method on the
+      <code>Stream</code>&nbsp;and if you don&rsquo;t want a stream to be processed in parallel (you will see shortly that
+      there are genuine reasons for not wanting to process a stream in parallel), you can add the
+      intermediate operation <code>sequential()</code>&nbsp;to the stream pipeline. It doesn&rsquo;t matter how many
+      times you add <code>parallel()</code>&nbsp;and <code>sequential()</code>&nbsp;operations in the stream pipeline. The fate of
+      the stream is decided by the last operation that you add because, as I mentioned before, these
+      operations just set or unset an internal flag.</p>
+
+      <h3 class="section-title section-title--sub">The <code>parallelStream()</code>&nbsp;method</h3>
+
+      <p class="no-indent">Besides the <code>stream()</code>&nbsp;method, the <code>Collection</code>&nbsp;interface also has a default method named
+      <code>parallelStream()</code>&nbsp;that returns a parallel stream. This method is primarily</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

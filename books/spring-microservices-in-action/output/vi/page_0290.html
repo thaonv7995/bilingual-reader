@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Bảng 9.1 các lựa chọn tổng hợp nhật ký</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.table-caption {
+      margin: 0 0 1.5mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page table.data-table.log-aggregation-table {
+      margin: 0 0 3mm;
+      font-size: 9pt;
+      line-height: 1.22;
+    }
+    .prose-page.chapter-page table.log-aggregation-table th {
+      background: #d9d9d9;
+      font-weight: 700;
+      padding: 1mm 1.5mm;
+    }
+    .prose-page.chapter-page table.log-aggregation-table td {
+      padding: 1mm 1.5mm;
+      vertical-align: top;
+    }
+    .prose-page.chapter-page table.log-aggregation-table .product-name {
+      font-weight: 700;
+      width: 24%;
+    }
+    .prose-page.chapter-page table.log-aggregation-table .impl-models {
+      width: 24%;
+    }
+    .prose-page.chapter-page table.log-aggregation-table .notes {
+      width: 52%;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page table.log-aggregation-table + p,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + h4.subsection-title,
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + h4.subsection-title {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0289.html">← Prev</a>
+    <a href="page_0291.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Tổng hợp nhật ký và Spring Cloud Sleuth</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">265</span>
+      </header>
+
+      <p class="table-caption no-indent"><strong>Bảng 9.1</strong><br>Các lựa chọn giải pháp tổng hợp nhật ký dùng với Spring Boot</p>
+
+      <table class="data-table log-aggregation-table">
+        <thead>
+          <tr>
+            <th scope="col">Tên sản phẩm</th>
+            <th scope="col">Mô hình triển khai</th>
+            <th scope="col">Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="product-name">Elasticsearch, Logstash, Kibana (ELK)</td>
+            <td class="impl-models">Mã nguồn mở<br>Thương mại<br>Thường triển khai on-premise</td>
+            <td class="notes">http://elastic.co<br>Công cụ tìm kiếm đa mục đích<br>Có thể tổng hợp nhật ký thông qua (ELK stack)<br>Cần nhiều hỗ trợ thủ công nhất</td>
+          </tr>
+          <tr>
+            <td class="product-name">Graylog</td>
+            <td class="impl-models">Mã nguồn mở<br>Thương mại<br>On-premise</td>
+            <td class="notes">http://graylog.org<br>Nền tảng mã nguồn mở được thiết kế để cài đặt on-premise</td>
+          </tr>
+          <tr>
+            <td class="product-name">Splunk</td>
+            <td class="impl-models">Chỉ thương mại<br>On-premise và trên nền cloud</td>
+            <td class="notes">http://splunk.com<br>Công cụ quản lý và tổng hợp log lâu đời và toàn diện nhất<br>Ban đầu là giải pháp on-premise, nhưng sau đó đã có dịch vụ trên cloud</td>
+          </tr>
+          <tr>
+            <td class="product-name">Sumo Logic</td>
+            <td class="impl-models">Freemium<br>Thương mại<br>Trên nền cloud</td>
+            <td class="notes">http://sumologic.com<br>Mô hình freemium/giá theo bậc<br>Chỉ chạy dưới dạng dịch vụ trên cloud<br>Cần tài khoản công việc của doanh nghiệp để đăng ký (không dùng Gmail hoặc Yahoo)</td>
+          </tr>
+          <tr>
+            <td class="product-name">Papertrail</td>
+            <td class="impl-models">Freemium<br>Thương mại<br>Trên nền cloud</td>
+            <td class="notes">http://papertrailapp.com<br>Mô hình freemium/giá theo bậc<br>Chỉ chạy dưới dạng dịch vụ trên cloud</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="no-indent">Với tất cả các lựa chọn này, có thể khó để chọn giải pháp nào là tốt nhất. Mỗi tổ chức sẽ khác nhau và có nhu cầu khác nhau.</p>
+
+      <p>Trong phạm vi chương này, chúng ta sẽ xem Papertrail như một ví dụ về cách tích hợp các nhật ký được hỗ trợ bởi Spring Cloud Sleuth vào một nền tảng ghi log thống nhất. Tôi chọn Papertrail vì</p>
+
+      <ol class="manning-numbered" aria-label="Lý do chọn Papertrail">
+        <li>Có mô hình freemium cho phép bạn đăng ký tài khoản miễn phí theo bậc.</li>
+        <li>Thiết lập cực kỳ dễ, đặc biệt với các runtime container như Docker.</li>
+        <li>Là dịch vụ trên nền cloud. Tôi tin rằng hạ tầng logging tốt là rất quan trọng đối với ứng dụng microservice, nhưng tôi không tin hầu hết tổ chức có đủ thời gian hay năng lực kỹ thuật để thiết lập và vận hành đúng cách một nền tảng logging.</li>
+      </ol>
+
+      <h4 class="subsection-title">9.2.1 Triển khai Spring Cloud Sleuth/Papertrail trong thực tế</h4>
+
+      <p class="no-indent">Ở hình 9.3, chúng ta đã thấy một kiến trúc ghi log thống nhất tổng quát. Giờ hãy xem cùng kiến trúc đó có thể được triển khai với Spring Cloud Sleuth và Papertrail như thế nào.</p>
+
+      <p>Để thiết lập Papertrail hoạt động với môi trường của bạn, chúng ta cần thực hiện các bước sau:</p>
+
+      <ol class="manning-numbered" aria-label="Các bước thiết lập Papertrail">
+        <li>Tạo tài khoản Papertrail và cấu hình connector syslog Papertrail.</li>
+        <li>Định nghĩa container Docker Logspout (<a href="https://github.com/gliderlabs/log-spout">https://github.com/gliderlabs/log-spout</a>) để capture stdout từ tất cả các container Docker.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

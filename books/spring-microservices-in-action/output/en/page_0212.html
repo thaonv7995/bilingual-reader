@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Listing 6.15 run() and Listing 6.16 getAbRoutingInfo</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--615 .listing-callouts-right {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--615 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-annotated--615 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-annotated--615 .listing-callouts-right .listing-callout:nth-child(4) {
+      margin-top: 4mm;
+    }
+    .prose-page.chapter-page .listing-annotated--616 .listing-callouts-right {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0211.html">← Prev</a>
+    <a href="page_0213.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Building a dynamic route filter</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">187</span>
+      </header>
+
+      <figure class="code-snippet" aria-label="Listing 6.14 (continued)">
+        <pre class="code-block"><code>  @Override
+  public boolean shouldFilter() {}
+
+  @Override
+  public Object run() {}
+}</code></pre>
+      </figure>
+
+      <h4 class="subsection-title">6.7.2 Implementing the run() method</h4>
+
+      <p>The real work for the SpecialRoutesFilter begins in the <code>run()</code> method of the code. The following listing shows the code for this method.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.15</strong><br>The run() method for the SpecialRoutesFilter is where the work begins</figcaption>
+        <div class="listing-annotated listing-annotated--615" aria-label="Listing 6.15 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>public Object run() {
+ RequestContext ctx = RequestContext.getCurrentContext();
+
+ AbTestingRoute abTestRoute =
+    getAbRoutingInfo( filterUtils.getServiceId() );
+
+ if (abTestRoute!=null &amp;&amp;
+     useSpecialRoute(abTestRoute)) {
+   String route =
+       buildRouteString(
+          ctx.getRequest().getRequestURI(),
+          abTestRoute.getEndpoint(),
+          ctx.get("serviceId").toString());
+  forwardToSpecialRoute(route);
+ }
+
+ return null;
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 6.15 right callouts">
+            <p class="listing-callout">Executes call to SpecialRoutes service to determine if there is a routing record for this org</p>
+            <p class="listing-callout">The <code>useSpecialRoute()</code> method will take the weight of the route, generate a random number, and determine if you&rsquo;re going to forward the request onto the alternative service.</p>
+            <p class="listing-callout">If there&rsquo;s a routing record, build the full URL (with path) to the service location specified by the specialroutes service.</p>
+            <p class="listing-callout">The <code>forwardToSpecialRoute()</code> method does the work of forwarding onto the alternative service.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>The general flow of code in listing 6.15 is that when a route request hits the <code>run()</code> method in the SpecialRoutesFilter, it will execute a REST call to the SpecialRoutes service. This service will execute a lookup and determine if a routing record exists for the Eureka service ID of the target service being called. The call out to SpecialRoutes service is done in the <code>getAbRoutingInfo()</code> method. The <code>getAbRoutingInfo()</code> method is shown in the following listing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.16</strong><br>Invoking the SpecialRouteservice to see if a routing record exists</figcaption>
+        <div class="listing-annotated listing-annotated--616" aria-label="Listing 6.16 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>private AbTestingRoute getAbRoutingInfo(String serviceName){
+  ResponseEntity&lt;AbTestingRoute&gt; restExchange = null;
+try {
+  restExchange = restTemplate.exchange(
+    "http://specialroutesservice/v1
+     ➥ /route/abtesting/{serviceName}",
+    HttpMethod.GET,null, AbTestingRoute.class, serviceName);
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 6.16 right callout">
+            <p class="listing-callout">Calls the SpecialRoutesService endpoint</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

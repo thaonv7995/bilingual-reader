@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Indexing Order By</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Indexing Order By</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Trong cả hai trường hợp, bạn có thể tự hỏi liệu và làm thế nào bạn có thể đạt được một <code><strong>order by</strong></code> theo dạng pipelined. Để làm điều này, bạn có thể thực hiện truy vấn với định nghĩa chỉ mục đầy đủ trong mệnh đề <code><strong>order by</strong></code> và kiểm tra kết quả. Bạn sẽ thường nhận ra rằng bạn có một nhận thức sai lầm về chỉ mục và rằng thứ tự chỉ mục thực sự không như yêu cầu của mệnh đề <code><strong>order by</strong></code> ban đầu, vì vậy cơ sở dữ liệu không thể sử dụng chỉ mục để tránh một thao tác sắp xếp.</p>
+
+      <p>Nếu bộ tối ưu hóa ưu tiên một thao tác sắp xếp rõ ràng cho giá trị chi phí của nó, thường là vì bộ tối ưu hóa chọn kế hoạch thực thi tốt nhất cho việc thực thi <i>toàn bộ</i> <i>truy vấn</i>. Nói cách khác, bộ tối ưu hóa chọn kế hoạch thực thi nhanh nhất để lấy bản ghi cuối cùng. Nếu cơ sở dữ liệu phát hiện rằng ứng dụng chỉ lấy một vài hàng đầu tiên, nó có thể lại ưu tiên một <code><strong>order by</strong></code> theo chỉ mục. Chương 7, &ldquo;Kết quả một phần&rdquo;, giải thích các phương pháp tối ưu hóa tương ứng.</p>
+
+      <h3 class="section-title">Yếu tố phân cụm được tối ưu hóa tự động</h3>
+
+      <p class="no-indent">Cơ sở dữ liệu Oracle giữ yếu tố phân cụm ở mức tối thiểu bằng cách xem xét <code>ROWID</code> cho thứ tự chỉ mục. Mỗi khi hai mục chỉ mục có cùng giá trị khóa, <code>ROWID</code> quyết định thứ tự cuối cùng của chúng.</p>
+
+      <p>Do đó, chỉ mục cũng được sắp xếp theo thứ tự bảng và do đó có yếu tố phân cụm nhỏ nhất có thể vì <code>ROWID</code> đại diện cho địa chỉ vật lý của hàng bảng.</p>
+
+      <p>Bằng cách thêm một cột khác vào một chỉ mục, bạn chèn một tiêu chí sắp xếp mới <i>trước</i> <code>ROWID</code>. Cơ sở dữ liệu có ít tự do hơn trong việc căn chỉnh các mục chỉ mục theo thứ tự bảng, vì vậy yếu tố phân cụm của chỉ mục chỉ có thể trở nên tồi tệ hơn.</p>
+
+      <p>Dù sao đi nữa, vẫn có thể rằng thứ tự chỉ mục tương ứng gần đúng với thứ tự bảng. Doanh số của một ngày có thể vẫn được phân cụm cùng nhau trong bảng cũng như trong chỉ mục&mdash;ngay cả khi thứ tự của chúng không còn hoàn toàn giống nhau nữa. Cơ sở dữ liệu phải đọc các khối bảng nhiều lần khi sử dụng chỉ mục <code>SALE_DT_PR</code>&mdash;nhưng đó chỉ là những khối bảng giống như trước. Do việc lưu cache dữ liệu thường xuyên được truy cập, tác động đến hiệu suất có thể thấp hơn nhiều so với giá trị chi phí chỉ ra.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">133</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — PostgreSQL Stock Indexes</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 2mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.index-method-label {
+      margin: 0 0 1mm;
+      text-indent: 0;
+      font-style: italic;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 0 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0130.html">← Trước</a>
+    <a href="page_0132.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">131</span>
+      </header>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0131_icon_tip.png" width="92" height="87" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Tên chỉ mục phải là duy nhất trong một schema nhất định.</p>
+      </div>
+
+      <h3 class="subsection-title">Chỉ mục chứng khoán PostgreSQL</h3>
+      <p class="no-indent">Để tận dụng tối đa tất cả những gì PostgreSQL cung cấp, bạn sẽ muốn hiểu các loại chỉ mục khác nhau và các tình huống mà chúng sẽ hỗ trợ hoặc gây hại. Các phương pháp chỉ mục là:</p>
+
+      <p class="index-method-label no-indent"><em>B-Tree</em></p>
+      <p class="no-indent">B-Tree là một chỉ mục đa năng phổ biến trong các cơ sở dữ liệu quan hệ. Bạn thường có thể sử dụng B-Tree một mình nếu không muốn thử nghiệm với các loại khác. Nếu PostgreSQL tự động tạo chỉ mục cho bạn hoặc bạn không bận tâm chỉ định phương pháp chỉ mục, B-Tree sẽ được chọn. Hiện tại, đây là phương pháp chỉ mục duy nhất cho khóa chính và khóa duy nhất.</p>
+
+      <p class="index-method-label no-indent"><em>GiST</em></p>
+      <p class="no-indent">Cây tìm kiếm tổng quát (GiST) là một chỉ mục được tối ưu hóa cho tìm kiếm toàn văn, dữ liệu không gian, dữ liệu khoa học, dữ liệu không có cấu trúc và dữ liệu phân cấp. Mặc dù bạn không thể sử dụng nó để đảm bảo tính duy nhất, bạn có thể tạo ra hiệu ứng tương tự bằng cách sử dụng nó trong một ràng buộc loại trừ.</p>
+
+      <p>GiST là một chỉ mục có mất mát, theo nghĩa là chỉ mục tự nó sẽ không lưu trữ giá trị của những gì nó đang chỉ mục, mà chỉ là một hình ảnh phác thảo của giá trị như một hình hộp cho một đa giác. Điều này tạo ra nhu cầu cho một bước tra cứu bổ sung nếu bạn cần lấy giá trị hoặc thực hiện một kiểm tra tinh vi hơn.</p>
+
+      <p class="index-method-label no-indent"><em>GIN</em></p>
+      <p class="no-indent">Chỉ mục đảo ngược tổng quát (GIN) được thiết kế cho tìm kiếm toàn văn tích hợp sẵn và kiểu dữ liệu <code>jsonb</code> của PostgreSQL. Nhiều tiện ích mở rộng khác, chẳng hạn như <code>hstore</code> và <code>pg_trgm</code> cũng sử dụng nó. GIN là một hậu duệ của GiST mà không có sự mất mát. GIN sẽ tạo một bản sao của các giá trị trong các cột là một phần của chỉ mục. Nếu bạn cần lấy dữ liệu giới hạn trong các cột được bao phủ, GIN nhanh hơn GiST. Tuy nhiên, việc sao chép bổ sung mà chỉ mục GIN yêu cầu có nghĩa là việc cập nhật chỉ mục chậm hơn so với một chỉ mục GiST tương đương. Ngoài ra, vì mỗi hàng chỉ mục bị giới hạn ở một kích thước nhất định, bạn không thể sử dụng GIN để chỉ mục các đối tượng lớn như tài liệu hstore lớn hoặc văn bản. Nếu có khả năng bạn sẽ chèn một tài liệu 600 trang vào một trường của một bảng, đừng sử dụng GIN để chỉ mục cột đó.</p>
+
+      <p>Bạn có thể tìm thấy một ví dụ tuyệt vời về GIN trong <span class="accent-word">Chờ đợi LIKE/ILIKE nhanh hơn</span>. Trong phiên bản 9.3, bạn có thể chỉ mục các biểu thức chính quy tận dụng tiện ích mở rộng <code>pg_trgm</code> dựa trên GIN.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Chỉ mục<span class="sep">|</span>113</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

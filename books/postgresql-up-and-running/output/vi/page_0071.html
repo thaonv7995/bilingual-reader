@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: Nhập và Xuất Dữ Liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 0 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0070.html">← Trước</a>
+    <a href="page_0072.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">71</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>\copy sometable FROM somefile.txt DELIMITER '|';</code></pre>
+      </figure>
+
+      <p class="no-indent">Nếu bạn muốn thay thế các giá trị null bằng một cái gì đó khác, hãy thêm một NULL AS:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>\copy sometable FROM somefile.txt NULL As '';</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0071_icon_warning.png" width="92" height="87" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Đừng nhầm lẫn lệnh <code>\copy</code> trong psql với câu lệnh COPY
+        được cung cấp bởi ngôn ngữ SQL. Bởi vì psql là một tiện ích khách, tất cả các đường dẫn
+        được diễn giải tương đối với khách hàng đã kết nối. Câu lệnh SQL copy là
+        dựa trên máy chủ và chạy dưới ngữ cảnh của tài khoản dịch vụ postgres OS.
+        Tệp đầu vào phải nằm trong một đường dẫn có thể truy cập bởi tài khoản dịch vụ post‐
+        gres. Chúng tôi sẽ chi tiết hóa sự khác biệt giữa hai cái này trong
+        <span class="accent-word">Nhập Dữ liệu Độ rộng Cố định trong PostgreSQL với psql</span>.</p>
+      </div>
+
+      <h3 class="section-title">Xuất psql</h3>
+      <p class="no-indent">Xuất dữ liệu thậm chí còn dễ hơn nhập dữ liệu. Bạn thậm chí có thể xuất các hàng đã chọn
+      từ một bảng. Sử dụng lệnh psql <code>\copy</code> để xuất. Trong Ví dụ 3-8, chúng tôi minh họa
+      cách xuất dữ liệu mà chúng tôi vừa tải lại vào một tệp phân cách bằng tab.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 3-8.</strong> Xuất dữ liệu với psql</figcaption>
+        <pre class="code-block"><code>\connect postgresql_book
+\copy (SELECT * FROM staging.factfinder_import  WHERE s01 ~ E'^[0-9]+' ) TO '/
+test.tab'
+WITH DELIMITER E'\t' CSV HEADER</code></pre>
+      </figure>
+
+      <p class="no-indent">Hành vi mặc định của việc xuất dữ liệu mà không có điều kiện là xuất ra một
+      tệp phân cách bằng tab. Tuy nhiên, định dạng phân cách bằng tab không xuất các cột tiêu đề.
+      Bạn chỉ có thể sử dụng tùy chọn HEADER với định dạng CSV (xem Ví dụ 3-9).</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 3-9.</strong> Xuất dữ liệu với psql</figcaption>
+        <pre class="code-block"><code>\connect postgresql_book
+\copy staging.factfinder_import TO '/test.csv' WITH CSV HEADER QUOTE '"' FORCE
+QUOTE *</code></pre>
+      </figure>
+
+      <p class="no-indent">FORCE QUOTE * đảm bảo rằng tất cả các cột đều được đặt trong dấu ngoặc kép. Để rõ ràng, chúng tôi cũng chỉ ra
+      ký tự trích dẫn mặc dù psql giả định rằng dấu ngoặc kép sẽ được sử dụng nếu không có dấu ngoặc kép nào được chỉ định.</p>
+
+      <h3 class="section-title">Sao chép từ/đến Chương trình</h3>
+      <p class="no-indent">Kể từ PostgreSQL 9.3, psql có thể lấy dữ liệu từ đầu ra của các chương trình dòng lệnh
+      —như curl, ls, và wget—và đổ dữ liệu vào một bảng. Ví dụ 3-10 nhập một
+      danh sách thư mục từ lệnh dir.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Nhập và Xuất Dữ Liệu<span class="sep">|</span>53</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

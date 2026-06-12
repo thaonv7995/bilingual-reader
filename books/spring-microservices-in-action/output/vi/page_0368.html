@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Phụ lục B: B.5 Cách làm mới token</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 4;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0367.html">← Prev</a>
+    <a href="page_0369.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">343</span>
+        <span class="rh-center"></span>
+        <span class="rh-right"><em>Cách làm mới token</em></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Các bước luồng implicit grant Hình B.4 (tiếp theo)">
+        <li>Mỗi khi một tài nguyên được bảo vệ được gọi, token truy cập OAuth2 được trình bày cho dịch vụ gọi.</li>
+        <li>Dịch vụ gọi sẽ xác thực token OAuth2 và kiểm tra người dùng có được phép thực hiện hoạt động mà họ đang cố gắng thực hiện hay không.</li>
+      </ol>
+
+      <p class="no-indent">Hãy lưu ý một số điều về implicit grant OAuth2:</p>
+
+      <ul class="manning-bullets" aria-label="Các lưu ý về implicit grant OAuth2">
+        <li>Implicit grant là loại grant duy nhất trong đó token truy cập OAuth2 được lộ trực tiếp cho client công khai (trình duyệt web). Với authorization grant, ứng dụng client nhận mã ủy quyền trả về máy chủ ứng dụng đang lưu trữ ứng dụng. Với authorization code grant, người dùng được cấp quyền truy cập OAuth2 bằng cách trình bày mã ủy quyền. Token OAuth2 trả về không bao giờ được lộ trực tiếp cho trình duyệt của người dùng. Với client credentials grant, việc cấp quyền diễn ra giữa hai ứng dụng chạy trên máy chủ. Với password grant, cả ứng dụng gửi yêu cầu dịch vụ và các dịch vụ đều được tin cậy và thuộc sở hữu của cùng một tổ chức.</li>
+        <li>Token OAuth2 do implicit grant tạo ra dễ bị tấn công và lạm dụng hơn vì token được cung cấp cho trình duyệt. Bất kỳ JavaScript độc hại nào chạy trong trình duyệt đều có thể truy cập token truy cập OAuth2 và gọi các dịch vụ mà bạn đã lấy token OAuth2 thay mặt bạn, về cơ bản là mạo danh bạn.</li>
+        <li>Token OAuth2 của loại implicit grant nên có thời hạn ngắn (1–2 giờ). Vì token truy cập OAuth2 được lưu trong trình duyệt, đặc tả OAuth2 (và Spring Cloud security) không hỗ trợ khái niệm refresh token, trong đó token có thể được gia hạn tự động.</li>
+      </ul>
+
+      <h4 class="subsection-title">B.5 Cách làm mới token</h4>
+
+      <p class="no-indent">Khi một token truy cập OAuth2 được cấp, nó chỉ hợp lệ trong một khoảng thời gian nhất định và cuối cùng sẽ hết hạn. Khi token hết hạn, ứng dụng gọi (và người dùng) sẽ cần xác thực lại với dịch vụ OAuth2. Tuy nhiên, trong hầu hết các luồng grant OAuth2, máy chủ OAuth2 sẽ cấp cả token truy cập và refresh token. Client có thể trình bày refresh token cho dịch vụ xác thực OAuth2, và dịch vụ sẽ xác thực refresh token rồi cấp token truy cập OAuth2 mới. Hãy xem hình B.5 và đi qua luồng refresh token:</p>
+
+      <ol class="manning-numbered" aria-label="Các bước luồng refresh token Hình B.5">
+        <li>Người dùng đã đăng nhập vào EagleEye và đã được xác thực với dịch vụ OAuth2 EagleEye. Người dùng đang làm việc bình thường, nhưng đáng tiếc là token của họ đã hết hạn.</li>
+        <li>Lần tiếp theo người dùng cố gọi một dịch vụ (ví dụ organization service), ứng dụng EagleEye sẽ truyền token đã hết hạn tới organization service.</li>
+        <li>Organization service sẽ cố xác thực token với dịch vụ OAuth2, dịch vụ này trả về mã trạng thái HTTP 401 (unauthorized) và payload JSON</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

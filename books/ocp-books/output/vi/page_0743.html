@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 24: Triển khai Bản địa hóa (Implementing Localization)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: 14pt;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      font-size: 10pt;
+      line-height: 1.35;
+      background: #e2e9f0;
+      border-left: none;
+      white-space: pre-wrap;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0742.html">← Trước</a>
+    <a href="page_0744.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">743</span>
+      </header>
+
+      <p class="no-indent">bundle và lấy bundle cho locale mặc định của ứng dụng, bởi vì việc truyền vào một locale sẽ làm mất đi mục đích của i18n.</p>
+
+      <p>Tuy nhiên, ứng dụng nên chia các entry thành nhiều bundle để dễ dàng quản lý các entry hơn. Ví dụ, bạn có thể tạo các resource bundle riêng biệt cho từng phần có chức năng khác nhau của ứng dụng. Lưu ý rằng một ứng dụng có thể có số lượng resource bundle bất kỳ.</p>
+
+      <h3 class="section-title">24.3.5 Định dạng thông điệp bằng MessageFormat<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Việc hiển thị các thông điệp đúng ngữ pháp trong các locale khác nhau là rất phức tạp. Ví dụ, một câu như "Your balance is 100 points." sẽ đúng ngữ pháp trong nhiều ngôn ngữ chẳng hạn như tiếng Anh. Tuy nhiên, nó sẽ không đúng ngữ pháp trong nhiều ngôn ngữ khác như tiếng Hindi, ngôn ngữ mà dạng đúng của câu sẽ là "Your balance 100 points is".</p>
+
+      <p>Do đó, nếu chương trình tạo thông điệp này bằng cách sử dụng nối chuỗi như <code>String msg =
+      rb.getString("yourbalanceis")+" "+amount+" "+rb.getString("points");</code>, chuỗi kết quả có thể trông kỳ lạ trong một số locale.</p>
+
+      <p>Lớp <code>java.text.MessageFormat</code> có thể được sử dụng để giải quyết vấn đề này. Thay vì viết cứng việc nối chuỗi, bạn có thể chỉ định các tham số trong chuỗi thông điệp và định dạng chuỗi lúc runtime bằng cách truyền các giá trị cho các tham số đó. Ví dụ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ResourceBundle rb = ResourceBundle.getBundle("helloapp");
+String message = MessageFormat.format(rb.getString("yourbalanceis"), 100);
+System.out.println(message);</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

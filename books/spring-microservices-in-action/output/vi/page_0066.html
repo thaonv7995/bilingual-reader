@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Xác định mức độ chi tiết của dịch vụ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0065.html">← Trước</a>
+    <a href="page_0067.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Câu chuyện của kiến trúc sư: thiết kế kiến trúc microservice</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">41</span>
+      </header>
+
+      <h4 class="subsection-title">2.1.2 Xác định mức độ chi tiết của dịch vụ</h4>
+
+      <p>Khi bạn đã có mô hình dữ liệu được đơn giản hóa, bạn có thể bắt đầu quá trình xác định những microservice nào bạn sẽ cần trong ứng dụng. Dựa trên mô hình dữ liệu trong hình 2.2, bạn có thể thấy tiềm năng cho bốn microservice dựa trên các thành phần sau:</p>
+
+      <ul class="manning-bullets">
+        <li>Assets</li>
+        <li>License</li>
+        <li>Contract</li>
+        <li>Organization</li>
+      </ul>
+
+      <p>Mục tiêu là lấy những khối chức năng chính này và tách chúng thành các đơn vị hoàn toàn tự chứa, có thể được xây dựng và triển khai độc lập với nhau. Tuy nhiên, việc tách các dịch vụ từ mô hình dữ liệu không chỉ là đóng gói lại mã nguồn vào các dự án riêng biệt. Nó còn liên quan đến việc tách ra các bảng cơ sở dữ liệu thực tế mà các dịch vụ đang truy cập và chỉ cho phép từng dịch vụ riêng lẻ truy cập các bảng trong miền cụ thể của nó. Hình 2.3 cho thấy mã ứng dụng và mô hình dữ liệu được &ldquo;chia nhỏ&rdquo; thành các phần riêng lẻ như thế nào.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0066_fig_2_3.png" width="1313" height="957" alt="Hình 2.3 — Ứng dụng EagleEye monolithic được phân rã thành các microservice Assets, License, Contract và Organization">
+        <figcaption><strong>Hình 2.3</strong><br>Bạn sử dụng mô hình dữ liệu làm cơ sở để phân rã một ứng dụng monolithic thành các microservice.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

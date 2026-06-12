@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      line-height: 1.2;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0140.html">← Trước</a>
+    <a href="page_0142.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">141</span>
+      </header>
+
+      <ol class="numbered" start="1">
+        <li><code>mash(Collection )</code> .</li>
+        <li><code>fa.mash(c)</code> : Trình biên dịch nhận thấy kiểu khai báo của <code>fa</code> là <code>Fruit</code> . Do đó,
+        nó sẽ chỉ xem xét các phương thức có sẵn trong Lớp (Class) Fruit để liên kết lệnh gọi này. Nó
+        cũng nhận thấy kiểu khai báo của đối số <code>c</code> là <code>Collection</code> . Vì Fruit
+        thực sự có phương thức mash có thể chấp nhận một <code>Collection</code> , nó sẽ liên kết lệnh gọi với
+        phương thức <code>mash(Collection c)</code> của Fruit.<br><br>
+        Tại thời điểm runtime, JVM nhận thấy rằng <code>fa</code> trỏ đến một Đối tượng (Object) của Lớp (Class) Apple và vì vậy, nó
+        gọi <code>mash(c)</code> trên thể hiện Apple đó. Do đó, nó in ra In Apple&rsquo;s
+        <code>mash(Collection )</code> .</li>
+        <li><code>a.mash(c)</code> : Trình biên dịch nhận thấy kiểu khai báo của <code>a</code> là <code>Apple</code> . Do đó,
+        nó sẽ chỉ xem xét các phương thức có sẵn trong Lớp (Class) Apple để liên kết lệnh gọi này. Nó
+        cũng nhận thấy kiểu khai báo của đối số <code>c</code> là <code>Collection</code> . Lớp (Class) Apple có
+        hai phương thức có thể chấp nhận một <code>Collection</code> - <code>mash(Collection )</code> và <code>mash(List )</code> .
+        Vì kiểu khai báo của đối số <code>c</code> khớp hoàn toàn với <code>mash(Collection )</code> , nó
+        liên kết lệnh gọi với phương thức <code>mash(Collection c)</code> của Apple.<br><br>
+        Tại thời điểm runtime, JVM nhận thấy rằng <code>a</code> trỏ đến một Đối tượng (Object) của Lớp (Class) Apple và vì vậy, nó gọi
+        phương thức <code>mash(Collection )</code> của Apple. Thực tế là <code>c</code> thực sự trỏ đến một Đối tượng (Object) ArrayList
+        là không quan trọng tại thời điểm này. Do đó, nó in ra In Apple&rsquo;s <code>mash(Collection )</code> .</li>
+        <li><code>f.mash(a)</code> : Trình biên dịch nhận thấy kiểu khai báo của <code>f</code> là <code>Fruit</code> . Do đó,
+        nó sẽ chỉ xem xét các phương thức có sẵn trong Lớp (Class) Fruit để liên kết lệnh gọi này. Nó
+        cũng nhận thấy kiểu khai báo của đối số <code>a</code> là <code>Apple</code> . Vì Fruit không
+        có phương thức mash nào có thể chấp nhận một Apple, nó từ chối biên dịch mã nguồn. Lệnh gọi
+        <code>fa.mash(a)</code> cũng sẽ không biên dịch được vì kiểu khai báo của <code>fa</code> là <code>Fruit</code> . Thực
+        tế là <code>fa</code> sẽ trỏ đến một Đối tượng (Object) Apple tại thời điểm runtime, vốn có phương thức <code>mash(Apple )</code>
+        là không quan trọng đối với trình biên dịch vì trình biên dịch không thể đảm bảo rằng <code>fa</code> sẽ
+        luôn trỏ đến một Đối tượng (Object) Apple tại thời điểm runtime.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

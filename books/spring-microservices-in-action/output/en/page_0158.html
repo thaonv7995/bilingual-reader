@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 5: Listing 5.5 fallback in Hystrix</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--55 .listing-callouts {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--55 .listing-callout:nth-child(1) {
+      margin-bottom: 12mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--float {
+      float: right;
+      clear: right;
+      margin: 0 0 2.5mm 4mm;
+      max-width: 48%;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page .sidebar-note--float + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0157.html">← Prev</a>
+    <a href="page_0159.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Fallback processing</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">133</span>
+      </header>
+
+      <p class="no-indent">Now if you rebuild and rerun the code example, you&rsquo;ll never get a timeout error because your artificial timeout on the call is 11 seconds while your <code>@HystrixCommand</code> annotation is now configured to only time out after 12 seconds.</p>
+
+      <aside class="sidebar-note sidebar-note--float" aria-label="On service timeouts">
+        <h3>On service timeouts</h3>
+        <p>It should be obvious that I&rsquo;m using a circuit breaker timeout of 12 seconds as a teaching example. In a distributed environment, I often get nervous if I start hearing comments from development teams that a 1 second timeout on remote service calls is too low because their service X takes on average 5-6 seconds.</p>
+        <p>This usually tells me that unresolved performance problems exist with the service being called. Avoid the temptation to increase the default timeout on Hystrix calls unless you absolutely cannot resolve a slow running service call.</p>
+        <p>If you do have a situation where part of your service calls are going to take longer than other service calls, definitely look at segregating these service calls into separate thread pools.</p>
+      </aside>
+
+      <h4 class="subsection-title">5.6 Fallback processing</h4>
+
+      <p>Part of the beauty of the circuit breaker pattern is that because a &ldquo;middle man&rdquo; is between the consumer of a remote resource and the resource itself, you have an opportunity for the developer to intercept a service failure and choose an alternative course of action to take.</p>
+
+      <p>In Hystrix, this is known as a fallback strategy and is easily implemented. Let&rsquo;s see how to build a simple fallback strategy for your licensing database that simply returns a licensing object that says no licensing information is currently available. The following listing demonstrates this.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.5</strong><br>Implementing a fallback in Hystrix</figcaption>
+        <div class="listing-annotated listing-annotated--55" aria-label="Listing 5.5 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>@HystrixCommand(fallbackMethod = "buildFallbackLicenseList")
+  public List&lt;License&gt; getLicensesByOrg(String organizationId){
+    randomlyRunLong();
+    return licenseRepository.findByOrganizationId(organizationId);
+  }
+private List&lt;License&gt; buildFallbackLicenseList(String organizationId){
+  List&lt;License&gt; fallbackList = new ArrayList&lt;&gt;();
+  License license = new License()
+    .withId("0000000-00-00000")
+    .withOrganizationId( organizationId )
+    .withProductName(
+    "Sorry no licensing information currently available");</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Listing 5.5 annotation callouts">
+            <p class="listing-callout">The <code>fallbackMethod</code> attribute defines a single function in your class that will be called if the call from Hystrix fails.</p>
+            <p class="listing-callout">In the fallback method you return a hard-coded value.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

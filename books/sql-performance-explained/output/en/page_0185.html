@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — PostgreSQL Operations</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 0 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-desc {
+      margin: 0 0 0 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page h3.subsection-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .doc-quote {
+      margin: 2.5mm 0 4mm 4.5mm;
+      padding: 3mm 4mm;
+      background: #dcdedf;
+      border: 0.35pt solid var(--book-rule);
+      text-indent: 0;
+    }
+
+    .prose-page .doc-quote p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+    }
+
+    .prose-page .doc-quote p:last-child {
+      margin-bottom: 0;
+      text-align: right;
+    }
+
+    .prose-page .footnotes {
+      margin-top: 4mm;
+      padding-top: 0;
+      border-top: none;
+      font-size: 9.5pt;
+      line-height: 1.35;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">PostgreSQL Operations</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="operation-label">Bitmap Index Scan / Bitmap Heap Scan / Recheck Cond</p>
+
+      <p class="no-indent">Tom Lane&rsquo;s post to the PostgreSQL performance mailing list is very clear and concise.</p>
+
+      <blockquote class="doc-quote">
+        <p>A plain Index Scan fetches one tuple-pointer at a time from the index, and immediately visits that tuple in the table. A bitmap scan fetches all the tuple-pointers from the index in one go, sorts them using an in-memory &ldquo;bitmap&rdquo; data structure, and then visits the table tuples in physical tuple-location order.</p>
+        <p>&mdash;Tom Lane<sup>1</sup></p>
+      </blockquote>
+
+      <h3 class="subsection-title">Join Operations</h3>
+
+      <p class="no-indent">Generally join operations process only two tables at a time. In case a query has more joins, they are executed sequentially: first two tables, then the intermediate result with the next table. In the context of joins, the term &ldquo;table&rdquo; could therefore also mean &ldquo;intermediate result&rdquo;.</p>
+
+      <p class="operation-label">Nested Loops</p>
+      <p class="operation-desc">Joins two tables by fetching the result from one table and querying the other table for each row from the first. See also &ldquo;Nested Loops&rdquo; on page&nbsp;92.</p>
+
+      <p class="operation-label">Hash Join / Hash</p>
+      <p class="operation-desc">The hash join loads the candidate records from one side of the join into a hash table (marked with Hash in the plan) which is then probed for each record from the other side of the join. See also &ldquo;Hash Join&rdquo; on page&nbsp;101.</p>
+
+      <p class="operation-label">Merge Join</p>
+      <p class="operation-desc">The (sort) merge join combines two sorted lists like a zipper. Both sides of the join must be presorted. See also &ldquo;Sort Merge&rdquo; on page&nbsp;109.</p>
+
+      <div class="footnotes">
+        <p><sup>1</sup> http://archives.postgresql.org/pgsql-performance/2005-12/msg00623.php</p>
+      </div>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">175</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

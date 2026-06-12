@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">30</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <p class="no-indent">Kế hoạch thực thi mà có lẽ đã được sử dụng trước khi thay đổi chỉ mục không sử dụng chỉ mục nào cả:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>----------------------------------------------------
+| Id | Operation         | Name      | Rows | Cost |
+----------------------------------------------------
+|  0 | SELECT STATEMENT  |           |    1 |  477 |
+|* 1 |  TABLE ACCESS FULL| EMPLOYEES |    1 |  477 |
+----------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - filter("LAST_NAME"='WINAND' AND "SUBSIDIARY_ID"=30)</code></pre>
+      </figure>
+
+      <p>Mặc dù <code>TABLE ACCESS FULL</code> phải đọc và xử lý toàn bộ bảng, nhưng trong trường hợp này, nó dường như nhanh hơn so với việc sử dụng chỉ mục. Điều này đặc biệt không bình thường vì truy vấn chỉ khớp với một hàng. Việc sử dụng chỉ mục để tìm một hàng duy nhất lẽ ra phải nhanh hơn nhiều so với quét bảng toàn bộ, nhưng trong trường hợp này thì không. Chỉ mục dường như chậm.</p>
+
+      <p>Trong những trường hợp như vậy, tốt nhất là đi qua từng bước của kế hoạch thực thi gây rắc rối. Bước đầu tiên là <code>INDEX RANGE SCAN</code> trên chỉ mục <code>EMPLOYEES_PK</code>. Chỉ mục đó không bao phủ cột <code>LAST_NAME</code>&mdash;<code>INDEX RANGE SCAN</code> chỉ có thể xem xét bộ lọc <code>SUBSIDIARY_ID</code>; cơ sở dữ liệu Oracle cho thấy điều này trong khu vực &ldquo;Predicate Information&rdquo;&mdash;mục &ldquo;2&rdquo; của kế hoạch thực thi. Tại đó, bạn có thể thấy các điều kiện được áp dụng cho mỗi hoạt động.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Phụ lục&nbsp;A, &ldquo;Kế hoạch thực thi&rdquo;, giải thích cách tìm &ldquo;Predicate Information&rdquo; cho các cơ sở dữ liệu khác.</p>
+      </aside>
+
+      <p><code>INDEX RANGE SCAN</code> với ID hoạt động 2 (Ví dụ&nbsp;2.1 trên trang&nbsp;19) chỉ áp dụng bộ lọc <code>SUBSIDIARY_ID=30</code>. Điều đó có nghĩa là nó duyệt qua cây chỉ mục để tìm mục đầu tiên cho <code>SUBSIDIARY_ID</code> 30. Tiếp theo, nó theo dõi chuỗi nút lá để tìm tất cả các mục khác cho công ty con đó. Kết quả của <code>INDEX RANGE SCAN</code> là một danh sách các <code>ROWIDs</code> thỏa mãn điều kiện <code>SUBSIDIARY_ID</code>: tùy thuộc vào kích thước của công ty con, có thể chỉ có một vài hoặc có thể có hàng trăm.</p>
+
+      <p>Bước tiếp theo là hoạt động <code>TABLE ACCESS BY INDEX ROWID</code>. Nó sử dụng các <code>ROWIDs</code> từ bước trước để lấy các hàng&mdash;tất cả các cột&mdash;từ bảng. Khi cột <code>LAST_NAME</code> có sẵn, cơ sở dữ liệu có thể đánh giá phần còn lại của câu lệnh where. Điều đó có nghĩa là cơ sở dữ liệu phải lấy tất cả các hàng cho <code>SUBSIDIARY_ID=30</code> trước khi nó có thể áp dụng bộ lọc <code>LAST_NAME</code>.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">20</p>
+    </article>
+  </main>
+</body>
+</html>

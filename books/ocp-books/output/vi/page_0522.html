@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý Thực thi Mã Đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm;
+      padding-left: 1.5em;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0521.html">← Trước</a>
+    <a href="page_0523.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">522</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>static Lock lock = new ReentrantLock();
+static int count = 0;
+static Runnable r = () -> {
+   lock.lock();
+   try{
+      count++;
+   }finally{
+      lock.unlock();
+   }
+};
+public static void main(String[] args) throws Exception {
+   Thread t1 = Thread.startVirtualThread(r);
+   Thread t2 = Thread.startVirtualThread(r);
+   boolean gotTheLock = lock.tryLock(1, TimeUnit.SECONDS);
+   if(gotTheLock){ //should wrap this block in try/finally
+      System.out.println("main thread got the lock");
+      lock.unlock();
+   }else{
+      System.out.println("main thread did not get the lock");
+   }
+   t1.join(); t2.join();
+   System.out.println("Count is "+count);
+}
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Các điểm sau đây đáng lưu ý về chương trình trên:</p>
+
+      <ol class="numbered">
+        <li>Hai Thread (Luồng) ảo đồng bộ hóa bằng cách sử dụng cùng một đối tượng (Object) <code>Lock</code>&nbsp;và do đó, chỉ có một trong số chúng có thể cập nhật <code>count</code>&nbsp;tại một thời điểm. Vì vậy, chúng ta chắc chắn rằng <code>count</code>&nbsp;được tăng lên một cách nguyên tử.</li>
+        <li>Hãy quan sát rằng khối mã sau <code>lock.lock()</code>&nbsp;được bọc trong một khối try và lệnh gọi tới <code>lock.unlock()</code>&nbsp;nằm trong khối finally. Mặc dù điều này là không cần thiết trong trường hợp này vì có ít khả năng mã trong khối try sẽ ném một Exception (Ngoại lệ), nhưng việc sử dụng các lock tường minh theo cách này được khuyến nghị để</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: On error handling and summary</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + ul.manning-checks {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page ul.manning-checks {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-checks > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-checks > li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-checks ul.manning-dashes {
+      margin: 1.5mm 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-dashes li {
+      position: relative;
+      margin: 0 0 1mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-dashes li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 10pt;
+      line-height: 1.4;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0142.html">← Prev</a>
+    <a href="page_0144.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">118</span>
+        <span class="rh-center">CHAPTER 4 <em>On service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="On error handling">
+        <h3>On error handling</h3>
+        <p>When you use the standard Spring <code>RestTemplate</code> class, all service calls&rsquo; HTTP status codes will be returned via the <code>ResponseEntity</code> class&rsquo;s <code>getStatusCode()</code> method. With the Feign Client, any HTTP 4xx &ndash; 5xx status codes returned by the service being called will be mapped to a <code>FeignException</code>. The <code>FeignException</code> will contain a JSON body that can be parsed for the specific error message.</p>
+        <p>Feign does provide you the ability to write an error decoder class that will map the error back to a custom Exception class. Writing this decoder is outside the scope of this book, but you can find examples of this in the Feign GitHub repository at (<a href="https://github.com/Netflix/feign/wiki/Custom-error-handling">https://github.com/Netflix/feign/wiki/Custom-error-handling</a>).</p>
+      </aside>
+
+      <h4 class="subsection-title">4.6 Summary</h4>
+
+      <ul class="manning-checks" aria-label="Chapter 4 summary">
+        <li>The service discovery pattern is used to abstract away the physical location of services.</li>
+        <li>A service discovery engine such as Eureka can seamlessly add and remove service instances from an environment without the service clients being impacted.</li>
+        <li>Client-side load balancing can provide an extra level of performance and resiliency by caching the physical location of a service on the client making the service call.</li>
+        <li>Eureka is a Netflix project that when used with Spring Cloud, is easy to set up and configure.</li>
+        <li>You used three different mechanisms in Spring Cloud, Netflix Eureka, and Netflix Ribbon to invoke a service. These mechanisms included
+          <ul class="manning-dashes" aria-label="Service invocation mechanisms">
+            <li>Using a Spring Cloud service DiscoveryClient</li>
+            <li>Using Spring Cloud and Ribbon-backed RestTemplate</li>
+            <li>Using Spring Cloud and Netflix&rsquo;s Feign client</li>
+          </ul>
+        </li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0625.html">← Trước</a>
+    <a href="page_0627.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">626</span>
+      </header>
+
+      <p class="no-indent">chuỗi được viết dưới nhiều định dạng khác nhau. Mặc dù vậy, chuỗi dùng để tạo một <code>ZoneId</code>&nbsp;bằng cách sử dụng phương thức
+      <code>of</code>&nbsp;phải khớp với một múi giờ chính thức trong cơ sở dữ liệu của JDK hoặc ở định dạng
+      chỉ định chính xác lượng &ldquo;offset&rdquo; chẳng hạn như <code>UTC+01:15</code>. (Đừng lo lắng, định dạng này không
+      quan trọng đối với kỳ thi). Việc cố gắng tạo một <code>ZoneId</code>&nbsp;cho một nơi không tồn tại chẳng hạn
+      như&nbsp;<code>ZoneId.of("Somewhere/Timbaktoo");</code>&nbsp;sẽ khiến
+      một&nbsp;<code>java.time.zone.ZoneRulesException</code>&nbsp;bị ném ra kèm theo thông báo, Unknown time-
+      zone ID: Somewhere/Timbaktoo.</p>
+
+      <p class="no-indent"><strong class="run-in">ZonedDateTime:</strong> Một đối tượng <code>ZonedDateTime</code>&nbsp;biểu diễn ngày và giờ trong một múi giờ
+      cụ thể. Do đó, nó cần hai thứ - số mili giây đã trôi qua kể từ epoch và
+      <code>ZoneId</code>&nbsp;của múi giờ mà nó biểu diễn thời gian. Nó sử dụng <code>ZoneId</code>&nbsp;để lấy tất cả các quy tắc
+      ảnh hưởng đến ngày/giờ được sử dụng trong múi giờ đó và áp dụng chúng để hiển thị cho bạn thời gian của khu vực đó.</p>
+
+      <p>Nói một cách bình dân, ví dụ, nếu người dân ở một múi giờ cụ thể chỉnh đồng hồ của họ lùi lại hoặc
+      tiến lên vào các ngày nhất định trong năm (chẳng hạn như để tiết kiệm ánh sáng ban ngày), thì một đối tượng <code>ZonedDateTime</code>&nbsp;được
+      tạo cho múi giờ đó sẽ biết các ngày đó và lượng điều chỉnh cần áp dụng để hiển thị
+      thời gian chính xác ở khu vực đó tại bất kỳ thời điểm nào. Vì một&nbsp;<code>ZonedDateTime</code>&nbsp;lấy tất cả các quy tắc áp dụng
+      cho múi giờ đó bằng cách sử dụng&nbsp;<code>ZoneId</code>, một <code>ZoneId</code>&nbsp;là cần thiết để tạo một <code>ZonedDateTime</code>.</p>
+
+      <p class="no-indent"><strong class="run-in">OffsetDateTime:</strong> - Lớp <code>OffsetDateTime</code>&nbsp;hơi kỳ lạ vì nó không biểu diễn
+      ngày giờ cục bộ (local datetime) cũng như không biểu diễn ngày giờ ở bất kỳ vùng địa lý cụ thể nào. Thực chất nó
+      chỉ chứa hai thứ - số mili giây đã trôi qua sau epoch và một lượng chênh lệch (offset)
+      gọi là &ldquo;zone offset&rdquo;, không gì khác ngoài lượng thời gian mà thời gian được biểu diễn bởi
+      <code>OffsetDateTime</code>&nbsp;này khác biệt so với UTC. Vì một <code>OffsetDateTime</code>&nbsp;không biểu diễn thời gian
+      cho bất kỳ vùng địa lý cụ thể nào, nó không quan tâm đến các quy tắc đặc thù của vùng. Theo một cách nào đó, một
+      đối tượng <code>OffsetDateTime</code>&nbsp;biểu diễn ngày/giờ của một địa điểm tưởng tượng luôn luôn &ldquo;lệch&rdquo; (offset)
+      so với UTC một lượng bằng giá trị offset đã cho. Lượng chênh lệch này được nắm giữ bởi một instance của
+      lớp <code>ZoneOffset</code>, lớp kế thừa từ <code>ZoneId</code>. Bạn thực sự có thể tạo một khoảng chênh lệch giờ (zone offset) với bất kỳ
+      lượng thời gian nào như thế này:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ZoneOffset zo = ZoneOffset.ofHoursMinutes(1, 10); //creates a ZoneOffset of 1 hour
+and 10 minutes</code></pre>
+      </figure>
+
+      <p class="no-indent">&ldquo;id&rdquo; của <code>ZoneOffset</code>&nbsp;này là&nbsp;&ldquo;+01:10&rdquo;. Tất nhiên, bạn sẽ không thể tìm thấy bất kỳ &ldquo;quy tắc&rdquo; nào cho
+      múi giờ này vì +1:10 không phải là tên múi giờ chính thức của bất kỳ khu vực nào trong</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

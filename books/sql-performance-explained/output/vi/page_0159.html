@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Paging Through Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phân Trang Kết Quả</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="operation-label">SQL Server</p>
+
+      <p class="no-indent">SQL Server không có phần mở rộng &ldquo;offset&rdquo; cho mệnh đề top độc quyền của nó nhưng đã giới thiệu phần mở rộng fetch first với SQL Server 2012 (&ldquo;Denali&rdquo;). Mệnh đề offset là bắt buộc mặc dù tiêu chuẩn định nghĩa nó là một phần bổ sung tùy chọn.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM sales
+ ORDER BY sale_date DESC
+<strong>OFFSET 10 ROWS
+ FETCH NEXT 10 ROWS ONLY;</strong></code></pre>
+      </figure>
+
+      <p>Bên cạnh sự đơn giản, một lợi thế khác của phương pháp này là bạn chỉ cần chỉ mục hàng để lấy một trang tùy ý. Tuy nhiên, cơ sở dữ liệu phải đếm tất cả các hàng từ đầu cho đến khi nó đạt đến trang yêu cầu. Hình&nbsp;7.2 cho thấy rằng phạm vi chỉ mục được quét trở nên lớn hơn khi lấy nhiều trang hơn.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;7.2.&nbsp;Truy Cập Sử Dụng Phương Pháp Offset</figcaption>
+        <img src="../assets/images/page_0159_fig_7_2.png" width="1027" height="517" alt="Hình 7.2. Truy Cập Sử Dụng Phương Pháp Offset">
+      </figure>
+
+      <p>Điều này có hai nhược điểm: (1) các trang bị trôi khi chèn thêm doanh số mới vì việc đánh số luôn được thực hiện từ đầu; (2) thời gian phản hồi tăng lên khi duyệt ngược lại.</p>
+
+      <p>Phương pháp seek tránh cả hai vấn đề vì nó sử dụng các giá trị của trang trước đó làm ranh giới. Điều đó có nghĩa là nó tìm kiếm các giá trị phải xuất hiện sau mục cuối cùng từ trang trước. Điều này có thể được diễn đạt bằng một mệnh đề where đơn giản. Nói cách khác: phương pháp seek đơn giản là không chọn các giá trị đã được hiển thị.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">149</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

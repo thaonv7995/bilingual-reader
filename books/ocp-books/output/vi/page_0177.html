@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 15: Handling Exceptions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0176.html">← Trước</a>
+    <a href="page_0178.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">177</span>
+      </header>
+
+      <p class="no-indent">Cái được gọi là &ldquo;ngoại lệ&rdquo; (tức là exception với chữ &lsquo;e&rsquo; thường) theo cách nói thông thường, trên thực tế là một đối tượng của lớp <code>java.lang.Throwable</code> hoặc một trong các lớp con (subclasses) của nó. Mặc dù bạn sẽ hiếm khi sử dụng trực tiếp lớp <code>Throwable</code> trong mã nguồn của mình, nó chứa hầu hết các chức năng liên quan đến các Exception (Ngoại lệ) và vì thế, bạn nên nắm rõ các constructor và các phương thức quan trọng của lớp này.</p>
+
+      <h3 class="section-title section-title--minor">Các constructor của Throwable<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Throwable có ba public constructor sau đây:</p>
+
+      <p class="no-indent">1. <code>Throwable()</code> : Khởi tạo một đối tượng throwable mới với chi tiết thông báo (detail message) là null.</p>
+
+      <p class="no-indent">2. <code>Throwable(String message)</code> : Khởi tạo một đối tượng throwable mới với chi tiết thông báo (detail message) được chỉ định.</p>
+
+      <p class="no-indent">3. <code>Throwable(String message, Throwable cause)</code> : Khởi tạo một đối tượng throwable mới với chi tiết thông báo (detail message) và &ldquo;nguyên nhân&rdquo; (cause) được chỉ định. Nguyên nhân là một đối tượng throwable khác mà lập trình viên tin là nguyên nhân thực sự của Exception (Ngoại lệ). Điều này rất hữu ích nếu bạn muốn catch một exception chuẩn chẳng hạn như <code>NullPointerException</code> và sau đó throw một exception nghiệp vụ mới với exception ban đầu làm nguyên nhân thực sự.</p>
+
+      <h3 class="section-title section-title--minor">Các phương thức của Throwable<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn có thể gặp cách sử dụng của các phương thức sau của Throwable trong kỳ thi:</p>
+
+      <p class="no-indent">1. <code>String toString()</code> : Trả về chuỗi đại diện của throwable theo định dạng <code>&lt;tên lớp exception&gt;: &lt;message&gt;</code>.</p>
+
+      <p class="no-indent">2. <code>String getMessage()</code> : Trả về chuỗi chi tiết thông báo của throwable này.</p>
+
+      <p class="no-indent">3. <code>void printStackTrace()</code> : In ra stack trace trong error stream.</p>
+
+      <p class="no-indent">4. <code>Throwable getCause()</code> : Trả về nguyên nhân (cause) được truyền vào khi khởi tạo throwable.</p>
+
+      <p class="no-indent">5. <code>void addSuppressed(Throwable exception)/Throwable[] getSuppressed()</code> : Thêm một throwable khác vào mảng các Ngoại lệ bị ẩn đi (Suppressed Exception) của nó và lấy mảng các Ngoại lệ bị ẩn đi (Suppressed Exception) đó.</p>
+
+      <p>Một lớp con (subclass) của <code>java.lang.Exception</code> đặc biệt quan trọng là <code>java.lang.RuntimeException</code>. <code>RuntimeException</code> và các lớp con của nó thuộc về</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

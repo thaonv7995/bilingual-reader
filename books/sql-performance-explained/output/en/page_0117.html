@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Hash Join</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .language-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Hash Join</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>DBIx::Class 0.08192 generates the following SQL. It fetches all columns from the <code>SALES</code> table and the selected attributes from <code>EMPLOYEES</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT me.sale_id,
+       me.employee_id,
+       me.subsidiary_id,
+       me.sale_date,
+       me.eur_value,
+       employee.first_name,
+       employee.last_name
+  FROM sales me
+  JOIN employees employee
+        ON( employee.employee_id   = me.employee_id
+       AND  employee.subsidiary_id = me.subsidiary_id)
+ WHERE(sale_date &gt; ?)</code></pre>
+      </figure>
+
+      <p class="language-label">PHP</p>
+
+      <p>Version 2 of the Doctrine framework supports attribute selection at runtime. The documentation states that the partially loaded objects might behave oddly and requires the <strong><em>partial</em></strong> keyword to acknowledge the risks. Furthermore, you must select the primary key columns explicitly:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>$qb = $em-&gt;createQueryBuilder();
+$qb-&gt;select('<strong>partial</strong> s.{sale_id, <strong>sale_date</strong>, <strong>eur_value</strong>},'
+          . '<strong>partial</strong> e.{employee_id, subsidiary_id, '
+          .           '<strong>first_name</strong> , <strong>last_name</strong>}')
+   -&gt;from('Sales', 's')
+   -&gt;join('s.employee', 'e')
+   -&gt;where("s.sale_date &gt; :dt")
+   -&gt;setParameter('dt', $dt, Type::DATETIME);</code></pre>
+      </figure>
+
+      <p>The generated SQL contains the requested columns and once more the <code>SUBSIDIARY_ID</code> and <code>EMPLOYEE_ID</code> from the <code>SALES</code> table.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">107</p>
+    </article>
+  </main>
+</body>
+</html>

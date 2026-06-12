@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) của Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0401.html">← Trước</a>
+    <a href="page_0403.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">402</span>
+      </header>
+
+      <ol class="numbered">
+        <li>
+          <p>luồng đầu ra) và xây dựng thêm các chức năng bổ sung trên các luồng đó. Đó là lý do tại sao các luồng như vậy được gọi là các luồng &ldquo;bậc cao hơn&rdquo; (higher-level streams).&nbsp;</p>
+        </li>
+        <li>
+          <p>Các luồng bậc cao hơn không quan tâm đến việc dữ liệu thực sự đến từ đâu hay đi về đâu. Nhiệm vụ của các luồng bậc thấp hơn như <code>FileInputStream</code> / <code>FileOutputStream</code>&nbsp;là xử lý nguồn dữ liệu hoặc đích nhận dữ liệu thực tế.&nbsp;</p>
+        </li>
+      </ol>
+
+      <p class="no-indent">Mặc dù không phải là một quy tắc đặt tên chính thức, một mẹo hay để biết liệu hàm khởi tạo của một lớp luồng I/O có nhận một luồng đầu vào hoặc luồng đầu ra làm đối số hay không là xem tên của lớp đó có tiết lộ nguồn hoặc đích nhận dữ liệu thực tế hay không. Nếu tên của một lớp luồng I/O tiết lộ nguồn hoặc đích nhận dữ liệu thực tế, thì đó là một luồng bậc thấp và nó không nhận một luồng đầu vào hoặc luồng đầu ra làm đối số trong quá trình khởi tạo. Ví dụ, <code>FileInputStream</code> và&nbsp;<code>ByteArrayInputStream</code>&nbsp;tiết lộ nguồn dữ liệu của chúng (lần lượt là một tệp và một mảng byte) và do đó là các luồng bậc thấp. Mặt khác, <code>ObjectInputStream</code>, <code>BufferedInputStream</code> và <code>DataInputStream</code>&nbsp;tiết lộ loại dữ liệu mà chúng xử lý (lần lượt là đối tượng (Object), bộ đệm byte (byte buffer) và dữ liệu nguyên thủy (primitive data))&nbsp;thay vì nguồn hoặc đích nhận của dữ liệu, và do đó là các luồng bậc cao hơn. Chúng nhận một <code>InputStream</code>&nbsp;(or một <code>OutputStream</code>) làm đối số trong quá trình khởi tạo.</p>
+
+      <h3 class="section-title section-title--sub">19.1.4 Đọc và ghi dữ liệu ký tự<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn đã biết rằng dữ liệu thực tế được lưu trữ trong một hệ thống tệp là một chuỗi các số 0 và 1. Chương trình của chúng ta sẽ đọc các bit đó và thông dịch chúng thành thứ gì đó có ý nghĩa hơn, chẳng hạn như các ký tự. Do đó, bạn có thể sử dụng các lớp <code>InputStream</code>&nbsp;và <code>OutputStream</code>&nbsp;thô để đọc các byte thô và tự thông dịch các byte đó thành các ký tự bằng cách sử dụng một bảng mã ký tự nào đó như ASCII. Tuy nhiên, việc chuyển đổi byte thành ký tự không phải lúc nào cũng đơn giản như việc thông dịch một byte thành một ký tự ASCII. Có hàng trăm ngôn ngữ và hàng ngàn ký tự tồn tại và chúng không thể đều được ánh xạ trực tiếp thành các giá trị của một byte đơn lẻ. Đó là lý do tại sao các bảng mã ký tự hiện đại sử dụng nhiều</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

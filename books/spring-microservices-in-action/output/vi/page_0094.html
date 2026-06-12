@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Lựa chọn triển khai</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.table-caption {
+      margin: 0 0 1.5mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page table.data-table.config-projects-table {
+      margin: 0 0 3mm;
+      font-size: 9pt;
+      line-height: 1.22;
+    }
+    .prose-page.chapter-page table.config-projects-table th {
+      background: #d9d9d9;
+      font-weight: 700;
+      padding: 1mm 1.5mm;
+    }
+    .prose-page.chapter-page table.config-projects-table td {
+      padding: 1mm 1.5mm;
+      vertical-align: top;
+    }
+    .prose-page.chapter-page table.config-projects-table .project-name {
+      font-weight: 700;
+      width: 16%;
+    }
+    .prose-page.chapter-page table.config-projects-table .description {
+      width: 32%;
+    }
+    .prose-page.chapter-page table.config-projects-table .characteristics {
+      width: 52%;
+    }
+    .prose-page.chapter-page table.config-projects-table + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0093.html">← Trước</a>
+    <a href="page_0095.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Về quản lý cấu hình (và độ phức tạp)</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">69</span>
+      </header>
+
+      <p class="no-indent">với nhau. Giờ chúng ta sẽ chuyển sang xem các giải pháp khác nhau cho mẫu này, rồi xem một triển khai cụ thể.</p>
+
+      <h4 class="subsection-title">3.1.2 Lựa chọn triển khai</h4>
+
+      <p>May mắn thay, bạn có thể lựa chọn trong số rất nhiều dự án mã nguồn mở đã được kiểm chứng trên thực tế để triển khai giải pháp quản lý cấu hình. Hãy xem một số lựa chọn khác nhau hiện có và so sánh chúng. Bảng 3.1 trình bày các lựa chọn này.</p>
+
+      <p class="table-caption no-indent"><strong>Bảng 3.1</strong><br>Các dự án mã nguồn mở để triển khai hệ thống quản lý cấu hình</p>
+
+      <table class="data-table config-projects-table">
+        <thead>
+          <tr>
+            <th scope="col">Tên dự án</th>
+            <th scope="col">Mô tả</th>
+            <th scope="col">Đặc điểm</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="project-name">Etcd</td>
+            <td class="description">Dự án mã nguồn mở viết bằng Go. Dùng cho service discovery và quản lý key-value. Dùng giao thức raft (<a href="https://raft.github.io/">https://raft.github.io/</a>) cho mô hình tính toán phân tán.</td>
+            <td class="characteristics">Rất nhanh và có khả năng mở rộng<br>Có thể phân tán<br>Điều khiển qua dòng lệnh<br>Dễ sử dụng và thiết lập</td>
+          </tr>
+          <tr>
+            <td class="project-name">Eureka</td>
+            <td class="description">Do Netflix phát triển. Đã được kiểm chứng cực kỹ trên thực tế. Dùng cho cả service discovery và quản lý key-value.</td>
+            <td class="characteristics">Kho lưu trữ key-value phân tán.<br>Linh hoạt; cần nỗ lực để thiết lập<br>Cung cấp làm mới client động ngay từ đầu</td>
+          </tr>
+          <tr>
+            <td class="project-name">Consul</td>
+            <td class="description">Do Hashicorp phát triển. Tương tự Etcd và Eureka về tính năng, nhưng dùng thuật toán khác cho mô hình tính toán phân tán (giao thức SWIM; <a href="https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf">https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf</a>).</td>
+            <td class="characteristics">Nhanh<br>Cung cấp service discovery gốc với tùy chọn tích hợp trực tiếp với DNS<br>Không cung cấp làm mới client động ngay từ đầu</td>
+          </tr>
+          <tr>
+            <td class="project-name">ZooKeeper</td>
+            <td class="description">Dự án Apache cung cấp khả năng khóa phân tán. Thường được dùng làm giải pháp quản lý cấu hình để truy cập dữ liệu key-value.</td>
+            <td class="characteristics">Giải pháp lâu đời và được kiểm chứng nhất<br>Phức tạp nhất khi sử dụng<br>Có thể dùng cho quản lý cấu hình, nhưng chỉ nên cân nhắc nếu bạn đã dùng ZooKeeper ở các phần khác trong kiến trúc</td>
+          </tr>
+          <tr>
+            <td class="project-name">Spring Cloud configuration server</td>
+            <td class="description">Dự án mã nguồn mở cung cấp giải pháp quản lý cấu hình tổng quát với nhiều back end khác nhau. Có thể tích hợp với Git, Eureka và Consul làm back end.</td>
+            <td class="characteristics">Kho key/value không phân tán<br>Tích hợp chặt chẽ cho dịch vụ Spring và không phải Spring<br>Có thể dùng nhiều back end để lưu trữ dữ liệu cấu hình, gồm hệ thống tệp dùng chung, Eureka, Consul và Git</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Tất cả các giải pháp trong bảng 3.1 đều có thể dùng để xây dựng giải pháp quản lý cấu hình một cách dễ dàng. Với các ví dụ trong chương này và trong phần còn lại của cuốn sách, bạn sẽ dùng Spring Cloud configuration server. Tôi chọn giải pháp này vì một số lý do, gồm các lý do sau:</p>
+
+      <ol class="manning-numbered" aria-label="Lý do chọn Spring Cloud configuration server">
+        <li>Spring Cloud configuration server dễ thiết lập và sử dụng.</li>
+        <li>Spring Cloud configuration tích hợp chặt chẽ với Spring Boot. Bạn thực sự có thể đọc toàn bộ dữ liệu cấu hình ứng dụng chỉ với vài annotation đơn giản, dễ dùng.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

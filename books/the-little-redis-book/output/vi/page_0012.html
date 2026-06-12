@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Cuốn sách Redis nhỏ — Trang 12</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Điều hướng trang">
+      <a href="page_0011.html">← Trước</a>
+      <span>Trang 12 / 30</span>
+      <a href="page_0013.html">Tiếp →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<p class="lead no-indent"><code>getrange</code> hữu ích trong serialization tiết kiệm không gian. Ví dụ cụ thể: <code>incr</code>, <code>incrby</code>, <code>decr</code>, <code>decrby</code>:</p><figure class="code-snippet"><pre class="code-block"><code><span class="cli-prompt">&gt;</span> incr stats:page:about
+(integer) 1
+<span class="cli-prompt">&gt;</span> incr stats:page:about
+(integer) 2
+<span class="cli-prompt">&gt;</span> incrby ratings:video:12333 5
+(integer) 5
+<span class="cli-prompt">&gt;</span> incrby ratings:video:12333 3
+(integer) 8</code></pre></figure><p>String Redis rất hợp analytics. Thử <code>incr users:leto</code> (không phải số) — sẽ lỗi.</p><p><code>setbit</code>/<code>getbit</code>: bài Spool đếm unique visitor trong ngày — 128 triệu user, laptop &lt;50ms, 16MB RAM.</p><p>Không cần hiểu bitmap — chỉ cần biết string mạnh hơn vẻ ngoài. Hay dùng: object và counter; cache vì get theo key rất nhanh.</p><h3 class="section-title">Hashes</h3><p>Hash cho thấy Redis không chỉ key-value: giống string nhưng có thêm field. Tương đương <code>set</code>/<code>get</code>:</p><figure class="code-snippet"><pre class="code-block"><code>hset users:goku powerlevel 9000
+hget users:goku powerlevel</code></pre></figure><p>Đặt/lấy/xóa nhiều field:</p><figure class="code-snippet"><pre class="code-block"><code>hmset users:goku race saiyan age 737
+hmget users:goku race powerlevel
+hgetall users:goku
+hkeys users:goku
+hdel users:goku age</code></pre></figure><p>Hash kiểm soát tốt hơn string thuần — cập nhật/xóa từng phần không cần đọc/ghi cả object.</p>
+      <p class="page-folio">11</p>
+    </article>
+  </main>
+</body>
+</html>

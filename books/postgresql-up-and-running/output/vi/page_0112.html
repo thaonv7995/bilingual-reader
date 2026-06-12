@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu — Kiểu Dữ Liệu Khoảng</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.type-name {
+      margin: 0 0 1mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.type-desc {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.type-name code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0111.html">← Trước</a>
+    <a href="page_0113.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">112</span>
+      </header>
+
+      <p class="no-indent">trừ khi mọi người đồng ý sử dụng đại diện đó cho các khoảng rời rạc, chúng ta có thể
+      dễ dàng so sánh giữa nhiều khoảng mà không cần lo lắng trước về việc chuyển đổi từ mở
+      sang đóng hoặc ngược lại. PostgreSQL chuẩn hóa tất cả các khoảng rời rạc, cho cả lưu trữ và
+      hiển thị. Vì vậy, nếu bạn nhập một khoảng thời gian như <code>(2014-1-5,2014-2-1]</code>, PostgreSQL sẽ viết lại nó
+      thành <code>[2014-01-06,2014-02-02)</code>.</p>
+
+      <h3 class="subsection-title">Các Kiểu Khoảng Tích Hợp Sẵn</h3>
+      <p class="no-indent">PostgreSQL đi kèm với sáu kiểu khoảng tích hợp sẵn cho số và thời gian:</p>
+
+      <p class="type-name no-indent"><code>int4range</code>, <code>int8range</code></p>
+      <p class="type-desc">Một khoảng của các số nguyên. Các khoảng số nguyên là rời rạc và có thể được chuẩn hóa.</p>
+
+      <p class="type-name no-indent"><code>numrange</code></p>
+      <p class="type-desc">Một khoảng liên tục của các số thập phân, số thực hoặc số double-precision.</p>
+
+      <p class="type-name no-indent"><code>daterange</code></p>
+      <p class="type-desc">Một khoảng ngày rời rạc của các ngày lịch mà không có nhận thức về múi giờ.</p>
+
+      <p class="type-name no-indent"><code>tsrange</code>, <code>tstzrange</code></p>
+      <p class="type-desc">Một khoảng ngày và giờ (timestamp) liên tục cho phép giây phân số.
+      tstrange không nhận thức về múi giờ. tstzrange thì có nhận thức về múi giờ.</p>
+
+      <p>Đối với các khoảng giống như số, nếu điểm bắt đầu hoặc điểm kết thúc để trống, PostgreSQL
+      sẽ thay thế nó bằng một null. Để thực tiễn, bạn có thể hiểu null đại diện cho
+      -vô cực bên trái hoặc vô cực bên phải. Trên thực tế, bạn bị ràng buộc bởi giá trị nhỏ nhất
+      và lớn nhất cho kiểu dữ liệu cụ thể. Vì vậy, một int4range của <code>(,)</code> sẽ là
+      <code>[-2147483648,2147483647)</code>.</p>
+
+      <p>Đối với các khoảng tạm thời, -vô cực và vô cực là các giới hạn trên và dưới hợp lệ.</p>
+
+      <p>Ngoài các kiểu khoảng tích hợp sẵn, bạn có thể tạo các kiểu khoảng của riêng mình. Khi bạn
+      làm như vậy, bạn có thể đặt khoảng đó là rời rạc hoặc liên tục.</p>
+
+      <h3 class="subsection-title">Định Nghĩa Các Khoảng</h3>
+      <p class="no-indent">Một khoảng, bất kể loại nào, luôn được cấu thành từ hai phần tử cùng loại với
+      điều kiện giới hạn được ký hiệu bởi [, ], (, hoặc ), như được thể hiện trong <span class="accent-word">Ví dụ 5-19</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-19.</strong> Định nghĩa các khoảng với các phép chuyển đổi</figcaption>
+        <pre class="code-block"><code>SELECT '[2013-01-05,2013-08-13]'::daterange; ①
+SELECT '(2013-01-05,2013-08-13]'::daterange; ②
+SELECT '(0,)'::int8range; ③
+SELECT '(2013-01-05 10:00,2013-08-13 14:00]'::tsrange; ④
+[2013-01-05,2013-08-14)
+[2013-01-06,2013-08-14)</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">94<span class="sep">|</span>Chương 5: Kiểu Dữ Liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

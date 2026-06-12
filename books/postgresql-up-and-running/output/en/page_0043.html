@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-animal {
+      position: absolute;
+      top: 8mm;
+      left: var(--book-margin-x);
+      width: 13mm;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 1.5mm 0 2mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0042.html">← Prev</a>
+    <a href="page_0044.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <img class="chapter-animal" src="../assets/images/page_0043_icon.png" width="50" height="48" alt="">
+
+      <p class="no-indent">Recent versions of PostgreSQL no longer use the terms users and
+      groups. You will still see these terms bandied about on discussion
+      boards; just know that they mean login roles and group roles re‐
+      spectively. For backward compatibility, <code>CREATE USER</code> and <code>CREATE
+      GROUP</code> still work in current version, but shun them and use <code>CREATE
+      ROLE</code> instead.</p>
+
+      <h3 class="tool-title">Creating Login Roles</h3>
+      <p>When you initialize the data cluster during setup, PostgreSQL creates a single role for
+      you with the name <code>postgres</code>. (PostgreSQL also creates a namesake database called
+      <code>postgres</code>.) You can bypass the password setting by mapping an OS root user to the new
+      role. After you’ve installed PostgreSQL, before you do anything else, you should log in
+      as <code>postgres</code> using <code>psql</code> or <code>pgAdmin</code> and create other roles. pgAdmin has a graphical
+      section for creating user roles, but if you want to create one using SQL, execute an SQL
+      command like the one shown in Example 2-4.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 2-4</strong><br>Creating login roles</figcaption>
+        <pre class="code-block"><code>CREATE ROLE leo LOGIN PASSWORD 'king' CREATEDB VALID UNTIL 'infinity';</code></pre>
+      </figure>
+
+      <p>The <code>VALID</code> line is optional and specifies when the role should expire and lose its privi‐
+      leges; the default is <code>infinity</code>, which means the role never expires. The <code>CREATEDB</code> modi‐
+      fier grants database creation rights to the new role.</p>
+
+      <p>To create a user with superuser rights, do so as shown in Example 2-5. Naturally, you
+      can create a superuser only if you are a superuser yourself.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 2-5</strong><br>Creating superuser roles</figcaption>
+        <pre class="code-block"><code>CREATE ROLE regina LOGIN PASSWORD 'queen' SUPERUSER VALID UNTIL '2020-1-1 00:00';</code></pre>
+      </figure>
+
+      <p>We don’t really want our queen to reign forever, so we added an abdication date.</p>
+
+      <h3 class="tool-title">Creating Group Roles</h3>
+      <p>Group roles generally have no login rights but serve as containers for other roles. This
+      is merely a best-practice suggestion. Nothing stops you from creating a role that can
+      both log in and contain other roles.</p>
+
+      <p>Create a group role through the following SQL:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE ROLE royalty INHERIT;</code></pre>
+      </figure>
+
+      <p>Note the use of term <code>INHERIT</code>. This means that any member of royalty will automati‐
+      cally have rights granted to the royalty role, except for superuser rights. For security,
+      PostgreSQL never passes on superuser rights.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Roles<span class="sep">|</span>25</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

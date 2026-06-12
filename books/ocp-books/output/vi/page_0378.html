@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0377.html">← Trước</a>
+    <a href="page_0379.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">378</span>
+      </header>
+
+      <p class="no-indent">Nếu một lớp (Class) không thể triển khai (implement) <code>Comparable</code>&nbsp;(điều này có thể xảy ra nếu bạn không kiểm soát mã nguồn của nó) và bạn vẫn muốn giữ các đối tượng (Object) của lớp (Class) này trong các cấu trúc dữ liệu được sắp xếp, thì interface (Giao diện) <code>Comparator</code>&nbsp;chính là thứ bạn cần. Một <code>Comparator</code>&nbsp;cho phép chúng ta tách logic sắp xếp ra khỏi lớp (Class) có các đối tượng (Object) mà chúng ta muốn sắp xếp và đặt nó vào một lớp (Class) độc lập. Nó chỉ có duy nhất một abstract method <code>int compare(T o1, T o2)</code>&nbsp;chứa logic so sánh. Dưới đây là cách thực hiện:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class PersonComparator implements Comparator&lt;Person&gt;{
+  public int compare(Person p1, Person p2) {
+    int a = p1.age - p2.age;
+    if(a != 0) return a; //this establishes the order based on age
+    else return p1.name.compareTo(p2.name); //if the age is same then we
+order alphabetically
+  }
+}</code></pre>
+      </figure>
+
+      <p>Giờ đây chúng ta có thể sử dụng <code>Comparator</code>&nbsp;này để áp đặt một thứ tự mong muốn cho <code>TreeSet</code>&nbsp;hoặc <code>TreeMap</code> bằng cách truyền một instance của comparator vào constructor của chúng, ví dụ: <code>Set&lt;Person&gt; s = new TreeSet&lt;Person&gt;(new PersonComparator());</code>&nbsp;. <code>TreeSet</code>&nbsp;sẽ không còn cố gắng cast các đối tượng (Object) được thêm vào thành <code>Comparable</code>&nbsp;nữa. Nó sẽ sử dụng <code>Comparator</code>&nbsp;để xác định vị trí của các đối tượng (Object).</p>
+
+      <p>Lưu ý rằng hướng dẫn về việc giữ cho <code>equals</code>&nbsp;và <code>compareTo</code>&nbsp;của <code>Comparable</code>&nbsp;nhất quán cũng áp dụng cho <code>equals</code>&nbsp;và <code>compare</code>&nbsp;của <code>Comparator</code>&nbsp;nhưng việc tuân thủ nó không quá quan trọng vì bạn sẽ sớm thấy rằng một <code>Comparator</code>&nbsp;cũng có thể được sử dụng để sắp xếp các đối tượng (Object) mà không cần sự tham gia của các cấu trúc dữ liệu được sắp xếp.</p>
+
+      <p>Ngoài method <code>compare</code>&nbsp;, <code>Comparator</code>&nbsp;còn có rất nhiều default method cũng như static method giúp chúng ta xây dựng các comparator mới bằng cách biến đổi các comparator đã tạo hoặc tái sử dụng các comparator có sẵn được cung cấp trong thư viện Java. Ví dụ, nếu bạn muốn sắp xếp các đối tượng (Object) <code>Person</code>&nbsp;theo thứ tự ngược lại, bạn có thể gọi default method <code>reversed()</code>&nbsp;trên một comparator hiện có</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Listing 6.6 continuation and Listing 6.7 FilterUtils</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0199.html">← Prev</a>
+    <a href="page_0201.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Building your first Zuul pre-filter generating correlation IDs</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">175</span>
+      </header>
+
+      <figure class="code-snippet" aria-label="Listing 6.6 continuation">
+        <pre class="code-block"><code>          filterUtils.getCorrelationId());
+    }
+    else{
+      filterUtils
+         .setCorrelationId(generateCorrelationId());
+   logger.debug("tmx-correlation-id generated
+   ➥ in tracking filter: {}.",
+   ➥ filterUtils.getCorrelationId());
+}
+  RequestContext ctx =
+    RequestContext.getCurrentContext();
+  logger.debug("Processing incoming request for {}.",
+     ctx.getRequest().getRequestURI());
+  return null;
+}
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">To implement a filter in Zuul, you have to extend the ZuulFilter class and then override four methods: <code>filterType()</code>, <code>filterOrder()</code>, <code>shouldFilter()</code>, and <code>run()</code>. The first three methods in this list describe to Zuul what type of filter you&rsquo;re building, what order it should be run in compared to the other filters of its type, and whether it should be active. The last method, <code>run()</code>, contains the business logic the filter is going to implement.</p>
+
+      <p>You&rsquo;ve implemented a class called <code>FilterUtils</code>. This class is used to encapsulate common functionality used by all your filters. The <code>FilterUtils</code> class is located in the <code>zuulsvr/src/main/java/com/thoughtmechanix/zuulsvr/FilterUtils.java</code>. We&rsquo;re not going to walk through the entire <code>FilterUtils</code> class, but the key methods we&rsquo;ll discuss here are the <code>getCorrelationId()</code> and <code>setCorrelationId()</code> functions. The following listing shows the code for the <code>FilterUtils</code> <code>getCorrelationId()</code> method.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.7</strong><br>Retrieving the tmx-correlation-id from the HTTP headers</figcaption>
+        <pre class="code-block"><code>public String getCorrelationId(){
+  RequestContext ctx = RequestContext.getCurrentContext();
+
+  if (ctx.getRequest()
+        .getHeader(CORRELATION_ID) !=null) {
+ return ctx.getRequest()
+           .getHeader(CORRELATION_ID);
+  }
+  else{
+ return ctx.getZuulRequestHeaders()
+           .get(CORRELATION_ID);
+  }
+}</code></pre>
+      </figure>
+
+      <p>The key thing to notice in listing 6.7 is that you first check to see if the tmx-correlation-ID is already set on the HTTP Headers for the incoming request. You do this using the <code>ctx.getRequest().getHeader(CORRELATION_ID)</code> call.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

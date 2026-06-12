@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 1: Spring Cloud by example</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 2mm;
+      background: transparent;
+      border: none;
+      font-size: 9.5pt;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0056.html">← Prev</a>
+    <a href="page_0058.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">32</span>
+        <span class="rh-center">CHAPTER 1 <em>Welcome to the cloud, Spring</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">register itself with a Eureka Service Discovery agent and that you&rsquo;re going to use service discovery to look up remote REST services endpoints in your code. Note that configuration is happening in a property file that will tell the simple service the location and port number of a Eureka server to contact. You first see Hystrix being used when you declare your hello method:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>@HystrixCommand(threadPoolKey = "helloThreadPool")
+public String helloRemoteServiceCall(String firstName, String lastName)</code></pre>
+      </figure>
+
+      <p>The <code>@HystrixCommand</code> annotation is doing two things. First, any time the <code>helloRemoteServiceCall</code> method is called, it won&rsquo;t be directly invoked. Instead, the method will be delegated to a thread pool managed by Hystrix. If the call takes too long (default is one second), Hystrix steps in and interrupts the call. This is the implementation of the circuit breaker pattern. The second thing this annotation does is create a thread pool called <code>helloThreadPool</code> that&rsquo;s managed by Hystrix. All calls to <code>helloRemoteServiceCall</code> method will only occur on this thread pool and will be isolated from any other remote service calls being made.</p>
+
+      <p>The last thing to note is what&rsquo;s occurring inside the <code>helloRemoteServiceCall</code> method. The presence of the <code>@EnableEurekaClient</code> has told Spring Boot that you&rsquo;re going to use a modified <code>RestTemplate</code> class (this isn&rsquo;t how the Standard Spring <code>RestTemplate</code> would work out of the box) whenever you make a REST service call. This <code>RestTemplate</code> class will allow you to pass in a logical service ID for the service you&rsquo;re trying to invoke:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ResponseEntity&lt;String&gt; restExchange = restTemplate.exchange
+(http://logical-service-id/name/{firstName}/{lastName}</code></pre>
+      </figure>
+
+      <p>Under the covers, the <code>RestTemplate</code> class will contact the Eureka service and look up the physical location of one or more of the &ldquo;name&rdquo; service instances. As a consumer of the service, your code never has to know where that service is located.</p>
+
+      <p>Also, the <code>RestTemplate</code> class is using Netflix&rsquo;s Ribbon library. Ribbon will retrieve a list of all the physical endpoints associated with a service. Every time the service is called by the client, it &ldquo;round-robins&rdquo; the call to the different service instances on the client without having to go through a centralized load balancer. By eliminating a centralized load balancer and moving it to the client, you eliminate another failure point (load balancer going down) in your application infrastructure.</p>
+
+      <p>I hope that at this point you&rsquo;re impressed, because you&rsquo;ve added a significant number of capabilities to your microservice with only a few annotations. That&rsquo;s the real beauty behind Spring Cloud. You as a developer get to take advantage of battle-hardened microservice capabilities from premier cloud companies like Netflix and Consul. These capabilities, if used outside of Spring Cloud, can be complex and obtuse to set up. Spring Cloud simplifies their use to literally nothing more than a few simple Spring Cloud annotations and configuration entries.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

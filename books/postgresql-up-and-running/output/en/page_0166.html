@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 8: Writing Functions — Writing Functions with SQL</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0165.html">← Prev</a>
+    <a href="page_0167.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">166</span>
+      </header>
+
+      <h3 class="section-title">Writing Functions with SQL</h3>
+
+      <p class="no-indent">Although SQL is mostly a language for issuing queries, it can also be used to write
+      functions that run against the database. In PostgreSQL, doing so is fast and easy. Take
+      your existing SQL statements, add a functional header and footer, and you&rsquo;re done. The
+      ease comes at a price. You won&rsquo;t have fancy control languages to create conditional
+      execution branches. More restrictively, you can&rsquo;t run dynamic SQL statements that you
+      assemble on the fly depending on the arguments passed into the function.</p>
+
+      <p>On the positive side, the query planner can peek into an SQL function and optimize
+      execution depending on what it sees, a process called inlining. Planners treat other
+      languages as black boxes. Inlining lets SQL functions take advantage of indexes and
+      collapse repetitive computations.</p>
+
+      <h3 class="subsection-title">Basic SQL Function</h3>
+
+      <p class="no-indent">Example 8-2 shows a primitive SQL function that inserts a row into a table and returns
+      a scalar value.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-2.</strong> SQL function that returns the identifier of inserted record</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION write_to_log(param_user_name varchar, param_description text)
+RETURNS integer AS
+$$
+INSERT INTO logs(user_name, description) VALUES($1, $2)
+RETURNING log_id;
+$$
+LANGUAGE 'sql' VOLATILE;</code></pre>
+      </figure>
+
+      <p>To call the function, execute something like:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT write_to_log('alejandro', 'Woke up at noon.') As new_id;</code></pre>
+      </figure>
+
+      <p>Similarly, you can update data with an SQL function and return a scalar or void, as
+      shown in Example 8-3.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-3.</strong> SQL function to update a record</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION
+update_logs(log_id int, param_user_name varchar, param_description text)
+RETURNS void AS
+$$
+UPDATE logs SET user_name = $2, description = $3
+ , log_ts = CURRENT_TIMESTAMP WHERE log_id = $1;
+$$
+LANGUAGE 'sql' VOLATILE;</code></pre>
+      </figure>
+
+      <p>To execute:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT update_logs(12, 'alejandro', 'Fell back asleep.');</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">148<span class="sep">|</span>Chapter 8: Writing Functions</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

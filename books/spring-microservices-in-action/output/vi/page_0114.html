@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Về làm mới microservice / 3.4 Bảo vệ thông tin cấu hình nhạy cảm</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0113.html">← Trước</a>
+    <a href="page_0115.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Bảo vệ thông tin cấu hình nhạy cảm</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">89</span>
+      </header>
+
+      <p class="no-indent">Hãy lưu ý vài điều về annotation <code>@RefreshScope</code>. Đầu tiên, annotation này chỉ tải lại các thuộc tính Spring tùy chỉnh mà bạn có trong cấu hình ứng dụng. Các hạng mục như cấu hình cơ sở dữ liệu được Spring Data sử dụng sẽ không được tải lại bởi annotation <code>@RefreshScope</code>. Để thực hiện refresh, bạn có thể gọi endpoint <code>http://&lt;yourserver&gt;:8080/refresh</code>.</p>
+
+      <aside class="sidebar-note" aria-label="Về làm mới microservice">
+        <h3>Về làm mới microservice</h3>
+        <p>Khi dùng dịch vụ Spring Cloud configuration với các microservice, một điều bạn cần cân nhắc trước khi thay đổi thuộc tính một cách động là bạn có thể có nhiều instance của cùng một dịch vụ đang chạy, và bạn sẽ cần refresh tất cả các dịch vụ đó với cấu hình ứng dụng mới. Có nhiều cách để xử lý vấn đề này:</p>
+        <p>Dịch vụ Spring Cloud configuration có cơ chế dựa trên &ldquo;push&rdquo; tên là Spring Cloud Bus, cho phép máy chủ cấu hình Spring Cloud phát thông báo tới tất cả các client đang dùng dịch vụ rằng đã có thay đổi. Spring Cloud configuration yêu cầu một thành phần middleware bổ sung đang chạy (RabbitMQ). Đây là cách cực kỳ hữu ích để phát hiện thay đổi, nhưng không phải tất cả back end cấu hình Spring Cloud đều hỗ trợ cơ chế &ldquo;push&rdquo; (tức là máy chủ Consul).</p>
+        <p>Ở chương tiếp theo, bạn sẽ dùng Spring Service Discovery và Eureka để đăng ký tất cả các instance của một dịch vụ. Một kỹ thuật tôi đã dùng để xử lý sự kiện refresh cấu hình ứng dụng là refresh các thuộc tính ứng dụng trong Spring Cloud configuration, rồi viết một script đơn giản để truy vấn engine service discovery nhằm tìm tất cả các instance của một dịch vụ và gọi trực tiếp endpoint <code>/refresh</code>.</p>
+        <p>Cuối cùng, bạn có thể khởi động lại tất cả các server hoặc container để nhận thuộc tính mới. Đây là việc khá đơn giản, đặc biệt nếu bạn chạy các dịch vụ trong dịch vụ container như Docker. Khởi động lại container Docker chỉ mất vài giây và sẽ buộc đọc lại cấu hình ứng dụng.</p>
+        <p>Hãy nhớ rằng các server dựa trên cloud là tạm thời (ephemeral). Đừng ngại khởi chạy các instance mới của dịch vụ với cấu hình mới, chuyển traffic sang các dịch vụ mới, rồi gỡ bỏ các instance cũ.</p>
+      </aside>
+
+      <h4 class="subsection-title">3.4 Bảo vệ thông tin cấu hình nhạy cảm</h4>
+
+      <p>Theo mặc định, máy chủ cấu hình Spring Cloud lưu tất cả thuộc tính dưới dạng văn bản thuần (plain text) trong các tệp cấu hình ứng dụng. Điều này bao gồm thông tin nhạy cảm như thông tin đăng nhập cơ sở dữ liệu.</p>
+
+      <p>Việc lưu thông tin đăng nhập nhạy cảm dưới dạng plain text trong kho mã nguồn là một thực hành cực kỳ tồi. Thật không may, điều đó xảy ra thường xuyên hơn bạn nghĩ. Spring Cloud Config cho phép bạn mã hóa các thuộc tính nhạy cảm một cách dễ dàng. Spring Cloud Config hỗ trợ cả mã hóa đối xứng (shared secret) và mã hóa bất đối xứng (khóa public/private).</p>
+
+      <p>Chúng ta sẽ xem cách thiết lập máy chủ cấu hình Spring Cloud của bạn để dùng mã hóa với khóa đối xứng. Để làm điều này, bạn cần</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

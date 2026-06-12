@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tinh chỉnh Hiệu suất Truy vấn — Chỉ mục của bạn có hữu ích không?</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0185.html">← Trước</a>
+    <a href="page_0187.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">186</span>
+      </header>
+
+      <p class="no-indent">chỉ như một biện pháp cuối cùng. Mặc dù bạn có thể vô hiệu hóa chúng, nhưng trình lập kế hoạch vẫn có thể sử dụng chúng khi không có lựa chọn khả thi nào khác. Khi bạn thấy chúng được sử dụng, tốt nhất là nên kiểm tra lại xem trình lập kế hoạch có đang sử dụng chúng vì cần thiết hay không, chứ không phải vì không biết. Một cách nhanh chóng để kiểm tra là vô hiệu hóa chúng.</p>
+
+      <h3 class="subsection-title">Chỉ mục của bạn có hữu ích không?</h3>
+
+      <p class="no-indent">Khi trình lập kế hoạch quyết định thực hiện một quét tuần tự, nó lên kế hoạch để lặp qua tất cả các hàng của một bảng. Nó chọn con đường này khi không tìm thấy chỉ mục nào có thể thỏa mãn điều kiện truy vấn, hoặc nó kết luận rằng việc sử dụng một chỉ mục sẽ tốn kém hơn so với việc quét bảng. Nếu bạn vô hiệu hóa chiến lược quét tuần tự, và trình lập kế hoạch vẫn kiên quyết sử dụng nó, điều này có nghĩa là các chỉ mục đang thiếu hoặc trình lập kế hoạch nghĩ rằng các chỉ mục bạn có sẽ không hữu ích cho truy vấn cụ thể đó. Hai sai lầm phổ biến mà mọi người mắc phải là để các chỉ mục hữu ích ra khỏi bảng của họ hoặc đưa vào các chỉ mục không thể được sử dụng bởi các truy vấn của họ. Một cách dễ dàng để kiểm tra xem các chỉ mục của bạn có được sử dụng hay không là truy vấn các view <code>pg_stat_user_indexes</code> và <code>pg_stat_user_tables</code> bằng cách sử dụng tiện ích mở rộng <code>pg_stat_statements</code> được mô tả trong <span class="accent-word">&ldquo;Thu thập Thống kê về Các Lệnh&rdquo; trên trang 166</span>.</p>
+
+      <p>Hãy bắt đầu với một truy vấn chống lại bảng mà chúng tôi đã tạo trong <span class="accent-word">Ví dụ 7-18</span>. Chúng tôi sẽ thêm một chỉ mục GIN trên cột mảng. Các chỉ mục GIN là một trong số ít các chỉ mục bạn có thể sử dụng để lập chỉ mục cho các mảng:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx_lu_fact_types ON census.lu_fact_types USING gin (fact_subcats);</code></pre>
+      </figure>
+
+      <p>Để kiểm tra chỉ mục của chúng tôi, chúng tôi sẽ thực hiện một truy vấn để tìm tất cả các hàng có subcats chứa &ldquo;White alone&rdquo; hoặc &ldquo;Asian alone.&rdquo; Chúng tôi đã bật quét tuần tự mặc dù đó là cài đặt mặc định, chỉ để chắc chắn. Đầu ra EXPLAIN kèm theo được hiển thị trong <span class="accent-word">Ví dụ 9-8</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-8.</strong> Cho phép trình lập kế hoạch chọn quét tuần tự</figcaption>
+        <pre class="code-block"><code>set enable_seqscan = true;
+EXPLAIN (ANALYZE)
+SELECT *
+FROM census.lu_fact_types
+WHERE fact_subcats &amp;&amp; '{White alone, Black alone}'::varchar[];
+Seq Scan on lu_fact_types
+     (cost=0.00..2.85 rows=2 width=200) (actual time=0.066..0.076 rows=2 loops=1)
+Filter: (fact_subcats &amp;&amp; '{&quot;White alone&quot;,&quot;Black alone&quot;}'::character varying[]) Rows
+Removed by Filter: 66
+Planning time: 0.182 ms
+Execution time: 0.108 ms</code></pre>
+      </figure>
+
+      <p>Quan sát rằng khi <code>enable_seqscan</code> được bật, chỉ mục của chúng tôi không được sử dụng và trình lập kế hoạch đã chọn thực hiện một quét tuần tự. Điều này có thể là do bảng của chúng tôi quá nhỏ hoặc vì chỉ mục mà chúng tôi có không tốt cho truy vấn này. Nếu chúng tôi lặp lại truy vấn nhưng tắt quét tuần tự trước đó, như được hiển thị trong <span class="accent-word">Ví dụ 9-9</span>, chúng tôi có thể thấy rằng chúng tôi đã thành công trong việc buộc trình lập kế hoạch sử dụng chỉ mục.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">168<span class="sep">|</span>Chương 9: Tinh chỉnh Hiệu suất Truy vấn</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

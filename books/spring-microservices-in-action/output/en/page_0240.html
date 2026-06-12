@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Listing 7.8 JWT token store (continued)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--78cont .listing-callouts-right {
+      padding-top: 1mm;
+    }
+    .prose-page.chapter-page .listing-annotated--78cont .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 11mm;
+    }
+    .prose-page.chapter-page .listing-annotated--78cont .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 9mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0239.html">← Prev</a>
+    <a href="page_0241.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">215</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">JavaScript Web Tokens and OAuth2</span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--78cont" aria-label="Listing 7.8 (continued)">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>    public DefaultTokenServices tokenServices() {
+        DefaultTokenServices defaultTokenServices
+            = new DefaultTokenServices();
+        defaultTokenServices.setTokenStore(tokenStore());
+        defaultTokenServices.setSupportRefreshToken(true);
+        return defaultTokenServices;
+    }
+    @Bean
+    public JwtAccessTokenConverter jwtAccessTokenConverter() {
+        JwtAccessTokenConverter converter =
+           new JwtAccessTokenConverter();
+        converter
+           .setSigningKey(serviceConfig.getJwtSigningKey());
+        return converter;
+    }
+    @Bean
+    public TokenEnhancer jwtTokenEnhancer() {
+        return new JWTTokenEnhancer();
+    }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Listing 7.8 annotation callouts">
+          <p class="listing-callout">Used to read data to and from a token presented to the service</p>
+          <p class="listing-callout">Acts as the translator between JWT and OAuth2 server</p>
+          <p class="listing-callout">Defines the signing key that will be used to sign a token</p>
+        </div>
+      </div>
+
+      <p class="no-indent">The <code>JWTTokenStoreConfig</code> class is used to define how Spring will manage the creation, signing, and translation of a JWT token. The <code>tokenServices()</code> method is going to use Spring security&rsquo;s default token services implementation, so the work here is rote. The <code>jwtAccessTokenConverter()</code> method is the one we want to focus on. It defines how the token is going to be translated. The most important thing to note about this method is that you&rsquo;re setting the signing key that will be used to sign your token.</p>
+
+      <p class="block-indent">For this example, you&rsquo;re going to use a symmetrical key, which means both the authentication service and the services protected by the authentication service must share the same key between all of the services. The key is nothing more than a random string of values that&rsquo;s store in the authentication services Spring Cloud Config entry (<a href="https://github.com/carnellj/config-repo/blob/master/authenticationservice/authenticationservice.yml">https://github.com/carnellj/config-repo/blob/master/authenticationservice/authenticationservice.yml</a>). The actual value for the signing key is</p>
+
+      <figure class="code-snippet" aria-label="JWT signing key configuration">
+        <pre class="code-block"><code>signing.key: &ldquo;345345fsdgsf5345&rdquo;</code></pre>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>Spring Cloud Security supports symmetrical key encryption and asymmetrical encryption using public/private keys. We&rsquo;re not going to walk through setting up JWT using public/private keys. Unfortunately, little official documentation exists on the JWT, Spring Security, and public/private keys. If you&rsquo;re interested in how to do this, I highly recommend you look at Baeldung.com (<a href="http://www.baeldung.com/spring-security-oauth-jwt">http://www.baeldung.com/spring-security-oauth-jwt</a>). They do an excellent job of explaining JWT and public/private key setup.</p>
+      </aside>
+
+      <p>In the <code>JWTTokenStoreConfig</code> from listing 7.8, you defined how JWT tokens were going to be signed and created. You now need to hook this into your overall OAuth2 service. In listing 7.2 you used the <code>OAuth2Config</code> class to define the configuration of</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

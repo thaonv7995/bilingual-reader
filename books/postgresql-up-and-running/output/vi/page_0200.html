@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài — Thiết lập Sao chép</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page ol.numbered code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word,
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0199.html">← Trước</a>
+    <a href="page_0201.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">200</span>
+      </header>
+
+      <p class="no-indent">các bảng mới, cài đặt các tiện ích mở rộng, và nhiều thứ khác. Điều này làm cho chúng xâm nhập hơn là chỉ
+      gửi nhật ký.</p>
+
+      <p><a href="http://postgres-xc.sourceforge.net" class="accent-word">Postgres-XC</a>, vẫn đang trong giai đoạn beta, đang bắt đầu thu hút một lượng khán giả. Lý do tồn tại của Postgres-
+      XC không phải là sao chép mà là xử lý truy vấn phân tán. Nó được thiết kế với khả năng mở rộng trong
+      tâm trí hơn là tính khả dụng cao. Postgres-XC không phải là một phần mở rộng của PostgreSQL mà là một
+      nhánh hoàn toàn riêng biệt tập trung vào việc cung cấp một cụm đối xứng đa chủ có khả năng ghi mở rộng rất
+      giống với <a href="http://bit.ly/1z3iT6S" class="accent-word">Oracle RAC</a>.</p>
+
+      <p>Chúng tôi khuyên bạn nên tham khảo một <a href="http://bit.ly/1vUu5AP" class="accent-word">ma trận so sánh các tùy chọn bên thứ ba phổ biến</a> trước khi
+      quyết định sử dụng cái gì.</p>
+
+      <h3 class="section-title">Thiết lập Sao chép</h3>
+
+      <p class="no-indent">Hãy cùng xem qua các bước để thiết lập sao chép. Chúng ta sẽ tận dụng tính năng streaming được giới thiệu
+      trong phiên bản 9.0, yêu cầu chỉ có kết nối ở cấp độ cơ sở dữ liệu PostgreSQL giữa
+      máy chủ chính và các máy chủ phụ. Chúng ta cũng sẽ sử dụng các tính năng được giới thiệu trong phiên bản 9.1 cho phép bạn dễ dàng thiết lập tài khoản xác thực đặc biệt cho việc sao chép.</p>
+
+      <h3 class="subsection-title">Cấu hình Máy chủ Chính</h3>
+
+      <p class="no-indent">Các bước cơ bản để thiết lập máy chủ chính là:</p>
+
+      <ol class="numbered">
+        <li>Tạo một tài khoản sao chép:</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE ROLE pgrepuser REPLICATION LOGIN PASSWORD 'woohoo';</code></pre>
+      </figure>
+
+      <ol class="numbered" start="2">
+        <li>Thay đổi các cài đặt cấu hình sau trong <code>postgresql.conf</code>:</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>listen_addresses = *
+wal_level = hot_standby
+archive_mode = on
+max_wal_senders = 2
+wal_keep_segments = 10</code></pre>
+      </figure>
+
+      <p>Các cài đặt này được mô tả trong <a href="http://bit.ly/1z3iXUq" class="accent-word">Cấu hình Máy chủ: Sao chép</a>.</p>
+
+      <ol class="numbered" start="3">
+        <li>Thêm chỉ thị cấu hình <code>archive_command</code> vào <code>postgresql.conf</code> để chỉ định
+        nơi mà WAL sẽ được lưu. Với streaming, bạn có thể chọn bất kỳ thư mục nào.</li>
+      </ol>
+
+      <p>Thông tin chi tiết về cài đặt này có thể được tìm thấy tại tài liệu <a href="http://bit.ly/1yxbOvw" class="accent-word">PostgreSQL PGStandby</a>.</p>
+
+      <p>Trên Linux/Unix, dòng <code>archive_command</code> của bạn nên trông giống như:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>archive_command = 'cp %p ../archive/%f'</code></pre>
+      </figure>
+
+      <p>Bạn cũng có thể sử dụng <code>rsync</code> thay vì <code>cp</code> nếu bạn muốn lưu trữ trên một máy chủ khác:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>archive_command = 'rsync -av %p postgres@192.168.0.10:archive/%f'</code></pre>
+      </figure>
+
+      <p>Trên Windows:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">182<span class="sep">|</span>Chương 10: Sao chép và Dữ liệu bên ngoài</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

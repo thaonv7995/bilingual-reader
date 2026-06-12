@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p.step-label {
+      margin: 0 0 1.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.step-label + figure.code-snippet {
+      margin-top: 0;
+      margin-bottom: 2mm;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0041.html">← Prev</a>
+    <a href="page_0043.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> * <strong>FROM</strong> pg_stat_activity;</code></pre>
+      </figure>
+
+      <p>Additionally, the command provides details of the last query running on each connection,
+      the connected user (<code>usename</code>), the database (<code>datname</code>) in use, and the start
+      times of the query. You need this view to grab the process IDs of connections that
+      you want to terminate.</p>
+
+      <p class="step-label no-indent">2. Now cancel all active queries on a connection:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_cancel_backend(<em>procid</em>)</code></pre>
+      </figure>
+      <p>This does not terminate the connection itself, though.</p>
+
+      <p class="step-label no-indent">3. Kill the connection:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_terminate_backend(<em>procid</em>)</code></pre>
+      </figure>
+      <p>If you have not canceled the queries on the connection, they are all rudely terminated
+      now. This will be your weapon of choice prior to a restore to prevent an eager
+      user from immediately restarting a canceled query.</p>
+
+      <p>PostgreSQL lets you embed functions that perform actions within a regular <code>SELECT</code>
+      query. So, although <code>pg_terminate_backend</code> and <code>pg_cancel_backend</code> can act on only
+      one connection at a time, you can kill multiple connections by wrapping them in a
+      <code>SELECT</code>. For example, let’s suppose you want to kill all connections belonging to a role
+      with a single blow. Run this SQL command on version 9.2 and later:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_terminate_backend(pid) <strong>FROM</strong> pg_stat_activity <strong>WHERE</strong> usename =
+<em>'some_role'</em>;</code></pre>
+      </figure>
+
+      <p class="no-indent">or before version 9.2:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_terminate_backend(procpid) <strong>FROM</strong> pg_stat_activity <strong>WHERE</strong> usename =
+<em>'some_role'</em>;</code></pre>
+      </figure>
+
+      <p>The <code>pg_stat_activity</code> view has changed considerably since version 9.1 with the renaming
+      and addition of new columns. <code>procpid</code> is now <code>pid</code>.</p>
+
+      <h3 class="section-title">Roles</h3>
+      <p>PostgreSQL represents accounts as <em>roles</em>. Roles that can log in are called <em>login roles</em>. Roles
+      can be members of other roles; roles that contain other roles are called <em>group roles</em>. (And
+      yes, group roles can be members of other group roles and so on ad infinitum, but don’t
+      go there unless you have a knack for hierarchical thinking.) Roles that are group and
+      can log in are called <em>group login roles</em>. However, for easier maintainability and security,
+      DBAs generally don’t grant login rights to group roles. A role can be designated as
+      <em>superuser</em>. Superuser roles have unfettered access to the PostgreSQL service.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">24<span class="sep">|</span>Chapter 2: Database Administration</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

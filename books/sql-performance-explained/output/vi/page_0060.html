@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 4mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">60</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <p class="no-indent">Tùy chọn khác là sử dụng hai chỉ mục riêng biệt, một cho mỗi cột. Sau đó, cơ sở dữ liệu phải quét cả hai chỉ mục trước và sau đó kết hợp các kết quả. Việc tìm kiếm chỉ mục trùng lặp đã liên quan đến nhiều nỗ lực hơn vì cơ sở dữ liệu phải duyệt qua hai cây chỉ mục. Thêm vào đó, cơ sở dữ liệu cần rất nhiều bộ nhớ và thời gian CPU để kết hợp các kết quả trung gian.</p>
+
+      <aside class="sidebar-note">
+        <h3>Ghi chú</h3>
+        <p>Một lần quét chỉ mục nhanh hơn hai lần.</p>
+      </aside>
+
+      <p>Các cơ sở dữ liệu sử dụng hai phương pháp để kết hợp các chỉ mục. Đầu tiên là kết nối chỉ mục. Chương&nbsp;4, &ldquo;Phép toán Kết nối&rdquo; giải thích các thuật toán liên quan một cách chi tiết. Phương pháp thứ hai sử dụng chức năng từ thế giới kho dữ liệu.</p>
+
+      <p>Kho dữ liệu là mẹ của tất cả các truy vấn ad-hoc. Chỉ cần một vài cú nhấp chuột để kết hợp các điều kiện tùy ý vào truy vấn mà bạn chọn. Không thể dự đoán các kết hợp cột có thể xuất hiện trong câu lệnh <code>where</code> và điều đó làm cho việc lập chỉ mục, như đã giải thích cho đến nay, gần như không thể.</p>
+
+      <p>Các kho dữ liệu sử dụng một loại chỉ mục đặc biệt để giải quyết vấn đề đó: chỉ mục bitmap. Ưu điểm của các chỉ mục bitmap là chúng có thể được kết hợp khá dễ dàng. Điều đó có nghĩa là bạn có được hiệu suất tốt khi lập chỉ mục từng cột riêng lẻ. Ngược lại, nếu bạn biết truy vấn trước, để bạn có thể tạo một chỉ mục B-tree đa cột tùy chỉnh, nó vẫn sẽ nhanh hơn so với việc kết hợp nhiều chỉ mục bitmap.</p>
+
+      <p>Điểm yếu lớn nhất của các chỉ mục bitmap là khả năng mở rộng khi chèn, cập nhật và xóa là vô lý. Các thao tác ghi đồng thời gần như không thể. Điều đó không phải là vấn đề trong một kho dữ liệu vì các quy trình tải được lên lịch lần lượt. Trong các ứng dụng trực tuyến, các chỉ mục bitmap hầu như không có giá trị.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Các chỉ mục bitmap gần như không thể sử dụng cho xử lý giao dịch trực tuyến (OLTP).</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">50</p>
+    </article>
+  </main>
+</body>
+</html>

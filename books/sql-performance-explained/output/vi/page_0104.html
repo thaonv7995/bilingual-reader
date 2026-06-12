@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 4: The Join Operation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page .code-intro {
+      margin: 0 0 1mm 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 4: Phép nối</p>
+
+      <p class="operation-label">Perl</p>
+      <p class="code-intro">Mẫu sau đây minh họa khung làm việc DBIx::Class của Perl:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>my @employees =
+   $schema-&gt;resultset('Employees')
+          -&gt;search({'UPPER(last_name)' =&gt; {-like=&gt;'WIN%'}});</code></pre>
+      </figure>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>foreach my $employee (@employees) {
+   # xử lý Nhân viên
+   foreach my $sale ($employee-&gt;sales) {
+      # xử lý Bán hàng cho Nhân viên
+   }
+}</code></pre>
+      </figure>
+
+      <p class="code-intro">DBIx::Class 0.08192 tạo ra N+1 truy vấn chọn:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT me.employee_id, me.subsidiary_id
+     , me.last_name, me.first_name, me.date_of_birth
+  FROM employees me
+ WHERE ( UPPER(last_name) LIKE ? )</code></pre>
+      </figure>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   SELECT me.sale_id, me.employee_id, me.subsidiary_id
+        , me.sale_date, me.eur_value
+     FROM sales me
+    WHERE ( ( me.employee_id = ?
+      AND me.subsidiary_id = ? ) )</code></pre>
+      </figure>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   SELECT me.sale_id, me.employee_id, me.subsidiary_id
+        , me.sale_date, me.eur_value
+     FROM sales me
+    WHERE ( ( me.employee_id = ?
+      AND me.subsidiary_id = ? ) )</code></pre>
+      </figure>
+
+      <p class="operation-label">PHP</p>
+      <p class="code-intro">Mẫu Doctrine sử dụng giao diện xây dựng truy vấn:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>$qb = $em-&gt;createQueryBuilder();
+$qb-&gt;select('e')
+   -&gt;from('Employees', 'e')
+   -&gt;where("upper(e.last_name) like :last_name")
+   -&gt;setParameter('last_name', 'WIN%');
+$r = $qb-&gt;getQuery()-&gt;getResult();</code></pre>
+      </figure>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>foreach ($r as $row) {
+   // xử lý Nhân viên
+   foreach ($row-&gt;getSales() as $sale) {
+      // xử lý Bán hàng cho Nhân viên
+   }
+}</code></pre>
+      </figure>
+
+      <p class="page-folio page-folio--left">94</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Appendix A: Execution Plans</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h2.appendix-section-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 0 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page h3.subsection-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.subsection-title:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page h3.subsection-title + .operation-label {
+      margin-top: 0;
+    }
+
+    .prose-page .operation-desc {
+      margin: 0 0 0 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Appendix A: Execution Plans</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="subsection-title">Sorting and Grouping</h3>
+
+      <p class="operation-label">using filesort (in the &ldquo;Extra&rdquo; column)</p>
+      <p class="operation-desc">&ldquo;using filesort&rdquo; in the Extra column indicates an explicit sort operation&mdash; no matter where the sort takes place (main memory or on disk). &ldquo;Using filesort&rdquo; needs large amounts of memory to materialize the intermediate result (not pipelined). See also &ldquo;Indexing Order By&rdquo; on page&nbsp;130.</p>
+
+      <h3 class="subsection-title">Top-N Queries</h3>
+
+      <p class="operation-label">implicit: no &ldquo;using filesort&rdquo; in the &ldquo;Extra&rdquo; column</p>
+      <p class="operation-desc">A MySQL execution plan does not show a top-N query explicitly. If you are using the <code>limit</code> syntax and don&rsquo;t see &ldquo;using filesort&rdquo; in the extra column, it is executed in a pipelined manner. See also &ldquo;Querying Top-N Rows&rdquo; on page&nbsp;143.</p>
+
+      <h2 class="appendix-section-title">Distinguishing Access and Filter-Predicates</h2>
+
+      <p class="no-indent">The MySQL database uses three different ways to evaluate <code>where</code> clauses (predicates):</p>
+
+      <p class="operation-label">Access predicate (via the &ldquo;key_len&rdquo; column)</p>
+      <p class="operation-desc">The access predicates express the start and stop conditions of the leaf node traversal.</p>
+
+      <p class="operation-label">Index filter predicate (&ldquo;Using index condition&rdquo;, since MySQL 5.6)</p>
+      <p class="operation-desc">Index filter predicates are applied during the leaf node traversal only. They do not contribute to the start and stop conditions and do not narrow the scanned range.</p>
+
+      <p class="operation-label">Table level filter predicate (&ldquo;Using where&rdquo; in the &ldquo;Extra&rdquo; column)</p>
+      <p class="operation-desc">Predicates on columns which are not part of the index are evaluated on the table level. For that to happen, the database must load the row from the table first.</p>
+
+      <p>MySQL execution plans do not show which predicate types are used for each condition&mdash; they just list the predicate types in use.</p>
+
+      <footer class="book-footer">
+        <span class="page-folio">190</span>
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

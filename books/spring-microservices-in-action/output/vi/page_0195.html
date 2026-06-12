@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Các loại filter Zuul</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .step-marker {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 5mm;
+      height: 5mm;
+      margin-right: 1mm;
+      border: 0.35pt solid #999;
+      border-radius: 50%;
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-weight: 700;
+      line-height: 1;
+      vertical-align: middle;
+      color: #333;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + figure.diagram {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0194.html">← Trước</a>
+    <a href="page_0196.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">170</span>
+        <span class="rh-center">CHƯƠNG 6 <em>Định tuyến dịch vụ với Spring Cloud và Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">gateway. Thường thì logic tùy chỉnh này được dùng để áp dụng một bộ chính sách ứng dụng nhất quán như bảo mật, ghi log và theo dõi cho mọi dịch vụ.</p>
+
+      <p>Các chính sách ứng dụng này được coi là <em>mối quan tâm xuyên suốt</em> vì bạn muốn chúng được áp dụng cho mọi dịch vụ trong ứng dụng mà không phải sửa từng dịch vụ để triển khai chúng. Theo cách này, các filter Zuul có thể được dùng tương tự như servlet filter J2EE hoặc Spring Aspect có thể chặn một phạm vi rộng các hành vi và trang trí hoặc thay đổi hành vi của lời gọi mà lập trình viên ban đầu không hề biết đến sự thay đổi đó. Trong khi servlet filter hoặc Spring Aspect chỉ giới hạn trong một dịch vụ cụ thể, dùng Zuul và các filter Zuul cho phép bạn triển khai các mối quan tâm xuyên suốt trên mọi dịch vụ được định tuyến qua Zuul.</p>
+
+      <p>Zuul cho phép bạn xây dựng logic tùy chỉnh bằng filter trong gateway Zuul. Filter cho phép bạn triển khai một chuỗi logic nghiệp vụ mà mỗi yêu cầu dịch vụ đi qua khi được xử lý.</p>
+
+      <p class="no-indent">Zuul hỗ trợ ba loại filter:</p>
+
+      <ul class="manning-bullets" aria-label="Các loại filter Zuul">
+        <li><strong class="run-in">Pre-filter</strong>&mdash;Pre-filter được gọi trước khi yêu cầu thực tế tới đích đến diễn ra với Zuul. Pre-filter thường thực hiện nhiệm vụ đảm bảo dịch vụ có định dạng thông điệp nhất quán (ví dụ các HTTP header quan trọng đã có mặt) hoặc đóng vai trò người gác cổng để đảm bảo người dùng gọi dịch vụ đã được xác thực (họ là đúng người họ tuyên bố) và được ủy quyền (họ có thể làm những gì họ yêu cầu).</li>
+        <li><strong class="run-in">Post filter</strong>&mdash;Post filter được gọi sau khi dịch vụ đích đã được gọi và phản hồi đang được gửi lại cho client. Thường thì post filter sẽ được triển khai để ghi log phản hồi từ dịch vụ đích, xử lý lỗi hoặc kiểm tra phản hồi để tìm thông tin nhạy cảm.</li>
+        <li><strong class="run-in">Route filter</strong>&mdash;Route filter được dùng để chặn lời gọi trước khi dịch vụ đích được gọi. Thường thì route filter được dùng để xác định liệu có cần thực hiện một mức định tuyến động nào đó hay không. Ví dụ, sau này trong chương bạn sẽ dùng filter cấp route để định tuyến giữa hai phiên bản khác nhau của cùng một dịch vụ, sao cho một phần nhỏ các lời gọi tới dịch vụ được định tuyến tới phiên bản mới của dịch vụ thay vì dịch vụ hiện có. Điều này cho phép bạn cho một số ít người dùng trải nghiệm chức năng mới mà không bắt mọi người dùng dịch vụ mới.</li>
+      </ul>
+
+      <p>Hình 6.11 cho thấy pre-, post và route filter phối hợp với nhau như thế nào trong quá trình xử lý yêu cầu của client dịch vụ.</p>
+
+      <p>Nếu bạn theo luồng được trình bày trong hình 6.11, bạn sẽ thấy mọi thứ bắt đầu với client dịch vụ thực hiện lời gọi tới dịch vụ được expose qua service gateway. Từ đó, các hoạt động sau diễn ra:</p>
+
+      <p class="no-indent"><span class="step-marker" aria-hidden="true">1</span> Mọi pre-filter được định nghĩa trong gateway Zuul sẽ được Zuul gọi khi một yêu cầu đi vào gateway Zuul. Pre-filter có thể kiểm tra và sửa đổi yêu cầu HTTP trước khi nó tới dịch vụ thực tế. Pre-filter không thể chuyển hướng người dùng tới một endpoint hoặc dịch vụ khác.</p>
+
+      <figure class="diagram" aria-label="Hình 6.11 (tiếp theo ở trang sau)">
+        <img src="../assets/images/page_0195_fig_6_11.png" width="1313" height="589" alt="Hình 6.11 — Pre-, route và post filter tạo thành một pipeline mà yêu cầu client đi qua">
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

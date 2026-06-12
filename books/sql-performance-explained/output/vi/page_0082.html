@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Smart Logic</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h4.subsection-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">82</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <p class="no-indent">Nếu không biết vị trí của ký tự đại diện trong cụm từ tìm kiếm, sẽ không thể đưa ra câu trả lời chính xác. Bộ tối ưu hóa không có lựa chọn nào khác ngoài việc &ldquo;đoán&rdquo;. Nếu bạn biết rằng luôn có một ký tự đại diện ở đầu, bạn có thể cố tình làm mờ điều kiện <code>LIKE</code> để bộ tối ưu hóa không còn xem xét chỉ mục trên <code>LAST_NAME</code>.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT last_name, first_name, employee_id
+  FROM employees
+ WHERE subsidiary_id = ?
+   AND last_name || '' LIKE ?</code></pre>
+      </figure>
+
+      <p>Chỉ cần thêm một chuỗi rỗng vào cột <code>LAST_NAME</code>. Tuy nhiên, đây là một lựa chọn cuối cùng. Chỉ thực hiện khi thực sự cần thiết.</p>
+
+      <h4 class="subsection-title">Logic Thông Minh</h4>
+
+      <p class="no-indent">Một trong những tính năng chính của cơ sở dữ liệu SQL là hỗ trợ các truy vấn ad-hoc: các truy vấn mới có thể được thực hiện bất cứ lúc nào. Điều này chỉ có thể xảy ra vì bộ tối ưu hóa truy vấn (kế hoạch truy vấn) hoạt động tại thời gian chạy; nó phân tích từng câu lệnh khi nhận được và tạo ra một kế hoạch thực thi hợp lý ngay lập tức. Chi phí phát sinh từ việc tối ưu hóa tại thời gian chạy có thể được giảm thiểu bằng cách sử dụng các tham số ràng buộc.</p>
+
+      <p>Ý chính của tóm tắt đó là các cơ sở dữ liệu được tối ưu hóa cho SQL động&mdash;vì vậy hãy sử dụng nó nếu bạn cần.</p>
+
+      <p>Tuy nhiên, có một thực tiễn phổ biến mà tránh SQL động để ủng hộ SQL tĩnh&mdash;thường là vì huyền thoại &ldquo;SQL động chậm&rdquo;. Thực tiễn này gây hại nhiều hơn là có lợi nếu cơ sở dữ liệu sử dụng bộ nhớ đệm kế hoạch thực thi chia sẻ như DB2, cơ sở dữ liệu Oracle hoặc SQL Server.</p>
+
+      <p>Để minh họa, hãy tưởng tượng một ứng dụng truy vấn bảng <code>EMPLOYEES</code>. Ứng dụng cho phép tìm kiếm theo id công ty con, id nhân viên và họ (không phân biệt chữ hoa chữ thường) theo bất kỳ tổ hợp nào. Vẫn có thể viết một truy vấn duy nhất bao trùm tất cả các trường hợp bằng cách sử dụng logic &ldquo;thông minh&rdquo;.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">72</p>
+    </article>
+  </main>
+</body>
+</html>

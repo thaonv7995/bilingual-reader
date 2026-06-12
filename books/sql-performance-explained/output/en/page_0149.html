@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Indexing Group By</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Indexing Group By</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">Indexing Group By</h3>
+
+      <p class="no-indent">SQL databases use two entirely different <code><strong>group by</strong></code> algorithms. The first one, the hash algorithm, aggregates the input records in a temporary hash table. Once all input records are processed, the hash table is returned as the result. The second algorithm, the sort/group algorithm, first sorts the input data by the grouping key so that the rows of each group follow each other in immediate succession. Afterwards, the database just needs to aggregate them. In general, both algorithms need to materialize an intermediate state, so they are not executed in a pipelined manner. Nevertheless the sort/group algorithm can use an index to avoid the sort operation, thus enabling a pipelined <code><strong>group by</strong></code>.</p>
+
+      <aside class="sidebar-note">
+        <h3>Note</h3>
+        <p>MySQL 5.6 doesn&rsquo;t use the hash algorithm. Nevertheless, the optimization for the sort/group algorithm works as described below.</p>
+      </aside>
+
+      <p>Consider the following query. It delivers yesterday&rsquo;s revenue grouped by <code>PRODUCT_ID</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT product_id, sum(eur_value)
+  FROM sales
+ WHERE sale_date = TRUNC(sysdate) - INTERVAL '1' DAY
+ <strong>GROUP BY</strong> product_id;</code></pre>
+      </figure>
+
+      <p>Knowing the index on <code>SALE_DATE</code> and <code>PRODUCT_ID</code> from the previous section, the sort/group algorithm is more appropriate because an <code>INDEX RANGE SCAN</code> automatically delivers the rows in the required order. That means the database avoids materialization because it does not need an explicit sort operation&mdash;the <code><strong>group by</strong></code> is executed in a pipelined manner.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id |Operation                    | Name        | Rows | Cost |
+---------------------------------------------------------------
+| 0 |SELECT STATEMENT             |             |   17 |  192 |
+| 1 | <strong>SORT GROUP BY NOSORT</strong>        |             |   17 |  192 |
+| 2 |  TABLE ACCESS BY INDEX ROWID| SALES       |  321 |  192 |
+|*3 |   INDEX RANGE SCAN          | SALES_DT_PR |  321 |    3 |
+---------------------------------------------------------------</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">139</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

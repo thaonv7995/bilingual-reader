@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0121.html">← Trước</a>
+    <a href="page_0123.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">122</span>
+      </header>
+
+      <p class="no-indent">là các nút trên điều khiển từ xa. Mặc dù TV hỗ trợ nhiều chức năng hơn nữa, bạn vẫn không thể sử dụng
+      chúng bằng điều khiển từ xa cũ vì chiếc điều khiển từ xa cũ không có thông tin về các chức năng mới.</p>
+
+      <p>Tham chiếu và đối tượng (Object) hoạt động tương tự nhau. Kiểu của tham chiếu giống như mẫu của
+      điều khiển từ xa, còn kiểu của đối tượng (Object) giống như mẫu của TV. Đoạn mã sau đây sẽ làm rõ
+      điều này:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Object obj = "hello";
+int h = obj.hashCode(); //ok because hashCode is defined in Object</code></pre>
+      </figure>
+
+      <figure class="code-snippet code-snippet--error">
+        <pre class="code-block"><code>int i
+= obj.length(); //will not compile</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>String str = "hello";
+int j
+= str.length(); //OK</code></pre>
+      </figure>
+
+      <p>Trong đoạn mã trên, kiểu được khai báo của biến tham chiếu <code>obj</code> là <code>Object</code> và kiểu của
+      đối tượng (Object) mà nó tham chiếu đến tại thời điểm runtime là <code>String</code>. Vì <code>String</code> là một lớp con (Subclass) của <code>Object</code>,
+      <code>String</code> là một (is-a) <code>Object</code> và do đó, việc gán một đối tượng (Object) <code>String</code> cho <code>obj</code> là hoàn toàn hợp lệ.</p>
+
+      <p>Có thể nói rằng <code>String</code> là một dạng mẫu mới của <code>Object</code> và nó có một số tính năng mới bên
+      cạnh tất cả các tính năng của <code>Object</code>. Tuy nhiên, vì kiểu được khai báo của <code>obj</code> là <code>Object</code>,
+      trình biên dịch sẽ chỉ cho phép bạn sử dụng các chức năng được hỗ trợ bởi <code>Object</code> bởi vì
+      trình biên dịch không biết rằng <code>obj</code> thực sự sẽ trỏ tới một chuỗi tại thời điểm runtime.</p>
+
+      <p>Nếu bạn muốn sử dụng các tính năng mới của lớp String thông qua <code>obj</code>, bạn sẽ cần phải ép kiểu nó sang
+      <code>String</code> bằng cách sử dụng toán tử ép kiểu (cast operator):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Object obj = "hello";
+String str =  (String) obj; //cast obj to String
+int i
+= str.length();
+int j
+= ((String) obj).length(); //casting and accessing at the same
+time</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

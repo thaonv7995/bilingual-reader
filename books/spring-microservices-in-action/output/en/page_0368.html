@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Appendix B: B.5 How tokens are refreshed</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 4;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0367.html">← Prev</a>
+    <a href="page_0369.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">343</span>
+        <span class="rh-center"></span>
+        <span class="rh-right"><em>How tokens are refreshed</em></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Figure B.4 implicit grant flow steps (continued)">
+        <li>Every time a protected resource is called, the OAuth2 access token is presented to the calling service.</li>
+        <li>The calling service will validate the OAuth2 token and check that the user is authorized to do the activity they&rsquo;re attempting to do.</li>
+      </ol>
+
+      <p class="no-indent">Keep several things in mind regarding the OAuth2 implicit grant:</p>
+
+      <ul class="manning-bullets" aria-label="OAuth2 implicit grant considerations">
+        <li>The implicit grant is the only grant type where the OAuth2 access token is directly exposed to a public client (web browser). In the authorization grant, the client application gets an authorization code returned back to the application server hosting the application. With an authorization code grant, the user is granted an OAuth2 access by presenting the authorization code. The returned OAuth2 token is never directly exposed to the user&rsquo;s browser. In the client credentials grant, the grant occurs between two server-based applications. In the password grant, both the application making the request for a service and the services are trusted and are owned by the same organization.</li>
+        <li>OAuth2 tokens generated by the implicit grant are more vulnerable to attack and misuse because the tokens are made available to the browser. Any malicious JavaScript running in the browser can get access to the OAuth2 access token and call the services you retrieved the OAuth2 token for on your behalf and essentially impersonate you.</li>
+        <li>The implicit grant type OAuth2 tokens should be short-lived (1-2 hours). Because the OAuth2 access token is stored in the browser, the OAuth2 spec (and Spring Cloud security) doesn&rsquo;t support the concept of a refresh token in which a token can be automatically renewed.</li>
+      </ul>
+
+      <h4 class="subsection-title">B.5 How tokens are refreshed</h4>
+
+      <p class="no-indent">When an OAuth2 access token is issued, it has a limited amount of time that it&rsquo;s valid and will eventually expire. When the token expires, the calling application (and user) will need to re-authenticate with the OAuth2 service. However, in most of the Oauth2 grant flows, the OAuth2 server will issue both an access token and a refresh token. A client can present the refresh token to the OAuth2 authentication service and the service will validate the refresh token and then issue a new OAuth2 access token. Let&rsquo;s look at figure B.5 and walk through the refresh token flow:</p>
+
+      <ol class="manning-numbered" aria-label="Figure B.5 refresh token flow steps">
+        <li>The user has logged into EagleEye and is already authenticated with the EagleEye OAuth2 service. The user is happily working, but unfortunately their token has expired.</li>
+        <li>The next time the user tries to call a service (say the organization service), the EagleEye application will pass the expired token to the organization service.</li>
+        <li>The organization service will try to validate the token with the OAuth2 service, which return an HTTP status code 401 (unauthorized) and a JSON payload</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

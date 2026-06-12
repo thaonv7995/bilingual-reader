@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Listing 5.7 (tiếp), thuộc tính circuit breaker</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + .sidebar-note {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0165.html">← Prev</a>
+    <a href="page_0167.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">141</span>
+        <span class="rh-center">Vượt ra ngoài cơ bản; tinh chỉnh Hystrix</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>           name="metrics.rollingStats.timeInMilliseconds",
+           ➥ value="15000")
+         @HystrixProperty(
+           name="metrics.rollingStats.numBuckets",
+           ➥ value="5")}
+     )
+  public List&lt;License&gt; getLicensesByOrg(String organizationId){
+  ➥ logger.debug("getLicensesByOrg Correlation id: {}",
+  ➥ UserContextHolder
+               .getContext()
+               .getCorrelationId());
+    randomlyRunLong();
+
+    return licenseRepository.findByOrganizationId(organizationId);
+  }</code></pre>
+      </figure>
+
+      <p class="no-indent">Thuộc tính đầu tiên, <code>circuitBreaker.requestVolumeTheshold</code>, điều khiển số lượng cuộc gọi liên tiếp phải xảy ra trong cửa sổ 10 giây trước khi Hystrix cân nhắc kích hoạt circuit breaker cho lời gọi đó. Thuộc tính thứ hai, <code>circuitBreaker.errorThresholdPercentage</code>, là tỷ lệ phần trăm các cuộc gọi phải thất bại (do timeout, ngoại lệ được ném ra, hoặc HTTP 500 được trả về) sau khi đã vượt qua giá trị <code>circuitBreaker.requestVolumeThreshold</code> trước khi circuit breaker được kích hoạt. Thuộc tính cuối cùng trong ví dụ mã trước, <code>circuitBreaker.sleepWindowInMilliseconds</code>, là khoảng thời gian Hystrix sẽ chờ sau khi circuit breaker được kích hoạt trước khi Hystrix cho phép một lời gọi khác đi qua để kiểm tra xem dịch vụ đã khỏe lại chưa.</p>
+
+      <p>Hai thuộc tính Hystrix cuối cùng (<code>metrics.rollingStats.timeInMilliseconds</code> và <code>metrics.rollingStats.numBuckets</code>) được đặt tên hơi khác so với các thuộc tính trước, nhưng chúng vẫn điều khiển hành vi của circuit breaker. Thuộc tính đầu tiên, <code>metrics.rollingStats.timeInMilliseconds</code>, được dùng để điều khiển kích thước cửa sổ mà Hystrix sẽ dùng để giám sát các vấn đề với lời gọi dịch vụ. Giá trị mặc định cho thuộc tính này là 10.000 millisecond (tức là 10 giây).</p>
+
+      <p>Thuộc tính thứ hai, <code>metrics.rollingStats.numBuckets</code>, điều khiển số lần thống kê được thu thập trong cửa sổ bạn đã định nghĩa. Hystrix thu thập metric theo bucket trong cửa sổ này và kiểm tra thống kê trong các bucket đó để xác định liệu lời gọi tài nguyên từ xa có đang thất bại hay không. Số bucket được định nghĩa phải chia đều cho tổng số millisecond đặt cho thống kê <code>rollingStatus.inMilliseconds</code>. Ví dụ, trong cài đặt tùy chỉnh của bạn trong listing trước, Hystrix sẽ dùng cửa sổ 15 giây và thu thập dữ liệu thống kê vào năm bucket, mỗi bucket dài ba giây.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Cửa sổ thống kê càng nhỏ và số bucket bạn giữ trong cửa sổ càng nhiều thì mức sử dụng CPU và bộ nhớ trên dịch vụ có khối lượng lớn sẽ càng tăng. Hãy lưu ý điều này và cưỡng lại cám dỗ đặt cửa sổ thu thập metric và bucket quá chi tiết cho đến khi bạn thực sự cần mức độ quan sát đó.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

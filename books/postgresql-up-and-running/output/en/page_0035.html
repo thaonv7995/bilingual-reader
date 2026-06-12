@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.config-name {
+      margin: 2.5mm 0 0;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.config-name + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0034.html">← Prev</a>
+    <a href="page_0036.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHAPTER 2</p>
+        <h1 class="chapter-title no-indent">Database Administration</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="lead no-indent">This chapter covers what we deem to be the most common activities for basic admin‐
+      istration of a PostgreSQL server: role and permission management, database creation,
+      add-on installation, backup, and restore. We assume you’ve already installed Post‐
+      greSQL and have administration tools at your disposal.</p>
+
+      <h3 class="section-title">Configuration Files</h3>
+      <p>The main configuration files that control basic operations of a PostgreSQL server in‐
+      stance are:</p>
+
+      <p class="config-name no-indent">postgresql.conf</p>
+      <p>Controls general settings, such as memory allocation, default storage location for
+      new databases, the IP addresses that PostgreSQL listens on, location of logs, and
+      plenty more. Version 9.4 introduced an additional file called <code>postgresql.auto.conf</code>,
+      which is created or rewritten whenever you use the new <code>ALTER SYSTEM</code> SQL com‐
+      mand. The settings in that file override the <code>postgresql.conf</code> file.</p>
+
+      <p class="config-name no-indent">pg_hba.conf</p>
+      <p>Controls security. It manages access to the server, dictating which users can log in
+      to which databases, which IP addresses or groups of addresses can connect, and
+      which authentication scheme to expect.</p>
+
+      <p class="config-name no-indent">pg_ident.conf</p>
+      <p>If present, maps an authenticated OS login to a PostgreSQL user. People sometimes
+      map the OS root account to the <code>postgres</code> superuser account. Each authentication
+      line in <code>pg_hba.conf</code> can dictate usage of a different <code>pg_ident.conf</code> file.</p>
+
+      <p>If you accepted the default installation options, you find these files in the main Post‐
+      greSQL data folder. You can edit them using any text editor, or using the Admin Pack
+      in pgAdmin. Download instructions are in <span class="accent-word">“Editing postgresql.conf and pg_hba.conf</span></p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">17</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

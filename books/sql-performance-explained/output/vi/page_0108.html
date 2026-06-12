@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 4: The Join Operation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page .code-intro {
+      margin: 0 0 1mm 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chapter 4: The Join Operation</p>
+
+      <p class="no-indent">Vấn đề. Từ khóa distinct trong truy vấn SQL là đáng lo ngại vì hầu hết các cơ sở dữ liệu thực sự sẽ lọc các bản ghi trùng lặp. Chỉ một vài cơ sở dữ liệu nhận ra rằng khóa chính đảm bảo tính duy nhất trong trường hợp đó.</p>
+
+      <p>API Hibernate gốc giải quyết vấn đề ở phía khách hàng bằng cách sử dụng một bộ biến đổi tập hợp kết quả:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Criteria c = session.createCriteria(Employees.class);
+c.add(Restrictions.ilike("lastName", 'Win%'));
+c.setFetchMode("sales", FetchMode.JOIN);
+c.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
+List&lt;Employees&gt; result = c.list();</code></pre>
+      </figure>
+
+      <p class="code-intro">Nó tạo ra truy vấn sau:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>select this_.subsidiary_id as subsidiary1_0_1_
+     , this_.employee_id as employee2_0_1_
+       -- CÁC cột khác của this_ trên employees
+     , sales2_.sale_id as sale1_3_
+       -- CÁC cột khác của sales2_ trên sales
+  from employees this_
+  left outer join sales sales2_
+          on this_.subsidiary_id=sales2_.subsidiary_id
+         and this_.employee_id=sales2_.employee_id
+ where lower(this_.last_name) like ?</code></pre>
+      </figure>
+
+      <p>Phương pháp này tạo ra SQL thẳng mà không có các điều khoản không mong muốn. Lưu ý rằng Hibernate sử dụng lower() cho các truy vấn không phân biệt chữ hoa chữ thường—một chi tiết quan trọng cho việc lập chỉ mục dựa trên hàm.</p>
+
+      <p class="page-folio page-folio--left">98</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

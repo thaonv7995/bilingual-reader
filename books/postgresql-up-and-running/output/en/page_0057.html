@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0056.html">← Prev</a>
+    <a href="page_0058.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">To create a compressed backup of tables whose names start with “pay” in any schema:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F c -b -v -t *.pay* -f pay.backup mydb</code></pre>
+      </figure>
+
+      <p class="no-indent">To create a compressed backup of all objects in the hr and payroll schemas:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F c -b -v -n hr -n payroll -f hr.backup mydb</code></pre>
+      </figure>
+
+      <p class="no-indent">To create a compressed backup of all objects in all schemas, excluding the public
+      schema:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F c -b -v -N public -f all_sch_except_pub.backup mydb</code></pre>
+      </figure>
+
+      <p class="no-indent">To create a plain-text SQL backup of select tables, useful for porting structure and data
+      to lower versions of PostgreSQL or non-PostgreSQL databases (plain text generates a
+      SQL script that you can run on any system that speaks SQL):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F p --column-inserts -f select_tables.backup mydb</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0057_icon_tip.png" width="43" height="58" alt="Tip">
+        </figure>
+        <p class="callout-text">If your file paths contain spaces or other characters that could con‐
+        fuse the command-line shell, wrap the file path in double quotes: “/
+        path with spaces/mydb.backup”. As a general rule, you can al‐
+        ways use double quotes if you aren’t sure.</p>
+      </div>
+
+      <p>The directory format option was introduced in version 9.1. This option backs up each
+      table as a separate file in a folder and gets around potential limitations of file size in your
+      filesystem. This option is the only pg_dump backup format option that generates multiple
+      files, as shown in Example 2-8. It creates a new directory and populates it with a gzipped
+      file for each table, together with a file that lists all the included structures. The command
+      will exit with an error if the directory already exists.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 2-8.</strong> Directory format backup</figcaption>
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F d -f /somepath/a_directory mydb</code></pre>
+      </figure>
+
+      <p>A parallel backup option was introduced in version 9.3 with the --jobs (-j) option.
+      Setting this to --jobs=3 runs three backups in parallel. The parallel backup option
+      makes sense only with the directory format option, because each parallel write must
+      write to a separate file. Example 2-9 demonstrates its use.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 2-9.</strong> Directory format parallel backup</figcaption>
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -j 3 -Fd -f /somepath/a_directory mydb</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Backup and Restore<span class="sep">|</span>39</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Truyền mã thông báo truy cập OAuth2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm 3mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + .sidebar-note--gray,
+    .prose-page.chapter-page .sidebar-note--gray + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0236.html">← Prev</a>
+    <a href="page_0238.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">212</span>
+        <span class="rh-center">CHƯƠNG 7 <em>Bảo mật microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Cấu hình này là danh sách đen các header nhạy cảm mà Zuul sẽ không cho truyền xuống dịch vụ downstream. Việc thiếu giá trị <code>Authorization</code> trong danh sách trước đó có nghĩa là Zuul sẽ cho phép truyền giá trị đó qua. Nếu bạn hoàn toàn không đặt thuộc tính <code>zuul.sensitive-Headers</code>, Zuul sẽ tự động chặn cả ba giá trị khỏi bị truyền (<code>Cookie</code>, <code>Set-Cookie</code> và <code>Authorization</code>).</p>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="Còn các khả năng OAuth2 khác của Zuul thì sao?">
+        <h3>Còn các khả năng OAuth2 khác của Zuul thì sao?</h3>
+        <p>Zuul có thể tự động truyền mã thông báo truy cập OAuth2 xuống downstream và ủy quyền các yêu cầu đến đối với dịch vụ OAuth2 bằng cách dùng annotation <code>@EnableOAuth2Sso</code>. Tôi cố ý không dùng cách tiếp cận này vì mục tiêu của chương này là trình bày những điều cơ bản về cách OAuth2 hoạt động mà không thêm một tầng phức tạp (hoặc gỡ lỗi) nữa. Mặc dù cấu hình gateway của dịch vụ Zuul không quá phức tạp, nó vẫn sẽ thêm đáng kể nội dung vào một chương đã rất dài. Nếu bạn muốn gateway dịch vụ Zuul tham gia Single Sign On (SSO), tài liệu Spring Cloud Security có một hướng dẫn ngắn nhưng đầy đủ về cách thiết lập máy chủ Spring (<a href="http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html">http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html</a>).</p>
+      </aside>
+
+      <p>Việc tiếp theo bạn cần làm là cấu hình licensing service thành dịch vụ tài nguyên OAuth2 và thiết lập các quy tắc ủy quyền mong muốn cho dịch vụ. Chúng ta sẽ không thảo luận chi tiết cấu hình licensing service vì đã nói về quy tắc ủy quyền ở mục 7.3.3, &ldquo;Xác định ai và cái gì có thể truy cập dịch vụ.&rdquo;</p>
+
+      <p>Cuối cùng, tất cả những gì bạn cần làm là sửa cách mã trong licensing service gọi organization service. Bạn cần đảm bảo HTTP header &ldquo;Authorization&rdquo; được chèn vào lời gọi ứng dụng tới Organization service. Nếu không có Spring Security, bạn sẽ phải viết servlet filter để lấy HTTP header từ lời gọi licensing service đến rồi thủ công thêm vào mọi lời gọi dịch vụ outbound trong licensing service. Spring OAuth2 cung cấp lớp Rest Template mới hỗ trợ các lời gọi OAuth2. Lớp này có tên <code>OAuth2RestTemplate</code>. Để dùng lớp <code>OAuth2RestTemplate</code>, trước hết bạn cần expose nó dưới dạng bean có thể auto-wired vào dịch vụ gọi các dịch vụ được bảo vệ OAuth2 khác. Bạn làm điều này trong lớp <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/Application.java</code>:</p>
+
+      <figure class="code-snippet" aria-label="Định nghĩa bean OAuth2RestTemplate">
+        <pre class="code-block"><code>@Bean
+ public OAuth2RestTemplate oauth2RestTemplate(
+        OAuth2ClientContext oauth2ClientContext,
+        OAuth2ProtectedResourceDetails details) {
+        return new OAuth2RestTemplate(details, oauth2ClientContext);
+    }</code></pre>
+      </figure>
+
+      <p>Để xem lớp <code>OAuth2RestTemplate</code> hoạt động, bạn có thể xem trong lớp <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/clients/OrganizationRestTemplate.java</code>. Listing sau đây cho thấy cách <code>OAuth2RestTemplate</code> được auto-wired vào lớp này.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

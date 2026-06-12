@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0202.html">← Trước</a>
+    <a href="page_0204.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">203</span>
+      </header>
+
+      <p class="no-indent">thể nhận diện được tất cả các vấn đề như vậy khi viết phương thức. Các vấn đề mới có thể được phát hiện sau đó và bạn có thể phải sửa đổi phương thức của mình để tương thích với chúng. Do đó, tốt hơn là nên khai báo một lớp cha (Superclass) chung là <code>IOException</code>&nbsp; trong mệnh đề throws thay vì các lớp con (Subclass) riêng lẻ như <code>FileNotFoundException</code>&nbsp; hoặc <code>EOFException</code>&nbsp;.</p>
+
+      <h3 class="section-title section-title--sub">Ném Exception (Ngoại lệ)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn nên luôn luôn ném Exception (Ngoại lệ) cụ thể nhất có thể. Ví dụ, nếu bạn không tìm thấy tệp tin khi cố gắng mở nó, bạn nên ném một <code>FileNotFoundException</code>&nbsp; thay vì một&nbsp;<code>IOException</code>&nbsp; hoặc <code>Exception</code>&nbsp;. Bằng cách ném Exception (Ngoại lệ) cụ thể nhất, bạn cung cấp nhiều thông tin hơn cho bên gọi về vấn đề gặp phải. Điều này giúp bên gọi xác định được phương án giải quyết phù hợp nhất cho vấn đề.</p>
+
+      <h3 class="section-title section-title--sub">15.3.2 Ném Exception (Ngoại lệ) từ khối khởi tạo (initializer) và constructor<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--sub">Ném Exception (Ngoại lệ) từ khối khởi tạo tĩnh (static initializer)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>JVM tự động thực thi các khối khởi tạo tĩnh (static initializer) khi nó nạp một Lớp (Class). Mặc dù JVM nạp một Lớp (Class) do một số hành động từ mã ứng dụng như tạo một Đối tượng (Object) của Lớp (Class) hoặc gọi một static method của Lớp (Class), nhưng không có sự gọi trực tiếp nào đến khối khởi tạo tĩnh (static initializer) từ ứng dụng. Do đó, nếu một khối khởi tạo tĩnh (static initializer) kết thúc bằng việc ném ra một Exception (Ngoại lệ), ứng dụng sẽ không có cách nào để xử lý Exception (Ngoại lệ) đó và phục hồi từ nó. Vì lý do này, một khối khởi tạo tĩnh (static initializer) không được phép ném ra bất kỳ Ngoại lệ checked (Checked Exception) nào. Nếu trình biên dịch (compiler) thấy khả năng một Ngoại lệ checked (Checked Exception) có thể bị ném ra từ một khối khởi tạo tĩnh (static initializer), nó sẽ báo lỗi. Ví dụ, đoạn mã sau sẽ không biên dịch:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

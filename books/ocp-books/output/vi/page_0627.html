@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0626.html">← Trước</a>
+    <a href="page_0628.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">627</span>
+      </header>
+
+      <p class="no-indent">trên thế giới nhưng nếu bạn tạo một <code>ZonedDateTime</code>&nbsp;sử dụng <code>ZoneOffset</code> này, thời gian ở địa điểm giả tưởng này sẽ luôn đi trước UTC 1 giờ và 10 phút.</p>
+
+      <p class="no-indent"><strong class="run-in">Period:</strong>&nbsp;Period biểu thị một lượng thời gian dựa trên ngày, tính theo ngày, tháng và năm. Nó không có khái niệm về giờ, phút và giây.</p>
+
+      <p class="no-indent"><strong class="run-in">Duration:</strong>&nbsp;Duration biểu thị một lượng thời gian dựa trên thời gian, tính theo giờ, phút và giây. Nó không có khái niệm về ngày, tháng hay năm.</p>
+
+      <p>Việc hiểu rõ sự khác biệt giữa <strong>Period</strong> và <strong>Duration</strong> là rất quan trọng. Mặc dù một Period biểu thị 1 ngày tương đương với một Duration biểu thị 24 giờ, cả hai lại khác nhau về mặt khái niệm. Việc cộng thêm một Period 1 ngày vào một ngày cho trước sẽ chỉ tăng phần ngày của ngày đó và không ảnh hưởng đến thành phần thời gian, nhưng việc cộng thêm một Duration 24 giờ sẽ cộng thêm 24 giờ vào phần thời gian, từ đó cũng làm thay đổi cả phần ngày. Ví dụ, việc cộng thêm một Period 1 ngày vào ngày trước <strong>ngày bắt đầu giờ mùa hè</strong> sẽ chỉ đơn thuần tăng ngày mà không ảnh hưởng đến giờ. Do đó, ngày 9 tháng 3 năm 2024 lúc 10 PM sẽ trở thành ngày 10 tháng 3 năm 2024&nbsp;<strong>10 PM</strong>. Nhưng việc cộng thêm một Duration 24 giờ vào cùng ngày đó sẽ làm thay đổi ngày thành ngày 10 tháng 3 năm 2024&nbsp;<strong>11 PM</strong>, bởi vì vào ngày cụ thể này, đồng hồ đã được điều chỉnh chạy nhanh hơn 1 giờ. Vì thế, 10 PM + 24 giờ không phải là 10 PM mà là 11 PM của ngày hôm sau.</p>
+
+      <p>Package này cũng chứa hai enum - <code>Month</code>&nbsp;và <code>DayOfWeek</code>. <code>Month</code>&nbsp;chứa các giá trị từ <code>JANUARY</code>&nbsp;đến <code>DECEMBER</code>&nbsp;và <code>DayOfWeek</code>&nbsp;chứa các giá trị từ <code>MONDAY</code>&nbsp;đến <code>SUNDAY</code>. Sẽ tốt hơn nếu sử dụng các enum này thay vì số nguyên khi tạo các đối tượng ngày/giờ vì chúng giúp mã nguồn dễ đọc hơn và cũng giúp bạn tránh được sự nhầm lẫn do việc đánh chỉ số gây ra. Ví dụ, <code>LocalDate.of(2024, Month.JANUARY, 10)</code>&nbsp;dễ đọc hơn&nbsp;<code>LocalDate.of(2024, 1, 10)</code>.</p>
+
+      <h3 class="section-title section-title--sub">Package <code>java.time.temporal</code><span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

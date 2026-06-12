@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Greater, Less and BETWEEN</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">53</span>
+      </header>
+      <p class="chapter-running-head">Greater, Less and BETWEEN</p>
+
+      <p class="no-indent">With this example, we can also falsify the myth that the most selective column should be at the leftmost index position. If we look at the figures and consider the selectivity of the first column only, we see that both conditions match 13 records. This is the case regardless whether we filter by <code>DATE_OF_BIRTH</code> only or by <code>SUBSIDIARY_ID</code> only. The selectivity is of no use here, but one column order is still better than the other.</p>
+
+      <p>To optimize performance, it is very important to know the scanned index range. With most databases you can even see this in the execution plan&mdash;you just have to know what to look for. The following execution plan from the Oracle database unambiguously indicates that the <code>EMP_TEST</code> index starts with the <code>DATE_OF_BIRTH</code> column.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+|Id | Operation                    | Name      | Rows | Cost |
+--------------------------------------------------------------
+| 0 | SELECT STATEMENT             |           |    1 |    4 |
+|*1 |  FILTER                      |           |      |      |
+| 2 |   TABLE ACCESS BY INDEX ROWID| EMPLOYEES |    1 |    4 |
+|*3 |    INDEX RANGE SCAN          | EMP_TEST  |    2 |    2 |
+--------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+1 - filter(:END_DT &gt;= :START_DT)
+3 - access(DATE_OF_BIRTH &gt;= :START_DT
+       AND DATE_OF_BIRTH &lt;= :END_DT)
+    filter(SUBSIDIARY_ID  = :SUBS_ID)</code></pre>
+      </figure>
+
+      <p>The predicate information for the <code>INDEX RANGE SCAN</code> gives the crucial hint. It identifies the conditions of the where clause either as access or as filter predicates. This is how the database tells us how it uses each condition.</p>
+
+      <aside class="sidebar-note">
+        <h3>Note</h3>
+        <p>The execution plan was simplified for clarity. The appendix on page 170 explains the details of the &ldquo;Predicate Information&rdquo; section in an Oracle execution plan.</p>
+      </aside>
+
+      <p>The conditions on the <code>DATE_OF_BIRTH</code> column are the only ones listed as access predicates; they limit the scanned index range. The <code>DATE_OF_BIRTH</code> is therefore the first column in the <code>EMP_TEST</code> index. The <code>SUBSIDIARY_ID</code> column is used only as a filter.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">43</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Nguyên tắc thiết kế và Mẫu thiết kế — Trang 10</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Điều hướng trang">
+      <a href="page_0009.html">← Trước</a>
+      <span>Trang 10 / 34</span>
+      <a href="page_0011.html">Tiếp →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">10</span>
+      </header>
+
+      <p class="lead no-indent">Dù vậy, nếu bỏ qua chi phí không gian nhỏ, ta có thể khiến Circle hoạt động đúng bằng cách ghi đè phương thức SetFoci để đảm bảo cả hai tiêu điểm luôn có cùng giá trị. Xem Đoạn mã 2-5. Như vậy, bất kỳ tiêu điểm nào cũng đóng vai trò tâm của hình tròn, và trục lớn sẽ là đường kính của nó.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Đoạn mã 2-5</strong><br>Giữ hai tiêu điểm của Circle trùng nhau.</figcaption>
+        <pre class="code-block"><code>void Circle::SetFoci(const Point&amp; a, const Point&amp; b)
+{
+  itsFocusA = a;
+  itsFocusB = a;
+}</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong class="run-in">Client phá hỏng mọi thứ.</strong> Chắc chắn mô hình ta đã tạo là tự nhất quán. Một thể hiện của Circle sẽ tuân thủ mọi quy tắc của hình tròn. Không có gì bạn có thể làm với nó để khiến nó vi phạm những quy tắc đó. Ellipse cũng vậy. Hai lớp tạo thành một mô hình nhất quán đẹp đẽ, dù Circle có một phần tử dữ liệu thừa.</p>
+      <p>Tuy nhiên, Circle và Ellipse không sống một mình trong vũ trụ. Chúng cùng chung sống với nhiều thực thể khác, và cung cấp giao diện công khai của mình cho những thực thể đó. Những giao diện đó ngụ ý một hợp đồng. Hợp đồng có thể không được nêu rõ ràng, nhưng nó vẫn tồn tại. Ví dụ, người dùng Ellipse có quyền mong đợi đoạn mã sau thành công:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>void f(Ellipse&amp; e)
+{
+  Point a(-1,0);
+  Point b(1,0);
+  e.SetFoci(a,b);
+  e.SetMajorAxis(3);
+  assert(e.GetFocusA() == a);
+  assert(e.GetFocusB() == b);
+  assert(e.GetMajorAxis() == 3);
+}</code></pre>
+      </figure>
+
+      <p>Trong trường hợp này hàm mong đợi làm việc với một Ellipse. Do đó, nó mong đợi có thể đặt tiêu điểm và trục lớn, rồi xác minh chúng đã được đặt đúng. Nếu ta truyền một thể hiện Ellipse vào hàm này, nó sẽ hoạt động tốt. Tuy nhiên, nếu ta truyền một thể hiện Circle vào hàm, nó sẽ thất bại khá tệ.</p>
+      <p>Nếu ta làm hợp đồng của Ellipse rõ ràng, ta sẽ thấy một hậu điều kiện trên SetFoci đảm bảo các giá trị đầu vào được sao chép vào biến thành viên, và biến trục lớn không bị thay đổi. Rõ ràng Circle vi phạm đảm bảo này vì nó bỏ qua biến đầu vào thứ hai của SetFoci.</p>
+      <p class="no-indent"><strong class="run-in">Thiết kế theo Hợp đồng.</strong> Phát biểu lại LSP, ta có thể nói rằng, để có thể thay thế được, hợp đồng của lớp cơ sở phải được lớp dẫn xuất tôn trọng. Vì</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

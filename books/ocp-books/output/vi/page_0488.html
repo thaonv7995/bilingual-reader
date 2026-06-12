@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi code đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0487.html">← Trước</a>
+    <a href="page_0489.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">488</span>
+      </header>
+
+      <p class="no-indent">5. và một thread khác đọc chúng. Vì bất kỳ thread nào cũng có thể có cơ hội chạy vào bất kỳ lúc nào, chúng ta không thể giả định rằng thread ghi (writer thread) sẽ luôn có thể thiết lập các trường instance trước khi thread đọc (reader thread) thực hiện đọc chúng. Do đó, thread đọc sử dụng một vòng lặp while để kiểm tra xem thread ghi đã có cơ hội cập nhật trường <code>name</code>&nbsp;hay chưa. Trong khi thread đọc đang bận kiểm tra xem trường <code>name</code>&nbsp;có khác <code>null</code>&nbsp;hay không, OS cuối cùng sẽ lập lịch cho thread ghi chạy và thread ghi sẽ thiết lập trường <code>id</code>&nbsp;thành <code>10</code>&nbsp;, trường <code>name</code>&nbsp;thành <code>&quot;bob&quot;</code>&nbsp;, và sau đó lại thiết lập trường <code>id</code>&nbsp;thành <code>20</code>&nbsp;. Hãy quan sát rằng tại thời điểm thiết lập trường <code>name</code>&nbsp;thành <code>&quot;bob&quot;</code>&nbsp;, giá trị của trường <code>id</code>&nbsp;, như được thấy bởi thread ghi, là <code>10</code>&nbsp;. Giờ đây, vì trường <code>name</code>&nbsp;được đánh dấu là <code>volatile</code>&nbsp;, JVM đảm bảo rằng bất kỳ thread nào cố gắng đọc trường này sau khi nó đã được ghi, sẽ nhận thấy rằng việc ghi đã thực sự được thực thi, nghĩa là nó sẽ thấy giá trị đã được cập nhật. Hơn nữa, thread đọc cũng sẽ thấy các giá trị tương đương hoặc mới hơn của các trường khác (ngay cả khi chúng không được đánh dấu là <code>volatile</code>&nbsp;) mà thread ghi đã thấy tại thời điểm ghi vào trường volatile. Vì vậy, thread đọc được đảm bảo sẽ thấy trường <code>name</code>&nbsp;thay đổi từ <code>null</code>&nbsp;thành khác <code>null</code>&nbsp;tại một thời điểm nào đó. Nó cũng được đảm bảo KHÔNG thấy giá trị của trường <code>id</code>&nbsp;là <code>0</code> bởi vì tại thời điểm ghi vào trường <code>name</code>&nbsp;, giá trị của trường <code>id</code>&nbsp;là <code>10</code>&nbsp;. Lưu ý rằng thread đọc không được đảm bảo sẽ thấy cập nhật được thực hiện đối với trường <code>id</code>&nbsp;<strong>sau khi</strong> thread ghi đã cập nhật trường <code>name</code>&nbsp;bởi vì trường <code>id</code>&nbsp;không được đánh dấu là <code>volatile</code>&nbsp;.</p>
+
+      <p>Từ thảo luận trên, bạn có thể thấy rằng chương trình tính giai thừa có thể được khắc phục bằng cách đánh dấu trường <code>result</code>&nbsp;là <code>volatile</code>&nbsp;.</p>
+
+      <p class="no-indent"><strong class="run-in">6. Khóa cùng một monitor với monitor được mở khóa bởi một thread khác&mdash;</strong> Trong Java, mỗi đối tượng (object) đều liên kết với một monitor (còn được gọi là khóa nội tại - intrinsic lock). Monitor này có thể được khóa (lock) và mở khóa (unlock) bởi một thread bằng cách sử dụng một khối &ldquo;synchronized&rdquo;. Tại một thời điểm chỉ có tối đa một thread có thể khóa monitor. Nếu một monitor đã bị khóa bởi một thread, các thread khác phải đợi cho đến khi thread đang khóa monitor đó mở khóa nó.</p>
+
+      <p>Mặc dù các monitor được thiết kế để giải quyết một vấn đề lớn hơn thay vì chỉ làm cho các cập nhật hiển thị đối với các thread khác, về mặt kỹ thuật, chúng cũng có thể được sử dụng để thiết lập một mối quan hệ happens-before.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 8: Viết Hàm — Ngôn Ngữ Tin Cậy và Không Tin Cậy</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p .run-in {
+      font-weight: 700;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0164.html">← Trước</a>
+    <a href="page_0166.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">165</span>
+      </header>
+
+      <p class="no-indent">kết quả. Điều kiện ban đầu cũng là tùy chọn. Khi nó có mặt, lệnh sử dụng
+      nó để khởi tạo giá trị trạng thái.</p>
+
+      <p>Toán tử sắp xếp tùy chọn có thể phục vụ như là toán tử sắp xếp liên kết cho một tổng hợp kiểu MIN- hoặc MAX-.
+      Nó được sử dụng để tận dụng các chỉ mục. Nó chỉ là một tên toán tử như
+      <code>&gt;</code> và <code>&lt;</code>. Nó chỉ nên được sử dụng khi hai câu lệnh sau đây là tương đương:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT agg(col) FROM sometable;
+SELECT col FROM sometable ORDER BY col USING sortop LIMIT 1;</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0165_icon_tip.png" width="50" height="48" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Cấu trúc <code>CREATE AGGREGATE</code> trong PostgreSQL 9.4 đã được mở rộng để
+        bao gồm hỗ trợ cho việc tạo các tổng hợp di động, điều này rất hữu ích với
+        các hàm cửa sổ di chuyển. Xem <span class="accent-word">PostgreSQL 9.4: CRE&shy;ATE
+        AGGREGATE</span> để biết thêm chi tiết.</p>
+      </div>
+
+      <p>Các tổng hợp không cần phải phụ thuộc vào một cột duy nhất. Nếu bạn cần nhiều hơn một cột cho
+      tổng hợp của mình (một ví dụ là hàm hiệp phương sai tích hợp), xem <span class="accent-word">Cách Tạo Tổng Hợp Nhiều Cột</span> để được hướng dẫn.</p>
+
+      <p>Các hàm ngôn ngữ SQL rất dễ viết. Bạn không cần phải lo lắng về các lệnh điều khiển phức tạp,
+      và bạn có thể đã nắm vững SQL ngay từ đầu. Khi viết các tổng hợp, bạn có thể đi khá xa chỉ với ngôn ngữ SQL. Chúng tôi
+      minh họa các tổng hợp trong <span class="accent-word">&ldquo;Viết Các Hàm Tổng Hợp SQL&rdquo; trên trang 149</span>.</p>
+
+      <h3 class="subsection-title">Ngôn Ngữ Tin Cậy và Không Tin Cậy</h3>
+      <p class="no-indent">Các ngôn ngữ hàm được đặc trưng bởi mức độ tin cậy: tin cậy so với không tin cậy. Nhiều&mdash;
+      nhưng không phải tất cả&mdash;ngôn ngữ cung cấp cả phiên bản tin cậy và không tin cậy. Thuật ngữ tin cậy
+      ngụ ý rằng ngôn ngữ không thể gây hại cho hệ điều hành cơ sở:</p>
+
+      <p class="no-indent"><strong class="run-in">Tin cậy</strong> Một ngôn ngữ tin cậy không có quyền truy cập vào hệ thống tệp của máy chủ ngoài cụm dữ liệu.
+      Do đó, nó không thể thực thi các lệnh OS. Người dùng ở bất kỳ cấp độ nào cũng có thể tạo hàm
+      trong một ngôn ngữ tin cậy. Các ngôn ngữ như SQL, PL/pgSQL và PL/Perl là tin cậy.</p>
+
+      <p class="no-indent"><strong class="run-in">Không tin cậy</strong> Một ngôn ngữ không tin cậy có thể tương tác với hệ điều hành. Nó có thể thực thi các hàm OS và
+      gọi các dịch vụ web. Chỉ có siêu người dùng mới có quyền viết hàm trong một
+      ngôn ngữ không tin cậy. Tuy nhiên, một siêu người dùng có thể cấp quyền cho một vai trò khác để
+      chạy một hàm không tin cậy. Theo quy ước, các ngôn ngữ không tin cậy kết thúc bằng
+      chữ cái U (PL/PerlU, PL/PythonU, v.v.).</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Giải Phẫu Các Hàm PostgreSQL<span class="sep">|</span>147</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

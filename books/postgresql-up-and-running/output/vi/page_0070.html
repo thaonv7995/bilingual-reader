@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: psql (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0069.html">← Trước</a>
+    <a href="page_0071.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">70</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Chỉ mục:
+"pg_ts_dict_dictname_index" UNIQUE, btree (dictname, dictnamespace)
+"pg_ts_dict_oid_index" UNIQUE, btree (oid)
+Có OIDs: có</code></pre>
+      </figure>
+
+      <h3 class="section-title">Nhập và Xuất Dữ Liệu</h3>
+      <p class="no-indent">psql có lệnh <code>\copy</code> cho phép bạn nhập dữ liệu từ và xuất dữ liệu đến một tệp văn bản.
+      Tab là dấu phân cách mặc định, nhưng bạn có thể chỉ định các dấu khác. Các dòng mới phải tách biệt
+      các hàng. Trong ví dụ đầu tiên của chúng tôi, chúng tôi đã tải dữ liệu từ <span class="accent-word">US Census Fact Finder</span>
+      về nhân khẩu học chủng tộc của nhà ở tại Massachusetts. Bạn có thể tải tệp
+      mà chúng tôi sử dụng trong ví dụ này, DEC_10_SF1_QTH1_with_ann.csv, từ <span class="accent-word">PostgreSQL Book
+      Data</span>.</p>
+
+      <h3 class="subsection-title">Nhập psql</h3>
+      <p class="no-indent">Thực hành thông thường của chúng tôi khi tải dữ liệu không chuẩn hóa hoặc không quen thuộc là tạo một
+      lược đồ staging riêng để tiếp nhận dữ liệu đến. Sau đó, chúng tôi viết một loạt các truy vấn khám phá
+      để có cái nhìn tổng quan về những gì chúng tôi đang có. Cuối cùng, chúng tôi phân phối dữ liệu vào
+      các bảng sản xuất đã chuẩn hóa khác nhau và xóa lược đồ staging.</p>
+
+      <p>Trước khi đưa dữ liệu vào PostgreSQL, bạn phải tạo một bảng để chứa
+      dữ liệu đến. Dữ liệu phải khớp với tệp cả về số lượng cột và kiểu dữ liệu.
+      Điều này có thể là một bước bổ sung phiền phức cho một tệp được định dạng tốt, nhưng nó giúp loại bỏ
+      nhu cầu để psql đoán kiểu dữ liệu. psql xử lý toàn bộ việc nhập như một giao dịch duy nhất;
+      nếu nó gặp bất kỳ lỗi nào trong dữ liệu, toàn bộ việc nhập sẽ thất bại. Nếu bạn không chắc chắn về dữ liệu
+      có trong tệp, chúng tôi khuyên bạn nên thiết lập bảng với các kiểu dữ liệu dễ chịu nhất và sau đó chuyển đổi chúng sau nếu cần. Ví dụ,
+      nếu bạn không thể chắc chắn rằng một cột chỉ có giá trị số, hãy để nó là kiểu ký tự
+      thay đổi để đưa dữ liệu vào kiểm tra và sau đó chuyển đổi lại sau.</p>
+
+      <p>Khởi động psql từ dòng lệnh và chạy các lệnh trong <span class="accent-word">Ví dụ 3-7</span> trong console psql.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 3-7.</strong> Nhập dữ liệu với psql</figcaption>
+        <pre class="code-block"><code>\connect postgresql_book
+\cd /postgresql_book/ch03
+\copy staging.factfinder_import FROM DEC_10_SF1_QTH1_with_ann.csv CSV</code></pre>
+      </figure>
+
+      <p class="no-indent">Trong <span class="accent-word">Ví dụ 3-7</span>, chúng tôi khởi động psql tương tác, kết nối với cơ sở dữ liệu của chúng tôi, sử dụng <code>\cd</code> để thay đổi
+      thư mục hiện tại thành thư mục chứa tệp của chúng tôi, và nhập dữ liệu của chúng tôi bằng cách sử dụng lệnh
+      <code>\copy</code>. Bởi vì dấu phân cách mặc định là tab, chúng tôi bổ sung tuyên bố của mình với
+      CSV để cho psql biết rằng dữ liệu của chúng tôi được phân tách bằng dấu phẩy.</p>
+
+      <p>Nếu tệp của bạn có các dấu phân cách không chuẩn như ống, hãy chỉ định dấu phân cách:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">52<span class="sep">|</span>Chương 3: psql</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: What is a services gateway?</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page figure.diagram figcaption + p,
+    .prose-page.chapter-page p + ul.manning-bullets {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0179.html">← Prev</a>
+    <a href="page_0181.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">What is a services gateway?</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">155</span>
+      </header>
+
+      <figure class="diagram" aria-label="Figure 6.1">
+        <img src="../assets/images/page_0180_fig_6_1.png" width="1313" height="864" alt="Figure 6.1 — Without a services gateway, the service client will call distinct endpoints for each service">
+        <figcaption><strong>Figure 6.1</strong><br>Without a services gateway, the service client will call distinct endpoints for each service.</figcaption>
+      </figure>
+
+      <p class="no-indent">A service gateway acts as an intermediary between the service client and a service being invoked. The service client talks only to a single <em>URL</em> managed by the service gateway. The service gateway pulls apart the path coming in from the service client call and determines what service the service client is trying to invoke. Figure 6.2 illustrates how like a &ldquo;traffic&rdquo; cop directing traffic, the service gateway directs the user to a target microservice and corresponding instance. The service gateway sits as the gatekeeper for all inbound traffic to microservice calls within your application. With a service gateway in place, your service clients never directly call the <em>URL</em> of an individual service, but instead place all calls to the service gateway.</p>
+
+      <figure class="diagram" aria-label="Figure 6.2">
+        <img src="../assets/images/page_0180_fig_6_2.png" width="1313" height="454" alt="Figure 6.2 — The service gateway sits between the service client and the corresponding service instances">
+        <figcaption><strong>Figure 6.2</strong><br>The service gateway sits between the service client and the corresponding service instances. All service calls (both internal-facing and external) should flow through the service gateway.</figcaption>
+      </figure>
+
+      <p>Because a service gateway sits between all calls from the client to the individual services, it also acts as a central Policy Enforcement Point (<em>PEP</em>) for service calls. The use of a centralized <em>PEP</em> means that cross-cutting service concerns can be implemented in a single place without the individual development teams having to implement these concerns. Examples of cross-cutting concerns that can be implemented in a service gateway include</p>
+
+      <ul class="manning-bullets" aria-label="Cross-cutting concerns implemented in a service gateway">
+        <li><strong class="run-in">Static routing</strong>&mdash;A service gateway places all service calls behind a single <em>URL</em> and <em>API</em> route. This simplifies development as developers only have to know about one service endpoint for all of their services.</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

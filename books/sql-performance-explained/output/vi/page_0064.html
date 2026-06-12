@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục NULL</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">64</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <p class="no-indent">Khái niệm <code>NULL</code> được sử dụng trong nhiều ngôn ngữ lập trình. Dù bạn nhìn ở đâu, một chuỗi rỗng không bao giờ là <code>NULL</code>&hellip;ngoại trừ trong cơ sở dữ liệu Oracle. Thực tế, không thể lưu trữ một chuỗi rỗng trong một trường <code>VARCHAR2</code>. Nếu bạn cố gắng, cơ sở dữ liệu Oracle chỉ lưu <code>NULL</code>.</p>
+
+      <p>Sự kỳ lạ này không chỉ lạ lùng; nó còn nguy hiểm. Thêm vào đó, sự kỳ quặc của <code>NULL</code> trong cơ sở dữ liệu Oracle không dừng lại ở đây&mdash;nó tiếp tục với việc lập chỉ mục.</p>
+
+      <h3 class="section-title">Lập chỉ mục NULL</h3>
+
+      <p class="no-indent">Cơ sở dữ liệu Oracle không bao gồm các hàng trong một chỉ mục nếu tất cả các cột được lập chỉ mục đều là <code>NULL</code>. Điều đó có nghĩa là mỗi chỉ mục là một chỉ mục một phần&mdash;giống như có một câu lệnh <code>where</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx
+          ON tbl (A, B, C, ...)
+       WHERE A IS NOT NULL
+          OR B IS NOT NULL
+          OR C IS NOT NULL
+             ...;</code></pre>
+      </figure>
+
+      <p>Xem xét chỉ mục <code>EMP_DOB</code>. Nó chỉ có một cột: <code>DATE_OF_BIRTH</code>. Một hàng không có giá trị <code>DATE_OF_BIRTH</code> sẽ không được thêm vào chỉ mục này.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>INSERT INTO employees ( subsidiary_id, employee_id
+                      , first_name   , last_name
+                      , phone_number)
+               VALUES ( ?, ?, ?, ?, ? );</code></pre>
+      </figure>
+
+      <p>Câu lệnh chèn không thiết lập <code>DATE_OF_BIRTH</code> nên nó mặc định là <code>NULL</code>&mdash;do đó, bản ghi không được thêm vào chỉ mục <code>EMP_DOB</code>. Do đó, chỉ mục không thể hỗ trợ một truy vấn cho các bản ghi mà <code>DATE_OF_BIRTH IS NULL</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name
+  FROM employees
+ WHERE date_of_birth IS NULL;</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">54</p>
+    </article>
+  </main>
+</body>
+</html>

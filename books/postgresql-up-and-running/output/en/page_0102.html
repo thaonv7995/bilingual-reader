@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-size: 9.1pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0101.html">← Prev</a>
+    <a href="page_0103.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">102</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-7.</strong> Return phone numbers in piece of text as separate rows</figcaption>
+        <pre class="code-block"><code>SELECT unnest(regexp_matches( 'Cell (619)852-5083. Casa 619-730-6254. Bésame mucho.
+E'[(]{0,1}[0-9]{3}[)-.]{0,1}[0-9]{3}[-.]{0,1}[0-9]{4}', 'g')
+) As x;
+ x
+-------------
+ (619)852-5083
+ 619-730-6254</code></pre>
+      </figure>
+
+      <p class="no-indent">The matching rules for <span class="accent-word">Example 5-7</span> are:</p>
+
+      <ul class="bullets">
+        <li><code>[(]{0,1}</code>: starts with 0 or 1 <code>(</code>.</li>
+        <li><code>[0-9]{3}</code>: followed by 3 digits.</li>
+        <li><code>[)-.]{0,1}</code>: followed by 0 or 1 of <code>)</code>, <code>-</code>, or <code>.</code>.</li>
+        <li><code>[0-9]{4}</code>: followed by 4 digits.</li>
+        <li><code>regexp_matches</code> returns a string array consisting of matches of a regular expres‐
+        sion. If you don’t pass in the <code>g</code> parameter, your array will return just the first match
+        of the regular expression. The <code>g</code> stands for global and returns all matches of a regular
+        expression as separate elements.</li>
+        <li><code>unnest</code> explodes an array into a row set.</li>
+      </ul>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0102_icon_tip.png" width="43" height="57" alt="Tip">
+        </figure>
+        <p class="callout-text">There are many ways to compose the same regular expression. For
+        instance, <code>\\d</code> is shorthand for <code>[0-9]</code>. But given the few characters
+        you’d save, we prefer the more descriptive longhand.</p>
+      </div>
+
+      <p class="no-indent">In addition to the wealth of regular-expression functions, you can use regular expres‐
+      sions with the <code>SIMILAR TO</code> (<code>~</code>) operators. This sequence returns all description fields
+      with embedded phone numbers:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT description
+FROM mytable
+WHERE description ~  E'[(]{0,1}[0-9]{3}[)-.]{0,1}[0-9]{3}[-.]{0,1}[0-9]{4}';</code></pre>
+      </figure>
+
+      <h3 class="section-title">Temporals</h3>
+      <p class="no-indent">PostgreSQL support for temporal data is second to none. In addition to the usual dates
+      and times types, PostgreSQL has support for time zones, enabling the automatic han‐
+      dling of daylight saving time (DST) conversions by region. Specialized data types such
+      as <code>interval</code> offer datetime arithmetic. PostgreSQL also understands infinity and neg‐</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">84<span class="sep">|</span>Chapter 5: Data Types</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

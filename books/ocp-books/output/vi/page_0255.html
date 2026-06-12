@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: generic-syntax;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: generic-syntax;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(generic-syntax) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li figure.code-snippet {
+      margin: 1.5mm 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0254.html">← Trước</a>
+    <a href="page_0256.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">255</span>
+      </header>
+
+      <p class="no-indent">kiểu dữ liệu hay một phương thức. Các đoạn mã nguồn được trình bày trong các câu hỏi thi sử dụng các kiểu dữ liệu tham số hóa (parameterized types) khá tự do. Do đó, bạn cần biết các cách dưới đây để khai báo các biến an toàn kiểu (type-safe) và khởi tạo các kiểu dữ liệu tham số hóa nhằm hiểu được đoạn mã được đưa ra trong câu hỏi đang cố gắng thực hiện điều gì:</p>
+
+      <ol class="numbered">
+        <li>Một biến an toàn kiểu (type-safe) có thể được khai báo bằng cách chỉ định một đối số kiểu (type argument) bên trong <code>&lt;</code> và <code>&gt;</code>. Ví dụ,
+          <figure class="code-snippet">
+            <pre class="code-block"><code>ArrayList&lt;String&gt; stringArray;
+List&lt;Integer&gt; iList;
+ArrayList&lt;com.acme.Person&gt; personList;
+
+//I will discuss wildcards in the next section
+List&lt;?&gt; iList; //using unbounded wildcard
+List&lt;? extends Integer&gt; iList; //using upper bounded wildcard
+List&lt;? super Integer&gt; iList;//using lower bounded wildcard</code></pre>
+          </figure>
+          <figure class="code-snippet code-snippet--warn">
+            <pre class="code-block"><code>List&lt;&gt; iList; //invalid, a type must be specified inside &lt;&gt; while
+declaring a variable</code></pre>
+          </figure>
+        </li>
+        <li>Một Lớp (Class) tham số hóa có thể được khởi tạo tương tự bằng cách chỉ định đối số kiểu bên trong
+        <code>&lt;</code> và <code>&gt;</code>. Ví dụ,
+          <figure class="code-snippet">
+            <pre class="code-block"><code>new ArrayList&lt;String&gt;();
+new ArrayList&lt;Integer&gt;();
+new ArrayList&lt;com.acme.Person&gt;();</code></pre>
+          </figure>
+          Tuy nhiên, không thể sử dụng ký tự đại diện (wildcard) khi khởi tạo các đối tượng Lớp (Class) generic. Vì vậy, các dòng sau đây sẽ không biên dịch được:
+          <figure class="code-snippet code-snippet--warn">
+            <pre class="code-block"><code>new ArrayList&lt;?&gt;();
+new ArrayList&lt;? extends Integer&gt;();</code></pre>
+          </figure>
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

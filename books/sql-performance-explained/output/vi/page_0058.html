@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label {
+      margin: 4mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page .indented-block {
+      margin: 0 0 3.2mm 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .footnotes {
+      margin-top: 4mm;
+      padding-top: 0;
+      border-top: none;
+      font-size: 9.5pt;
+      line-height: 1.35;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">58</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <p class="no-indent">thuật ngữ tìm kiếm có thể nhìn thấy đối với bộ tối ưu hóa. Nếu bạn không sử dụng tham số ràng buộc mà đưa trực tiếp thuật ngữ tìm kiếm vào câu lệnh SQL, bạn phải thực hiện các biện pháp khác để chống lại các cuộc tấn công SQL injection!</p>
+
+      <p>Ngay cả khi cơ sở dữ liệu tối ưu hóa kế hoạch thực thi cho một ký tự đại diện dẫn đầu, nó vẫn có thể cung cấp hiệu suất không đủ. Bạn có thể sử dụng một phần khác của <code>where</code> để truy cập dữ liệu một cách hiệu quả trong trường hợp đó&mdash;xem thêm &ldquo;Chỉ mục lọc điều kiện được sử dụng có chủ đích&rdquo; trên trang 112. Nếu không có đường dẫn truy cập nào khác, bạn có thể sử dụng một trong các giải pháp chỉ mục toàn văn độc quyền sau đây.</p>
+
+      <p class="operation-label">MySQL</p>
+      <p class="indented-block">MySQL cung cấp các từ khóa <code>match</code> và <code>against</code> cho tìm kiếm toàn văn. Bắt đầu từ MySQL 5.6, bạn có thể tạo các chỉ mục toàn văn cho các bảng InnoDB cũng&mdash;trước đây, điều này chỉ có thể thực hiện với các bảng MyISAM. Xem &ldquo;Chức năng tìm kiếm toàn văn&rdquo; trong tài liệu MySQL.</p>
+
+      <p class="operation-label">Oracle Database</p>
+      <p class="indented-block">Cơ sở dữ liệu Oracle cung cấp từ khóa <code>contains</code>. Xem &ldquo;Hướng dẫn phát triển ứng dụng Oracle Text.&rdquo;</p>
+
+      <p class="operation-label">PostgreSQL</p>
+      <p class="indented-block">PostgreSQL cung cấp toán tử <code>@@</code> để thực hiện tìm kiếm toàn văn. Xem &ldquo;Tìm kiếm toàn văn&rdquo; trong tài liệu PostgreSQL.</p>
+      <p class="indented-block">Một tùy chọn khác là sử dụng phần mở rộng WildSpeed<sup>2</sup> để tối ưu hóa các biểu thức <code>LIKE</code> trực tiếp. Phần mở rộng này lưu trữ văn bản trong tất cả các vòng quay có thể để mỗi ký tự đều ở đầu một lần. Điều đó có nghĩa là văn bản được chỉ mục không chỉ được lưu trữ một lần mà thay vào đó là nhiều lần bằng số ký tự trong chuỗi&mdash;do đó nó cần rất nhiều không gian.</p>
+
+      <p class="operation-label">SQL Server</p>
+      <p class="indented-block">SQL Server cung cấp từ khóa <code>contains</code>. Xem &ldquo;Tìm kiếm toàn văn&rdquo; trong tài liệu SQL Server.</p>
+
+      <aside class="sidebar-note">
+        <h3>Suy nghĩ về điều đó</h3>
+        <p>Làm thế nào bạn có thể chỉ mục một tìm kiếm <code>LIKE</code> chỉ có một ký tự đại diện ở đầu thuật ngữ tìm kiếm (<code>'%TERM'</code>)?</p>
+      </aside>
+
+      <div class="footnotes">
+        <p><sup>2</sup> http://www.sai.msu.su/~megera/wiki/wildspeed</p>
+      </div>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">48</p>
+    </article>
+  </main>
+</body>
+</html>

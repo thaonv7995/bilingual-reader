@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 1: Anatomy of an Index</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--chapter {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--chapter .rh-left,
+    .prose-page .running-head--chapter .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--chapter .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--head {
+      margin-bottom: 4mm;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--chapter">
+        <span class="rh-left"></span>
+        <span class="rh-center">Chương 1: Giải phẫu của một chỉ mục</span>
+        <span class="rh-right"></span>
+      </header>
+      <hr class="chapter-rule chapter-rule--head" aria-hidden="true">
+
+      <p class="no-indent">Việc duyệt cây là một thao tác rất hiệu quả—hiệu quả đến mức tôi gọi nó là <i>quyền lực đầu tiên của chỉ mục</i>. Nó hoạt động gần như ngay lập tức—ngay cả trên một tập dữ liệu khổng lồ. Điều này chủ yếu là do sự cân bằng của cây, cho phép truy cập tất cả các phần tử với cùng một số bước, và thứ hai là do sự phát triển theo cấp số nhân của độ sâu cây. Điều đó có nghĩa là độ sâu cây phát triển rất chậm so với số lượng nút lá. Các chỉ mục trong thế giới thực với hàng triệu bản ghi có độ sâu cây từ bốn đến năm. Độ sâu cây sáu hiếm khi được thấy. Hộp “Khả năng mở rộng theo cấp số nhân” mô tả điều này chi tiết hơn.</p>
+
+      <h3 class="section-title">Chỉ mục chậm, Phần I</h3>
+
+      <p>Mặc dù việc duyệt cây rất hiệu quả, vẫn có những trường hợp mà việc tra cứu chỉ mục không hoạt động nhanh như mong đợi. Sự mâu thuẫn này đã nuôi dưỡng huyền thoại về <i>“chỉ mục suy thoái”</i> trong một thời gian dài. Huyền thoại này tuyên bố rằng việc tái xây dựng chỉ mục là giải pháp kỳ diệu. Lý do thực sự khiến các câu lệnh đơn giản có thể chậm—ngay cả khi sử dụng chỉ mục—có thể được giải thích dựa trên các phần trước đó.</p>
+
+      <p>Nguyên liệu đầu tiên cho một tra cứu chỉ mục chậm là chuỗi nút lá. Hãy xem xét việc tìm kiếm “57” trong Hình&nbsp;1.3 một lần nữa. Rõ ràng có hai mục phù hợp trong chỉ mục. Ít nhất hai mục là giống nhau, để chính xác hơn: nút lá tiếp theo có thể có thêm các mục cho “57”. Cơ sở dữ liệu phải đọc nút lá tiếp theo để xem có thêm mục nào phù hợp hay không. Điều đó có nghĩa là một tra cứu chỉ mục không chỉ cần thực hiện việc duyệt cây, mà còn cần theo dõi chuỗi nút lá.</p>
+
+      <p>Nguyên liệu thứ hai cho một tra cứu chỉ mục chậm là truy cập vào bảng. Ngay cả một nút lá duy nhất cũng có thể chứa nhiều kết quả—thường là hàng trăm. Dữ liệu bảng tương ứng thường bị phân tán trên nhiều khối bảng (xem Hình&nbsp;1.1, “Nút lá chỉ mục và dữ liệu bảng tương ứng”). Điều đó có nghĩa là có một truy cập bảng bổ sung cho mỗi kết quả.</p>
+
+      <p>Một tra cứu chỉ mục yêu cầu ba bước: (1) việc duyệt cây; (2) theo dõi chuỗi nút lá; (3) lấy dữ liệu bảng. Việc duyệt cây là bước duy nhất có giới hạn trên cho số lượng khối được truy cập—độ sâu chỉ mục. Hai bước còn lại có thể cần truy cập nhiều khối—chúng gây ra một tra cứu chỉ mục chậm.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">6</p>
+    </article>
+  </main>
+</body>
+</html>

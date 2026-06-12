@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Giải thích các thuộc tính Travis trong Listing 10.2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout-letter {
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-weight: 700;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0340.html">← Trước</a>
+    <a href="page_0342.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">316</span>
+        <span class="rh-center">CHƯƠNG 10 <em>Triển khai microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">tập thuộc tính, build cho chương này có thể mất tới 10 phút để tải xuống tất cả các jar phụ thuộc.</p>
+
+      <p>Hai thuộc tính tiếp theo trong listing 10.2 là thuộc tính <code>sudo</code> và thuộc tính service. <span class="listing-callout-letter">d</span> Thuộc tính <code>sudo</code> được dùng để báo cho Travis biết quy trình build của bạn sẽ cần dùng <code>sudo</code> như một phần của build. Lệnh <code>sudo</code> của UNIX được dùng để tạm thời nâng quyền người dùng lên quyền root. Thông thường, bạn dùng <code>sudo</code> khi cần cài đặt công cụ bên thứ ba. Bạn làm chính xác điều này ở giai đoạn sau của build khi cần cài đặt công cụ Amazon ECS.</p>
+
+      <p>Thuộc tính <code>services</code> được dùng để báo cho Travis biết bạn có sẽ dùng các dịch vụ quan trọng nhất định trong khi thực thi build hay không. Ví dụ, nếu các bài kiểm thử integration của bạn cần cơ sở dữ liệu cục bộ để chạy, Travis cho phép bạn khởi động cơ sở dữ liệu MySQL hoặc PostgreSQL ngay trên máy build. Trong trường hợp này, bạn cần Docker chạy để build image Docker cho từng dịch vụ EagleEye và đẩy image lên Docker Hub. Bạn đã đặt thuộc tính <code>services</code> để khởi động Docker khi build được kích hoạt.</p>
+
+      <p>Thuộc tính tiếp theo, <code>notifications</code> <span class="listing-callout-letter">e</span> xác định kênh liên lạc sẽ dùng mỗi khi build thành công hoặc thất bại. Hiện tại, bạn luôn truyền đạt kết quả build bằng cách đặt kênh thông báo cho build là email. Travis sẽ thông báo cho bạn qua email cả khi build thành công lẫn thất bại. Travis CI có thể thông báo qua nhiều kênh khác ngoài email, bao gồm Slack, IRC, HipChat hoặc webhook tùy chỉnh.</p>
+
+      <p>Thuộc tính <code>branches.only</code> <span class="listing-callout-letter">f</span> cho Travis biết Travis nên build trên những nhánh nào. Đối với các ví dụ trong chương này, bạn chỉ thực hiện build từ nhánh <code>master</code> của Git. Điều này ngăn bạn kích hoạt build mỗi khi gắn thẻ cho kho hoặc commit lên một nhánh trong GitHub. Điều này quan trọng vì GitHub gọi callback vào Travis mỗi khi bạn gắn thẻ cho kho hoặc tạo release. Việc có thuộc tính <code>branches.only</code> được đặt thành master ngăn Travis rơi vào vòng build vô hạn.</p>
+
+      <p>Phần cuối của cấu hình build là thiết lập các biến môi trường nhạy cảm <span class="listing-callout-letter">g</span>. Trong quy trình build, bạn có thể giao tiếp với các nhà cung cấp bên thứ ba như Docker, GitHub và Amazon. Đôi khi bạn giao tiếp qua công cụ dòng lệnh của họ và đôi khi bạn dùng API. Dù thế nào, bạn thường phải cung cấp thông tin đăng nhập nhạy cảm. Travis CI cho phép bạn thêm các biến môi trường đã mã hóa để bảo vệ thông tin đăng nhập này.</p>
+
+      <p>Để thêm biến môi trường đã mã hóa, bạn phải mã hóa biến môi trường bằng công cụ dòng lệnh <code>travis</code> trên máy của bạn trong thư mục dự án nơi bạn có mã nguồn. Để cài đặt công cụ dòng lệnh Travis cục bộ, hãy xem tài liệu của công cụ tại <a href="https://github.com/travis-ci/travis.rb">https://github.com/travis-ci/travis.rb</a>. Đối với <code>.travis.yml</code> được dùng trong chương này, tôi đã tạo và mã hóa các biến môi trường sau:</p>
+
+      <ul class="manning-bullets" aria-label="Các biến môi trường Travis đã mã hóa">
+        <li><code>DOCKER_USERNAME</code>&mdash;Tên người dùng Docker Hub.</li>
+        <li><code>DOCKER_PASSWORD</code>&mdash;Mật khẩu Docker Hub.</li>
+        <li><code>AWS_ACCESS_KEY</code>&mdash;Khóa truy cập AWS được dùng bởi client dòng lệnh <code>ecs-cli</code> của Amazon.</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

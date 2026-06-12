@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 7: SQL: Cách PostgreSQL — DO</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0147.html">← Trước</a>
+    <a href="page_0149.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">148</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-17.</strong> Truy vấn đến JSON sử dụng json_agg</figcaption>
+        <pre class="code-block"><code>SELECT json_agg(f) As cats
+FROM (
+    SELECT MAX(fact_type_id) As max_type, category
+    FROM census.lu_fact_types
+    GROUP BY category
+) As f;</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">DO</h3>
+      <p class="no-indent">Lệnh DO cho phép bạn chèn một đoạn mã quy trình vào SQL của bạn ngay lập tức. Ví dụ, chúng ta sẽ tải dữ liệu được thu thập trong <span class="accent-word">Ví dụ 3-7</span> vào các bảng sản xuất từ bảng staging của chúng ta. Chúng ta sẽ sử dụng PL/pgSQL cho đoạn mã quy trình của mình, nhưng bạn có thể tự do sử dụng các ngôn ngữ khác.</p>
+
+      <p><span class="accent-word">Ví dụ 7-18</span> tạo ra một loạt các câu lệnh INSERT INTO SELECT. SQL cũng thực hiện một thao tác unpivot để chuyển đổi dữ liệu cột thành hàng.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0148_icon_warning.png" width="50" height="48" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text"><span class="accent-word">Ví dụ 7-18</span> chỉ là một phần danh sách mã cần thiết để xây dựng
+        <code>lu_fact_types</code>. Để có mã đầy đủ, hãy tham khảo tệp <code>building_census_tables.sql</code> là một phần của mã và dữ liệu tải xuống của cuốn sách.</p>
+      </div>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-18.</strong> Sử dụng DO để tạo SQL động</figcaption>
+        <pre class="code-block"><code>set search_path=census;
+DROP TABLE IF EXISTS lu_fact_types;
+CREATE TABLE lu_fact_types (
+    fact_type_id serial,
+    category varchar(100),
+    fact_subcats varchar(255)[],
+    short_name varchar(50),
+    CONSTRAINT pk_lu_fact_types PRIMARY KEY (fact_type_id)
+);
+
+DO language plpgsql
+$$
+DECLARE var_sql text;
+BEGIN
+    var_sql := string_agg(
+        'INSERT INTO lu_fact_types(category, fact_subcats, short_name)
+        SELECT
+            ''Housing'',
+            array_agg(s' || lpad(i::text,2,'0') || ') As fact_subcats,
+            ' || quote_literal('s' || lpad(i::text,2,'0')) || ' As short_name
+        FROM staging.factfinder_import
+        WHERE s' || lpad(I::text,2,'0') || ' ~ ''^[a-zA-Z]+'' ', ';'
+    )
+    FROM generate_series(1,51) As I;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">130<span class="sep">|</span>Chương 7: SQL: Cách PostgreSQL</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

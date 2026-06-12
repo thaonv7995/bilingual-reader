@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0650.html">← Trước</a>
+    <a href="page_0652.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">651</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ZonedDateTime utcTime = ldt.atZone(ZoneId.of("Z")); //Z implies UTC
+ZonedDateTime nyTime =
+    utcTime.withZoneSameInstant(ZoneId.of("America/New_York"));
+System.out.println(nyTime);</code></pre>
+      </figure>
+
+      <p class="no-indent">Đoạn mã trên in ra <code>2024-03-10T03:30-04:00[America/New_York]</code>, điều này cho thấy Java tự động chuyển thời gian về phía trước thành 3:30 sáng và chênh lệch múi giờ (zone offset) thành -4 do DST khi thời gian tại điểm đến rơi vào khoảng trống thời gian đó.</p>
+
+      <p>Điều ngược lại xảy ra khi DST kết thúc. Đồng hồ được dịch lùi lại 1 giờ. Vì vậy, ví dụ, vì DST kết thúc lúc 2 giờ sáng ngày 3 tháng 11 năm 2024 tại New York, ngay khi đồng hồ chạm mốc ngày/giờ này, chúng sẽ được chuyển lùi lại thành 1 giờ sáng. Do đó, người dân ở New York được trải nghiệm khoảng thời gian từ 1 giờ sáng đến 2 giờ sáng hai lần trong ngày hôm đó! Trong giờ đầu tiên, chênh lệch múi giờ (Zone offset) là -4 (vì DST vẫn đang được áp dụng tại thời điểm đó) và trong giờ thứ hai, nó là -5. Điều này nghe có vẻ thú vị, nhưng điều gì sẽ xảy ra khi một mốc thời gian từ một múi giờ khác không áp dụng DST trong khoảng thời gian này được chuyển đổi sang giờ New York?</p>
+
+      <p>Hãy cùng phân tích với cùng hai múi giờ là UTC và ET. Hãy tưởng tượng rằng bạn đang chuyển đổi thời gian liên tục từ 4 giờ sáng UTC trở đi sang ET. Việc chuyển đổi bất kỳ thời gian nào trước 5 giờ sáng UTC sang ET là rất dễ dàng. Vì DST đang ở trạng thái &quot;BẬT&quot; (&quot;ON&quot;) tại ET trong khoảng thời gian đó, nên thời gian ở ET sẽ chỉ là UTC trừ đi 4 (thay vì UTC trừ đi 5). Vì vậy, 5 giờ sáng UTC sẽ là 1 giờ sáng ET, không còn nghi ngờ gì nữa. Trong khoảng thời gian từ 5 giờ sáng UTC (bao gồm) đến 6 giờ sáng UTC (không bao gồm), DST vẫn đang BẬT vì đồng hồ ở ET chưa chạm đến</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

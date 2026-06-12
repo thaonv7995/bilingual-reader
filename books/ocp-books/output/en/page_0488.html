@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0487.html">← Prev</a>
+    <a href="page_0489.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">488</span>
+      </header>
+
+      <p class="no-indent">5. and another thread reads them. Since any thread could get a chance to run at any time, we
+      can&rsquo;t assume that the writer thread will always be able to set the instance fields before the
+      reader thread gets to read them. So, the reader thread uses a while loop to check whether
+      the writer thread has gotten a chance to update the <code>name</code>&nbsp;field. While the reader thread is
+      busy testing the <code>name</code>&nbsp;field to be not <code>null</code>&nbsp;, the OS will ultimately schedule the writer
+      thread to run and the writer thread will set the <code>id</code>&nbsp;field to <code>10</code>&nbsp;, the <code>name</code>&nbsp;field to
+      <code>&quot;bob&quot;</code>&nbsp;, and then the <code>id</code>&nbsp;field again to <code>20</code>&nbsp;. Observe that at the time of setting the
+      <code>name</code>&nbsp;field to <code>&quot;bob&quot;</code>&nbsp;, the value of the <code>id</code>&nbsp;field, as seen by the writer thread, is <code>10</code>&nbsp;.
+      Now, since the <code>name</code>&nbsp;field is marked <code>volatile</code>&nbsp;, the JVM guarantees that any thread
+      that tries to read this field after it has been written to, will observe that the write has really
+      been executed, i.e., it will see the updated value. Furthermore, that the reader thread will
+      see the same or more recent values of other fields also (even if they are not marked
+      <code>volatile</code>&nbsp;) that the writer thread has seen at the time of writing to the volatile field.
+      Thus, the reader thread is guaranteed to see the <code>name</code>&nbsp;field change from <code>null</code>&nbsp;to not
+      <code>null</code>&nbsp;at some point. It is also guaranteed to NOT see the value of the <code>id</code>&nbsp;field as <code>0</code>
+      because at the time of writing to the <code>name</code>&nbsp;field, the value of the <code>id</code>&nbsp;field is <code>10</code>&nbsp;. Note
+      that the reader thread is not guaranteed to see the update made to the <code>id</code>&nbsp;field <strong>after</strong> the
+      writer thread has updated the <code>name</code>&nbsp;field because the <code>id</code>&nbsp;field is not marked
+      <code>volatile</code>&nbsp;.</p>
+
+      <p>From the above discussion, you can see that the factorial program can be fixed by marking
+      the <code>result</code>&nbsp;field <code>volatile</code>&nbsp;.</p>
+
+      <p class="no-indent"><strong class="run-in">6. Locking the same monitor as the one unlocked by another thread&mdash;</strong> In Java,
+      every object is associated with a monitor (also known as an&nbsp;intrinsic lock). This monitor
+      can be locked and unlocked by a thread by using a &ldquo;synchronized&rdquo; block. At most one
+      thread can lock the monitor at a time. If a monitor is already locked by a thread, other
+      threads have to wait until the thread that has already locked the monitor unlocks it.</p>
+
+      <p>Although monitors are designed to solve a bigger problem than just making updates
+      visible to other threads, they can, technically, be used to establish a happens-before
+      relationship as well.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

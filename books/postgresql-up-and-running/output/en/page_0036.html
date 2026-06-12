@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 2.5mm 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 1.5mm 0 2mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0035.html">← Prev</a>
+    <a href="page_0037.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">from pgAdmin” on page 61. If you are ever unsure where these files are, run the
+      Example 2-1 query as a superuser while connected to any of your databases.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 2-1</strong><br>Location of configuration files</figcaption>
+        <pre class="code-block"><code>SELECT name, setting FROM pg_settings WHERE category = 'File Locations';
+       name        |                 setting
+-------------------+------------------------------------------
+ config_file       | /etc/postgresql/9.3/main/postgresql.conf
+ data_directory    | /var/lib/postgresql/9.3/main
+ external_pid_file | /var/run/postgresql/9.3-main.pid
+ hba_file          | /etc/postgresql/9.3/main/pg_hba.conf
+ ident_file        | /etc/postgresql/9.3/main/pg_ident.conf</code></pre>
+      </figure>
+
+      <h3 class="tool-title">postgresql.conf</h3>
+      <p>postgresql.conf controls the life-sustaining settings of the PostgreSQL server instance as
+      well as default settings for new databases. You can override many settings at the database,
+      user, session, and even function levels. You’ll find many details on how to fine-tune your
+      server by tweaking settings in the article <a href="http://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server" class="accent-word">Tuning Your PostgreSQL Server</a>.</p>
+
+      <p>An easy way to check the current settings is to query the <code>pg_settings</code> view, as we
+      demonstrate in Example 2-2. We provide a synopsis of key setting and description of
+      the key columns, but to delve deeper, we suggest you check the official documentation,
+      <a href="http://bit.ly/1vnIlhH" class="accent-word">pg_settings</a>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 2-2</strong><br>Key settings</figcaption>
+        <pre class="code-block"><code>SELECT name, context (1)
+, unit (2)
+,
+    setting, boot_val, reset_val (3)
+FROM pg_settings
+WHERE name IN ( 'listen_addresses', 'max_connections', 'shared_buffers', 'effective_cache_size', 'work_mem', 'maintenance_work_mem'
+)
+ORDER BY context, name;
+         name         |  context   | unit | setting | boot_val  | reset_val
+----------------------+------------+------+---------+-----------+-----------
+ listen_addresses     | postmaster |      | *       | localhost | *
+ max_connections      | postmaster |      | 100     | 100       | 100
+ shared_buffers       | postmaster | 8kB  | 131584  | 1024      | 131584
+ effective_cache_size | user       | 8kB  | 16384   | 16384     | 16384
+ maintenance_work_mem | user       | kB   | 16384   | 16384     | 16384
+ work_mem             | user       | kB   | 5120    | 1024      | 5120</code></pre>
+      </figure>
+
+      <p class="no-indent">(1) If context is set to postmaster, changing this parameter requires a restart of
+      the PostgreSQL service. If it’s set to user, changes just require a reload to take
+      effect globally. Restarting terminates active connections, whereas reloading does
+      not.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">18<span class="sep">|</span>Chapter 2: Database Administration</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

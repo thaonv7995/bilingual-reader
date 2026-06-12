@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 3: Performance and Scalability</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chapter 3: Performance and Scalability</p>
+
+      <p class="no-indent">It should be easy to find the reason by comparing both execution plans.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>------------------------------------------------------
+| Id | Operation         | Name       | Rows  | Cost |
+------------------------------------------------------
+|  0 | SELECT STATEMENT  |            |     1 |  972 |
+|  1 |  SORT AGGREGATE   |            |     1 |      |
+|* 2 |   INDEX RANGE SCAN| SCALE_SLOW |  3000 |  972 |
+------------------------------------------------------</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>------------------------------------------------------
+| Id   Operation         | Name       | Rows  | Cost |
+------------------------------------------------------
+|  0 | SELECT STATEMENT  |            |     1 |   13 |
+|  1 |  SORT AGGREGATE   |            |     1 |      |
+|* 2 |   INDEX RANGE SCAN| SCALE_FAST |  3000 |   13 |
+------------------------------------------------------</code></pre>
+      </figure>
+
+      <p>The execution plans are almost identical&mdash;they just use a different index. Even though the cost values reflect the speed difference, the reason is not visible in the execution plan.</p>
+
+      <p>It seems like we are facing a &ldquo;slow index experience&rdquo;; the query is slow although it uses an index. Nevertheless we do not believe in the myth of the &ldquo;broken index&rdquo; anymore. Instead, we remember the two ingredients that make an index lookup slow: (1) the table access, and (2) scanning a wide index range.</p>
+
+      <p>Neither execution plan shows a <code>TABLE ACCESS BY INDEX ROWID</code> operation so one execution plan must scan a wider index range than the other. So where does an execution plan show the scanned index range? In the predicate information of course!</p>
+
+      <aside class="sidebar-note">
+        <h3>Tip</h3>
+        <p>Pay attention to the predicate information.</p>
+      </aside>
+
+      <p>The predicate information is by no means an unnecessary detail you can omit as was done above. An execution plan without predicate information is incomplete. That means you cannot see the reason for the performance difference in the plans shown above. If we look at the complete execution plans, we can see the difference.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">82</p>
+    </article>
+  </main>
+</body>
+</html>

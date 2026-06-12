@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 3: Figure 3.9 and client-side encryption</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page figure.diagram + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0117.html">← Prev</a>
+    <a href="page_0119.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Protecting sensitive configuration information</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">93</span>
+      </header>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0118_fig_3_9.png" width="1313" height="621" alt="Figure 3.9 — spring.datasource.password property stored as an encrypted value">
+        <figcaption><strong>Figure 3.9</strong><br>While the <code>spring.datasource.password</code> is encrypted in the property file, it&rsquo;s decrypted when the configuration for the licensing service is retrieved. This is still problematic.</figcaption>
+      </figure>
+
+      <p class="no-indent">By default, Spring Cloud Config will do all the property decryption on the server and pass the results back to the applications consuming the properties as plain, unencrypted text. However, you can tell Spring Cloud Config to not decrypt on the server and make it the responsibility of the application retrieving the configuration data to decrypt the encrypted properties.</p>
+
+      <h4 class="subsection-title">3.4.4 Configure microservices to use encryption on the client side</h4>
+
+      <p>To enable client side decryption of properties, you need to do three things:</p>
+
+      <ol class="manning-numbered" aria-label="Steps to enable client-side decryption">
+        <li>Configure Spring Cloud Config to not decrypt properties on the server side.</li>
+        <li>Set the symmetric key on the licensing server.</li>
+        <li>Add the <code>spring-security-rsa</code> JARs to the licensing services <code>pom.xml</code> file.</li>
+      </ol>
+
+      <p>The first thing you need to do is disable the server-side decryption of properties in Spring Cloud Config. This is done by setting the Spring Cloud Config&rsquo;s <code>src/main/resources/application.yml</code> file to set the property <code>spring.cloud.config.server.encrypt.enabled: false</code>. That&rsquo;s all you have to do on the Spring Cloud Config server.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

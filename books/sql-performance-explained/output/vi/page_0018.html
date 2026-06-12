@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 1: Anatomy of an Index</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--chapter {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--chapter .rh-left,
+    .prose-page .running-head--chapter .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--chapter .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--head {
+      margin-bottom: 4mm;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .operation-label {
+      margin: 4mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--chapter">
+        <span class="rh-left"></span>
+        <span class="rh-center">Chương 1: Giải phẫu của một chỉ mục</span>
+        <span class="rh-right"></span>
+      </header>
+      <hr class="chapter-rule chapter-rule--head" aria-hidden="true">
+
+      <p class="no-indent">Nguồn gốc của huyền thoại &ldquo;chỉ mục chậm&rdquo; là niềm tin sai lầm rằng một lần tra cứu chỉ mục chỉ đơn giản là đi qua cây, do đó ý tưởng rằng một chỉ mục chậm phải do một cây &ldquo;bị hỏng&rdquo; hoặc &ldquo;mất cân bằng&rdquo;. Sự thật là bạn thực sự có thể hỏi hầu hết các cơ sở dữ liệu cách họ sử dụng một chỉ mục. Cơ sở dữ liệu Oracle khá chi tiết trong khía cạnh này và có ba hoạt động khác nhau mô tả một lần tra cứu chỉ mục cơ bản:</p>
+
+      <p class="operation-label">QUÉT CHỈ MỤC DUY NHẤT</p>
+      <p>Hoạt động <code>INDEX UNIQUE SCAN</code> chỉ thực hiện việc đi qua cây. Cơ sở dữ liệu Oracle sử dụng hoạt động này nếu một ràng buộc duy nhất đảm bảo rằng tiêu chí tìm kiếm sẽ khớp với không quá một mục.</p>
+
+      <p class="operation-label">QUÉT CHỈ MỤC PHẠM VI</p>
+      <p>Hoạt động <code>INDEX RANGE SCAN</code> thực hiện việc đi qua cây <i>và</i> theo dõi chuỗi nút lá để tìm tất cả các mục khớp. Đây là hoạt động dự phòng nếu có thể có nhiều mục khớp với tiêu chí tìm kiếm.</p>
+
+      <p class="operation-label">TRUY CẬP BẢNG THEO ROWID CHỈ MỤC</p>
+      <p>Hoạt động <code>TABLE ACCESS BY INDEX ROWID</code> truy xuất hàng từ bảng. Hoạt động này (thường) được thực hiện cho mỗi bản ghi khớp từ một hoạt động quét chỉ mục trước đó.</p>
+
+      <p>Điều quan trọng là một <code>INDEX RANGE SCAN</code> có thể đọc một phần lớn của một chỉ mục. Nếu có một lần truy cập bảng cho mỗi hàng, truy vấn có thể trở nên chậm ngay cả khi sử dụng một chỉ mục.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">8</p>
+    </article>
+  </main>
+</body>
+</html>

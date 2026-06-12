@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: Eureka REST API and Figure 4.5</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .topic-box {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .topic-box h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .topic-box p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .topic-box p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .footnotes {
+      margin: 0 0 2.5mm;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+    .prose-page.chapter-page .footnotes p {
+      text-indent: 0;
+      margin: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0133.html">← Prev</a>
+    <a href="page_0135.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">109</span>
+        <span class="rh-center">Registering services with Spring Eureka</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">The last attribute, the <code>eureka.serviceUrl.defaultZone</code> attribute, holds a comma-separated list of Eureka services the client will use to resolve to service locations. For our purposes, you&rsquo;re only going to have one Eureka service.</p>
+
+      <aside class="topic-box" aria-label="Eureka high availability">
+        <h3>Eureka high availability</h3>
+        <p>Setting up multiple URL services isn&rsquo;t enough for high availability. The <code>eureka.serviceUrl.defaultZone</code> attribute only provides a list of Eureka services for the client to communicate with. You also need to set up the Eureka services to replicate the contents of their registry with each other.</p>
+        <p>A group of Eureka registries communicate with each other using a peer-to-peer communication model where each Eureka service has to be configured to know about the other nodes in the cluster. Setting up a Eureka cluster is outside of the scope of this book. If you&rsquo;re interested in setting up a Eureka cluster, please visit the Spring Cloud project&rsquo;s website for further information.<sup>a</sup></p>
+      </aside>
+
+      <div class="footnotes">
+        <p><sup>a</sup> <a href="http://projects.spring.io/spring-cloud/spring-cloud.html">http://projects.spring.io/spring-cloud/spring-cloud.html</a></p>
+      </div>
+
+      <p>At this point you&rsquo;ll have a single service registered with your Eureka service.</p>
+
+      <p>You can use Eureka&rsquo;s REST API to see the contents of the registry. To see all the instances of a service, hit the following GET endpoint:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>http://&lt;eureka service&gt;:8761/eureka/apps/&lt;APPID&gt;</code></pre>
+      </figure>
+
+      <p>For instance, to see the organization service in the registry you can call <code>http://localhost:8761/eureka/apps/organizationservice</code>.</p>
+
+      <figure class="diagram" aria-label="Figure 4.5">
+        <img src="../assets/images/page_0134_fig_4_5.png" width="1313" height="548" alt="Figure 4.5 — Calling the Eureka REST API to see the organization service instance registered in Eureka">
+        <figcaption><strong>Figure 4.5</strong><br>Calling the Eureka REST API to see the organization will show the IP address of the service instances registered in Eureka, along with the service status.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

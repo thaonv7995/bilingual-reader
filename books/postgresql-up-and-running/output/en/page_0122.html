@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types — Custom Types</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0121.html">← Prev</a>
+    <a href="page_0123.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">122</span>
+      </header>
+
+      <p class="no-indent">We create an instance of a chicken without adding it to the chicken table itself; hence
+      we’re able to repeat id with impunity. We take our array of two chickens, stuff them into
+      one duck, and add it to the ducks table. We take the duck we added and stuff it into the
+      turkeys table.</p>
+
+      <p>Finally, let’s see what we have in our turkey:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM turkeys;
+output
+------------------------
+id |         ducks
+---+-----------------------
+ 1 | {"(1,\"{(1),(1)}\")"}</code></pre>
+      </figure>
+
+      <p>We can also replace subelements of our turducken. This next example replaces our
+      second chicken in our first turkey with a different chicken:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>UPDATE turkeys SET ducks[1].chickens[2] = ROW(3)::chickens
+WHERE id = 1 RETURNING *;
+output
+--------------
+id |         ducks
+---+-----------------------
+ 1 | {"(1,\"{(1),(3)}\")"}</code></pre>
+      </figure>
+
+      <p>We used the RETURNING clause as discussed in <span class="accent-word">“Returning Affected Records to the
+      User”</span> on page 128 to output the changed record.</p>
+
+      <p>PostgreSQL internally keeps track of object dependencies. The <code>ducks.chickens</code> column
+      is dependent on the <code>chickens</code> table. The <code>turkeys.ducks</code> column is dependent on the
+      <code>ducks</code> table. You won’t be able to drop the <code>chickens</code> table without specifying CASCADE
+      or first dropping the <code>ducks.chickens</code> column. If you do a CASCADE, the <code>ducks.chick</code>‐
+      <code>ens</code> column will be gone, and without warning, your turkeys will have no chickens in
+      their ducks.</p>
+
+      <h3 class="subsection-title">Building Custom Data Types</h3>
+      <p class="no-indent">Although you can easily create composite types just by creating a table, at some point,
+      you’ll probably want to build your own from scratch. For example, let’s build a complex
+      number data type with the following statement:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TYPE complex_number AS (r double precision, i double precision);</code></pre>
+      </figure>
+
+      <p>We can then use this complex number as a column type:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE circuits (circuit_id serial PRIMARY KEY, ac_volt complex_number);</code></pre>
+      </figure>
+
+      <p>We can then query our table with statements such as:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT circuit_id, (ac_volt).* FROM circuits;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">104<span class="sep">|</span>Chapter 5: Data Types</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

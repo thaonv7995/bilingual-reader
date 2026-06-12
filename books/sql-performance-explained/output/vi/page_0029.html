@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục chậm, Phần II</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet,
+    .prose-page figure.listing {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.listing figcaption {
+      margin: 0 0 2mm;
+      font-size: 10pt;
+      font-weight: 700;
+      text-indent: 0;
+    }
+
+    .prose-page figure.code-snippet pre.code-block,
+    .prose-page figure.listing pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">29</span>
+      </header>
+      <p class="chapter-running-head">Chỉ mục chậm, Phần II</p>
+
+      <p class="no-indent">Việc thay đổi một chỉ mục có thể có những tác động không mong muốn. Trong ví dụ của chúng tôi, đó là ứng dụng danh bạ điện thoại nội bộ đã trở nên rất chậm kể từ khi sáp nhập. Phân tích đầu tiên đã xác định truy vấn sau đây là nguyên nhân gây ra sự chậm trễ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, subsidiary_id, phone_number
+  FROM employees
+ WHERE last_name  = 'WINAND'
+   AND subsidiary_id = 30;</code></pre>
+      </figure>
+
+      <p>Kế hoạch thực thi là:</p>
+
+      <figure class="listing">
+        <figcaption>Ví dụ&nbsp;2.1.&nbsp;Kế hoạch thực thi với chỉ mục khóa chính đã sửa đổi</figcaption>
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id |Operation                   | Name         | Rows | Cost |
+---------------------------------------------------------------
+| 0 |SELECT STATEMENT            |              |    1 |   <strong>30</strong> |
+|*1 | TABLE ACCESS BY INDEX ROWID| EMPLOYEES    |    1 |   30 |
+|*2 |  <strong>INDEX RANGE SCAN</strong>          | <strong>EMPLOYEES_PK</strong> |   40 |    2 |
+---------------------------------------------------------------
+
+Thông tin điều kiện (được xác định bởi id hoạt động):
+---------------------------------------------------
+  1 - filter("LAST_NAME"='WINAND')
+  2 - access("SUBSIDIARY_ID"=30)</code></pre>
+      </figure>
+
+      <p>Kế hoạch thực thi sử dụng một chỉ mục và có giá trị chi phí tổng thể là 30. Cho đến nay, mọi thứ đều ổn. Tuy nhiên, điều đáng nghi ngờ là nó sử dụng chỉ mục mà chúng tôi vừa thay đổi—đó là lý do đủ để nghi ngờ rằng sự thay đổi chỉ mục của chúng tôi đã gây ra vấn đề hiệu suất, đặc biệt khi nhớ lại định nghĩa chỉ mục cũ—nó bắt đầu với cột <code>EMPLOYEE_ID</code> mà hoàn toàn không nằm trong điều kiện <strong>where</strong>. Truy vấn không thể sử dụng chỉ mục đó trước đây.</p>
+
+      <p>Để phân tích thêm, sẽ rất tốt nếu so sánh kế hoạch thực thi trước và sau khi thay đổi. Để có kế hoạch thực thi gốc, chúng tôi có thể chỉ cần triển khai lại định nghĩa chỉ mục cũ, tuy nhiên hầu hết các cơ sở dữ liệu cung cấp một phương pháp đơn giản hơn để ngăn việc sử dụng một chỉ mục cho một truy vấn cụ thể. Ví dụ sau đây sử dụng một <em>optimizer hint</em> của Oracle cho mục đích đó.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT <strong>/*+ NO_INDEX(EMPLOYEES EMPLOYEE_PK) */</strong>
+       first_name, last_name, subsidiary_id, phone_number
+  FROM employees
+ WHERE last_name  = 'WINAND'
+   AND subsidiary_id = 30;</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">19</p>
+    </article>
+  </main>
+</body>
+</html>

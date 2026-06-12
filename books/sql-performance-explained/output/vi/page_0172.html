@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 8: Modifying Data</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 8: Chỉnh sửa Dữ liệu</p>
+
+      <h3 class="section-title">Xóa</h3>
+
+      <p class="no-indent">Khác với câu lệnh <code>insert</code>, câu lệnh <code>delete</code> có một điều kiện <code>where</code> có thể sử dụng tất cả các phương pháp được mô tả trong Chương&nbsp;2, &ldquo;Điều kiện Where&rdquo;, để tận dụng trực tiếp từ các chỉ mục. Thực tế, câu lệnh <code>delete</code> hoạt động giống như một câu lệnh <code>select</code> mà sau đó có một bước bổ sung để xóa các hàng đã xác định.</p>
+
+      <p>Việc xóa một hàng thực tế là một quá trình tương tự như việc chèn một hàng mới&mdash;đặc biệt là việc loại bỏ các tham chiếu từ các chỉ mục và các hoạt động để giữ cho các cây chỉ mục cân bằng. Biểu đồ hiệu suất được hiển thị trong Hình&nbsp;8.2 do đó rất giống với biểu đồ cho việc chèn.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;8.2.&nbsp;Hiệu suất Xóa theo Số lượng Chỉ mục</figcaption>
+        <img src="../assets/images/page_0172_fig_8_2.png" width="1027" height="440" alt="Hình 8.2. Hiệu suất Xóa theo Số lượng Chỉ mục">
+      </figure>
+
+      <p>Về lý thuyết, chúng ta mong đợi hiệu suất xóa tốt nhất cho một bảng không có chỉ mục nào&mdash;như đối với việc chèn. Tuy nhiên, nếu không có chỉ mục, cơ sở dữ liệu phải đọc toàn bộ bảng để tìm các hàng cần xóa. Điều đó có nghĩa là việc xóa hàng sẽ nhanh nhưng việc tìm kiếm sẽ rất chậm. Trường hợp này do đó không được hiển thị trong Hình&nbsp;8.2.</p>
+
+      <p>Tuy nhiên, việc thực hiện một câu lệnh <code>delete</code> mà không có chỉ mục vẫn có thể hợp lý giống như việc thực hiện một câu lệnh <code>select</code> mà không có chỉ mục nếu nó trả về một phần lớn của bảng.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Ngay cả các câu lệnh <code>delete</code> và <code>update</code> cũng có một kế hoạch thực thi.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">162</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

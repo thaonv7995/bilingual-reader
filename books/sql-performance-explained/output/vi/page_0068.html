@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">68</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  SELECT *
+    FROM employees
+   WHERE date_of_birth IS NULL;</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>----------------------------------------------------
+| Id | Operation         | Name      | Rows | Cost |
+----------------------------------------------------
+|  0 | SELECT STATEMENT  |           |    1 |  477 |
+|* 1 |  TABLE ACCESS FULL| EMPLOYEES |    1 |  477 |
+----------------------------------------------------</code></pre>
+      </figure>
+
+      <p class="no-indent">Tên hàm <code>BLACKBOX</code> nhấn mạnh thực tế rằng bộ tối ưu hóa không biết hàm này làm gì. Chúng ta có thể thấy rằng hàm này truyền giá trị đầu vào qua, nhưng đối với cơ sở dữ liệu, nó chỉ là một hàm trả về một số. Thuộc tính NOT NULL của tham số bị mất. Mặc dù chỉ mục phải có tất cả các hàng, cơ sở dữ liệu không biết điều đó nên không thể sử dụng chỉ mục cho truy vấn.</p>
+
+      <p>Nếu bạn biết rằng hàm này không bao giờ trả về <code>NULL</code>, như trong ví dụ này, bạn có thể thay đổi truy vấn để phản ánh điều đó:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  SELECT *
+    FROM employees
+   WHERE date_of_birth IS NULL
+     AND blackbox(employee_id) IS NOT NULL;</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>-------------------------------------------------------------
+| Id | Operation                   | Name       | Rows | Cost |
+-------------------------------------------------------------
+|  0 | SELECT STATEMENT            |            |    1 |    3 |
+|  1 |  TABLE ACCESS BY INDEX ROWID| EMPLOYEES  |    1 |    3 |
+|* 2 |   INDEX RANGE SCAN          | EMP_DOB_BB |    1 |    2 |
+-------------------------------------------------------------</code></pre>
+      </figure>
+
+      <p class="no-indent">Điều kiện bổ sung trong câu lệnh <code>where</code> luôn đúng và do đó không thay đổi kết quả. Tuy nhiên, cơ sở dữ liệu Oracle nhận ra rằng bạn chỉ truy vấn các hàng phải có trong chỉ mục theo định nghĩa.</p>
+
+      <p>Thật không may, không có cách nào để đánh dấu một hàm không bao giờ trả về <code>NULL</code>, nhưng bạn có thể di chuyển cuộc gọi hàm đến một cột ảo (kể từ 11g) và đặt một ràng buộc NOT NULL trên cột này.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  ALTER TABLE employees ADD bb_expression
+        GENERATED ALWAYS AS (blackbox(employee_id)) NOT NULL;
+  DROP    INDEX emp_dob_bb;
+  CREATE INDEX emp_dob_bb
+       ON employees (date_of_birth, bb_expression);</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">58</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Indexing Order By</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Indexing Order By</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">The sort operation <code>SORT ORDER BY</code> disappeared from the execution plan even though the query still has an <code><strong>order by</strong></code> clause. The database exploits the index order and skips the explicit sort operation.</p>
+
+      <aside class="sidebar-note">
+        <h3>Important</h3>
+        <p>If the index order corresponds to the <code><strong>order by</strong></code> clause, the database can omit the explicit sort operation.</p>
+      </aside>
+
+      <p>Even though the new execution plan has fewer operations, the cost value has increased considerably because the clustering factor of the new index is worse (see &ldquo;Automatically Optimized Clustering Factor&rdquo; on page 133).</p>
+
+      <p>At this point, it should just be noted that the cost value is not always a good indicator of the execution effort.</p>
+
+      <p>For this optimization, it is sufficient that the scanned index range is sorted according to the <code><strong>order by</strong></code> clause. Thus the optimization also works for this particular example when sorting by <code>PRODUCT_ID</code> only:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT sale_date, product_id, quantity
+  FROM sales
+ WHERE sale_date = TRUNC(sysdate) - INTERVAL '1' DAY
+ <strong>ORDER BY</strong> product_id;</code></pre>
+      </figure>
+
+      <p>In Figure&nbsp;6.1 we can see that the <code>PRODUCT_ID</code> is the only relevant sort criterion in the scanned index range. Hence the index order corresponds to the <code><strong>order by</strong></code> clause in this index range so that the database can omit the sort operation.</p>
+
+      <figure class="diagram">
+        <figcaption>Figure&nbsp;6.1.&nbsp;Sort Order in the Relevant Index Range</figcaption>
+        <img src="../assets/images/page_0141_fig_6_1.png" width="909" height="492" alt="Figure 6.1. Sort Order in the Relevant Index Range">
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">131</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

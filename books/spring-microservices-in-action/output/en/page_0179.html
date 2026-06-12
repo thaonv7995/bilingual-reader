@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Services gateway introduction</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets {
+      margin-top: -0.5mm;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0178.html">← Prev</a>
+    <a href="page_0180.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">154</span>
+        <span class="rh-center">CHAPTER 6 <em>Service routing with Spring Cloud and Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent"><strong class="run-in">First,</strong> it&rsquo;s difficult to consistently implement these capabilities in each service being built. Developers are focused on delivering functionality, and in the whirlwind of day-to-day activity they can easily forget to implement service logging or tracking. (I personally am guilty of this.) Unfortunately, for those of us working in a heavily regulated industry, such as financial services or healthcare, showing consistent and documented behavior in your systems is often a key requirement for complying with government regulations.</p>
+
+      <p class="no-indent"><strong class="run-in">Second,</strong> properly implementing these capabilities is a challenge. Things like microservice security can be a pain to set up and configure with each service being implemented. Pushing the responsibilities to implement a cross-cutting concern like security down to the individual development teams greatly increases the odds that someone will not implement it properly or will forget to do it.</p>
+
+      <p class="no-indent"><strong class="run-in">Third,</strong> you&rsquo;ve now created a hard dependency across all your services. The more capabilities you build into a common framework shared across all your services, the more difficult it is to change or add behavior in your common code without having to recompile and redeploy all your services. This might not seem like a big deal when you have six microservices in your application, but it&rsquo;s a big deal when you have a larger number of services, perhaps 30 or more. Suddenly an upgrade of core capabilities built into a shared library becomes a months-long migration process.</p>
+
+      <p>To solve this problem, you need to abstract these cross-cutting concerns into a service that can sit independently and act as a filter and router for all the microservice calls in your application. This cross-cutting concern is called a services gateway. Your service clients no longer directly call a service. Instead, all calls are routed through the service gateway, which acts as a single Policy Enforcement Point (PEP), and are then routed to a final destination.</p>
+
+      <p>In this chapter, we&rsquo;re going to see how to use Spring Cloud and Netflix&rsquo;s Zuul to implement a services gateway. Zuul is Netflix&rsquo;s open source services gateway implementation. Specifically, we&rsquo;re going to look at how to use Spring Cloud and Zuul to</p>
+
+      <ul class="manning-bullets" aria-label="Chapter 6 objectives">
+        <li>Put all service calls behind a single URL and map those calls using service discovery to their actual service instances</li>
+        <li>Inject correlation IDs into every service call flowing through the service gateway</li>
+        <li>Inject the correlation ID back from the HTTP response sent back from the client</li>
+        <li>Build a dynamic routing mechanism that will route specific individual organizations to a service instance endpoint that&rsquo;s different than what everyone else is using</li>
+      </ul>
+
+      <p>Let&rsquo;s dive into more detail on how a services gateway fits into the overall microservices being built in this book.</p>
+
+      <h4 class="subsection-title">6.1 What is a services gateway?</h4>
+
+      <p>Until now, with the microservices you&rsquo;ve built in earlier chapters, you&rsquo;ve either directly called the individual services through a web client or called them programmatically via a service discovery engine such as Eureka.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

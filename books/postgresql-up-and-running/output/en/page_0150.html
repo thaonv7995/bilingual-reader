@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — FILTER / Window Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0149.html">← Prev</a>
+    <a href="page_0151.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">150</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code> jojo    | {74,NULL,NULL,NULL,74,..} | {NULL,83,NULL,NULL,NULL,79,..}
+ jdoe    | {75,NULL,NULL,NULL,78,..} | {NULL,72,NULL,NULL,NULL,72..}
+ robe    | {68,NULL,NULL,NULL,77,..} | {NULL,83,NULL,NULL,NULL,85,..}
+ lhsu    | {84,NULL,NULL,NULL,80,..} | {NULL,72,NULL,NULL,NULL,72,..}
+(4 rows)</code></pre>
+      </figure>
+
+      <p class="no-indent">Observe that in <span class="accent-word">Example 7-21</span> we get a bunch of <code>NULL</code>s in our arrays. We could work
+      around this issue with some clever use of subselects, but most of those will be more
+      verbose and slower than the <code>FILTER</code> alternative shown in <span class="accent-word">Example 7-22</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-22.</strong> FILTER used with array_agg</figcaption>
+        <pre class="code-block"><code>SELECT student,
+    array_agg(score) FILTER (WHERE subject ='algebra') As algebra,
+    array_agg(score) FILTER (WHERE subject ='physics') As physics
+FROM test_scores
+GROUP BY student;
+ student | algebra | physics
+---------+---------+---------
+ jojo    | {74,74} | {83,79}
+ jdoe    | {75,78} | {72,72}
+ robe    | {68,77} | {83,85}
+ lhsu    | {84,80} | {72,72}</code></pre>
+      </figure>
+
+      <p>The <code>FILTER</code> clause works for all aggregate functions, not just aggregate functions built
+      into PostgreSQL.</p>
+
+      <h3 class="subsection-title">Window Functions</h3>
+      <p class="no-indent">Window functions are a common ANSI SQL feature supported in PostgreSQL since
+      version 8.4. A window function has the prescience to see and use data beyond the current
+      row; hence the term window. A window defines which other rows need to be considered
+      in addition to the current row. Windows let you add aggregate information to each row
+      of your output where the aggregation involves other rows in the same window. Window
+      functions such as <code>row_number</code> and <code>rank</code> are useful for ordering your data in sophisticated
+      ways that use rows outside the selected results but within a window.</p>
+
+      <p>Without window functions, you&rsquo;d have to resort to using joins and subqueries to poll
+      neighboring rows. On the surface, window functions violate the set-based principle of
+      SQL, but we mollify the purist by claiming that they are merely shorthand. You can find
+      more details and examples in <span class="accent-word">Window Functions</span>.</p>
+
+      <p><span class="accent-word">Example 7-23</span> gives you a quick start. Using a window function, we can obtain both the
+      detail data and the average value for all records with <code>fact_type_id</code> of 86 in one single
+      SELECT. Note that the WHERE clause is always evaluated before the window function.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">132<span class="sep">|</span>Chapter 7: SQL: The PostgreSQL Way</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

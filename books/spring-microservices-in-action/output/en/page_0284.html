@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 9: Distributed tracing with Spring Cloud Sleuth and Zipkin</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.manning-chapter-opener {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 10pt;
+      line-height: 1.38;
+      color: #262626;
+    }
+
+    .prose-page.manning-chapter-opener .chapter-head {
+      position: relative;
+      margin: 0 0 8mm;
+      padding: 0 0 3mm;
+      text-align: right;
+    }
+
+    .prose-page.manning-chapter-opener .chapter-head__num {
+      position: absolute;
+      right: 0;
+      top: -2mm;
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 92pt;
+      font-weight: 400;
+      font-style: italic;
+      line-height: 0.85;
+      color: #e6e6e6;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .prose-page.manning-chapter-opener .chapter-head__title {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 30pt;
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1.08;
+      color: #476b85;
+      text-align: right;
+    }
+
+    .prose-page.manning-chapter-opener .chapter-head__rule {
+      margin: 3mm 0 0 auto;
+      width: 72%;
+      border: none;
+      border-top: 0.25mm solid #476b85;
+    }
+
+    .prose-page.manning-chapter-opener .chapter-covers {
+      margin: 0 0 10mm;
+      padding: 4mm 5mm 4.5mm;
+      max-width: 92mm;
+      background: #f7f5e8;
+    }
+
+    .prose-page.manning-chapter-opener .chapter-covers__label {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 700;
+      font-style: italic;
+      line-height: 1.2;
+      color: #476b85;
+    }
+
+    .prose-page.manning-chapter-opener ul.chapter-covers__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .prose-page.manning-chapter-opener ul.chapter-covers__list li {
+      position: relative;
+      margin: 0 0 2mm;
+      padding-left: 4.5mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      line-height: 1.32;
+      text-align: left;
+      color: #476b85;
+    }
+
+    .prose-page.manning-chapter-opener ul.chapter-covers__list li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.32;
+      color: #476b85;
+    }
+
+    .prose-page.manning-chapter-opener .chapter-lead {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.manning-chapter-opener p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.manning-chapter-opener p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.manning-chapter-opener .page-folio {
+      bottom: 10mm;
+      font-style: normal;
+      font-size: 9pt;
+      font-weight: 700;
+    }
+
+    .prose-page.manning-chapter-opener .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+
+    .prose-page.manning-chapter-opener .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0283.html">← Prev</a>
+    <a href="page_0285.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page manning-chapter-opener">
+      <header class="chapter-head">
+        <p class="chapter-head__num" aria-hidden="true">9</p>
+        <h1 class="chapter-head__title">Distributed tracing with<br>Spring Cloud Sleuth<br>and Zipkin</h1>
+        <hr class="chapter-head__rule" aria-hidden="true">
+      </header>
+
+      <section class="chapter-covers" aria-labelledby="chapter-covers-label">
+        <h2 class="chapter-covers__label" id="chapter-covers-label">This chapter covers</h2>
+        <ul class="chapter-covers__list">
+          <li>Using Spring Cloud Sleuth to inject tracing information into service calls</li>
+          <li>Using log aggregation to see logs for distributed transaction</li>
+          <li>Querying via a log aggregation tool</li>
+          <li>Using OpenZipkin to visually understand a user&rsquo;s transaction as it flows across multiple microservice calls</li>
+          <li>Customizing tracing information with Spring Cloud Sleuth and Zipkin</li>
+        </ul>
+      </section>
+
+      <p class="chapter-lead no-indent">The microservices architecture is a powerful design paradigm for breaking down complex monolithic software systems into smaller, more manageable pieces. These manageable pieces can be built and deployed independently of each other; however, this flexibility comes at a price: complexity. Because microservices are distributed by nature, trying to debug where a problem is occurring can be maddening. The distributed nature of the services means that you have to trace one or more transactions across multiple services, physical machines, and different data stores, and try to piece together what exactly is going on.</p>
+
+      <p class="page-folio no-indent">259</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

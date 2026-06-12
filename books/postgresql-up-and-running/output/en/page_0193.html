@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — Avoid SELECT *</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + figure.code-snippet {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 0.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page figure.code-snippet--sql pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      padding: 0;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet--sql pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0192.html">← Prev</a>
+    <a href="page_0194.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">193</span>
+      </header>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0193_fig_9_6.png" width="1246" height="83" alt="Figure 9-6. Graphical plan of removing subqueries">
+        <figcaption>Figure 9-6. Graphical plan of removing subqueries</figcaption>
+      </figure>
+
+      <p class="no-indent">Keep in mind that we&rsquo;re not asking you to avoid subqueries entirely. We&rsquo;re only asking
+      you to use them judiciously. When you do use them, pay extra attention to how you
+      incorporate them into the main query. Finally, remember that a subquery should work
+      with the the main query, not independently of it.</p>
+
+      <h3 class="section-title">Avoid SELECT *</h3>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * is wasteful. It&rsquo;s akin to printing out a 1,000-page document when you need
+only 10 pages.</code></pre>
+      </figure>
+
+      <p class="no-indent">Besides the obvious downside of adding to network traffic, there are two
+      other drawbacks that you might not think of.</p>
+
+      <p>First, PostgreSQL stores large blob and text objects using TOAST (The Oversized-
+      Attribute Storage Technique). TOAST maintains side tables for PostgreSQL to store this
+      extra data. So retrieving a large field means that TOAST must assemble the data from
+      rows across different tables. Imagine the extra processing if your table contains text data
+      the size of War and Peace and you perform an unnecessary SELECT *.</p>
+
+      <p>Second, when you define views, you often will include more columns than you&rsquo;ll need.
+      You might even go so far as to use SELECT * inside a view. This is understandable and
+      perfectly fine. PostgreSQL is smart enough to let you request all the columns you want
+      in your view definition and even include complex calculations or joins without incurring
+      penalty, as long as no user runs a query referring to the columns.</p>
+
+      <p>To drive home our point, let&rsquo;s wrap our census in a view and use the slow subquery
+      example from <span class="accent-word">Example 9-12</span>:</p>
+
+      <figure class="code-snippet code-snippet--sql">
+        <pre class="code-block"><code>CREATE OR REPLACE VIEW vw_stats AS
+SELECT tract_id,
+    (SELECT COUNT(*) FROM census.facts As F WHERE F.tract_id = T.tract_id) As
+num_facts,
+    (SELECT COUNT(*)
+    FROM census.lu_fact_types As Y
+    WHERE Y.fact_type_id IN (
+        SELECT fact_type_id
+        FROM census.facts F
+        WHERE F.tract_id = T.tract_id
+    )</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Writing Better Queries<span class="sep">|</span>175</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

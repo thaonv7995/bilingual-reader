@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Tinh chỉnh Hiệu suất Truy vấn</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0181.html">← Trước</a>
+    <a href="page_0183.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">182</span>
+      </header>
+
+      <p>Trình lập kế hoạch kết luận rằng việc sử dụng chỉ mục rẻ hơn so với quét tuần tự và
+      chuyển sang quét chỉ mục. Chi phí ước tính tổng thể giảm từ 33.48 xuống 8.29. Chi phí khởi động
+      không còn là zero, vì trình lập kế hoạch trước tiên quét chỉ mục, sau đó lấy các bản ghi
+      phù hợp từ các trang dữ liệu (hoặc từ bộ nhớ nếu đã có trong shared buffers). Bạn cũng sẽ
+      nhận thấy rằng trình lập kế hoạch không còn cần quét 1,477 bản ghi. Điều này đã giảm
+      đáng kể chi phí.</p>
+
+      <p>Các truy vấn phức tạp hơn, chẳng hạn như <span class="accent-word">Ví dụ 9-5</span>, bao gồm nhiều bước con hơn. Bước cuối cùng
+      luôn được liệt kê đầu tiên, và tổng chi phí và thời gian của nó bằng tổng của tất cả các bước con. Đầu ra
+      thụt lề các bước con.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-5.</strong> EXPLAIN (ANALYZE) với GROUP BY và SUM</figcaption>
+        <pre class="code-block"><code>EXPLAIN (ANALYZE)
+SELECT left(tract_id,5) AS county_code, SUM(white_alone) As w
+FROM census.hisp_pop
+WHERE tract_id BETWEEN '25025000000' AND '25025999999'
+GROUP BY county_code;</code></pre>
+      </figure>
+
+      <p>Đầu ra kèm theo của <span class="accent-word">Ví dụ 9-5</span> được hiển thị trong <span class="accent-word">Ví dụ 9-6</span>, cho thấy một nhóm
+      và tổng.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-6.</strong> Đầu ra EXPLAIN (ANALYZE) của kế hoạch chiến lược HashAggregate</figcaption>
+        <pre class="code-block"><code>HashAggregate
+    (cost=29.57..32.45 rows=192 width=16) (actual time=0.664..0.664 rows=1 loops=1)
+    Group Key: "left"((tract_id)::text, 5)
+    -&gt; Bitmap Heap Scan trên hisp_pop
+        (cost=10.25..28.61 rows=192 width=16) (actual time=0.441..0.550 rows=204 loops=1)
+        Recheck Cond:
+            (((tract_id)::text &gt;= '25025000000'::text) AND
+            ((tract_id)::text &lt;= '25025999999'::text))
+        Heap Blocks: exact=15
+        -&gt; Bitmap Index Scan trên hisp_pop_pkey
+            (cost=0.00..10.20 rows=192 width=0) (actual time=0.421..0.421 rows=204 loops=1)
+            Index Cond:
+                (((tract_id)::text &gt;= '25025000000'::text) AND
+                ((tract_id)::text &lt;= '25025999999'::text))
+Planning time: 4.835 ms
+Execution time: 0.732 ms</code></pre>
+      </figure>
+
+      <p>Bước cha của <span class="accent-word">Ví dụ 9-6</span> là Hash Aggregate. Nó chứa một bước con của Bitmap
+      Heap Scan, mà lại chứa một bước con của Bitmap Index Scan. Trong ví dụ này,
+      vì đây là lần đầu tiên chúng tôi chạy truy vấn này, thời gian lập kế hoạch của chúng tôi đã vượt
+      xa thời gian thực thi. Tuy nhiên, PostgreSQL lưu trữ các kế hoạch, vì vậy nếu chúng tôi chạy
+      truy vấn này hoặc một truy vấn tương tự, chúng tôi sẽ được thưởng với thời gian lập kế hoạch giảm
+      đáng kể.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">164<span class="sep">|</span>Chương 9: Tinh chỉnh Hiệu suất Truy vấn</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

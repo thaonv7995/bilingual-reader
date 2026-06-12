@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 14: Tạo và sử dụng Interface (Giao diện)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0147.html">← Trước</a>
+    <a href="page_0149.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">148</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>}</code></pre>
+      </figure>
+
+      <p>Cả bốn khai báo biến ở trên đều hợp lệ. Tất cả các biến đều là <strong>public</strong>, <strong>static</strong>, và
+      <strong>final</strong> ngay cả khi ba biến đầu tiên không được khai báo như vậy. Điều này đồng nghĩa với việc bạn không thể
+      có các biến instance trong một Interface (Giao diện).</p>
+
+      <p>Hãy nhớ rằng các biến instance được dùng để lưu trữ <strong>trạng thái (state)</strong>, nghĩa là chúng thực sự là một phần
+      của <strong>phần triển khai (implementation)</strong>. Do đó, các biến instance không có chỗ đứng trong một Interface (Giao diện). Thành thật mà nói,
+      việc có các biến static trong một Interface (Giao diện) cũng không phải là một ý kiến hay, nhưng vì những lý do mà chỉ
+      các nhà thiết kế ngôn ngữ mới hiểu rõ nhất, Java cho phép các hằng số static trong một Interface (Giao diện). Nhiều người sử dụng tính năng này
+      để định nghĩa <strong>&ldquo;các hằng số toàn cục (global constants)&rdquo;</strong> nhưng đó đơn thuần là một lựa chọn thiết kế tồi. Hãy tránh dùng chúng trong mã nguồn của bạn.</p>
+
+      <h3 class="section-title section-title--minor">Các phương thức trong một Interface (Giao diện)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một Interface (Giao diện) có thể có bốn loại phương thức&nbsp;:</p>
+
+      <p class="no-indent">1. <strong>các phương thức abstract (abstract methods)</strong> - Bạn đã thấy các phương thức abstract trong phần trước về
+      các lớp abstract (abstract class). Chúng chỉ chứa phần khai báo và không có phần thân. Ở đây cũng tương tự như vậy,
+      ngoại trừ việc từ khóa abstract là không bắt buộc. Ví dụ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>interface Movable{
+  void move1(int x); //implicitly abstract
+  abstract void move2(int x); //explicitly abstract
+}</code></pre>
+      </figure>
+
+      <p>Cả hai phương thức được khai báo ở trên đều là abstract và ngầm định là public.</p>
+
+      <p class="no-indent">2. <strong>các phương thức default (default methods)</strong> - Các phương thức default là cách để một Interface (Giao diện) cung cấp một
+      phần triển khai mặc định cho một phương thức. Chúng được định nghĩa bằng cách sử dụng từ khóa <strong>default</strong> như sau:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

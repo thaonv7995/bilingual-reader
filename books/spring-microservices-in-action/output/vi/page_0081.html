@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Twelve-Factor (tiếp theo) và lắp ráp dịch vụ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p.continued-label {
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-style: italic;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0080.html">← Trước</a>
+    <a href="page_0082.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">56</span>
+        <span class="rh-center">CHƯƠNG 2 <em>Xây dựng microservice với Spring Boot</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="Xây dựng ứng dụng dịch vụ microservice Twelve-Factor (tiếp theo)">
+        <p class="no-indent continued-label">(tiếp theo)</p>
+        <p class="no-indent"><strong class="run-in">Build, release, run</strong>&mdash;Giữ tách biệt hoàn toàn các giai đoạn build, release và run khi triển khai ứng dụng. Sau khi code đã được build, nhà phát triển không bao giờ nên thay đổi code lúc runtime. Mọi thay đổi phải quay lại quy trình build và được triển khai lại. Một dịch vụ đã build là bất biến và không thể thay đổi.</p>
+        <p class="no-indent"><strong class="run-in">Processes</strong>&mdash;Microservice của bạn luôn phải stateless. Chúng có thể bị dừng và thay thế bất cứ lúc nào mà không lo mất dữ liệu khi một instance dịch vụ bị mất.</p>
+        <p class="no-indent"><strong class="run-in">Port binding</strong>&mdash;Microservice hoàn toàn tự chứa, với runtime engine cho dịch vụ được đóng gói trong file thực thi của dịch vụ. Bạn nên chạy dịch vụ mà không cần web server hoặc application server riêng. Dịch vụ nên tự khởi động từ dòng lệnh và có thể truy cập ngay qua cổng HTTP được expose.</p>
+        <p class="no-indent"><strong class="run-in">Concurrency</strong>&mdash;Khi cần scale, đừng dựa vào mô hình threading trong một dịch vụ duy nhất. Thay vào đó, khởi chạy thêm các instance microservice và scale out theo chiều ngang. Điều này không loại trừ việc dùng threading trong microservice, nhưng đừng coi đó là cơ chế scale duy nhất. Scale out, không scale up.</p>
+        <p class="no-indent"><strong class="run-in">Disposability</strong>&mdash;Microservice có thể thay thế và có thể khởi động hoặc dừng theo nhu cầu. Thời gian khởi động nên tối thiểu và các process nên tắt một cách graceful khi nhận tín hiệu kill từ hệ điều hành.</p>
+        <p class="no-indent"><strong class="run-in">Dev/prod parity</strong>&mdash;Giảm thiểu khoảng cách giữa tất cả môi trường mà dịch vụ chạy (kể cả máy desktop của nhà phát triển). Nhà phát triển nên dùng cùng hạ tầng cục bộ để phát triển dịch vụ như môi trường thực tế mà dịch vụ sẽ chạy. Điều này cũng có nghĩa thời gian triển khai dịch vụ giữa các môi trường nên là vài giờ, không phải vài tuần. Ngay khi code được commit, nó nên được kiểm thử và được đẩy nhanh nhất có thể từ Dev đến Prod.</p>
+        <p class="no-indent"><strong class="run-in">Logs</strong>&mdash;Log là một luồng sự kiện. Khi log được ghi ra, chúng nên có thể stream tới các công cụ như Splunk (<a href="http://splunk.com">http://splunk.com</a>) hoặc Fluentd (<a href="http://fluentd.org">http://fluentd.org</a>) để tổng hợp log và ghi vào vị trí trung tâm. Microservice không bao giờ nên quan tâm đến cơ chế điều này diễn ra thế nào; nhà phát triển nên xem log trực tiếp qua STDOUT khi chúng đang được ghi.</p>
+        <p class="no-indent"><strong class="run-in">Admin processes</strong>&mdash;Nhà phát triển thường phải thực hiện các tác vụ quản trị đối với dịch vụ (di chuyển hoặc chuyển đổi dữ liệu). Các tác vụ này không bao giờ nên ad hoc mà nên được thực hiện qua script được quản lý và duy trì trong repository mã nguồn. Các script này nên có thể lặp lại và không thay đổi (code script không được sửa cho từng môi trường) trên mọi môi trường chạy.</p>
+      </aside>
+
+      <h4 class="subsection-title">2.4.1 Lắp ráp dịch vụ: đóng gói và triển khai microservice</h4>
+
+      <p>Từ góc nhìn DevOps, một trong những khái niệm cốt lõi đằng sau kiến trúc microservice là nhiều instance của một microservice có thể được triển khai nhanh chóng để đáp ứng thay đổi môi trường ứng dụng (ví dụ: đột ngột có nhiều request từ người dùng, sự cố trong hạ tầng, v.v.).</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

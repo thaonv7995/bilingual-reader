@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 5: Clustering Data</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-label {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .chapter-title {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 20.7pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+    }
+
+    .prose-page .chapter-subtitle {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">121</span>
+      </header>
+
+      <p class="chapter-label">Chương 5</p>
+      <h1 class="chapter-title">Tập hợp Dữ liệu</h1>
+      <p class="chapter-subtitle">Sức mạnh Thứ Hai của Chỉ Mục</p>
+
+      <p class="no-indent">Thuật ngữ cụm được sử dụng trong nhiều lĩnh vực khác nhau. Một cụm sao, ví dụ, là một nhóm các ngôi sao. Một cụm máy tính, mặt khác, là một nhóm các máy tính làm việc chặt chẽ với nhau—hoặc để giải quyết một vấn đề phức tạp (cụm máy tính hiệu suất cao) hoặc để tăng tính khả dụng (cụm dự phòng). Nói chung, các cụm là những thứ liên quan xuất hiện cùng nhau.</p>
+
+      <p>Trong lĩnh vực máy tính, có một loại cụm nữa—một loại thường bị hiểu nhầm: cụm dữ liệu. Tập hợp dữ liệu có nghĩa là lưu trữ dữ liệu được truy cập liên tiếp gần nhau để việc truy cập yêu cầu ít thao tác IO hơn. Các cụm dữ liệu rất quan trọng trong việc tinh chỉnh cơ sở dữ liệu. Các cụm máy tính, mặt khác, cũng rất phổ biến trong bối cảnh cơ sở dữ liệu—do đó làm cho thuật ngữ cụm trở nên rất mơ hồ. Câu nói “Hãy sử dụng một cụm để cải thiện hiệu suất cơ sở dữ liệu” chỉ là một ví dụ; nó có thể đề cập đến một cụm máy tính nhưng cũng có thể có nghĩa là một cụm dữ liệu. Trong chương này, cụm thường đề cập đến các cụm dữ liệu.</p>
+
+      <p>Cụm dữ liệu đơn giản nhất trong một cơ sở dữ liệu SQL là hàng. Các cơ sở dữ liệu lưu trữ tất cả các cột của một hàng trong cùng một khối cơ sở dữ liệu nếu có thể. Các ngoại lệ áp dụng nếu một hàng không vừa vào một khối duy nhất—ví dụ, khi có các loại LOB liên quan.</p>
+
+      <aside class="sidebar-note">
+        <h3>Cửa hàng Cột</h3>
+        <p>Các cơ sở dữ liệu theo cột, hoặc cửa hàng cột, tổ chức các bảng theo cách có cột. Mô hình này có lợi khi truy cập nhiều hàng nhưng chỉ một vài cột—một mẫu rất phổ biến trong các kho dữ liệu (OLAP).</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">111</p>
+    </article>
+  </main>
+</body>
+</html>

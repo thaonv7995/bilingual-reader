@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 8: Listing 8.6 licensing service Kafka mapping</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--86 .listing-callouts-right {
+      padding-top: 20mm;
+    }
+    .prose-page.chapter-page .listing-annotated--86 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0270.html">← Prev</a>
+    <a href="page_0272.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">246</span>
+        <span class="rh-center">CHAPTER 8 <em>Event-driven architecture with Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="code-snippet" aria-label="Listing 8.5 continuation">
+        <pre class="code-block"><code>       logger.debug("Received an event for
+          ➥ organization id {}" ,
+          ➥ orgChange.getOrganizationId());
+    }
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Because the licensing service is a consumer of a message, you&rsquo;re going to pass the <code>@EnableBinding</code> annotation the value <code>Sink.class</code>. This tells Spring Cloud Stream to bind to a message broker using the default Spring Sink interface. Similar to the Spring Cloud Steam Source interface described in section 8.3.1, Spring Cloud Stream exposes a default channel on the Sink interface. The channel on the Sink interface is called <code>input</code> and is used to listen for incoming messages on a channel.</p>
+
+      <p>Once you&rsquo;ve defined that you want to listen for messages via the <code>@EnableBinding</code> annotation, you can write the code to process a message coming off the Sink input channel. To do this, use the Spring Cloud Stream <code>@StreamListener</code> annotation.</p>
+
+      <p>The <code>@StreamListener</code> annotation tells Spring Cloud Stream to execute the <code>loggerSink()</code> method every time a message is received off the input channel. Spring Cloud Stream will automatically de-serialize the message coming off the channel to a Java POJO called <code>OrganizationChangeModel</code>.</p>
+
+      <p>Once again, the actual mapping of the message broker&rsquo;s topic to the input channel is done in the licensing service&rsquo;s configuration. For the licensing service, its configuration is shown in the following listing and can be found in the licensing service&rsquo;s <code>licensing-service/src/main/resources/application.yml</code> file.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.6</strong><br>Mapping the licensing service to a message topic in Kafka</figcaption>
+        <div class="listing-annotated listing-annotated--86" aria-label="Listing 8.6 annotated configuration">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>spring:
+  application:
+    name: licensingservice
+    …   #Remove for consiceness
+  cloud:
+    stream:
+      bindings:
+        input:
+          destination: orgChangeTopic
+          content-type: application/json
+          group: licensingGroup
+      binder:
+        zkNodes: localhost
+        brokers: localhost</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 8.6 annotation callouts">
+            <p class="listing-callout">The <code>spring.cloud.stream.bindings.input</code> property maps the input channel to the <code>orgChangeTopic</code> queue.</p>
+            <p class="listing-callout">The <code>group</code> property is used to guarantee process-once semantics for a service.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">The configuration in this listing looks like the configuration for the organization service. It has, however, two key differences. First, you now have a channel called <code>input</code> defined under the <code>spring.cloud.stream.bindings</code> property. This value maps to the <code>Sink.INPUT</code> channel defined in the code from listing 8.5. This property maps the input channel to the <code>orgChangeTopic</code>. Second, you see the introduction of a new</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

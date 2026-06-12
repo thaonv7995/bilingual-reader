@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 8mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0470.html">← Prev</a>
+    <a href="page_0472.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">471</span>
+      </header>
+
+      <p>You should go through the JavaDoc description of <code>Thread.Builder</code>&nbsp;but its following four
+      methods are used more often than others:</p>
+
+      <ol class="numbered">
+        <li><code>Thread.Builder name(String name)</code> : Sets the thread name.</li>
+        <li><code>Thread.Builder name(String prefix, long start)</code> : Sets the thread name to be the
+        concatenation of a string prefix and the string representation of a counter value. This
+        method is useful when the <code>Thread.Builder</code>&nbsp;object is used to create multiple threads
+        each having a different name.</li>
+        <li><code>Thread start(Runnable task)</code> : Creates a new thread from the current state of the
+        builder and schedules it to execute.</li>
+        <li><code>Thread unstarted(Runnable task)</code> : Creates a new thread from the current state of
+        the builder to run the given task.</li>
+      </ol>
+
+      <h3 class="section-title section-title--minor">Daemon Threads<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>When you run the above program, you will notice that the program doesn&rsquo;t terminate even when
+      the end of the main method is reached. You will see the cursor blinking for a while after the
+      print statement in the <code>main</code>&nbsp;method executes. The program terminates only after the print
+      statement in the <code>run</code>&nbsp;method of the <code>Factorial</code>&nbsp;class is executed. That is because a Java
+      program is not composed of just the main thread. A Java program is composed of all the threads
+      that are started explicitly by our code as well as the threads started by the JVM on its own such
+      as the main thread. Thus, a program cannot terminate until all the running threads terminate.
+      However, there is a exception.</p>
+
+      <p>Some of the threads that the JVM starts are merely meant for &ldquo;housekeeping&rdquo; purpose and they
+      do not execute any logic that is relevant to the user (called &ldquo;business logic&rdquo;). Such threads that
+      exist only to play a supporting role in the program are called <strong>daemon threads</strong>. For example,
+      when you launch a Java program, the JVM automatically starts a thread for garbage collection
+      as well. Now, garbage collection is needed only if the program is executing some business logic.
+      It doesn&rsquo;t make sense to keep this thread running if there is no business logic left to execute. For
+      this reason, the JVM terminates all the daemon threads automatically after all non-daemon
+      threads terminate. It follows then that <strong>a Java program terminates when all non-daemon
+      threads terminate.</strong></p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

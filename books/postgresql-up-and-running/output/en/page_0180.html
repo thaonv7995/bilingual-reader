@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — Sample Runs and Output</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0179.html">← Prev</a>
+    <a href="page_0181.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">180</span>
+      </header>
+
+      <p class="no-indent">Adding the VERBOSE argument, as in <code>EXPLAIN (VERBOSE)</code>, will report down to the
+      columnar level. Adding the BUFFERS argument, which must be used in conjunction with
+      ANALYZE, as in <code>EXPLAIN (ANALYZE, BUFFERS)</code>, will report share hits. The higher this
+      number, the more records were already in memory from prior queries, meaning that
+      the planner did not have to go back to disk to reretrieve them.</p>
+
+      <p>An <code>EXPLAIN</code> that provides all details, including timing, output of columns, and buffers,
+      would look something like <code>EXPLAIN (ANALYZE, VERBOSE, BUFFERS) your_query_here;</code>.</p>
+
+      <p>It goes without saying that to use graphical EXPLAIN, you need a GUI such as pgAdmin.
+      After launching graphical EXPLAIN via pgAdmin, compose the query as usual, but instead
+      of executing it, choose EXPLAIN or <code>EXPLAIN (ANALYZE)</code> from the drop-down menu.
+      To those of you who pride yourself on being self-sufficient using only the command-line,
+      all we can say is: good for you!</p>
+
+      <p>If you use <code>EXPLAIN (ANALYZE)</code> on a data-changing statement such as UPDATE or INSERT
+      and you want to see the plan without making the actual data change, wrap the
+      statement in a transaction that you abort: place BEGIN before the statement and ROLLBACK
+      after it.</p>
+
+      <h3 class="subsection-title">Sample Runs and Output</h3>
+
+      <p class="no-indent">Let&rsquo;s try an example. First we&rsquo;ll use the <code>EXPLAIN (ANALYZE)</code> command with a table we
+      created in <span class="accent-word">Example 4-1</span> and <span class="accent-word">Example 4-2</span>.</p>
+
+      <p>In order to ensure that the planner doesn&rsquo;t use an index, we first drop the primary key
+      from our table:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE census.hisp_pop DROP CONSTRAINT IF EXISTS hisp_pop_pkey;</code></pre>
+      </figure>
+
+      <p>This is so that by running the query in <span class="accent-word">Example 9-1</span>, we can see the most basic of plans
+      in action, the sequential scan strategy.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-1.</strong> EXPLAIN (ANALYZE) of a sequential scan</figcaption>
+        <pre class="code-block"><code>EXPLAIN (ANALYZE) SELECT tract_id, hispanic_or_latino
+FROM census.hisp_pop
+WHERE tract_id = '25025010103';</code></pre>
+      </figure>
+
+      <p><span class="accent-word">Example 9-2</span> shows the output of <span class="accent-word">Example 9-1</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-2.</strong> EXPLAIN (ANALYZE) output</figcaption>
+        <pre class="code-block"><code>Seq Scan on hisp_pop
+    (cost=0.00..33.48 rows=1 width=16)
+    (actual time=0.205..0.339 rows=1 loops=1)
+    Filter: ((tract_id)::text = '25025010103'::text)
+    Rows Removed by Filter: 1477
+Total runtime: 0.360 ms</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">162<span class="sep">|</span>Chapter 9: Query Performance Tuning</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

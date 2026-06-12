@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Slow Indexes, Part I</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .prose-page .sidebar-flow {
+      overflow: hidden;
+    }
+
+    .prose-page table.depth-table {
+      float: right;
+      width: auto;
+      margin: 0 0 2mm 5mm;
+      border-collapse: collapse;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+
+    .prose-page table.depth-table th,
+    .prose-page table.depth-table td {
+      border: none;
+      padding: 0.5mm 0;
+      vertical-align: top;
+      text-align: left;
+      background: transparent;
+    }
+
+    .prose-page table.depth-table th {
+      font-weight: 700;
+      padding-right: 8mm;
+    }
+
+    .prose-page table.depth-table td:first-child {
+      padding-right: 8mm;
+      white-space: nowrap;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Slow Indexes, Part I</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note">
+        <h3>Logarithmic Scalability</h3>
+
+        <p>In mathematics, the logarithm of a number to a given base is the power or exponent to which the base must be raised in order to produce the number [Wikipedia<sup>1</sup>].</p>
+
+        <p>In a search tree the base corresponds to the number of entries per branch node and the exponent to the tree depth. The example index in Figure&nbsp;1.2 holds up to four entries per node and has a tree depth of three. That means that the index can hold up to 64 (4<sup>3</sup>) entries. If it grows by one level, it can already hold 256 entries (4<sup>4</sup>). Each time a level is <i>added</i>, the maximum number of index entries <i>quadruples</i>.</p>
+
+        <p>The logarithm reverses this function. The tree depth is therefore log<sub>4</sub>(number-of-index-entries).</p>
+
+        <div class="sidebar-flow">
+          <table class="depth-table">
+            <thead>
+              <tr>
+                <th scope="col">Tree Depth</th>
+                <th scope="col">Index Entries</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>3</td>
+                <td>64</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>256</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>1,024</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>4,096</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>16,384</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>65,536</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>262,144</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>1,048,576</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>The logarithmic growth enables the example index to search a million records with ten tree levels, but a real world index is even more efficient. The main factor that affects the tree depth, and therefore the lookup performance, is the number of entries in each tree node. This number corresponds to—mathematically speaking—the basis of the logarithm. The higher the basis, the shallower the tree, the faster the traversal.</p>
+        </div>
+
+        <p>Databases exploit this concept to a maximum extent and put as many entries as possible into each node—often hundreds. That means that every new index level supports a hundred times more entries.</p>
+      </aside>
+
+      <div class="footnotes">
+        <p><sup>1</sup> http://en.wikipedia.org/wiki/Logarithm</p>
+      </div>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">7</p>
+    </article>
+  </main>
+</body>
+</html>

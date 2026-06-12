@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 8.5pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0060.html">← Trước</a>
+    <a href="page_0062.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h3 class="section-title">Các Thực Hành Bị Cấm</h3>
+      <p class="no-indent">Chúng tôi đã chứng kiến nhiều cách mà mọi người đã quản lý để làm hỏng máy chủ PostgreSQL của họ, vì vậy chúng tôi nghĩ rằng tốt nhất là kết thúc chương này bằng cách liệt kê những sai lầm phổ biến nhất.</p>
+
+      <p>Để bắt đầu, nếu bạn không biết mình đã làm sai điều gì, tệp nhật ký có thể cung cấp manh mối. Hãy tìm thư mục <code>pg_log</code> trong thư mục dữ liệu PostgreSQL của bạn hoặc thư mục gốc của thư mục dữ liệu PostgreSQL để tìm các tệp nhật ký. Cũng có thể máy chủ của bạn đã tắt trước khi một mục nhật ký có thể được ghi, trong trường hợp đó nhật ký sẽ không giúp bạn. Nếu máy chủ của bạn không khởi động lại, hãy thử thực hiện điều sau từ dòng lệnh hệ điều hành:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>path/to/your/bin/pg_ctl -D your_postgresql_data_folder</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Đừng Xóa Các Tệp Hệ Thống và Nhị Phân Cơ Bản của PostgreSQL</h3>
+      <p>Có lẽ điều này là hiển nhiên, nhưng khi mọi người hết dung lượng đĩa, điều đầu tiên họ làm là hoảng sợ và bắt đầu xóa các tệp từ thư mục cụm dữ liệu PostgreSQL vì nó quá lớn. Một phần lý do sai lầm này xảy ra thường xuyên là vì một số tên thư mục như <code>pg_log</code>, <code>pg_xlog</code>, và <code>pg_clog</code> nghe có vẻ như là các thư mục cho nhật ký mà bạn mong đợi sẽ tích lũy và an toàn để xóa. Có một số tệp bạn có thể xóa một cách an toàn và một số sẽ phá hủy dữ liệu của bạn nếu bạn làm vậy.</p>
+
+      <p>Thư mục <code>pg_log</code>, thường được tìm thấy trong thư mục dữ liệu của bạn, là một thư mục tích lũy nhanh chóng, đặc biệt nếu bạn đã bật ghi nhật ký. Bạn luôn có thể xóa các tệp từ thư mục này mà không gây hại. Thực tế, nhiều người lên lịch công việc để xóa các tệp nhật ký một cách thường xuyên.</p>
+
+      <p>Các tệp trong các thư mục khác, ngoại trừ <code>pg_xlog</code>, không bao giờ nên bị xóa, ngay cả khi chúng có tên nghe giống như nhật ký. Đừng nghĩ đến việc chạm vào <code>pg_clog</code>, nhật ký cam kết đang hoạt động.</p>
+
+      <p><code>pg_xlog</code> lưu trữ các nhật ký giao dịch. Một số hệ thống mà chúng tôi đã thấy được cấu hình để di chuyển các nhật ký giao dịch đã xử lý vào một thư mục con gọi là archive. Bạn thường sẽ có một thư mục archive ở đâu đó (không nhất thiết là một thư mục con của <code>pg_xlog</code>) nếu bạn đang chạy sao chép đồng bộ, thực hiện lưu trữ liên tục, hoặc chỉ giữ nhật ký trong trường hợp bạn cần quay lại một thời điểm khác. Xóa các tệp trong thư mục gốc của <code>pg_xlog</code> sẽ phá hủy dữ liệu. Xóa các tệp trong thư mục đã lưu trữ chỉ ngăn bạn thực hiện phục hồi theo thời điểm, hoặc nếu một máy chủ phụ chưa phát lại các nhật ký, sẽ ngăn máy chủ phụ lấy chúng. Nếu những kịch bản này không áp dụng cho bạn, thì việc xóa hoặc di chuyển các tệp trong thư mục archive là an toàn.</p>
+
+      <p>Hãy cẩn thận với các chương trình diệt virus quá nhiệt tình, đặc biệt là trên Windows. Chúng tôi đã thấy những trường hợp mà phần mềm diệt virus đã xóa các nhị phân quan trọng trong thư mục bin của PostgreSQL. Nếu PostgreSQL không khởi động trên hệ thống Windows, trình xem sự kiện là nơi đầu tiên để tìm manh mối về lý do tại sao.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các Thực Hành Bị Cấm<span class="sep">|</span>43</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

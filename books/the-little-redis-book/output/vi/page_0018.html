@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Cuốn sách Redis nhỏ — Trang 18</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Điều hướng trang">
+      <a href="page_0017.html">← Trước</a>
+      <span>Trang 18 / 30</span>
+      <a href="page_0019.html">Tiếp →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<h3 class="section-title">Giao dịch (Transactions)</h3><p class="lead">Mọi lệnh Redis atomic, kể cả lệnh làm nhiều việc. Redis hỗ trợ transaction nhiều lệnh.</p><p>Redis single-threaded — một lệnh chạy thì lệnh khác không xen. Ví dụ:</p><ul class="bullets"><li><code>incr</code> ≈ get + set</li><li><code>getset</code> set mới và trả giá trị cũ</li><li><code>setnx</code> set chỉ khi key chưa tồn tại</li></ul><p>Nhóm lệnh atomic: <code>multi</code> → các lệnh → <code>exec</code> hoặc <code>discard</code>.</p><p>Redis đảm bảo:</p><ul class="bullets"><li>Thực thi đúng thứ tự</li><li>Một khối atomic — không lệnh client khác chen giữa</li><li>Tất cả hoặc không lệnh nào trong transaction</li></ul><p>Kết hợp pipelining và transaction được.</p><figure class="code-snippet"><pre class="code-block"><code>multi
+hincrby groups:1percent balance -9000000000
+hincrby groups:99percent balance 9000000000
+exec</code></pre></figure><p>Redis cho <code>watch</code> key — transaction có điều kiện. Không thể incr tùy biến kiểu:</p><figure class="code-snippet"><pre class="code-block"><code>redis.multi()
+current = redis.get('powerlevel')
+redis.set('powerlevel', current + 1)
+redis.exec()</code></pre></figure><p>Không hoạt động như vậy. Với <code>watch powerlevel</code>:</p><figure class="code-snippet"><pre class="code-block"><code>redis.watch('powerlevel')
+current = redis.get('powerlevel')
+redis.multi()</code></pre></figure>
+      <p class="page-folio">17</p>
+    </article>
+  </main>
+</body>
+</html>

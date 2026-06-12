@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 9: Listing 9.4 Zipkin server dependencies</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--94 .listing-callouts-right {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--94 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + .sidebar-note {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0300.html">← Prev</a>
+    <a href="page_0302.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">276</span>
+        <span class="rh-center">CHAPTER 9 <em>Distributed tracing with Spring Cloud Sleuth and Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">(<code>http://zipkin:9411</code>) variable passed on each services Docker configuration (<code>docker/common/docker-compose.yml</code>) file.</p>
+
+      <aside class="sidebar-note" aria-label="Zipkin, RabbitMQ, and Kafka">
+        <h3>Zipkin, RabbitMQ, and Kafka</h3>
+        <p>Zipkin does have the ability to send its tracing data to a Zipkin server via RabbitMQ or Kafka. From a functionality perspective, there&rsquo;s no difference in Zipkin behavior if you use HTTP, RabbitMQ, or Kafka. With the HTTP tracing, Zipkin uses an asynchronous thread to send performance data. The main advantage to using RabbitMQ or Kafka to collect your tracing data is that if your Zipkin server is down, any tracing messages sent to Zipkin will be &ldquo;enqueued&rdquo; until Zipkin can pick up the data.</p>
+        <p>The configuration of Spring Cloud Sleuth to send data to Zipkin via RabbitMQ and Kafka is covered in the Spring Cloud Sleuth documentation, so we won&rsquo;t cover it here in any further detail.</p>
+      </aside>
+
+      <h4 class="subsection-title">9.3.3 Installing and configuring a Zipkin server</h4>
+
+      <p class="no-indent">To use Zipkin, you first need to set up a Spring Boot project the way you&rsquo;ve done multiple times throughout the book. (In the code for the chapter, this is call <code>zipkinsvr</code>.) You then need to add two JAR dependencies to the <code>zipkinsvr/pom.xml</code> file. These two jar dependences are shown in the following listing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 9.4</strong><br>JAR dependencies needed for Zipkin service</figcaption>
+        <div class="listing-annotated listing-annotated--94" aria-label="Listing 9.4 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>&lt;dependency&gt;
+  &lt;groupId&gt;io.zipkin.java&lt;/groupId&gt;
+  &lt;artifactId&gt;zipkin-server&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+  &lt;groupId&gt;io.zipkin.java&lt;/groupId&gt;
+  &lt;artifactId&gt;zipkin-autoconfigure-ui&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 9.4 annotation callouts">
+            <p class="listing-callout">This dependency contains the core classes for setting up the Zipkin server.</p>
+            <p class="listing-callout">This dependency contains the core for classes for running the UI part of the Zipkin server.</p>
+          </div>
+        </div>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="@EnableZipkinServer vs. @EnableZipkinStreamServer">
+        <h3>@EnableZipkinServer vs. @EnableZipkinStreamServer: which annotation?</h3>
+        <p>One thing to notice about the JAR dependencies above is that they&rsquo;re not Spring-Cloud-based dependencies. While Zipkin is a Spring-Boot-based project, the <code>@EnableZipkinServer</code> is not a Spring Cloud annotation. It&rsquo;s an annotation that&rsquo;s part of the Zipkin project. This often confuses people who are new to the Spring Cloud Sleuth and Zipkin, because the Spring Cloud team did write the <code>@EnableZipkinStreamServer</code> annotation as part of Spring Cloud Sleuth. The <code>@EnableZipkinStreamServer</code> annotation simplifies the use of Zipkin with RabbitMQ and Kafka.</p>
+        <p>I chose to use the <code>@EnableZipkinServer</code> because of its simplicity in setup for this chapter. With the <code>@EnableZipkinStreamServer</code> you need to set up and configure the services being traced and the Zipkin server to publish/listen to RabbitMQ</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

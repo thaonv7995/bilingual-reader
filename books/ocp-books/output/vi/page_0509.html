@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0508.html">← Trước</a>
+    <a href="page_0510.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">509</span>
+      </header>
+
+      <p class="no-indent">có thể thay đổi (mutable) và không an toàn cho thread (thread unsafe), nhưng có một vài điều bạn cần lưu ý khi tạo một Lớp (Class) thực sự bất biến (immutable). Vì kỳ thi OCP không yêu cầu bạn phải biết tất cả các chi tiết đó, tôi sẽ không đi sâu vào chúng trong cuốn sách này. Tuy nhiên, tôi thực sự khuyên bạn nên đọc thêm về chủ đề này từ tài liệu Java Secure Coding Guidelines do Oracle công bố vào thời gian rảnh rỗi.</p>
+
+      <h3 class="section-title section-title--sub">20.4.2 Sử dụng các trường final hoặc volatile<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Nếu bạn không mong muốn một trường của một Lớp (Class) bao giờ thay đổi, hãy khai báo nó là <code>final</code>. Điều này giúp ngăn ngừa việc vô tình sử dụng sai trường đó. Mặt khác, nếu bạn dự kiến một trường sẽ bị thay đổi trực tiếp bởi nhiều Thread (Luồng), hãy khai báo nó là <code>volatile</code> để đảm bảo không Thread (Luồng) nào nhìn thấy giá trị cũ (stale value) của trường đó.</p>
+
+      <p>Hãy nhớ rằng <code>volatile</code> không đảm bảo tính nguyên tử (atomicity) cho các thao tác liên quan đến nhiều trường hoặc cho nhiều thao tác trên cùng một trường.</p>
+
+      <h3 class="section-title section-title--sub">20.4.3 Sử dụng tính đóng gói (Encapsulation)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Mặc dù việc sử dụng các Lớp (Class) bất biến nhiều nhất có thể là rất tốt cho an toàn thread (thread safety), nhưng việc kỳ vọng một ứng dụng chỉ bao gồm các Lớp (Class) bất biến là điều không thực tế. Trong những trường hợp các trường của Đối tượng (Object) có thể bị thay đổi, bạn nên luôn sử dụng các phương thức truy cập (accessor) và sửa đổi (mutator) với kiểm soát quyền truy cập (access control) phù hợp cho các trường của nó. Việc cho phép truy cập non-private vào các trường thực thể (instance fields) của một Lớp (Class) là con đường dẫn đến thảm họa, vì các trường đó có thể bị sửa đổi bởi bất kỳ Thread (Luồng) nào ở bất kỳ thời điểm nào mà không cần quan tâm đến logic nghiệp vụ (business logic) của Lớp (Class). Cung cấp các phương thức truy cập và sửa đổi phù hợp cho các trường thực thể không chỉ cho phép kiểm tra tính hợp lệ của giá trị, mà còn cho phép kết hợp các khóa (lock) để ngăn chặn việc sửa đổi chúng từ nhiều Thread (Luồng) cùng một lúc. Ví dụ, Lớp (Class) <code>Square</code>&nbsp;sau đây là an toàn thread (thread safe) vì các phương thức getter và setter đồng bộ hóa (synchronize) trên cùng một khóa (lock):</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

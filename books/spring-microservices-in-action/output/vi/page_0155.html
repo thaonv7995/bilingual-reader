@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Listing 5.2 và 5.3</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--52 .listing-callouts {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--53 .listing-callouts {
+      padding-top: 1.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--53 .listing-callout:nth-child(1) {
+      margin-bottom: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing + .sidebar-note,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0154.html">← Prev</a>
+    <a href="page_0156.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">130</span>
+        <span class="rh-center">CHƯƠNG 5 <em>Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Bạn sẽ bọc phương thức <code>getLicensesByOrg()</code> trong lớp <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/services/LicenseService.java</code>, như trình bày trong listing sau.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.2</strong><br>Bọc lời gọi tài nguyên từ xa bằng circuit breaker</figcaption>
+        <div class="listing-annotated listing-annotated--52" aria-label="Mã có chú thích của Listing 5.2">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>//Imports removed for conciseness
+@HystrixCommand
+public List&lt;License&gt; getLicensesByOrg(String organizationId){
+    return licenseRepository.findByOrganizationId(organizationId);
+  }</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích annotation của Listing 5.2">
+            <p class="listing-callout">Annotation <code>@HystrixCommand</code> được dùng để bọc phương thức <code>getLicenseByOrg()</code> bằng circuit breaker Hystrix.</p>
+          </div>
+        </div>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Nếu bạn xem mã trong listing 5.2 trong kho mã nguồn, bạn sẽ thấy nhiều tham số hơn trên annotation <code>@HystrixCommand</code> so với những gì được hiển thị trong listing trước. Chúng ta sẽ đi vào các tham số đó sau trong chương. Mã trong listing 5.2 đang dùng annotation <code>@HystrixCommand</code> với tất cả giá trị mặc định của nó.</p>
+      </aside>
+
+      <p class="no-indent">Điều này không trông như nhiều mã, và thực tế cũng vậy, nhưng có rất nhiều chức năng bên trong annotation này. Với việc dùng annotation <code>@HystrixCommand</code>, bất cứ khi nào phương thức <code>getLicensesByOrg()</code> được gọi, lời gọi sẽ được bọc bằng circuit breaker Hystrix. Circuit breaker sẽ ngắt bất kỳ lời gọi nào tới phương thức <code>getLicensesByOrg()</code> khi lời gọi mất hơn 1.000 millisecond.</p>
+
+      <p>Ví dụ mã này sẽ nhàm chán nếu cơ sở dữ liệu hoạt động bình thường. Hãy mô phỏng phương thức <code>getLicensesByOrg()</code> gặp truy vấn cơ sở dữ liệu chậm bằng cách khiến lời gọi mất hơn một giây trong khoảng một trên ba lời gọi. Listing sau đây minh họa điều này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.3</strong><br>Ngẫu nhiên làm timeout lời gọi tới cơ sở dữ liệu licensing service</figcaption>
+        <div class="listing-annotated listing-annotated--53" aria-label="Mã có chú thích của Listing 5.3">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>private void randomlyRunLong(){
+   Random rand = new Random();
+
+   int randomNum = rand.nextInt((3 - 1) + 1) + 1;
+
+   if (randomNum==3) sleep();
+  }
+
+  private void sleep(){
+    try {
+      Thread.sleep(11000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @HystrixCommand</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích annotation của Listing 5.3">
+            <p class="listing-callout">Phương thức <code>randomlyRunLong()</code> cho bạn xác suất một trên ba lời gọi cơ sở dữ liệu chạy lâu.</p>
+            <p class="listing-callout">Thread được sleep trong 11.000 millisecond (11 giây). Hành vi mặc định của Hystrix là timeout lời gọi sau 1 giây.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

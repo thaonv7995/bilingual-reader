@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Thu thập trace messaging</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .diagram-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 68%) minmax(0, 32%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram {
+      margin: 0;
+    }
+    .prose-page.chapter-page .diagram-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.diagram,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0306.html">← Trước</a>
+    <a href="page_0308.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">282</span>
+        <span class="rh-center">CHƯƠNG 9 <em>Theo dõi phân tán với Spring Cloud Sleuth và Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Trong hình 9.14, bạn có thể thấy lời gọi tới dịch vụ licensing bao gồm 4 lời gọi HTTP riêng biệt. Bạn thấy lời gọi tới gateway Zuul, rồi từ gateway Zuul tới dịch vụ licensing. Dịch vụ licensing sau đó gọi ngược lại qua Zuul để gọi dịch vụ organization.</p>
+
+      <h4 class="subsection-title">9.3.7 Thu thập trace messaging</h4>
+
+      <p class="no-indent">Spring Cloud Sleuth và Zipkin không chỉ trace các lời gọi HTTP. Spring Cloud Sleuth cũng gửi dữ liệu trace Zipkin trên mọi kênh message đến hoặc đi đã đăng ký trong dịch vụ.</p>
+
+      <p>Messaging có thể tạo ra các vấn đề hiệu năng và độ trễ riêng bên trong một ứng dụng. Một dịch vụ có thể không xử lý message từ hàng đợi đủ nhanh. Hoặc có thể có vấn đề độ trễ mạng. Tôi đã gặp tất cả các tình huống này khi xây dựng ứng dụng dựa trên microservice.</p>
+
+      <p>Bằng cách sử dụng Spring Cloud Sleuth và Zipkin, bạn có thể xác định khi nào message được publish từ hàng đợi và khi nào nó được nhận. Bạn cũng có thể thấy hành vi nào diễn ra khi message được nhận trên hàng đợi và xử lý.</p>
+
+      <p>Như bạn sẽ nhớ từ chương 8, mỗi khi một bản ghi organization được thêm, cập nhật hoặc xóa, một message Kafka được tạo và publish qua Spring Cloud Stream. Dịch vụ licensing nhận message và cập nhật kho key-value Redis mà nó dùng để cache dữ liệu.</p>
+
+      <p>Giờ bạn sẽ xóa một bản ghi organization và theo dõi giao dịch được trace bởi Spring Cloud Sleuth và Zipkin. Bạn có thể gửi DELETE <code>http://localhost:5555/api/organization/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a</code> qua POSTMAN tới dịch vụ organization.</p>
+
+      <p>Hãy nhớ, đầu chương chúng ta đã thấy cách thêm trace ID làm HTTP response header. Bạn đã thêm HTTP response header mới tên là <code>tmx-correlation-id</code>. Trong lời gọi của tôi, <code>tmx-correlation-id</code> được trả về với giá trị <code>5e14cae0d90dc8d4</code>. Bạn có thể tìm kiếm Zipkin theo trace ID cụ thể này bằng cách nhập trace ID mà lời gọi của bạn trả về qua hộp tìm kiếm ở góc trên bên phải màn hình truy vấn Zipkin. Hình 9.15 cho thấy nơi bạn có thể nhập trace ID.</p>
+
+      <figure class="diagram" aria-label="Hình 9.15">
+        <div class="diagram-annotated" aria-label="Hình 9.15 ảnh chụp màn hình có chú thích">
+          <img src="../assets/images/page_0307_fig_9_15.png" width="1313" height="299" alt="Hình 9.15 — Hộp tìm kiếm Zipkin cho trace ID">
+          <div class="diagram-callouts" aria-label="Chú thích Hình 9.15">
+            <p class="listing-callout">Nhập trace ID tại đây và nhấn Enter. Thao tác này sẽ hiển thị trace cụ thể mà bạn đang tìm.</p>
+          </div>
+        </div>
+        <figcaption><strong>Hình 9.15</strong><br>Với trace ID được trả về trong trường HTTP Response <code>tmx-correlation-id</code>, bạn có thể dễ dàng tìm giao dịch mà mình đang tìm.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

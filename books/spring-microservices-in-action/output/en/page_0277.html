@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 8: Listings 8.9 and 8.10 OrganizationRedisRepository</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--810 .listing-callouts-right {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-annotated--810 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 9mm;
+    }
+    .prose-page.chapter-page .listing-annotated--810 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0276.html">← Prev</a>
+    <a href="page_0278.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">252</span>
+        <span class="rh-center">CHAPTER 8 <em>Event-driven architecture with Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">of the licensing service classes that are going to need to access Redis. This interface (<code>licensing-service/src/main/java/com/thoughtmechanix/licenses/repository/OrganizationRedisRepository.java</code>) is shown in the following listing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.9</strong><br>OrganizationRedisRepository defines methods used to call Redis</figcaption>
+        <pre class="code-block"><code>package com.thoughtmechanix.licenses.repository;
+
+import com.thoughtmechanix.licenses.model.Organization;
+
+public interface OrganizationRedisRepository {
+    void saveOrganization(Organization org);
+    void updateOrganization(Organization org);
+    void deleteOrganization(String organizationId);
+    Organization findOrganization(String organizationId);
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">The second file is the implementation of the <code>OrganizationRedisRepository</code> interface. The implementation of the interface, the <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/repository/OrganizationRedisRepositoryImpl.java</code> class, uses the <code>RedisTemplate</code> Spring bean you declared earlier in listing 8.8 to interact with the Redis server and carry out actions against the Redis server. The next listing shows this code in use.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.10</strong><br>The OrganizationRedisRepositoryImpl implementation</figcaption>
+        <div class="listing-annotated listing-annotated--810" aria-label="Listing 8.10 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.repository;
+
+//Most of the imports removed for concisenss
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+
+@Repository
+public class OrganizationRedisRepositoryImpl implements
+OrganizationRedisRepository {
+    private static final String HASH_NAME="organization";
+
+    private RedisTemplate&lt;String, Organization&gt; redisTemplate;
+    private HashOperations hashOperations;
+
+    public OrganizationRedisRepositoryImpl(){
+        super();
+    }
+
+    @Autowired
+    private OrganizationRedisRepositoryImpl(RedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+
+    @PostConstruct
+    private void init() {</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 8.10 annotation callouts">
+            <p class="listing-callout">The <code>@Repository</code> annotation tells Spring that this class is a Repository class used with Spring Data.</p>
+            <p class="listing-callout">The name of the hash in your Redis server where organization data is stored</p>
+            <p class="listing-callout">The <code>HashOperations</code> class is a set of Spring helper methods for carrying out data operations on the Redis server</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

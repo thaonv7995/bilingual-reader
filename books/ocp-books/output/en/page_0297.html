@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0296.html">← Prev</a>
+    <a href="page_0298.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">297</span>
+      </header>
+
+      <p class="no-indent">the for loop written in <code>loadValuesFromDB()</code>&nbsp;fails to compile but the one written in
+      <code>loadValuesFromFile()</code>&nbsp;compiles fine. This shows that when a lower bound is applied to a
+      type argument, the type information associated with the generic type variable is hidden. This
+      prevents the programmer from accessing any type specific method or property <strong>using that
+      variable</strong>. Again, this is a not a fool proof security mechanism. That is not even the objective of
+      generics. The objective is only to reduce the opportunities for writing brittle and buggy code.</p>
+
+      <h3 class="section-title section-title--sub">Using unbounded wildcard<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Just like we used the unbounded type parameter <code>E</code>&nbsp;while defining the <code>DataHolder&lt;E&gt;</code>&nbsp;class
+      earlier, we can use the unbounded wildcard as an argument while parameterizing a generic type
+      to signify that the exact type argument is unknown. For example: <code>DataHolder&lt;?&gt; dh = new
+      DataHolder&lt;&gt;();</code>&nbsp;Here, <code>dh</code>&nbsp;is supposed to point to a <code>DataHolder</code>&nbsp;object containing a type
+      that is completely unknown to the us. That type could by anything but whatever it is, we don&rsquo;t
+      know it. The problem in dealing with an unknown type is that we can&rsquo;t do anything interesting
+      with it and the reason is the same as before &mdash; what if the <code>DataHolder</code>&nbsp;object that <code>dh</code>&nbsp;is
+      pointing to contains something different from whatever our assumption is? Since it has no lower
+      bound, no type will satisfy the type parameter <code>E</code>&nbsp;required for the <code>setData</code>&nbsp;method and so, for
+      example, we can&rsquo;t do <code>dh.setData(&quot;string&quot;);</code>, and since it has no upper bound we cannot
+      assign the return value of the <code>getData</code>&nbsp;method to a variable of any type except <code>Object</code>.
+      Effectively, <code>&lt;?&gt;</code>&nbsp;is the same as <code>&lt;? extends Object&gt;</code>. All that we can do is <code>Object obj =
+      dh.getData();</code></p>
+
+      <p>So, what is it good for? Well, if the business logic of your method doesn&rsquo;t depend on knowing
+      anything about the actual type of the argument, this is the recommended option because it
+      doesn&rsquo;t restrict your method to using a particular parameterized type and it doesn&rsquo;t force your
+      users to disclose anything about the type of the argument that they are passing to your method.
+      For example, if all you want to do is to write a utility method that logs the contents of a
+      <code>DataHolder</code>&nbsp;object, you can define it as follows:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

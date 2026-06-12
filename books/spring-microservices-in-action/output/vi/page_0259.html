@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Độ bền, khả năng mở rộng và linh hoạt</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0258.html">← Trước</a>
+    <a href="page_0260.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">234</span>
+        <span class="rh-center">CHƯƠNG 8 <em>Kiến trúc hướng sự kiện với Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">lẫn nhau. Như bạn đã thấy với thiết kế đồng bộ được đề xuất trước đó, phản hồi HTTP đồng bộ tạo ra phụ thuộc cứng giữa licensing service và organization service. Chúng ta không thể loại bỏ hoàn toàn những phụ thuộc này, nhưng có thể cố gắng giảm thiểu bằng cách chỉ expose các endpoint trực tiếp quản lý dữ liệu thuộc sở hữu của dịch vụ. Cách tiếp cận messaging cho phép bạn tách rời hai dịch vụ vì khi giao tiếp thay đổi trạng thái, không dịch vụ nào biết về dịch vụ kia. Khi organization service cần publish một thay đổi trạng thái, nó ghi message vào queue. Licensing service chỉ biết rằng nó nhận được message; nó không hề biết ai đã publish message đó.</p>
+
+      <h3 class="section-title">Độ bền</h3>
+
+      <p>Sự hiện diện của queue cho phép bạn đảm bảo rằng message sẽ được giao ngay cả khi consumer của dịch vụ đang không hoạt động. Organization service có thể tiếp tục publish message ngay cả khi licensing service không khả dụng. Các message sẽ được lưu trong queue và ở đó cho đến khi licensing service khả dụng trở lại. Ngược lại, với sự kết hợp giữa bộ nhớ đệm và cách tiếp cận queue, nếu organization service bị sập, licensing service có thể suy giảm một cách duyên dáng vì ít nhất một phần dữ liệu tổ chức sẽ nằm trong bộ nhớ đệm của nó. Đôi khi dữ liệu cũ còn tốt hơn là không có dữ liệu.</p>
+
+      <h3 class="section-title">Khả năng mở rộng</h3>
+
+      <p>Vì message được lưu trong queue, bên gửi message không phải chờ phản hồi từ consumer của message. Họ có thể tiếp tục công việc của mình. Tương tự, nếu consumer đọc message từ queue không xử lý message đủ nhanh, việc khởi chạy thêm consumer và để chúng xử lý các message đó từ queue là điều đơn giản. Cách tiếp cận khả năng mở rộng này phù hợp với mô hình microservice vì một trong những điều tôi nhấn mạnh xuyên suốt cuốn sách là việc khởi chạy instance mới của một microservice phải đơn giản và microservice bổ sung đó có thể trở thành dịch vụ khác xử lý công việc từ message queue chứa các message. Đây là ví dụ về mở rộng theo chiều ngang. Cơ chế mở rộng truyền thống để đọc message từ queue liên quan đến việc tăng số luồng mà message consumer có thể xử lý cùng lúc. Đáng tiếc, với cách tiếp cận này, bạn cuối cùng vẫn bị giới hạn bởi số CPU khả dụng cho message consumer. Mô hình microservice không có giới hạn này vì bạn mở rộng bằng cách tăng số máy lưu trữ dịch vụ tiêu thụ message.</p>
+
+      <h3 class="section-title">Linh hoạt</h3>
+
+      <p>Bên gửi message không biết ai sẽ tiêu thụ nó. Điều này có nghĩa là bạn có thể dễ dàng thêm consumer message mới (và chức năng mới) mà không ảnh hưởng đến dịch vụ gửi ban đầu. Đây là khái niệm cực kỳ mạnh mẽ vì chức năng mới có thể được thêm vào ứng dụng mà không cần chạm vào các dịch vụ hiện có. Thay vào đó, code mới có thể lắng nghe các sự kiện được publish và phản ứng tương ứng.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

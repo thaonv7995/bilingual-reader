@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Circuit breaker, fallback và bulkhead</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0146.html">← Trước</a>
+    <a href="page_0148.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">CHƯƠNG 5</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">122</span>
+      </header>
+
+      <h3 class="section-title">Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</h3>
+
+      <p class="no-indent">Mỗi khi service consumer cần gọi service instance đó, client-side load balancer sẽ trả về một vị trí từ nhóm các vị trí dịch vụ mà nó đang duy trì.</p>
+
+      <p>Vì client-side load balancer nằm giữa service client và service consumer, load balancer có thể phát hiện liệu một service instance có đang ném lỗi hay hoạt động kém hay không. Nếu client-side load balancer phát hiện vấn đề, nó có thể loại service instance đó khỏi nhóm các vị trí dịch vụ khả dụng và ngăn mọi lời gọi dịch vụ trong tương lai tới service instance đó.</p>
+
+      <p>Đây chính xác là hành vi mà các thư viện Ribbon của Netflix cung cấp sẵn mà không cần cấu hình thêm. Vì chúng ta đã trình bày client-side load balancing với Netflix Ribbon ở chương 4, chúng ta sẽ không đi sâu hơn về nội dung đó trong chương này.</p>
+
+      <h4 class="subsection-title">5.1.2<br>Circuit breaker</h4>
+
+      <p>Pattern circuit breaker là một mẫu khả năng phục hồi phía client được mô hình hóa theo circuit breaker điện. Trong hệ thống điện, circuit breaker sẽ phát hiện nếu quá nhiều dòng điện chảy qua dây dẫn. Nếu circuit breaker phát hiện vấn đề, nó sẽ ngắt kết nối với phần còn lại của hệ thống điện và giữ các thành phần hạ nguồn không bị hỏng.</p>
+
+      <p>Với circuit breaker phần mềm, khi một dịch vụ từ xa được gọi, circuit breaker sẽ giám sát lời gọi. Nếu các lời gọi mất quá nhiều thời gian, circuit breaker sẽ can thiệp và hủy lời gọi. Ngoài ra, circuit breaker sẽ giám sát tất cả các lời gọi tới tài nguyên từ xa và nếu đủ số lời gọi thất bại, triển khai circuit breaker sẽ kích hoạt, fail fast và ngăn các lời gọi trong tương lai tới tài nguyên từ xa đang lỗi.</p>
+
+      <h4 class="subsection-title">5.1.3<br>Xử lý fallback</h4>
+
+      <p>Với pattern fallback, khi một lời gọi dịch vụ từ xa thất bại, thay vì sinh ra exception, service consumer sẽ thực thi một nhánh mã thay thế và cố gắng thực hiện hành động bằng cách khác. Điều này thường liên quan đến việc tìm dữ liệu từ nguồn dữ liệu khác hoặc đưa yêu cầu của người dùng vào hàng đợi để xử lý sau. Lời gọi của người dùng sẽ không hiển thị exception báo lỗi, nhưng họ có thể được thông báo rằng yêu cầu của họ sẽ phải được đáp ứng vào một thời điểm sau.</p>
+
+      <p>Ví dụ, giả sử bạn có một trang thương mại điện tử theo dõi hành vi người dùng và cố gắng đưa ra gợi ý các mặt hàng khác mà họ có thể mua. Thông thường, bạn có thể gọi một microservice để phân tích hành vi trong quá khứ của người dùng và trả về danh sách gợi ý được tùy chỉnh cho người dùng cụ thể đó. Tuy nhiên, nếu dịch vụ preference thất bại, fallback của bạn có thể là lấy danh sách preference tổng quát hơn dựa trên tất cả giao dịch mua của người dùng và mang tính tổng quát hơn nhiều. Dữ liệu này có thể đến từ một dịch vụ và nguồn dữ liệu hoàn toàn khác.</p>
+
+      <h4 class="subsection-title">5.1.4<br>Bulkhead</h4>
+
+      <p>Pattern bulkhead dựa trên một khái niệm từ việc đóng tàu. Với thiết kế bulkhead, một con tàu được chia thành các khoang hoàn toàn tách biệt và kín nước gọi là bulkhead. Ngay cả khi thân tàu bị thủng, vì con tàu được chia thành</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

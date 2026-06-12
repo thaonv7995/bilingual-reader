@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p.emphasis-note {
+      margin-top: 6mm;
+      margin-bottom: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.diagram {
+      margin: 2mm 0 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page.ocp-chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0671.html">← Trước</a>
+    <a href="page_0673.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">672</span>
+      </header>
+
+      <p class="no-indent">cú pháp cơ bản để định nghĩa một module. Bạn có từ khóa <code>module</code>&nbsp;và tên module,
+      theo sau là các dấu ngoặc nhọn mở và đóng. Chúng ta sẽ thêm nhiều thông tin hơn vào bộ mô tả này khi tiếp tục. Tuy nhiên, tại thời điểm này, đây là một khởi đầu tốt!</p>
+
+      <p class="no-indent emphasis-note"><strong>File <code>module-info.java</code>&nbsp;không thể để trống.</strong></p>
+
+      <h3 class="section-title section-title--sub">23.1.3 Cấu trúc thư mục của một module<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Cấu trúc thư mục cho mã nguồn và cho các lớp (class) đã biên dịch của một module gần như
+      giống hệt với cấu trúc thư mục của một package. Sự khác biệt duy nhất là trong khi một package có thể nằm ở
+      bất kỳ thư mục nào, một module lại nằm trong một thư mục có cùng tên với tên của module. Quy tắc này
+      áp dụng cho cả các file mã nguồn cũng như các file class. Nếu thư mục module chứa mã nguồn,
+      nó được gọi là &ldquo;source module definition&rdquo; (định nghĩa module nguồn) và nếu thư mục module chứa các lớp (class) đã
+      biên dịch, nó được gọi là &ldquo;module definition&rdquo; (định nghĩa module).</p>
+
+      <p>Do đó, trong ví dụ của chúng ta, mã nguồn và các lớp (class) đã biên dịch của module phải nằm trong các thư mục
+      có tên là <code>simpleinterest</code>. Hình ảnh dưới đây thể hiện cấu trúc thư mục mà tôi sẽ sử dụng để
+      phát triển và thực thi mã nguồn cho module của chúng ta:</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0672_fig_diagram.png" width="957" height="509" alt="Sơ đồ cấu trúc thư mục cho module simpleinterest tại c:\ocp11\moduletest\src">
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

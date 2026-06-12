@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 23: Using Modules</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0703.html">← Prev</a>
+    <a href="page_0705.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">704</span>
+      </header>
+
+      <p class="no-indent">functionality or a &ldquo;service&rdquo;, which is defined by the <code>InterestCalculator</code>&nbsp;interface, and that
+      this service can be used as a black box by anybody. In fact, the whole point of creating the
+      <code>InterestCalculator</code>&nbsp;interface is that any class that requires interest to be computed could
+      use whichever <code>InterestCalculator</code>&nbsp;implementation was made available to it. For example,
+      we can also create a <code>CompoundInterestCalculator</code>&nbsp;that implements the same interface.</p>
+
+      <p>There could be a huge application that needs to compute interest as a part of its larger
+      functionality. Instead of worrying about &ldquo;how&rdquo; the interest is computed, this application should
+      just use whichever <code>InterestCalculator</code>&nbsp;is configured for use. We could configure it to use
+      <code>SimpleInterestCalculator</code>&nbsp;while the mocking the UI then configure it to use the
+      <code>CompoundInterestCalculator</code>&nbsp;later. We should not need to make any change in the
+      application code to achieve this. In other words, the application code should not be tightly
+      coupled with the actual implementation class that provides the <code>InterestCalculator</code>&nbsp;service
+      but should only depend on the service definition, i.e., the interface of that service.</p>
+
+      <p>There are multiple ways to achieve this goal including Spring&rsquo;s dependency injection framework.
+      But that is obviously not the focus of this exam. The OCP exam focuses on a less popular
+      technique that is available in the JDK and doesn&rsquo;t require any third party library. The module
+      system makes this technique the simplest of all to use. So, let&rsquo;s check it out.</p>
+
+      <h3 class="section-title">23.5.1 Defining and using a service<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">A service is nothing but by a well-known interface that outlines the functionality that it provides
+      through its methods. It has to be well-known because the service is all that the client application
+      knows about and is coupled to. Technically, a service could be a concrete class as well but
+      usually it is an interface or an abstract class.</p>
+
+      <p>So, for example, <code>calculators.InterestCalculator</code>&nbsp;could be a service. There is nothing
+      special that you need to do in the interface or the class to designate it as a service really. If you
+      think it describes a service then it is a service. Large projects usually adopt a convention such as
+      appending the word &ldquo;Service&rdquo; to the names of</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

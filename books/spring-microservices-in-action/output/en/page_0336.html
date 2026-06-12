@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: Section 10.5 GitHub and Travis CI</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 5;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered li .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0335.html">← Prev</a>
+    <a href="page_0337.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Beginning your build deploy/pipeline: GitHub and Travis CI</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">311</span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="EagleEye build pipeline technologies continued">
+        <li><strong class="run-in">Python (<a href="https://python.org">https://python.org</a>)&mdash;</strong>For writing the platform tests that are executed before a Docker image is deployed, I chose Python as my tool for writing the platform tests. I&rsquo;m a firm believer in using the right tools for the job, and frankly, I think Python is a fantastic programming language, especially for writing REST-based test cases.</li>
+        <li><strong class="run-in">Amazon&rsquo;s EC2 Container Service (ECS)&mdash;</strong>The final destination for our microservices will be Docker instances deployed to Amazon&rsquo;s Docker platform. I chose Amazon as my cloud platform because it&rsquo;s by far the most mature of the cloud providers and makes it trivial to deploy Docker services.</li>
+      </ol>
+
+      <aside class="sidebar-note" aria-label="Wait….did you say Python?">
+        <h3>Wait&hellip;.did you say Python?</h3>
+        <p>You might find it a little odd that I wrote the platform tests in Python rather than Java. I did this purposefully. Python (like Groovy) is a fantastic scripting language for writing REST-based test cases. I believe in using the right tool for the job. One of the biggest mind shifts I&rsquo;ve seen for organizations adopting microservices is that the responsibility for picking the language should lie with the development teams. In too many organizations, I&rsquo;ve seen a dogmatic embrace of standards (&ldquo;our enterprise standard is Java . . . and all code must be written in Java&rdquo;). As a result, I&rsquo;ve seen development teams jump through hoops to write large amounts of Java code when a 10-line Groovy or Python script would do the job.</p>
+        <p>The second reason I chose Python is that unlike unit and integration tests, platform tests are truly &ldquo;black box&rdquo; tests where you&rsquo;re acting like an actual API consumer running in a real environment. Unit tests exercise the lowest level of code and shouldn&rsquo;t have any external dependencies when they run. Integration tests come up a level and test the API, but key external dependencies, like calls to other services, database calls, and so on, are mocked or stubbed out. Platform tests should be truly independent tests of the underlying infrastructure.</p>
+      </aside>
+
+      <h4 class="subsection-title">10.5 Beginning your build deploy/pipeline: GitHub and Travis CI</h4>
+
+      <p class="no-indent">Dozens of source control engines and build deploy engines (both on-premise and cloud-based) can implement your build and deploy pipeline. For the examples in this book, I purposely chose GitHub as the source control repository and Travis CI as the build engine. The Git source control repository is an extremely popular repository and GitHub is one of the largest cloud-based source control repositories available today.</p>
+
+      <p>Travis CI is a build engine that integrates tightly with GitHub (it also supports Subversion and Mercurial). It&rsquo;s extremely easy to use and is completely driven off a single configuration file (<code>.travis.yml</code>) in your project&rsquo;s root directory. Its simplicity and opinionated nature make it easy to get a simple build pipeline off the ground</p>
+
+      <p>Up to now, all of the code examples in this book could be run solely from your desktop (with the exception of connectivity out to GitHub). For this chapter, if you</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

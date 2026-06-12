@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 14: Tạo và Sử dụng các Interface</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0150.html">← Trước</a>
+    <a href="page_0152.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">151</span>
+      </header>
+
+      <p class="no-indent">4. Lưu ý rằng vì các method private không thể nhìn thấy bên ngoài interface, chúng không thể được
+      đánh dấu là <code>default</code>.</p>
+
+      <p>Vì các method của một interface được thiết kế để được triển khai bởi các lớp implement
+      interface đó, các method của một interface không thể được khai báo là <code>final</code>. Hãy quan sát rằng điều này ngược lại với
+      quy tắc được áp dụng cho các biến. Các biến của một interface luôn luôn là <code>final</code>.</p>
+
+      <p>Mặc dù không quan trọng cho kỳ thi, nhưng chúng ta hoàn toàn có thể định nghĩa các class, record, interface, và
+      enum bên trong một interface. Chúng không thể mang phạm vi truy cập nào khác ngoài <code>public</code>.</p>
+
+      <h3 class="section-title section-title--minor">Marker interface (Interface đánh dấu)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn có thể gặp một interface hoàn toàn không chứa bất kỳ thành phần nào bên trong. Những interface như vậy được gọi là
+      &ldquo;marker interface&rdquo; (interface đánh dấu). Ví dụ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>interface SpecialThing{
+}</code></pre>
+      </figure>
+
+      <p>Trong đoạn mã trên, <code>SpecialThing</code> là một marker interface.</p>
+
+      <p>Mục đích của một marker interface là để gắn thẻ (tag) một lớp với một thông tin bổ sung về chính
+      lớp đó. Ví dụ, nếu bất kỳ class nào triển khai (implement) <code>SpecialThing</code>, điều đó ngụ ý rằng class đó là một
+      <code>SpecialThing</code>. Thông tin này, còn được gọi là &ldquo;metadata&rdquo; (siêu dữ liệu), có thể được sử dụng bởi một số đoạn mã hoặc một số
+      công cụ xử lý tất cả các đối tượng <code>SpecialThing</code> theo một cách nhất định.</p>
+
+      <p>Một marker interface rất nổi tiếng trong Java là <code>java.io.Serializable</code>. Nó báo hiệu cho JVM rằng
+      các đối tượng của những class triển khai interface này có thể được tuần tự hóa (serialized) và giải tuần tự hóa (deserialized).</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

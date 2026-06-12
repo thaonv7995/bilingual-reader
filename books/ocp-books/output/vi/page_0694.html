@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--terminal pre.code-block {
+      background: #e2e8f0;
+      border-left: none;
+      font-size: 9.75pt;
+      line-height: 1.4;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0693.html">← Trước</a>
+    <a href="page_0695.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">694</span>
+      </header>
+
+      <p class="no-indent">tự tìm vị trí của chúng.</p>
+
+      <h3 class="section-title section-title--sub">Sử dụng một module không có mã nguồn<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Trong quá trình phát triển một module, bạn có thể cần phải sử dụng các module của bên thứ ba mà mã nguồn của chúng không có sẵn. Ví dụ, điều gì sẽ xảy ra nếu module <code>calculators</code>&nbsp;được phát triển bởi một nhóm khác và bạn chỉ có tệp <code>calculators.jar</code>&nbsp;của nó?</p>
+
+      <p>Chúng ta có thể sử dụng tùy chọn <code>--module-path</code>&nbsp;để chỉ ra vị trí của một module cho <code>javac</code>&nbsp;tương tự như cách chúng ta đã sử dụng nó khi thực thi một module. Giả sử chúng ta đặt tệp <code>calculators.jar</code>&nbsp;trong thư mục <code>c:\ocp21\moduletest\modulejars</code>. Bây giờ chúng ta có thể sử dụng lệnh sau để biên dịch module <code>simpleinterest</code>:</p>
+
+      <figure class="code-snippet code-snippet--terminal">
+        <pre class="code-block"><code>c:\ocp21\moduletest&gt;javac --module-path modulejars -d out --module-source-
+path src --module simpleinterest</code></pre>
+      </figure>
+
+      <p class="no-indent">Hãy lưu ý rằng chúng ta không chỉ định tên tệp jar thực tế trong đường dẫn module (mặc dù chúng ta cũng có thể làm điều đó). Chúng ta chỉ chỉ định thư mục chứa nó. Chúng ta có thể chỉ định bao nhiêu thư mục tùy ý, được phân tách bằng dấu phân cách đường dẫn (<code>;</code>&nbsp;trên Windows và <code>:</code>&nbsp;trên *nix). Sự khác biệt giữa việc chỉ định một thư mục và chỉ định một tệp jar là khi bạn chỉ định một thư mục, tất cả các tệp jar cũng như các định nghĩa module đã giải nén (exploded module definitions) có trong thư mục đó đều có sẵn cho trình biên dịch (hoặc cho JVM, trong trường hợp thực thi), trong khi ở trường hợp còn lại, chỉ có tệp jar mà bạn chỉ định trên đường dẫn module mới khả dụng. Việc chỉ định một thư mục trên đường dẫn module (module-path) trong quá trình học là hoàn toàn bình thường, nhưng tốt hơn hết bạn nên chỉ định rõ các tệp jar khi phát triển một ứng dụng chuyên nghiệp. Lệnh để chạy <code>simpleinterest</code>&nbsp;với các tệp jar được liệt kê rõ ràng trong đường dẫn module trông như thế này:</p>
+
+      <figure class="code-snippet code-snippet--terminal">
+        <pre class="code-block"><code>c:\ocp21\moduletest&gt;java --module-path modulejars\simpleinterest.jar;modulejars\calculators.jar  --module
+simpleinterest</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

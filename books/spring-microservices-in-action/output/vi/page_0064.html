@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Câu chuyện của kiến trúc sư</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0063.html">← Trước</a>
+    <a href="page_0065.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Câu chuyện của kiến trúc sư: thiết kế kiến trúc microservice</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">39</span>
+      </header>
+
+      <h3 class="section-title">Câu chuyện của kiến trúc sư: thiết kế kiến trúc microservice</h3>
+
+      <p>Mặc dù bạn muốn các microservice đóng gói tất cả quy tắc nghiệp vụ để thực hiện một giao dịch đơn lẻ, điều này không phải lúc nào cũng khả thi. Bạn thường gặp tình huống cần các nhóm microservice phối hợp trên các phần khác nhau của miền nghiệp vụ để hoàn thành toàn bộ giao dịch. Một kiến trúc sư tách ranh giới dịch vụ của một tập microservice bằng cách xem xét nơi miền dữ liệu dường như không khớp với nhau.</p>
+
+      <p>Ví dụ, một kiến trúc sư có thể xem xét luồng nghiệp vụ sẽ được mã hóa thực hiện và nhận ra rằng họ cần cả thông tin khách hàng và sản phẩm. Sự hiện diện của hai miền dữ liệu riêng biệt là dấu hiệu tốt cho thấy nhiều microservice đang tham gia. Cách hai phần khác nhau của giao dịch nghiệp vụ tương tác thường trở thành giao diện dịch vụ cho các microservice.</p>
+
+      <p>Tách miền nghiệp vụ là một nghệ thuật hơn là khoa học đen trắng. Hãy dùng các hướng dẫn sau để xác định và phân rã vấn đề nghiệp vụ thành các ứng viên microservice:</p>
+
+      <ol class="manning-numbered">
+        <li><em>Mô tả vấn đề nghiệp vụ và lắng nghe các danh từ bạn dùng để mô tả vấn đề.</em> Dùng lặp lại cùng các danh từ khi mô tả vấn đề thường là dấu hiệu của miền nghiệp vụ cốt lõi và cơ hội cho một microservice. Ví dụ về các danh từ mục tiêu cho miền EagleEye từ chương 1 có thể trông giống như <em>hợp đồng</em>, <em>giấy phép</em> và <em>tài sản</em>.</li>
+        <li><em>Chú ý đến động từ.</em> Động từ làm nổi bật hành động và thường thể hiện đường viền tự nhiên của miền vấn đề. Nếu bạn thấy mình nói &ldquo;giao dịch X cần lấy dữ liệu từ thứ A và thứ B,&rdquo; điều đó thường cho thấy nhiều dịch vụ đang tham gia. Nếu áp dụng cách tiếp cận theo dõi động từ cho EagleEye, bạn có thể tìm các câu như: &ldquo;Khi Mike từ bộ phận dịch vụ desktop thiết lập một máy PC mới, anh ấy tra cứu số giấy phép còn khả dụng cho phần mềm X và, nếu còn giấy phép, cài đặt phần mềm. Sau đó anh ấy cập nhật số giấy phép đã dùng trong bảng tính theo dõi của mình.&rdquo; Các động từ then chốt ở đây là <em>tra cứu</em> và <em>cập nhật</em>.</li>
+        <li><em>Tìm tính gắn kết dữ liệu.</em> Khi bạn tách vấn đề nghiệp vụ thành các phần riêng biệt, hãy tìm các mảnh dữ liệu có mối liên hệ chặt chẽ với nhau. Nếu đột nhiên, trong quá trình trao đổi, bạn đang đọc hoặc cập nhật dữ liệu khác biệt hoàn toàn so với những gì đã thảo luận trước đó, bạn có thể có thêm một ứng viên dịch vụ. <em>Microservice phải hoàn toàn sở hữu dữ liệu của mình.</em></li>
+      </ol>
+
+      <p>Hãy lấy các hướng dẫn này và áp dụng chúng vào một vấn đề thực tế. Chương 1 đã giới thiệu một sản phẩm phần mềm hiện có tên EagleEye được dùng để quản lý tài sản phần mềm như giấy phép phần mềm và chứng chỉ secure socket layer (SSL). Các mục này được triển khai lên nhiều máy chủ khác nhau trong toàn tổ chức.</p>
+
+      <p>EagleEye là ứng dụng web monolithic truyền thống được triển khai lên máy chủ ứng dụng J2EE nằm trong trung tâm dữ liệu của khách hàng. Mục tiêu của bạn là tách ứng dụng monolithic hiện có thành một tập hợp các dịch vụ.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

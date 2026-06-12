@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: 4.5 Using service discovery to look up a service</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--route .listing-callouts {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0135.html">← Prev</a>
+    <a href="page_0137.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Using service discovery to look up a service</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">111</span>
+      </header>
+
+      <h4 class="subsection-title">4.5 Using service discovery to look up a service</h4>
+
+      <p>You now have the organization service registered with Eureka. You can also have the licensing service call the organization service without having direct knowledge of the location of any of the organization services. The licensing service will look up the physical location of the organization by using Eureka.</p>
+
+      <p>For our purposes, we&rsquo;re going to look at three different Spring/Netflix client libraries in which a service consumer can interact with Ribbon. These libraries will move from the lowest level of abstraction for interacting with Ribbon to the highest. The libraries we&rsquo;ll explore include</p>
+
+      <ul class="manning-bullets" aria-label="Spring and Netflix client libraries">
+        <li>Spring Discovery client</li>
+        <li>Spring Discovery client enabled RestTemplate</li>
+        <li>Netflix Feign client</li>
+      </ul>
+
+      <p class="no-indent">Let&rsquo;s walk through each of these clients and see their use in the context of the licensing service. Before we start into the specifics of the client, I wrote a few convenience classes and methods in the code so you can play with the different client types using the same service endpoint.</p>
+
+      <p>First, I&rsquo;ve modified the <code>src/main/java/com/thoughtmechanix/licenses/controllers/LicenseServiceController.java</code> to include a new route for the license services. This new route will allow you to specify the type of client you want to invoke the service with. This is a helper route so that as we explore each of the different methods for invoking the organization service via Ribbon, you can try each mechanism through a single route. The following listing shows the code for the new route in the <code>LicenseServiceController</code> class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 4.5</strong><br>Calling the licensing service with different REST Clients</figcaption>
+        <div class="listing-annotated listing-annotated--route" aria-label="Listing 4.5 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>@RequestMapping(value="/{licenseId}/{clientType}",
+method = RequestMethod.GET)
+public License getLicensesWithClient(
+   @PathVariable("organizationId") String organizationId,
+   @PathVariable("licenseId")      String licenseId,
+   @PathVariable("clientType")     String clientType) {
+
+    return licenseService.getLicense(organizationId,
+   licenseId, clientType);
+}</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Listing 4.5 annotation callout">
+            <p class="listing-callout">The <code>clientType</code> determines the type of Spring REST client to use.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>In this code, the <code>clientType</code> parameter passed on the route will drive the type of client we&rsquo;re going to use in the code examples. The specific types you can pass in on this route include</p>
+
+      <ul class="manning-bullets" aria-label="clientType route values">
+        <li><strong class="run-in">Discovery</strong>&mdash;Uses the discovery client and a standard Spring <code>RestTemplate</code> class to invoke the organization service</li>
+        <li><strong class="run-in">Rest</strong>&mdash;Uses an enhanced Spring <code>RestTemplate</code> to invoke the Ribbon-based service</li>
+        <li><strong class="run-in">Feign</strong>&mdash;Uses Netflix&rsquo;s Feign client library to invoke a service via Ribbon</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

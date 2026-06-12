@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị Cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p.step-label {
+      margin: 0 0 1.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.step-label + figure.code-snippet {
+      margin-top: 0;
+      margin-bottom: 2mm;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0041.html">← Trước</a>
+    <a href="page_0043.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> * <strong>FROM</strong> pg_stat_activity;</code></pre>
+      </figure>
+
+      <p>Thêm vào đó, lệnh này cung cấp chi tiết về truy vấn cuối cùng đang chạy trên mỗi kết nối,
+      người dùng kết nối (<code>usename</code>), cơ sở dữ liệu (<code>datname</code>) đang sử dụng, và thời gian bắt đầu
+      của truy vấn. Bạn cần chế độ xem này để lấy ID quy trình của các kết nối mà
+      bạn muốn kết thúc.</p>
+
+      <p class="step-label no-indent">2. Bây giờ hủy tất cả các truy vấn đang hoạt động trên một kết nối:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_cancel_backend(<em>procid</em>)</code></pre>
+      </figure>
+      <p>Điều này không kết thúc kết nối đó.</p>
+
+      <p class="step-label no-indent">3. Giết kết nối:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_terminate_backend(<em>procid</em>)</code></pre>
+      </figure>
+      <p>Nếu bạn chưa hủy các truy vấn trên kết nối, chúng sẽ bị kết thúc một cách thô bạo
+      ngay bây giờ. Đây sẽ là vũ khí của bạn trước khi khôi phục để ngăn một
+      người dùng háo hức ngay lập tức khởi động lại một truy vấn đã bị hủy.</p>
+
+      <p>PostgreSQL cho phép bạn nhúng các hàm thực hiện các hành động trong một truy vấn <code>SELECT</code>
+      thông thường. Vì vậy, mặc dù <code>pg_terminate_backend</code> và <code>pg_cancel_backend</code> chỉ có thể tác động đến
+      một kết nối tại một thời điểm, bạn có thể giết nhiều kết nối bằng cách bao bọc chúng trong một
+      <code>SELECT</code>. Ví dụ, giả sử bạn muốn giết tất cả các kết nối thuộc về một vai trò
+      chỉ với một cú đánh. Chạy lệnh SQL này trên phiên bản 9.2 và các phiên bản sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_terminate_backend(pid) <strong>FROM</strong> pg_stat_activity <strong>WHERE</strong> usename =
+<em>'some_role'</em>;</code></pre>
+      </figure>
+
+      <p class="no-indent">hoặc trước phiên bản 9.2:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_terminate_backend(procpid) <strong>FROM</strong> pg_stat_activity <strong>WHERE</strong> usename =
+<em>'some_role'</em>;</code></pre>
+      </figure>
+
+      <p>Chế độ xem <code>pg_stat_activity</code> đã thay đổi đáng kể kể từ phiên bản 9.1 với việc đổi tên
+      và thêm các cột mới. <code>procpid</code> giờ đây là <code>pid</code>.</p>
+
+      <h3 class="section-title">Vai trò</h3>
+      <p>PostgreSQL đại diện cho các tài khoản dưới dạng <em>vai trò</em>. Các vai trò có thể đăng nhập được gọi là <em>vai trò đăng nhập</em>. Các vai trò
+      có thể là thành viên của các vai trò khác; các vai trò chứa các vai trò khác được gọi là <em>vai trò nhóm</em>. (Và
+      đúng vậy, các vai trò nhóm có thể là thành viên của các vai trò nhóm khác và cứ thế vô hạn, nhưng đừng
+      đi vào đó trừ khi bạn có khả năng tư duy theo cấp bậc.) Các vai trò là nhóm và
+      có thể đăng nhập được gọi là <em>vai trò đăng nhập nhóm</em>. Tuy nhiên, để dễ dàng bảo trì và bảo mật,
+      các DBA thường không cấp quyền đăng nhập cho các vai trò nhóm. Một vai trò có thể được chỉ định là
+      <em>superuser</em>. Các vai trò superuser có quyền truy cập không bị hạn chế vào dịch vụ PostgreSQL.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">24<span class="sep">|</span>Chương 2: Quản trị Cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0061.html">← Prev</a>
+    <a href="page_0063.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h3 class="subsection-title">Don’t Give Full OS Administrative Rights to the Postgres System Account (postgres)</h3>
+      <p>Many people are under the misconception that the postgres account needs to have full
+      administrative rights to the server. In fact, depending on your PostgreSQL version, if
+      you give the postgres account full administrative rights to the server, your database
+      server might not even start.</p>
+
+      <p>The postgres account should always be created as a regular system user in the OS with
+      rights just to the data cluster and additional tablespace folders. Most installers will set
+      up the correct permissions without you needing to worry. Don’t try to do postgres any
+      favors by giving it more rights than it needs. Granting unnecessary rights leaves your
+      system vulnerable if you fall under an SQL injection attack.</p>
+
+      <p>There are cases where you’ll need to give the postgres account write/delete/read rights
+      to folders or executables outside of the data cluster. With scheduled jobs that execute
+      batch files, this need often arises. We advise you to practice restraint and bestow only
+      the minimum rights necessary to get the job done.</p>
+
+      <h3 class="subsection-title">Don’t Set <code>shared_buffers</code> Too High</h3>
+      <p>Loading up your server with RAM doesn’t mean you can set the <code>shared_buffers</code> as
+      high as your physical RAM. Try it and your server may crash or refuse to start. If you
+      are running PostgreSQL on 32-bit Windows, setting it higher than 512 MB often results
+      in instability. With 64-bit Windows, you can push the envelop a bit higher and can even
+      exceed 1 GB without any issues. On some Linux systems, <code>shared_buffers</code> can’t be set
+      higher than the compiled SHMMAX variable, which is usually quite low. PostgreSQL 9.3
+      changed how kernel memory is used, so that many of the issues people ran into with
+      kernel limitations in prior versions are nonissues in version 9.3. You can find more
+      details in <span class="accent-word">Kernel Resources</span>.</p>
+
+      <h3 class="subsection-title">Don’t Try to Start PostgreSQL on a Port Already in Use</h3>
+      <p>If you try to start PostgreSQL on a port that’s already in use, you’ll see errors in your
+      <code>pg_log</code> files of the form: <code>make sure PostgreSQL is not already running</code>. Here are
+      the common reasons why this happens:</p>
+
+      <ul class="bullets">
+        <li>You’ve already started the postgres service.</li>
+        <li>You are trying to run PostgreSQL on a port already in use by another service.</li>
+        <li>Your postgres service had a sudden shutdown and you have an orphan <code>postgresql.pid</code>
+        file in the data folder. Just delete the file and try again.</li>
+        <li>You have an orphaned PostgreSQL process. When all else fails, kill all running
+        PostgreSQL processes and then try starting again.</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">44<span class="sep">|</span>Chapter 2: Database Administration</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

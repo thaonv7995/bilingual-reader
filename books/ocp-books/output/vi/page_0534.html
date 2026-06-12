@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm;
+      padding-left: 1.5em;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0533.html">← Trước</a>
+    <a href="page_0535.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">534</span>
+      </header>
+
+      <p class="no-indent">Các phương thức <code>Future&lt;T&gt; submit(Runnable r, T result)</code>&nbsp;, trong đó <code>Callable&lt;T&gt;</code>&nbsp;và
+      <code>Runnable</code>&nbsp;đại diện cho tác vụ, còn <code>Future&lt;T&gt;</code>&nbsp;đại diện cho kết quả thuộc kiểu <code>T</code>&nbsp;sẽ được
+      tạo ra sau khi việc thực thi tác vụ hoàn tất.</p>
+
+      <p>Việc gửi một tác vụ đến một <code>ExecutorService</code>&nbsp;bằng cách sử dụng các phương thức <code>submit</code>&nbsp;của nó tạo nên nền tảng của
+      <strong>tính toán bất đồng bộ (asynchronous computation)</strong>&nbsp;trong thế giới Java. Nó được gọi là bất đồng bộ vì kết quả
+      của tác vụ chỉ được tạo ra khi việc thực thi tác vụ hoàn tất, nhưng lượt gọi đến
+      <code>submit</code>&nbsp;lại trả về ngay lập tức với một đối tượng <code>Future</code>&nbsp;trống, đối tượng này sẽ được lấp đầy bằng kết quả
+      sau đó. Điều này làm cho các phương thức <code>submit</code>&nbsp;khác biệt về mặt bản chất so với phương thức <code>execute</code>&nbsp;.</p>
+
+      <p>Một điểm khác biệt nữa, dĩ nhiên, là phương thức <code>execute</code>&nbsp;chỉ chấp nhận một <code>Runnable</code>&nbsp;, nhưng
+      có các phương thức <code>submit</code>&nbsp;nạp chồng (overloaded) chấp nhận cả <code>Runnable</code>&nbsp;lẫn <code>Callable</code>&nbsp;.</p>
+
+      <p>Cũng không có lớp (class) nào được định nghĩa công khai (public) trong JDK triển khai <code>ExecutorService</code>&nbsp;cả. Bạn
+      phải lấy một instance của một <code>ExecutorService</code>&nbsp;thông qua một phương thức factory của lớp
+      <code>Executors</code>&nbsp;. Trên thực tế, tất cả các phương thức factory của lớp <code>Executors</code>&nbsp;đều thực sự trả về một
+      instance của một <code>ExecutorService</code>&nbsp;, đó là lý do tại sao chúng ta có thể ép kiểu <code>e</code>&nbsp;sang
+      <code>ExecutorService</code>&nbsp;và gọi <code>shutdown()</code>&nbsp;trên nó trong đoạn mã ở trên.</p>
+
+      <p class="no-indent"><strong class="run-in">Executors</strong> - <code>Executors</code>&nbsp;là một lớp trợ giúp (helper class) biết cách tạo ra các loại
+      <code>Executors</code>&nbsp;khác nhau. Nó có một phương thức static để tạo ra từng loại. Dưới đây là những phương thức quan trọng
+      nhất:</p>
+
+      <ol class="numbered">
+        <li><code>ExecutorService newSingleThreadExecutor()</code>&nbsp;- Tạo một <code>Executor</code>&nbsp;chỉ có duy nhất
+        một worker thread và nó sử dụng thread đơn đó để thực thi các tác vụ. Dĩ nhiên, vì chỉ sử dụng một
+        thread, nó chỉ có thể thực thi các tác vụ một cách tuần tự từng cái một.</li>
+        <li><code>ExecutorService newCachedThreadPool()</code>&nbsp;- Tạo một thread pool để tạo các thread mới
+        khi cần thiết, nhưng sẽ tái sử dụng các thread đã được xây dựng trước đó khi chúng có sẵn.</li>
+        <li><code>ExecutorService newFixedThreadPool(int nThreads)</code>&nbsp;- Tạo một thread pool tái sử dụng
+        một số lượng thread cố định hoạt động ngoài một hàng đợi không giới hạn (unbounded queue) được chia sẻ.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

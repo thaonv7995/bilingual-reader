@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 22</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0021.html">← Prev</a>
+      <span>Page 22 / 30</span>
+      <a href="page_0023.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<figure class="code-snippet"><pre class="code-block"><code>rpush users:leto:guesses 5 9 10 2 4 10 19 2
+sort users:leto:guesses</code></pre></figure><p class="lead no-indent">Which will return the values sorted from lowest to highest. Here's a more advanced example:</p><figure class="code-snippet"><pre class="code-block"><code>sadd friends:ghanima leto paul chani jessica alia duncan
+sort friends:ghanima limit 0 3 desc alpha</code></pre></figure><p>The above command shows us how to page the sorted records (via <code>limit</code>), how to return the results in descending order (via <code>desc</code>) and how to sort lexicographically instead of numerically (via <code>alpha</code>).</p><p>The real power of <code>sort</code> is its ability to sort based on a referenced object. Earlier we showed how lists, sets and sorted sets are often used to reference other Redis objects. The sort command can dereference those relations and sort by the underlying value. For example, say we have a bug tracker which lets users watch issues. We might use a set to track the issues being watched:</p><figure class="code-snippet"><pre class="code-block"><code>sadd watch:leto 12339 1382 338 9338</code></pre></figure><p>It might make perfect sense to sort these by id (which the default sort will do), but we'd also like to have these sorted by severity. To do so, we tell Redis what pattern to sort by. First, let's add some more data so we can actually see a meaningful result:</p><figure class="code-snippet"><pre class="code-block"><code>set severity:12339 3
+set severity:1382 2
+set severity:338 5
+set severity:9338 4</code></pre></figure><p>To sort the bugs by severity, from highest to lowest, you'd do:</p><figure class="code-snippet"><pre class="code-block"><code>sort watch:leto by severity:* desc</code></pre></figure><p>Redis will substitute the * in our pattern (identified via <code>by</code>) with the values in our list/set/sorted set. This will create the key name that Redis will query for the actual values to sort by.</p><p>Although you can have millions of keys within Redis, I think the above can get a little messy. Thankfully sort can also work on hashes and their fields. Instead of having a bunch of top-level keys you can leverage hashes:</p><figure class="code-snippet"><pre class="code-block"><code>hset bug:12339 severity 3
+hset bug:12339 priority 1
+hset bug:12339 details <span class="cli-string">"{id: 12339, ....}"</span>
+hset bug:1382 severity 2
+hset bug:1382 priority 2
+hset bug:1382 details <span class="cli-string">"{id: 1382, ....}"</span>
+hset bug:338 severity 5
+hset bug:338 priority 3
+hset bug:338 details <span class="cli-string">"{id: 338, ....}"</span></code></pre></figure>
+      <p class="page-folio">21</p>
+    </article>
+  </main>
+</body>
+</html>

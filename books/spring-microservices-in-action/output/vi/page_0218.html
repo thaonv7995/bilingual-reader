@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Giới thiệu OAuth2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0217.html">← Trước</a>
+    <a href="page_0219.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Giới thiệu OAuth2</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">193</span>
+      </header>
+
+      <ul class="manning-bullets" aria-label="Các lớp bảo mật ứng dụng (tiếp theo)">
+        <li>Triển khai kiểm soát truy cập mạng để dịch vụ chỉ có thể truy cập qua các cổng được định nghĩa rõ ràng và chỉ một số ít máy chủ được ủy quyền mới có thể truy cập</li>
+      </ul>
+
+      <p class="no-indent">Chương này chỉ xử lý gạch đầu dòng đầu tiên trong danh sách này: cách <em>xác thực</em> rằng người dùng gọi microservice của bạn đúng là người họ tuyên bố và xác định họ có được ủy quyền thực hiện hành động mà họ yêu cầu từ microservice của bạn hay không. Hai chủ đề còn lại là các chủ đề bảo mật rất rộng nằm ngoài phạm vi của cuốn sách này.</p>
+
+      <p>Để triển khai các kiểm soát ủy quyền và xác thực, bạn sẽ dùng Spring Cloud Security và tiêu chuẩn OAuth2 (Open Authentication) để bảo vệ các dịch vụ Spring của mình. OAuth2 là một framework bảo mật dựa trên token cho phép người dùng xác thực với dịch vụ xác thực bên thứ ba. Nếu người dùng xác thực thành công, họ sẽ được cấp một token phải gửi kèm mọi yêu cầu. Token sau đó có thể được xác thực lại với dịch vụ xác thực. Mục tiêu chính của OAuth2 là khi nhiều dịch vụ được gọi để đáp ứng yêu cầu của người dùng, người dùng có thể được xác thực bởi từng dịch vụ mà không phải trình bày thông tin đăng nhập của mình cho từng dịch vụ xử lý yêu cầu. Spring Boot và Spring Cloud đều cung cấp triển khai OAuth2 sẵn có và giúp tích hợp bảo mật OAuth2 vào dịch vụ của bạn cực kỳ dễ dàng.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Trong chương này, chúng ta sẽ hướng dẫn bạn cách bảo vệ microservice bằng OAuth2; tuy nhiên, một triển khai OAuth2 đầy đủ còn yêu cầu ứng dụng web phía trước để nhập thông tin đăng nhập của người dùng. Chúng ta sẽ không đi qua cách thiết lập ứng dụng front-end vì điều đó nằm ngoài phạm vi của cuốn sách về microservice. Thay vào đó, chúng ta sẽ dùng REST client, như POSTMAN, để mô phỏng việc trình bày thông tin đăng nhập. Để có hướng dẫn tốt về cách cấu hình ứng dụng front-end, tôi khuyên bạn xem hướng dẫn Spring sau: <a href="https://spring.io/blog/2015/02/03/sso-with-oauth2-angular-js-and-spring-security-part-v">https://spring.io/blog/2015/02/03/sso-with-oauth2-angular-js-and-spring-security-part-v</a>.</p>
+      </aside>
+
+      <p>Sức mạnh thực sự của OAuth2 là cho phép lập trình viên ứng dụng dễ dàng tích hợp với các nhà cung cấp cloud bên thứ ba và thực hiện xác thực cũng như ủy quyền người dùng với các dịch vụ đó mà không phải liên tục truyền thông tin đăng nhập của người dùng tới dịch vụ bên thứ ba. Các nhà cung cấp cloud như Facebook, GitHub và Salesforce đều hỗ trợ OAuth2 như một tiêu chuẩn.</p>
+
+      <p>Trước khi đi vào chi tiết kỹ thuật về việc bảo vệ dịch vụ của chúng ta bằng OAuth2, hãy xem qua kiến trúc OAuth2.</p>
+
+      <h4 class="subsection-title">7.1 Giới thiệu OAuth2</h4>
+
+      <p>OAuth2 là một framework xác thực và ủy quyền bảo mật dựa trên token, chia bảo mật thành bốn thành phần. Bốn thành phần này là</p>
+
+      <ol class="manning-numbered" aria-label="Bốn thành phần OAuth2">
+        <li><em>Tài nguyên được bảo vệ</em>&mdash;Đây là tài nguyên (trong trường hợp của chúng ta, một microservice) mà bạn muốn bảo vệ và đảm bảo chỉ những người dùng đã xác thực và có ủy quyền phù hợp mới có thể truy cập.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

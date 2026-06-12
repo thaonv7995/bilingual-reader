@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0118.html">← Prev</a>
+    <a href="page_0120.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">119</span>
+      </header>
+
+      <p class="no-indent">and not a <code>Mango</code> at run time. So basically, we just fooled the compiler into accepting the code
+      by making a false guarantee. Well, we did fool the compiler but we can't fool the JVM. The JVM
+      knows what kind of object <code>f1</code> actually points to and it will not let the cast of <code>f1</code> to <code>Mango</code>
+      succeed. The JVM will throw a <code>ClassCastException</code> when it executes this line.</p>
+
+      <p>The JVM is essentially the second line of defence against violation of Java's type safety. It checks
+      at run time what the compiler is unable to check at compile time. If the JVM sees that a
+      reference variable is being cast to a type that does not satisfy the is-a test for the class of the
+      object to which the variable is referring, it will throw a <code>ClassCastException</code>. Thus, the type
+      safety of the program is never compromised.</p>
+
+      <p>Fooling the compiler in this case doesn't mean that you can fool the compiler by giving a false
+      guarantee every time. Take a look at this code:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Mango m = new Mango();
+Apple a = (Apple) m;</code></pre>
+      </figure>
+
+      <p>The compiler rejects the above code in spite of you guaranteeing that <code>m</code> will point to an
+      <code>Apple</code> at run time. Well, it turns out that compiler is not completely clueless. It knows that
+      there is absolutely no way <code>m</code> can point to an <code>Apple</code> because the declared class of <code>m</code> is
+      <code>Mango</code> and there is no is-a relationship between <code>Mango</code> and <code>Apple</code>. It knows that anything
+      that is a <code>Mango</code> can never be an <code>Apple</code> and so it calls your bluff. Thus, for a cast to pass
+      compilation, the cast must at least be plausible!</p>
+
+      <h3 class="section-title section-title--minor">Casting a reference to an interface<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">It is easy for a compiler to determine whether a reference of one class can ever point to an object
+      of another class because a class can only extend one class at the most. Therefore, if the class
+      mentioned in the cast is a subclass of the declared class of the reference, the compiler knows
+      that the cast may succeed at run time.</p>
+
+      <p>It is not so easy with interfaces. Since a class can extend one class and can also implement any
+      number of interfaces at the same time, the compiler cannot rule out cases where a reference can
+      never point to an instance of a class that implements the</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

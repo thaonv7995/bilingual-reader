@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Listing 8.14 và 8.15 OrganizationChangeHandler</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--813-cont .listing-callouts-right {
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-annotated--814 .listing-callouts-right {
+      padding-top: 12mm;
+    }
+    .prose-page.chapter-page .listing-annotated--814 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-annotated--815 .listing-callouts-right {
+      padding-top: 6mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + .listing-annotated {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0281.html">← Trước</a>
+    <a href="page_0283.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Một trường hợp sử dụng Spring Cloud Stream: bộ nhớ đệm phân tán</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">257</span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--813-cont" aria-label="Listing 8.13 (tiếp theo) YAML có chú thích">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>  ...
+    stream:
+      bindings:
+        inboundOrgChanges:
+          destination: orgChangeTopic
+          content-type: application/json
+          group: licensingGroup</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 8.13 (tiếp theo)">
+          <p class="listing-callout">Đổi tên kênh từ input thành inboundOrgChanges.</p>
+        </div>
+      </div>
+
+      <p class="no-indent">Để dùng kênh input tùy chỉnh của bạn, bạn cần inject interface <code>CustomChannels</code> mà bạn đã định nghĩa vào một class sẽ dùng nó để xử lý message. Với ví dụ bộ nhớ đệm phân tán, tôi đã chuyển code xử lý message đến sang class licensing-service sau: <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/events/handlers/OrganizationChangeHandler.java</code>. Listing sau trình bày code xử lý message mà bạn sẽ dùng với kênh <code>inboundOrgChanges</code> đã định nghĩa.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.14</strong><br>Dùng kênh tùy chỉnh mới trong OrganizationChangeHandler</figcaption>
+        <div class="listing-annotated listing-annotated--814" aria-label="Listing 8.14 có chú thích code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>@EnableBinding(CustomChannels.class)
+public class OrganizationChangeHandler {
+
+    @StreamListener("inboundOrgChanges")
+    public void loggerSink(OrganizationChangeModel orgChange) {
+        .... //We will get into the rest of the code shortly
+        }
+    }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 8.14">
+            <p class="listing-callout">Chuyển @EnableBindings ra khỏi class Application.java và vào class OrganizationChangeHandler. Lần này thay vì dùng Sink.class, hãy dùng class CustomChannels của bạn làm tham số truyền vào.</p>
+            <p class="listing-callout">Với annotation @StreamListener, bạn truyền vào tên kênh của mình, &ldquo;inboundOrgChanges&rdquo;, thay vì dùng Sink.INPUT.</p>
+          </div>
+        </div>
+      </figure>
+
+      <h4 class="subsection-title">8.4.3 Tổng hợp lại: xóa cache khi nhận được message</h4>
+
+      <p class="no-indent">Ở thời điểm này bạn không cần làm gì với organization service. Service đã được thiết lập sẵn để publish message mỗi khi một organization được thêm, cập nhật hoặc xóa. Việc bạn cần làm là hoàn thiện class <code>OrganizationChangeHandler</code> từ listing 8.14. Listing sau trình bày triển khai đầy đủ của class này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.15</strong><br>Xử lý thay đổi organization trong licensing service</figcaption>
+        <div class="listing-annotated listing-annotated--815" aria-label="Listing 8.15 có chú thích code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>@EnableBinding(CustomChannels.class)
+public class OrganizationChangeHandler {
+
+    @Autowired
+    private OrganizationRedisRepository
+       organizationRedisRepository;
+
+    private static final Logger logger =
+       LoggerFactory.getLogger(OrganizationChangeHandler.class);</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 8.15">
+            <p class="listing-callout">Class <code>OrganizationRedisRepository</code> mà bạn dùng để tương tác với Redis được inject vào <code>OrganizationChangeHandler</code>.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

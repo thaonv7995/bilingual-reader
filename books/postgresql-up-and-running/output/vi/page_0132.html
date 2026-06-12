@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 6: Bảng, Ràng buộc và Chỉ mục — Các lớp toán tử</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.index-type-name {
+      margin: 2.5mm 0 0;
+      font-weight: 700;
+      font-style: italic;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.index-type-name + p.index-type-body {
+      margin: 0 0 3mm 6mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.index-type-body + p.index-type-body {
+      margin: 0 0 3mm 6mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0131.html">← Trước</a>
+    <a href="page_0133.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">132</span>
+      </header>
+
+      <p class="index-type-name no-indent">SP-GiST</p>
+      <p class="index-type-body no-indent">Cây tìm kiếm phân vùng không gian tổng quát (SP-GiST), được giới thiệu trong phiên bản
+      9.2, có thể được sử dụng trong cùng các tình huống như GiST nhưng có thể nhanh hơn cho một số loại
+      phân phối dữ liệu. Các kiểu dữ liệu hình học gốc của PostgreSQL, chẳng hạn như <code>point</code> và
+      <code>box</code>, và kiểu dữ liệu <code>text</code>, là những kiểu đầu tiên hỗ trợ SP-GiST. Trong phiên bản 9.3, hỗ trợ
+      đã mở rộng đến các kiểu khoảng. Phần mở rộng không gian PostGIS cũng có kế hoạch tận dụng chỉ mục chuyên biệt này trong tương lai gần.</p>
+
+      <p class="index-type-name no-indent">hash</p>
+      <p class="index-type-body no-indent">Chỉ mục hash đã phổ biến trước khi GiST và GIN ra đời. Sự đồng thuận chung
+      đánh giá GiST và GIN cao hơn hash về cả hiệu suất và độ an toàn giao dịch.
+      Nhật ký ghi trước không theo dõi các chỉ mục hash; do đó, bạn không thể sử dụng chúng trong
+      các thiết lập sao chép luồng. PostgreSQL đã hạ bậc hash xuống trạng thái di sản. Bạn
+      vẫn có thể gặp loại chỉ mục này trong các cơ sở dữ liệu khác, nhưng tốt nhất là nên tránh hash
+      trong PostgreSQL.</p>
+
+      <p class="index-type-name no-indent">B-Tree-GiST/B-Tree-GIN</p>
+      <p class="index-type-body no-indent">Nếu bạn muốn khám phá các chỉ mục ngoài những gì PostgreSQL cài đặt theo mặc định, dù vì nhu cầu hay sự tò mò, hãy bắt đầu với các chỉ mục B-Tree-GiST hoặc B-Tree-GIN tổng hợp,
+      cả hai đều có sẵn dưới dạng phần mở rộng.</p>
+      <p class="index-type-body no-indent">Các chỉ mục lai này hỗ trợ các toán tử chuyên biệt của GiST hoặc GIN, nhưng cũng cung cấp
+      khả năng lập chỉ mục của toán tử bằng nhau trong các chỉ mục B-Tree. Bạn sẽ thấy chúng không thể thiếu
+      khi bạn muốn tạo một chỉ mục hợp thành bao gồm nhiều cột
+      với các kiểu dữ liệu như <code>character varying</code> hoặc <code>number</code>&mdash;thường được phục vụ bởi các
+      toán tử bằng nhau&mdash;hoặc như một kiểu <code>ltree</code> phân cấp hoặc vector văn bản đầy đủ với các toán tử chỉ
+      được hỗ trợ bởi GIN/GiST.</p>
+
+      <h3 class="subsection-title">Các lớp toán tử</h3>
+      <p class="no-indent">Chúng tôi rất muốn bỏ qua phần này về các lớp toán tử. Nhiều bạn sẽ vượt qua
+      các chỉ mục của mình mà không bao giờ cần biết chúng là gì và tại sao chúng
+      lại quan trọng đối với các chỉ mục. Nhưng nếu bạn gặp khó khăn, bạn sẽ cần hiểu các lớp toán tử để giải quyết
+      câu hỏi muôn thuở, &ldquo;Tại sao kế hoạch không tận dụng chỉ mục của tôi?&rdquo;</p>
+
+      <p>Các chuyên gia thuật toán dự định cho các chỉ mục của họ hoạt động với các kiểu dữ liệu nhất định và các
+      toán tử so sánh. Một chuyên gia trong việc lập chỉ mục các khoảng có thể ám ảnh về toán tử chồng chéo
+      (<code>&amp;&amp;</code>), trong khi một chuyên gia phát minh ra các chỉ mục cho tìm kiếm văn bản nhanh hơn có thể thấy ít ý nghĩa
+      trong một sự chồng chéo. Một nhà ngôn ngữ học tính toán cố gắng lập chỉ mục tiếng Trung hoặc các ngôn ngữ biểu tượng khác
+      có lẽ không có nhiều sử dụng cho các bất bình đẳng, trong khi sắp xếp từ A đến Z là rất quan trọng đối với
+      một hệ thống viết theo thứ tự chữ cái.</p>
+
+      <p>PostgreSQL nhóm các toán tử so sánh tương tự và các kiểu dữ liệu hợp lệ
+      thành các lớp toán tử (viết tắt là opclass). Ví dụ, lớp toán tử <code>int4_ops</code> bao gồm các toán tử <code>= &lt; &gt; &gt; &lt;</code> được áp dụng cho kiểu dữ liệu <code>int4</code>. Lớp toán tử <code>pg_op</code></p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">114<span class="sep">|</span>Chương 6: Bảng, Ràng buộc và Chỉ mục</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

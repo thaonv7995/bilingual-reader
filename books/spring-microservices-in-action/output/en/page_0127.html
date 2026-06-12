@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: Client-side load balancing</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered li p {
+      margin: 0 0 1.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered li p.continued {
+      padding-left: 3mm;
+    }
+    .prose-page.chapter-page .footnotes {
+      margin: 0 0 2.5mm;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+    .prose-page.chapter-page .footnotes p {
+      text-indent: 0;
+      margin: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0126.html">← Prev</a>
+    <a href="page_0128.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">102</span>
+        <span class="rh-center">CHAPTER 4 <em>On service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>Depending on the service discovery implementation, the propagation mechanism might use a hard-coded list of services to propagate to or use a multi-casting protocol like the &ldquo;gossip&rdquo;<sup>2</sup> or &ldquo;infection-style&rdquo;<sup>3</sup> protocol to allow other nodes to &ldquo;discover&rdquo; changes in the cluster.</p>
+
+      <p>Finally, each service instance will push to or have pulled from its status by the service discovery service. Any services failing to return a good health check will be removed from the pool of available service instances.</p>
+
+      <p>Once a service has registered with a service discovery service, it&rsquo;s ready to be used by an application or service that needs to use its capabilities. Different models exist for a client to &ldquo;discover&rdquo; a service. A client can rely solely on the service discovery engine to resolve service locations each time a service is called. With this approach, the service discovery engine will be invoked every time a call to a registered microservice instance is made. Unfortunately, this approach is brittle because the service client is completely dependent on the service discovery engine to be running to find and invoke a service.</p>
+
+      <p>A more robust approach is to use what&rsquo;s called client-side load balancing.<sup>4</sup> Figure 4.3 illustrates this approach.</p>
+
+      <p class="no-indent">In this model, when a consuming actor needs to invoke a service</p>
+
+      <ol class="manning-numbered" aria-label="Client-side load balancing steps">
+        <li>It will contact the service discovery service for all the service instances a service consumer is asking for and then cache data locally on the service consumer&rsquo;s machine.</li>
+        <li>Each time a client wants to call the service, the service consumer will look up the location information for the service from the cache. Usually client-side caching will use a simple load balancing algorithm like the &ldquo;round-robin&rdquo; load balancing algorithm to ensure that service calls are spread across multiple service instances.</li>
+        <li>The client will then periodically contact the service discovery service and refresh its cache of service instances. The client cache is eventually consistent, but there&rsquo;s always a risk that between when the client contacts the service discovery instance for a refresh and calls are made, calls might be directed to a service instance that isn&rsquo;t healthy.
+          <p class="continued">If, during the course of calling a service, the service call fails, the local service discovery cache is invalidated and the service discovery client will attempt to refresh its entries from the service discovery agent.</p>
+        </li>
+      </ol>
+
+      <p>Let&rsquo;s now take the generic service discovery pattern and apply it to your EagleEye problem domain.</p>
+
+      <div class="footnotes">
+        <p><sup>2</sup> <a href="https://en.wikipedia.org/wiki/Gossip_protocol">https://en.wikipedia.org/wiki/Gossip_protocol</a></p>
+        <p><sup>3</sup> <a href="https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf">https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf</a></p>
+        <p><sup>4</sup> <a href="https://en.wikipedia.org/wiki/Load_balancing_(computing)#Client-Side_Random_Load_Balancing">https://en.wikipedia.org/wiki/Load_balancing_(computing)#Client-Side_Random_Load_Balancing</a></p>
+      </div>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

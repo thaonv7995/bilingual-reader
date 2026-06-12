@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 3: Building our Spring Cloud configuration server</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 2;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0094.html">← Prev</a>
+    <a href="page_0096.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">70</span>
+        <span class="rh-center">CHAPTER 3 <em>Controlling your configuration with Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Reasons for Spring Cloud configuration server (continued)">
+        <li>Spring Cloud configuration server offers multiple back ends for storing configuration data. If you&rsquo;re already using tools such as Eureka and Consul, you can plug them right into Spring Cloud configuration server.</li>
+        <li>Of all the solutions in table 3.1, Spring Cloud configuration server can integrate directly with the Git source control platform. Spring Cloud configuration&rsquo;s integration with Git eliminates an extra dependency in your solutions and makes versioning your application configuration data a snap.</li>
+      </ol>
+
+      <p>The other tools (Etcd, Consul, Eureka) don&rsquo;t offer any kind of native versioning, and if you wanted that, you&rsquo;d have to build it yourself. If your shop uses Git, the use of Spring Cloud configuration server is an attractive option.</p>
+
+      <p class="no-indent"><strong>For the rest of this chapter, you&rsquo;re going to</strong></p>
+
+      <ol class="manning-numbered" aria-label="Chapter goals">
+        <li>Set up a Spring Cloud configuration server and demonstrate two different mechanisms for serving application configuration data&mdash;one using the filesystem and another using a Git repository</li>
+        <li>Continue to build out the licensing service to retrieve data from a database</li>
+        <li>Hook the Spring Cloud configuration service into your licensing service to serve up application configuration data</li>
+      </ol>
+
+      <h4 class="subsection-title">3.2 Building our Spring Cloud configuration server</h4>
+
+      <p>The Spring Cloud configuration server is a REST-based application that&rsquo;s built on top of Spring Boot. It doesn&rsquo;t come as a standalone server. Instead, you can choose to either embed it in an existing Spring Boot application or start a new Spring Boot project with the server embedded it.</p>
+
+      <p>The first thing you need to do is set up a new project directory called <code>confsvr</code>. Inside the consvr directory you&rsquo;ll create a new Maven file that will be used to pull down the JARs necessary to start up on your Spring Cloud configuration server. Rather than walk through the entire Maven file, I&rsquo;ll list the key parts in the following listing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 3.1</strong><br>Setting up the pom.xml for the Spring Cloud configuration server</figcaption>
+        <pre class="code-block"><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://
+     www.w3.org/2001/XMLSchema-instance&quot;
+         xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://
+     maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;
+&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+&lt;groupId&gt;com.thoughtmechanix&lt;/groupId&gt;
+&lt;artifactId&gt;configurationserver&lt;/artifactId&gt;
+&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+&lt;packaging&gt;jar&lt;/packaging&gt;
+
+&lt;name&gt;Config Server&lt;/name&gt;
+&lt;description&gt;Config Server demo project&lt;/description&gt;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

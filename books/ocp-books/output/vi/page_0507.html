@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã nguồn đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0506.html">← Trước</a>
+    <a href="page_0508.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">507</span>
+      </header>
+
+      <p class="no-indent"><strong>A.</strong> Một stack trace cho <code>InterruptedException</code>.</p>
+
+      <p class="no-indent"><strong>B.</strong> Một stack trace cho <code>IllegalMonitorStateException</code>.</p>
+
+      <p class="no-indent"><strong>C.</strong> Một stack trace cho <code>ThreadException</code>.</p>
+
+      <p class="no-indent"><strong>D.</strong> Không có đầu ra.</p>
+
+      <p class="no-indent">Đáp án đúng là&nbsp;<strong>B</strong>.</p>
+
+      <p>Quan sát thấy <code>lock.wait();</code>&nbsp;đang được gọi bởi một thread (luồng) không sở hữu lock (khóa) của
+      đối tượng (Object) <code>lock</code>. Do đó, nó sẽ nhận một <code>IllegalMonitorStateException</code>&nbsp;ngay khi gọi
+      <code>lock.wait()</code>.</p>
+
+      <h3 class="section-title">20.4 Viết mã nguồn an toàn với thread<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Như tôi đã giải thích trước đó, đầu ra thực tế của một chương trình không phải lúc nào cũng có thể dự đoán trước được do các race
+      condition (tình trạng tranh chấp). Nhưng không phải tất cả các chương trình như vậy đều không an toàn với thread (thread unsafe). Ví dụ, bạn không thể dự đoán
+      người dùng nào sẽ có được ghế nếu hai người dùng cố gắng đặt cùng một ghế, nhưng điều đó không làm cho ứng dụng
+      gặp vấn đề. Ứng dụng sẽ gặp vấn đề nếu nó cho phép hai người đặt cùng một
+      ghế. Với tư cách là một lập trình viên, bạn cần có khả năng đoán trước khả năng ứng dụng
+      tạo ra một kết quả không mong muốn khi nó được sử dụng bởi nhiều người.</p>
+
+      <p>Do đó, việc chia sẻ các trường lớp (class) và thực thể (instance) với nhiều thread (luồng) chỉ là một phần của việc viết
+      các chương trình đa luồng (multithreaded). Đảm bảo rằng chúng được chia sẻ một cách &ldquo;an toàn&rdquo; mới là phần còn lại. Một lớp (Class) hoặc một phương thức
+      có thể bị coi là <strong>không an toàn với thread (thread unsafe)</strong> nếu một kết quả không mong muốn có thể được dự đoán khi nó được sử dụng từ
+      nhiều thread (luồng). Ví dụ, lớp (Class) <code>Student</code>&nbsp;mà bạn đã thấy trước đó không an toàn với thread (thread unsafe)
+      bởi vì các trường <code>id</code>&nbsp;và <code>name</code>&nbsp;của nó có thể bị sửa đổi độc lập từ bất kỳ thread (luồng) nào, làm cho
+      logic nghiệp vụ được thể hiện trong phương thức update của nó mất hiệu lực. Tương tự, lớp (Class) <code>Factorial</code>&nbsp;cũng
+      không an toàn với thread (thread unsafe) bởi vì</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • CHỨNG CHỈ JAVA SE 17 &amp; 21</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

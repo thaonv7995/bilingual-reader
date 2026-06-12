@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Các vấn đề liên kết chặt trong mô hình request-response đồng bộ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + .sidebar-note--gray {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0256.html">← Trước</a>
+    <a href="page_0258.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">232</span>
+        <span class="rh-center">CHƯƠNG 8 <em>Kiến trúc hướng sự kiện với Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Để dữ liệu trong bộ nhớ đệm Redis bị vô hiệu hóa, organization service cần một endpoint trên licensing service được expose để có thể gọi nhằm vô hiệu hóa bộ nhớ đệm Redis của nó, hoặc organization service phải trò chuyện trực tiếp với máy chủ Redis do licensing service sở hữu để xóa dữ liệu trong đó.</p>
+
+      <p>Để organization service trò chuyện trực tiếp với Redis cũng có những vấn đề riêng, vì bạn đang trò chuyện với một kho dữ liệu do một dịch vụ khác sở hữu trực tiếp. Trong môi trường microservice, đây là điều tuyệt đối không nên làm. Mặc dù có thể cho rằng dữ liệu organization đúng ra thuộc về organization service, licensing service đang dùng nó trong một ngữ cảnh cụ thể và có thể đang biến đổi dữ liệu hoặc đã xây dựng các quy tắc nghiệp vụ xung quanh nó. Việc để organization service trò chuyện trực tiếp với dịch vụ Redis có thể vô tình phá vỡ các quy tắc mà nhóm sở hữu licensing service đã triển khai.</p>
+
+      <p class="no-indent"><strong class="run-in">Độ mong manh giữa các dịch vụ</strong> Liên kết chặt giữa licensing service và organization service cũng đã tạo ra độ mong manh giữa hai dịch vụ. Nếu licensing service bị sập hoặc chạy chậm, organization service có thể bị ảnh hưởng vì organization service giờ đang giao tiếp trực tiếp với licensing service. Một lần nữa, nếu bạn để organization service trò chuyện trực tiếp với kho dữ liệu Redis của licensing service, bạn đã tạo ra một phụ thuộc giữa organization service và Redis. Trong kịch bản này, bất kỳ sự cố nào với máy chủ Redis dùng chung đều có khả năng làm sập cả hai dịch vụ.</p>
+
+      <p class="no-indent"><strong class="run-in">Thiếu linh hoạt khi thêm consumer mới cho các thay đổi ở organization service</strong> Vấn đề cuối cùng với kiến trúc này là nó thiếu linh hoạt. Với mô hình trong hình 8.1, nếu bạn có một dịch vụ khác quan tâm đến thời điểm dữ liệu organization thay đổi, bạn sẽ cần thêm một lời gọi khác từ organization service tới dịch vụ đó. Điều này có nghĩa là phải thay đổi code và triển khai lại organization service. Nếu bạn dùng mô hình request-response đồng bộ để giao tiếp thay đổi trạng thái, bạn sẽ bắt đầu thấy gần như một mạng lưới phụ thuộc giữa các dịch vụ cốt lõi trong ứng dụng của bạn và các dịch vụ khác. Các trung tâm của những mạng lưới này trở thành các điểm lỗi chính trong ứng dụng của bạn.</p>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="Một kiểu liên kết khác">
+        <h3>Một kiểu liên kết khác</h3>
+        <p>Mặc dù messaging thêm một lớp gián tiếp giữa các dịch vụ của bạn, bạn vẫn có thể tạo ra liên kết chặt giữa hai dịch vụ khi dùng messaging. Sau này trong chương, bạn sẽ gửi message giữa organization service và licensing service. Các message này sẽ được serialize và deserialize thành đối tượng Java, dùng JSON làm giao thức truyền tải cho message. Thay đổi cấu trúc của message JSON có thể gây ra vấn đề khi chuyển đổi qua lại sang Java nếu hai dịch vụ không xử lý một cách linh hoạt các phiên bản khác nhau của cùng một loại message. JSON không hỗ trợ versioning một cách tự nhiên. Tuy nhiên, bạn có thể dùng Apache Avro (<a href="https://avro.apache.org/">https://avro.apache.org/</a>) nếu cần versioning. Avro là một giao thức nhị phân có versioning được tích hợp sẵn. Spring Cloud Stream có hỗ trợ Apache Avro như một giao thức messaging. Tuy nhiên, việc dùng Avro nằm ngoài phạm vi cuốn sách này, nhưng chúng tôi muốn bạn biết rằng nó hữu ích nếu bạn thực sự cần quan tâm đến versioning message.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

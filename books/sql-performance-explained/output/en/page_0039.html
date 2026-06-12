@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — User-Defined Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">39</span>
+      </header>
+      <p class="chapter-running-head">User-Defined Functions</p>
+
+      <p class="no-indent">Function-based indexing is a very generic approach. Besides functions like <code>UPPER</code> you can also index expressions like <code>A + B</code> and even use user-defined functions in the index definition.</p>
+
+      <p>There is one important exception. It is, for example, not possible to refer to the current time in an index definition, neither directly nor indirectly, as in the following example.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE FUNCTION get_age(date_of_birth DATE)
+RETURN NUMBER
+AS
+BEGIN
+  RETURN
+    TRUNC(MONTHS_BETWEEN(SYSDATE, date_of_birth)/12);
+END;
+/</code></pre>
+      </figure>
+
+      <p>The function <code>GET_AGE</code> uses the current date (<code>SYSDATE</code>) to calculate the age based on the supplied date of birth. You can use this function in all parts of an SQL query, for example in select and the where clauses:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, get_age(date_of_birth)
+  FROM employees
+ WHERE get_age(date_of_birth) = 42;</code></pre>
+      </figure>
+
+      <p>The query lists all 42-year-old employees. Using a function-based index is an obvious idea for optimizing this query, but you cannot use the function <code>GET_AGE</code> in an index definition because it is not deterministic. That means the result of the function call is not fully determined by its parameters. Only functions that always return the same result for the same parameters&mdash;functions that are deterministic&mdash;can be indexed.</p>
+
+      <p>The reason behind this limitation is simple. When inserting a new row, the database calls the function and stores the result in the index and there it stays, unchanged. There is no periodic process that updates the index. The database updates the indexed age only when the date of birth is changed by an update statement. After the next birthday, the age that is stored in the index will be wrong.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">29</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Returning Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0144.html">← Prev</a>
+    <a href="page_0146.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">145</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Census Tract 2002, Dukes County, Massachusetts
+Census Tract 2003, Dukes County, Massachusetts
+Census Tract 2004, Dukes County, Massachusetts
+Census Tract 9900, Dukes County, Massachusetts</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Returning Functions</h3>
+      <p class="no-indent">PostgreSQL allows functions that return sets to appear in the <code>SELECT</code> clause of an SQL
+      statement. This is not true of many other databases, in which only scalar functions can
+      appear in the <code>SELECT</code>.</p>
+
+      <p>Interweaving some set-returning functions inside an already complicated query could
+      easily produce results that are beyond what you expect, because these functions usually
+      result in the creation of new rows in the results. You must anticipate this if you&rsquo;ll be
+      using the results as a subquery. In <span class="accent-word">Example 7-13</span>, we demonstrate this with a temporal
+      version of <code>generate_series</code>. The example uses a table that we construct with:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE interval_periods (i_type interval);
+INSERT INTO interval_periods (i_type)
+VALUES ('5 months'), ('132 days'), ('4862 hours');</code></pre>
+      </figure>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-13.</strong> Set-returning function in SELECT</figcaption>
+        <pre class="code-block"><code>SELECT i_type,
+    generate_series('2012-01-01'::date,'2012-12-31'::date,i_type) As dt
+FROM interval_periods;
+i_type     |           dt
+-----------+------------------------
+5 months   | 2012-01-01 00:00:00-05
+5 months   | 2012-06-01 00:00:00-04
+5 months   | 2012-11-01 00:00:00-04
+132 days   | 2012-01-01 00:00:00-05
+132 days   | 2012-05-12 00:00:00-04
+132 days   | 2012-09-21 00:00:00-04
+4862 hours | 2012-01-01 00:00:00-05
+4862 hours | 2012-07-21 15:00:00-04</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Restricting DELETE, UPDATE, SELECT from Inherited Tables</h3>
+      <p class="no-indent">When you query from a table that has child tables, the query drills down into the chil‐
+      dren, creating a union of all the child records satisfying the query condition. <code>DELETE</code>
+      and <code>UPDATE</code> work the same way, drilling down the hierarchy for victims. Sometimes this
+      is not desirable and you want data to come only from the table you specified, without
+      the kids tagging along.</p>
+
+      <p>This is where the <code>ONLY</code> keyword comes in handy. We show an example of its use in
+      <span class="accent-word">Example 7-30</span>, where we want to delete only those records from the production table
+      that haven&rsquo;t migrated to the log table. Without the <code>ONLY</code> modifier, we&rsquo;d end up deleting
+      records from the child table that might have already been moved previously.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Handy Constructions<span class="sep">|</span>127</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

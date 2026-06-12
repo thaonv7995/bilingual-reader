@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 18</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0017.html">← Prev</a>
+      <span>Page 18 / 30</span>
+      <a href="page_0019.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<h3 class="section-title">Transactions</h3><p class="lead">Every Redis command is atomic, including the ones that do multiple things. Additionally, Redis has support for transactions when using multiple commands.</p><p>You might not know it, but Redis is actually single-threaded, which is how every command is guaranteed to be atomic. While one command is executing, no other command will run. (We'll briefly talk about scaling in a later chapter.) This is particularly useful when you consider that some commands do multiple things. For example:</p><ul class="bullets"><li><code>incr</code> is essentially a get followed by a set</li><li><code>getset</code> sets a new value and returns the original</li><li><code>setnx</code> first checks if the key exists, and only sets the value if it does not</li></ul><p>Although these commands are useful, you'll inevitably need to run multiple commands as an atomic group. You do so by first issuing the <code>multi</code> command, followed by all the commands you want to execute as part of the transaction, and finally executing <code>exec</code> to actually execute the commands or <code>discard</code> to throw away, and not execute the commands.</p><p>What guarantee does Redis make about transactions?</p><ul class="bullets"><li>The commands will be executed in order</li><li>The commands will be executed as a single atomic operation (without another client's command being executed halfway through)</li><li>That either all or none of the commands in the transaction will be executed</li></ul><p>You can, and should, test this in the command line interface. Also note that there's no reason why you can't combine pipelining and transactions.</p><figure class="code-snippet"><pre class="code-block"><code>multi
+hincrby groups:1percent balance -9000000000
+hincrby groups:99percent balance 9000000000
+exec</code></pre></figure><p>Finally, Redis lets you specify a key (or keys) to watch and conditionally apply a transaction if the key(s) changed. This is used when you need to get values and execute code based on those values, all in a transaction. With the code above, we wouldn't be able to implement our own <code>incr</code> command since they are all executed together once <code>exec</code> is called. From code, we can can't do:</p><figure class="code-snippet"><pre class="code-block"><code>redis.multi()
+current = redis.get('powerlevel')
+redis.set('powerlevel', current + 1)
+redis.exec()</code></pre></figure><p>That isn't how Redis transactions work. But, if we add a watch to <code>powerlevel</code>, we can do:</p><figure class="code-snippet"><pre class="code-block"><code>redis.watch('powerlevel')
+current = redis.get('powerlevel')
+redis.multi()</code></pre></figure>
+      <p class="page-folio">17</p>
+    </article>
+  </main>
+</body>
+</html>

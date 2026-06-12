@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — EXPLAIN</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0180.html">← Prev</a>
+    <a href="page_0182.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">181</span>
+      </header>
+
+      <p>In almost all EXPLAIN plans, you&rsquo;ll see a breakdown by steps, and each step can have
+      child steps. Each step will have a reported cost that looks something like
+      <code>cost=0.00..33.48</code>, as shown in <span class="accent-word">Example 9-2</span>. The first number, 0.00, is the estimated
+      startup cost, and the second number, 33.48, is the total estimated cost of the step. The
+      startup is the time before retrieval of data and could include scanning of indexes, joins
+      of tables, etc. For sequential scan steps, the startup cost is zero because the planner
+      mindlessly pulls all data so retrieval begins right away.</p>
+
+      <p>Keep in mind that the cost measure is reported in arbitrary units, which vary based on
+      hardware and are largely controlled by planner cost constants. As such, it makes sense
+      to use only as an estimate when comparing different plans on same server. The planner&rsquo;s
+      job is to pick the plan with the lowest estimated overall costs.</p>
+
+      <p>Because we opted to include the ANALYZE argument in <span class="accent-word">Example 9-1</span>, the planner will
+      run the query, and we&rsquo;re blessed with the actual timings as well.</p>
+
+      <p>From the plan in <span class="accent-word">Example 9-2</span>, we can see that the planner elected a sequential scan
+      because it couldn&rsquo;t find any indexes. The additional tidbit of information <code>Rows Removed
+      by Filter: 1477</code> is the number of rows that the planner examined before excluding
+      them from the output.</p>
+
+      <p>In PostgreSQL 9.4, the output makes a distinction between planning time and execution
+      time. Planning time is the amount of time it takes for the planner to come up with the
+      execution plan, whereas the execution time is everything that follows. The output in
+      version 9.4 would look as shown in <span class="accent-word">Example 9-3</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-3.</strong> EXPLAIN (ANALYZE) output in version 9.4</figcaption>
+        <pre class="code-block"><code>Seq Scan on hisp_pop
+    (cost=0.00..33.48 rows=1 width=16) (actual time=0.213..0.346 rows=1 loops=1)
+    Filter: ((tract_id)::text = '25025010103'::text)
+    Rows Removed by Filter: 1477
+Planning time: 0.095 ms
+Execution time: 0.381 ms</code></pre>
+      </figure>
+
+      <p>Let&rsquo;s now add back our primary key:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE census.hisp_pop ADD CONSTRAINT hisp_pop_pkey PRIMARY KEY(tract_id);</code></pre>
+      </figure>
+
+      <p>Repeating <span class="accent-word">Example 9-1</span>, we now see the plan output in <span class="accent-word">Example 9-4</span> (PostgreSQL 9.4
+      style).</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-4.</strong> EXPLAIN (ANALYZE) output of index strategy plan</figcaption>
+        <pre class="code-block"><code>Index Scan using idx_hisp_pop_tract_id_pat on hisp_pop
+    (cost=0.28..8.29 rows=1 width=16) (actual time=0.018..0.019 rows=1 loops=1)
+    Index Cond: ((tract_id)::text = '25025010103'::text)
+Planning time: 0.110 ms
+Execution time: 0.046 ms</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">EXPLAIN<span class="sep">|</span>163</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

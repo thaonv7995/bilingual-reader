@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Appendix B: Server Backup: pg_dumpall</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0214.html">← Prev</a>
+    <a href="page_0216.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">215</span>
+      </header>
+
+      <h3 class="section-title">Server Backup: pg_dumpall</h3>
+
+      <p class="no-indent">Use <code>pg_dump_all</code> to back up all databases on your server onto a single plain-text or
+      plain-text SQL file. The backup routine will automatically include server-level objects
+      such as roles and tablespaces. <span class="accent-word">Example B-2</span> shows the <code>pg_dumpall</code> help output. See
+      <span class="accent-word">&ldquo;Systemwide Backup Using pg_dumpall&rdquo; on page 40</span> for the full discussion.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example B-2.</strong> pg_dumpall help</figcaption>
+        <pre class="code-block"><code>pg_dumpall --help
+
+pg_dumpall extracts a PostgreSQL database cluster into an SQL script file.
+Usage:
+pg_dumpall [OPTION]...
+
+General options:
+-f, --file=FILENAME         output file name
+--lock-wait-timeout=TIMEOUT fail after waiting TIMEOUT for a table lock
+--help                      show this help, then exit
+--version                   output version information, then exit
+
+Options controlling the output content:
+  -a, --data-only             dump only the data, not the schema
+  -c, --clean                 clean (drop) databases before recreating
+  -g, --globals-only          dump only global objects, no databases
+  -o, --oids                  include OIDs in dump
+  -O, --no-owner              skip restoration of object ownership
+  -r, --roles-only            dump only roles, no databases or tablespaces
+  -s, --schema-only           dump only the schema, no data
+  -S, --superuser=NAME        superuser user name to use in the dump
+  -t, --tablespaces-only      dump only tablespaces, no databases or roles
+  -x, --no-privileges         do not dump privileges (grant/revoke)
+  --binary-upgrade            for use by upgrade utilities only
+  --column-inserts            dump data as INSERT commands with column names
+  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting
+  --disable-triggers          disable triggers during data-only restore
+  --inserts                   dump data as INSERT commands, rather than COPY
+  --no-security-labels        do not dump security label assignments
+  --no-tablespaces            do not dump tablespace assignments
+  --no-unlogged-table-data    do not dump unlogged table data
+  --quote-all-identifiers     quote all identifiers, even if not key words
+  --use-set-session-authorization
+use SET SESSION AUTHORIZATION commands instead o
+ALTER OWNER commands to set ownership
+
+Connection options:
+  -d, --dbname=CONNSTR     connect using connection string
+  -h, --host=HOSTNAME      database server host or socket directory
+  -l, --database=DBNAME    alternative default database
+  -p, --port=PORT          database server port number
+  -U, --username=NAME      connect as specified database user
+  -w, --no-password        never prompt for password</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Server Backup: pg_dumpall<span class="sep">|</span>197</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--output pre.code-block {
+      background: #e2e8f0;
+      border-left: none;
+      font-size: 9.75pt;
+      line-height: 1.4;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0241.html">← Prev</a>
+    <a href="page_0243.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">242</span>
+      </header>
+
+      <p class="no-indent">You will get a few warning messages when you compile the above program. Ignore them for
+      now. It prints the following output when run:</p>
+
+      <figure class="code-snippet code-snippet--output">
+        <pre class="code-block"><code>bob 3
+david 5
+charlie 7
+All names: [bob, david, charlie]</code></pre>
+      </figure>
+
+      <p>The above program illustrates the basics of using an <code>ArrayList</code>&nbsp;, i.e., adding objects,
+      removing, iterating over them, and printing the contents of the <code>ArrayList</code>&nbsp;. I suggest you write
+      a program that does the same thing using an array of strings instead of an <code>ArrayList</code>&nbsp;. This
+      will give you an appreciation for the value that <code>ArrayList</code>&nbsp;adds over a raw array.</p>
+
+      <p>I showed you the above code just to give you a glimpse of one of the readymade classes in the
+      Java library. There is a lot more that you can do with it but before we get to that, you need to
+      understand the bigger picture, the grand scheme of things, into which classes such as
+      <code>ArrayList</code>&nbsp;fit.</p>
+
+      <h3 class="section-title section-title--minor">Collections framework and Collections API<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p><code>ArrayList</code>&nbsp;belongs to a category of classes called &ldquo;collections&rdquo;. A &ldquo;collection&rdquo; is nothing
+      but a group of objects held up together in some form. You can visualize a collection as a bag in
+      which you put several things. Just like you use a bag to take various grocery items from a store
+      to your home, you put the objects in a collection so that you can pass them around to other
+      objects and methods. A bag knows nothing about the items themselves. It merely holds the
+      items. You can add items to it and take items out of it. It doesn&rsquo;t care about the order in which
+      you put the items or whether there are any duplicates or how they are stored inside the bag. The
+      behavior of a bag is captured by an interface called <code>Collection</code>&nbsp;, which exists in
+      the&nbsp;<code>java.util</code>&nbsp;package.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

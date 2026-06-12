@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 3: 3.4.1 Oracle JCE installation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-of-type {
+      margin-bottom: 2mm;
+    }
+    .prose-page.chapter-page .sidebar-note figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .sidebar-note figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .footnotes {
+      margin: 0 0 2.5mm;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+    .prose-page.chapter-page .footnotes p {
+      text-indent: 0;
+      margin: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0114.html">← Prev</a>
+    <a href="page_0116.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">90</span>
+        <span class="rh-center">CHAPTER 3 <em>Controlling your configuration with Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ol class="manning-numbered" aria-label="Steps to set up encryption with a symmetric key">
+        <li>Download and install the Oracle JCE jars needed for encryption</li>
+        <li>Set up an encryption key.</li>
+        <li>Encrypt and decrypt a property.</li>
+        <li>Configure microservices to use encryption on the client side</li>
+      </ol>
+
+      <h4 class="subsection-title">3.4.1 Download and install Oracle JCE jars needed for encryption</h4>
+
+      <p>To begin, you need to download and install Oracle&rsquo;s Unlimited Strength Java Cryptography Extension (JCE). This isn&rsquo;t available through Maven and must be downloaded from Oracle Corporation.<sup>1</sup> Once you&rsquo;ve downloaded the zip files containing the JCE jars, you must do the following:</p>
+
+      <ol class="manning-numbered" aria-label="Manual JCE installation steps">
+        <li>Locate your <code>$JAVA_HOME/jre/lib/security</code> directory.</li>
+        <li>Back up the <code>local_policy.jar</code> and <code>US_export_policy.jar</code> files in the <code>$JAVA_HOME/jre/lib/security</code> directory to a different location.</li>
+        <li>Unzip the JCE zip file you downloaded from Oracle.</li>
+        <li>Copy the <code>local_policy.jar</code> and <code>US_export_policy.jar</code> to your <code>$JAVA_HOME/jre/lib/security</code> directory.</li>
+        <li>Configure Spring Cloud Config to use encryption.</li>
+      </ol>
+
+      <aside class="sidebar-note" aria-label="Automating the process of installing Oracle's JCE files">
+        <h3>Automating the process of installing Oracle&rsquo;s JCE files</h3>
+        <p>I&rsquo;ve walked through the manual steps you need to install JCE on your laptop. Because we use Docker to build all our services as Docker containers, I&rsquo;ve scripted the download and installation of these JAR files in the Spring Cloud Config Docker container. The following OS X shell script snippet shows how I automated this using the curl (<a href="https://curl.haxx.se/">https://curl.haxx.se/</a>) command-line tool:</p>
+
+        <figure class="code-snippet">
+          <pre class="code-block"><code>cd /tmp/
+curl -k -LO "http://download.oracle.com/otn-pub/java/jce/8/jce_policy-
+8.zip"
+     -H 'Cookie: oraclelicense=accept-securebackup-cookie' &amp;&amp;  unzip
+jce_policy-8.zip
+rm jce_policy-8.zip
+yes |cp -v /tmp/UnlimitedJCEPolicyJDK8/*.jar /usr/lib/jvm/java-1.8-
+openjdk/jre/lib/security/</code></pre>
+        </figure>
+      </aside>
+
+      <p class="no-indent">I&rsquo;m not going to walk through all of the details, but basically I use CURL to download the JCE zip files (note the Cookie header parameter passed via the -H attribute on the curl command) and then unzip the files and copy them to the <code>/usr/lib/jvm/java-1.8-openjdk/jre/lib/security</code> directory in my Docker container.</p>
+
+      <p>If you look at the <code>src/main/docker/Dockerfile</code> file in the source code for this chapter, you can see an example of this scripting in action.</p>
+
+      <div class="footnotes">
+        <p><sup>1</sup> <a href="http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html">http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html</a>. This URL might be subject to change. A quick search on Google for Java Cryptography Extensions should always return you the right values.</p>
+      </div>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

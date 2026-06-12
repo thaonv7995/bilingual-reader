@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+      line-height: inherit;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--terminal pre.code-block {
+      background: #e2e8f0;
+      border-left: none;
+      font-size: 9.75pt;
+      line-height: 1.4;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0677.html">← Trước</a>
+    <a href="page_0679.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">678</span>
+      </header>
+
+      <p class="no-indent">Tùy chọn <code>module</code>&nbsp;được sử dụng để cho Java biết tên của module mà chúng ta muốn thực thi.
+      Hãy quan sát giá trị được chỉ định cho <code>--module</code>.&nbsp;Nó có định dạng là <code>&lt;module name&gt;/&lt;main class
+      name&gt;</code>&nbsp;vì hiện tại, module của chúng ta đang ở định dạng exploded (thư mục chưa đóng gói) và không chứa
+      bất kỳ thông tin nào về lớp main. Do đó, chúng ta cũng cần phải báo cho JVM biết về lớp mà chúng ta muốn
+      chạy. Một khi chúng ta đóng gói module của mình thành một file jar, chúng ta sẽ không cần phải chỉ định lớp main
+      trên dòng lệnh nữa.</p>
+
+      <h3 class="section-title section-title--sub">23.2.3 Đóng gói một module<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Quá trình đóng gói các Lớp (Class) của một module vào một file jar cũng giống như quá trình đóng gói các Lớp (Class) vào một
+      file jar thông thường mà chúng ta đã thấy. Điểm đặc biệt duy nhất của một module jar là theo quy ước, tên của
+      file jar trùng với tên của module (tất nhiên là kèm theo phần mở rộng <code>.jar</code>&nbsp;).
+      Bên trong file jar, các file class vẫn phải tồn tại trong cấu trúc thư mục dựa trên package giống như
+      trước đây. Do đó, tên của file jar tương ứng với thư mục module và cách tổ chức
+      các file bên trong file jar tương ứng với cách tổ chức các file bên trong thư mục module.
+      Vì một module cũng có một file <code>module-info.class</code>&nbsp;ở thư mục gốc của nó, nên file jar cũng phải có
+      class này trong thư mục gốc. Lưu ý rằng yêu cầu phải có file <code>module-info.class</code>&nbsp;trong
+      thư mục gốc của file jar đồng nghĩa với việc không thể đóng gói nhiều module trong cùng một file
+      jar. Nói cách khác, bạn chỉ có thể có duy nhất một module trên mỗi file jar.</p>
+
+      <p>Vì một modular jar (bao gồm cả tên của nó) mô phỏng cấu trúc tổ chức của một module, nên một modular jar
+      cũng được coi là &ldquo;định nghĩa module&rdquo; của một module.</p>
+
+      <p>Dưới đây là lệnh sẽ đóng gói module của chúng ta vào một file jar:</p>
+
+      <figure class="code-snippet code-snippet--terminal">
+        <pre class="code-block"><code>c:\ocp21\moduletest&gt;jar --create --file simpleinterest.jar --main-class
+simpleinterest.SimpleInterestCalculator -C out\simpleinterest .</code></pre>
+      </figure>
+
+      <p class="no-indent">Lệnh này sẽ tạo ra file <code>simpleinterest.jar</code>&nbsp;trong thư mục <code>moduletest</code>&nbsp;.</p>
+
+      <p>Tùy chọn <code>--create</code>&nbsp;cho công cụ <code>jar</code>&nbsp;biết rằng chúng ta muốn tạo một thứ gì đó, còn tùy chọn <code>--file</code>&nbsp;và
+      giá trị theo sau chỉ định file jar mà chúng ta muốn tạo. Tùy chọn <code>--</code></p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

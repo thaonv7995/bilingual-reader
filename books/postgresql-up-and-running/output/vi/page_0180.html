@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tinh chỉnh hiệu suất truy vấn — Chạy thử và đầu ra mẫu</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0179.html">← Trước</a>
+    <a href="page_0181.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">180</span>
+      </header>
+
+      <p class="no-indent">Thêm tham số VERBOSE, như trong <code>EXPLAIN (VERBOSE)</code>, sẽ báo cáo đến cấp độ cột. Thêm tham số BUFFERS, phải được sử dụng cùng với ANALYZE, như trong <code>EXPLAIN (ANALYZE, BUFFERS)</code>, sẽ báo cáo số lần truy cập bộ nhớ. Số này càng cao, có nghĩa là càng nhiều bản ghi đã có trong bộ nhớ từ các truy vấn trước, có nghĩa là kế hoạch không cần phải quay lại đĩa để lấy lại chúng.</p>
+
+      <p>Một <code>EXPLAIN</code> cung cấp tất cả các chi tiết, bao gồm thời gian, đầu ra của các cột và bộ đệm, sẽ trông giống như <code>EXPLAIN (ANALYZE, VERBOSE, BUFFERS) your_query_here;</code>.</p>
+
+      <p>Không cần phải nói rằng để sử dụng EXPLAIN đồ họa, bạn cần một GUI như pgAdmin. Sau khi khởi động EXPLAIN đồ họa qua pgAdmin, soạn thảo truy vấn như thường lệ, nhưng thay vì thực thi nó, chọn EXPLAIN hoặc <code>EXPLAIN (ANALYZE)</code> từ menu thả xuống. Đối với những ai tự hào về việc tự lực cánh sinh chỉ sử dụng dòng lệnh, tất cả những gì chúng tôi có thể nói là: tốt cho bạn!</p>
+
+      <p>Nếu bạn sử dụng <code>EXPLAIN (ANALYZE)</code> trên một câu lệnh thay đổi dữ liệu như UPDATE hoặc INSERT và bạn muốn xem kế hoạch mà không thực hiện thay đổi dữ liệu thực tế, hãy bọc câu lệnh trong một giao dịch mà bạn hủy bỏ: đặt BEGIN trước câu lệnh và ROLLBACK sau nó.</p>
+
+      <h3 class="subsection-title">Chạy thử và đầu ra mẫu</h3>
+
+      <p class="no-indent">Hãy thử một ví dụ. Đầu tiên, chúng ta sẽ sử dụng lệnh <code>EXPLAIN (ANALYZE)</code> với một bảng mà chúng ta đã tạo trong <span class="accent-word">Ví dụ 4-1</span> và <span class="accent-word">Ví dụ 4-2</span>.</p>
+
+      <p>Để đảm bảo rằng kế hoạch không sử dụng chỉ mục, chúng ta sẽ xóa khóa chính khỏi bảng của mình:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE census.hisp_pop DROP CONSTRAINT IF EXISTS hisp_pop_pkey;</code></pre>
+      </figure>
+
+      <p>Điều này để khi chạy truy vấn trong <span class="accent-word">Ví dụ 9-1</span>, chúng ta có thể thấy kế hoạch cơ bản nhất đang hoạt động, chiến lược quét tuần tự.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-1.</strong> EXPLAIN (ANALYZE) của một quét tuần tự</figcaption>
+        <pre class="code-block"><code>EXPLAIN (ANALYZE) SELECT tract_id, hispanic_or_latino
+FROM census.hisp_pop
+WHERE tract_id = '25025010103';</code></pre>
+      </figure>
+
+      <p><span class="accent-word">Ví dụ 9-2</span> cho thấy đầu ra của <span class="accent-word">Ví dụ 9-1</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-2.</strong> Đầu ra EXPLAIN (ANALYZE)</figcaption>
+        <pre class="code-block"><code>Seq Scan on hisp_pop
+    (cost=0.00..33.48 rows=1 width=16)
+    (actual time=0.205..0.339 rows=1 loops=1)
+    Filter: ((tract_id)::text = '25025010103'::text)
+    Rows Removed by Filter: 1477
+Total runtime: 0.360 ms</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">162<span class="sep">|</span>Chương 9: Tinh chỉnh hiệu suất truy vấn</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

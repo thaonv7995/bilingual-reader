@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0052.html">← Trước</a>
+    <a href="page_0054.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h3 class="section-title">Bước 2: Cài đặt vào cơ sở dữ liệu (phiên bản 9.1 trở lên)</h3>
+      <p class="no-indent">Hỗ trợ mở rộng mới giúp việc cài đặt trở nên đơn giản và nhất quán hơn. Sử dụng
+      lệnh <span class="accent-word">CREATE EXTENSION</span> để cài đặt các mở rộng vào từng cơ sở dữ liệu. Ba lợi ích lớn
+      là bạn không cần phải tìm hiểu nơi lưu trữ các tệp mở rộng (<code>share/
+      extension</code>), bạn có thể gỡ cài đặt chúng dễ dàng với <span class="accent-word">DROP EXTENSION</span>, và bạn có một
+      danh sách sẵn có về những gì đã được cài đặt và những gì có sẵn. Các gói cài đặt PostgreSQL
+      bao gồm các mở rộng phổ biến nhất, vì vậy bạn thực sự không cần phải làm gì hơn
+      ngoài việc chạy lệnh. Để lấy các mở rộng không được đóng gói với PostgreSQL, hãy truy cập
+      <span class="accent-word">Mạng lưới Mở rộng PostgreSQL</span>.</p>
+
+      <p>Dưới đây là cách chúng tôi sẽ cài đặt mở rộng fuzzystrmatch bằng cách sử dụng một truy vấn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE EXTENSION</strong> fuzzystrmatch;</code></pre>
+      </figure>
+
+      <p>Bạn vẫn có thể cài đặt một mở rộng không tương tác bằng cách sử dụng psql. Đảm bảo rằng bạn đã kết nối
+      với cơ sở dữ liệu mà bạn cần mở rộng, sau đó chạy một lệnh như:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>psql -p 5432 -d mydb -c "CREATE EXTENSION fuzzystrmatch;"</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0053_icon_warning.png" width="92" height="87" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Các mở rộng dựa trên C phải được cài đặt bởi một siêu người dùng. Hầu hết các mở rộng
+        rơi vào thể loại này.</p>
+      </div>
+
+      <p>Chúng tôi đề xuất bạn tạo một hoặc nhiều lược đồ để chứa các mở rộng nhằm giữ chúng tách biệt
+      khỏi dữ liệu sản xuất. Sau khi bạn tạo lược đồ, hãy cài đặt các mở rộng vào đó thông qua một
+      lệnh như:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE EXTENSION</strong> fuzzystrmatch <strong>SCHEMA</strong> my_extensions;</code></pre>
+      </figure>
+
+      <h3 class="section-title">Nâng cấp lên mô hình mở rộng mới</h3>
+      <p class="no-indent">Nếu bạn đã sử dụng một phiên bản PostgreSQL cũ hơn 9.1 và khôi phục cơ sở dữ liệu cũ của bạn
+      vào phiên bản 9.1 hoặc mới hơn trong quá trình nâng cấp phiên bản, tất cả các mở rộng nên tiếp tục
+      hoạt động mà không cần can thiệp. Để duy trì, bạn nên nâng cấp các mở rộng cũ của bạn trong thư mục contrib
+      để sử dụng cách tiếp cận mới đối với các mở rộng. Bạn có thể nâng cấp
+      các mở rộng, đặc biệt là những cái đi kèm với PostgreSQL, từ mô hình contrib cũ sang mô hình mới. Hãy nhớ rằng chúng tôi chỉ đề cập đến việc nâng cấp trong
+      mô hình cài đặt, không phải là mở rộng bản thân.</p>
+
+      <p>Ví dụ, giả sử bạn đã cài đặt mở rộng tablefunc (cho các truy vấn bảng chéo)
+      vào PostgreSQL 9.0 của bạn trong một lược đồ gọi là contrib, và bạn vừa khôi phục cơ sở dữ liệu của bạn
+      lên một máy chủ 9.1. Chạy lệnh sau để nâng cấp:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE EXTENSION</strong> tablefunc <strong>SCHEMA</strong> contrib <strong>FROM</strong> unpackaged;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các mở rộng<span class="sep">|</span>35</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

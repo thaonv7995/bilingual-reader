@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Mục 10.5 GitHub và Travis CI</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 5;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered li .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0335.html">← Trước</a>
+    <a href="page_0337.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Bắt đầu pipeline build/triển khai: GitHub và Travis CI</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">311</span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Công nghệ pipeline build EagleEye (tiếp theo)">
+        <li><strong class="run-in">Python (<a href="https://python.org">https://python.org</a>)&mdash;</strong>Để viết các kiểm thử nền tảng được thực thi trước khi triển khai image Docker, tôi đã chọn Python làm công cụ viết kiểm thử nền tảng. Tôi tin tưởng mạnh mẽ vào việc dùng đúng công cụ cho từng công việc, và thẳng thắn mà nói, tôi cho rằng Python là ngôn ngữ lập trình tuyệt vời, đặc biệt để viết test case dựa trên REST.</li>
+        <li><strong class="run-in">Dịch vụ Container EC2 của Amazon (ECS)&mdash;</strong>Đích đến cuối cùng cho các microservice của chúng ta sẽ là các instance Docker được triển khai lên nền tảng Docker của Amazon. Tôi chọn Amazon làm nền tảng đám mây vì đây là nhà cung cấp đám mây trưởng thành nhất và giúp việc triển khai dịch vụ Docker trở nên vô cùng đơn giản.</li>
+      </ol>
+
+      <aside class="sidebar-note" aria-label="Khoan… bạn vừa nói Python à?">
+        <h3>Khoan&hellip; bạn vừa nói Python à?</h3>
+        <p>Bạn có thể thấy hơi lạ khi tôi viết kiểm thử nền tảng bằng Python thay vì Java. Tôi làm điều này có chủ đích. Python (giống Groovy) là ngôn ngữ kịch bản tuyệt vời để viết test case dựa trên REST. Tôi tin vào việc dùng đúng công cụ cho từng công việc. Một trong những thay đổi tư duy lớn nhất tôi thấy ở các tổ chức áp dụng microservice là trách nhiệm chọn ngôn ngữ nên thuộc về các đội phát triển. Ở quá nhiều tổ chức, tôi thấy họ ôm cứng các tiêu chuẩn một cách giáo điều (&ldquo;tiêu chuẩn doanh nghiệp của chúng ta là Java . . . và mọi mã nguồn phải được viết bằng Java&rdquo;). Kết quả là tôi thấy các đội phát triển phải vòng vo để viết lượng lớn mã Java trong khi một script Groovy hoặc Python 10 dòng đã đủ làm việc.</p>
+        <p>Lý do thứ hai tôi chọn Python là không giống kiểm thử đơn vị và kiểm thử tích hợp, kiểm thử nền tảng thực sự là kiểm thử &ldquo;hộp đen&rdquo; nơi bạn hành xử như một người tiêu dùng API thực sự chạy trong môi trường thật. Kiểm thử đơn vị kiểm tra tầng mã thấp nhất và không nên có bất kỳ phụ thuộc bên ngoài nào khi chạy. Kiểm thử tích hợp đi lên một tầng và kiểm thử API, nhưng các phụ thuộc bên ngoài quan trọng, như lời gọi tới dịch vụ khác, lời gọi cơ sở dữ liệu, v.v., đều được mock hoặc stub. Kiểm thử nền tảng nên là các kiểm thử thực sự độc lập với hạ tầng bên dưới.</p>
+      </aside>
+
+      <h4 class="subsection-title">10.5 Bắt đầu pipeline build/triển khai: GitHub và Travis CI</h4>
+
+      <p class="no-indent">Có hàng chục engine quản lý mã nguồn và engine build/triển khai (cả on-premise lẫn trên đám mây) có thể triển khai pipeline build và triển khai của bạn. Trong các ví dụ của cuốn sách này, tôi cố ý chọn GitHub làm kho lưu trữ quản lý mã nguồn và Travis CI làm engine build. Kho lưu trữ kiểm soát mã nguồn Git là kho phổ biến và GitHub là một trong những kho quản lý mã nguồn trên đám mây lớn nhất hiện có.</p>
+
+      <p>Travis CI là engine build tích hợp chặt chẽ với GitHub (nó cũng hỗ trợ Subversion và Mercurial). Nó cực kỳ dễ dùng và hoàn toàn được điều khiển bởi một tệp cấu hình duy nhất (<code>.travis.yml</code>) trong thư mục gốc dự án của bạn. Sự đơn giản và tính opinionated của nó giúp bạn dễ dàng triển khai một pipeline build đơn giản</p>
+
+      <p>Cho đến nay, tất cả các ví dụ mã trong cuốn sách này đều có thể chạy hoàn toàn từ máy tính để bàn của bạn (trừ việc kết nối ra GitHub). Trong chương này, nếu bạn</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

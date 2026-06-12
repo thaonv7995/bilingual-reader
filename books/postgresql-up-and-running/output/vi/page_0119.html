@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types — JSONB / XML</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0118.html">← Trước</a>
+    <a href="page_0120.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">119</span>
+      </header>
+
+      <p class="no-indent">bạn sẽ thấy rằng <span class="accent-word">Ví dụ 5-25</span> và <span class="accent-word">Ví dụ 5-26</span> hoạt động hầu như không thay đổi cho kiểu
+      <code>jsonb</code>—chỉ cần thay thế tên bảng và thay đổi hàm <code>json_array_length</code> thành hàm tương đương <code>jsonb_array_length</code>.</p>
+
+      <p>Ngoài các toán tử được hỗ trợ bởi <code>json</code>, <code>jsonb</code> có thêm các toán tử so sánh cho sự bằng nhau (<code>=</code>), chứa (<code>@&gt;</code>), được chứa (<code>&lt;@</code>), khóa tồn tại (<code>?</code>), bất kỳ khóa nào trong mảng tồn tại (<code>?|</code>), và tất cả các khóa trong mảng tồn tại (<code>?&amp;</code>).</p>
+
+      <p>Vì vậy, ví dụ, để liệt kê tất cả các gia đình có một thành viên tên là Alex, hãy sử dụng toán tử chứa như được minh họa trong <span class="accent-word">Ví dụ 5-29</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-29.</strong> toán tử chứa jsonb</figcaption>
+        <pre class="code-block"><code>SELECT profile-&gt;&gt;'name' As family
+FROM families_b
+WHERE profile @&gt; '{"members":[{"member":{"name":"Alex"} }]}';
+
+family
+-----
+Gomez</code></pre>
+      </figure>
+
+      <p>Các toán tử bổ sung này cung cấp các kiểm tra rất nhanh khi bạn bổ sung chúng với
+      một chỉ mục GIN trên cột <code>jsonb</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx_familes_jb_profile_gin ON families_b USING gin (profile);</code></pre>
+      </figure>
+
+      <p>Chúng tôi không có đủ bản ghi trong bảng nhỏ bé của mình để chỉ mục có thể hoạt động, nhưng với nhiều
+      hàng hơn, bạn sẽ thấy rằng <span class="accent-word">Ví dụ 5-29</span> sử dụng chỉ mục.</p>
+
+      <h3 class="section-title">XML</h3>
+      <p class="no-indent">Kiểu dữ liệu XML, tương tự như JSON, là “gây tranh cãi” trong một cơ sở dữ liệu quan hệ vì
+      nó vi phạm các nguyên tắc chuẩn hóa. Tuy nhiên, tất cả các sản phẩm cơ sở dữ liệu quan hệ cao cấp (IBM DB2, Oracle, SQL Server) đều hỗ trợ XML. PostgreSQL cũng đã tham gia
+      và cung cấp nhiều hàm để hỗ trợ. Chúng tôi đã viết nhiều bài báo
+      về việc làm việc với XML trong PostgreSQL. (Bạn có thể tìm thấy những bài báo này tại <span class="accent-word">Ví dụ XML PostgreSQL</span>.) PostgreSQL đi kèm với các hàm để tạo, thao tác,
+      và phân tích dữ liệu XML. Những điều này được nêu trong <span class="accent-word">Hàm XML</span>. Không giống như kiểu <code>jsonb</code>,
+      hiện tại không có hỗ trợ chỉ mục trực tiếp cho nó. Vì vậy, bạn cần sử dụng các chỉ mục chức năng
+      để chỉ mục các phần con, tương tự như những gì bạn có thể làm với kiểu <code>json</code> thông thường.</p>
+
+      <h3 class="subsection-title">Chèn Dữ Liệu XML</h3>
+      <p class="no-indent">Khi bạn tạo một cột của kiểu dữ liệu <code>xml</code>, PostgreSQL tự động đảm bảo rằng
+      chỉ các giá trị XML hợp lệ được đưa vào các hàng. Đây là điều phân biệt một cột XML
+      với bất kỳ cột <code>text</code> nào. Tuy nhiên, XML không được xác thực theo bất kỳ Định nghĩa Kiểu Tài liệu (DTD) hoặc Định nghĩa Lược đồ XML (XSD), ngay cả khi nó được chỉ định trong tài liệu
+      XML. Để làm mới kiến thức về những gì cấu thành XML hợp lệ, <span class="accent-word">Ví dụ 5-30</span> cho thấy</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">XML<span class="sep">|</span>101</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

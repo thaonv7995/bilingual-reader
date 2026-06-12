@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Thiết lập Sao chép — Cấu hình các Slave</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ol.numbered > li figure.code-snippet {
+      margin: 1.5mm 0 0;
+      padding-left: 0;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0200.html">← Trước</a>
+    <a href="page_0202.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">201</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>archive_command = 'copy %p ..\\archive\\%f'</code></pre>
+      </figure>
+
+      <ol class="numbered" start="4">
+        <li>Tệp <code>pg_hba.conf</code> nên bao gồm một quy tắc cho phép các slave hoạt động như
+        các tác nhân sao chép. Ví dụ, quy tắc sau sẽ cho phép một tài khoản PostgreSQL có tên
+        pgrepuser trên một máy chủ trong mạng riêng của tôi với địa chỉ IP trong khoảng
+        192.168.0.1 đến 192.168.0.254 sao chép bằng mật khẩu md5:
+          <figure class="code-snippet">
+            <pre class="code-block"><code>host replication pgrepuser 192.168.0.0/24 md5</code></pre>
+          </figure>
+        </li>
+        <li>Tắt dịch vụ PostgreSQL và sao chép tất cả các tệp trong thư mục dữ liệu ngoại trừ
+        các thư mục <code>pg_xlog</code> và <code>pg_log</code> đến các slave. Đảm bảo rằng các thư mục <code>pg_xlog</code> và <code>pg_log</code>
+        đều có mặt trên các slave nhưng không có tệp nào.
+        Nếu bạn có một cụm cơ sở dữ liệu lớn và không thể tắt máy trong suốt thời gian
+        sao chép, bạn có thể sử dụng tiện ích <code>pg_basebackup</code>, có trong thư mục <code>bin</code> của
+        cài đặt PostgreSQL của bạn. Điều này sẽ tạo một bản sao của các tệp cụm dữ liệu trong thư mục được chỉ định
+        và cho phép bạn thực hiện sao lưu cơ sở trong khi dịch vụ postgres đang
+        chạy.</li>
+      </ol>
+
+      <h3 class="subsection-title">Cấu hình các Slave</h3>
+      <p class="no-indent">Để giảm thiểu rắc rối, các slave nên có cấu hình giống như master, đặc biệt nếu bạn
+      sẽ sử dụng chúng cho việc chuyển đổi dự phòng. Để máy chủ trở thành một slave, nó phải
+      có khả năng phát lại các giao dịch WAL của master. Các bước để tạo một slave
+      là:</p>
+
+      <ol class="numbered">
+        <li>Tạo một phiên bản mới của PostgreSQL với cùng phiên bản (tốt nhất là cả các phiên bản nhỏ)
+        như máy chủ master của bạn và cùng hệ điều hành ở cùng mức vá. Giữ cho các máy chủ giống nhau
+        không phải là yêu cầu, và bạn có thể thoải mái thử nghiệm và xem
+        bạn có thể lệch xa đến đâu.</li>
+        <li>Tắt PostgreSQL trên slave mới.</li>
+        <li>Ghi đè các tệp trong thư mục dữ liệu bằng các tệp bạn đã sao chép từ master.</li>
+        <li>Thêm cài đặt cấu hình sau vào tệp <code>postgresql.conf</code>:
+          <figure class="code-snippet">
+            <pre class="code-block"><code>hot_standby = on</code></pre>
+          </figure>
+        </li>
+        <li>Bạn không cần phải chạy các slave trên cùng một cổng như master, vì vậy bạn có thể tùy chọn
+        thay đổi cổng qua <code>postgresql.conf</code> hoặc qua một số tập lệnh khởi động cụ thể của hệ điều hành
+        mà thiết lập biến môi trường <code>PGPORT</code> trước khi khởi động. Bất kỳ tập lệnh khởi động nào sẽ
+        ghi đè cài đặt bạn có trong <code>postgresql.conf</code>.</li>
+        <li>Tạo một tệp mới trong thư mục dữ liệu có tên <code>recovery.conf</code> chứa các dòng sau,
+        và thay thế tên máy chủ thực tế, địa chỉ IP và cổng của master của bạn trên
+        dòng thứ hai:
+          <figure class="code-snippet">
+            <pre class="code-block"><code>standby_mode = 'on'
+primary_conninfo = 'host=192.168.0.1 port=5432 user=pgrepuser password=woo-</code></pre>
+          </figure>
+        </li>
+      </ol>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Thiết lập Sao chép<span class="sep">|</span>183</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

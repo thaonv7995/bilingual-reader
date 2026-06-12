@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 8.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0040.html">← Trước</a>
+    <a href="page_0042.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="object-term">peer</p>
+      <p class="object-def">Sử dụng tên hệ điều hành của khách hàng từ kernel. Nó chỉ có sẵn cho Linux, BSD, Mac
+      OS X và Solaris, và chỉ có thể được sử dụng cho các kết nối cục bộ.</p>
+
+      <p>Bạn có thể chọn nhiều phương thức xác thực hơn một, ngay cả cho cùng một cơ sở dữ liệu. Chỉ cần
+      nhớ rằng <code>pg_hba.conf</code> được đọc từ trên xuống dưới.</p>
+
+      <h3 class="tool-title">Tải lại các tệp cấu hình</h3>
+      <p class="no-indent">Nhiều, nhưng không phải tất cả, thay đổi đối với các tệp cấu hình yêu cầu khởi động lại dịch vụ <code>postgres</code>.
+      Các thay đổi khác có hiệu lực khi bạn thực hiện tải lại, điều này sẽ không làm gián đoạn các kết nối đang hoạt động.
+      Mở một cửa sổ console và chạy lệnh này để tải lại:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_ctl reload -D <em>your_data_directory_here</em></code></pre>
+      </figure>
+
+      <p>Hoặc, nếu bạn đã cài đặt PostgreSQL như một dịch vụ trong RedHat Enterprise Linux, CentOS,
+      hoặc Ubuntu, hãy nhập thay vào đó:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>service <em>postgresql-9.3</em> reload</code></pre>
+      </figure>
+
+      <p><em>postgresql-9.3</em> là tên của dịch vụ của bạn. Dịch vụ, đặc biệt đối với các phiên bản cũ hơn,
+      đôi khi chỉ được gọi là <code>postgresql</code> mà không có số phiên bản.</p>
+
+      <p>Bạn cũng có thể đăng nhập với tư cách là superuser vào bất kỳ cơ sở dữ liệu nào và thực hiện SQL sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_reload_conf();</code></pre>
+      </figure>
+
+      <p>Bạn cũng có thể tải lại từ pgAdmin; xem <span class="accent-word">“Chỉnh sửa postgresql.conf và pg_hba.conf từ
+      pgAdmin” trên trang 61</span>.</p>
+
+      <h3 class="section-title">Quản lý Kết nối</h3>
+      <p class="no-indent">Thỉnh thoảng, ai đó khác (chắc chắn không phải bạn) sẽ thực hiện một truy vấn mà họ
+      không có ý định và kết thúc với việc chiếm dụng tài nguyên. Bạn cũng có thể gặp một truy vấn
+      mất nhiều thời gian hơn mức bạn có thể kiên nhẫn. Nếu một trong những điều này xảy ra,
+      bạn sẽ muốn hủy truy vấn trên kết nối hoặc giết kết nối hoàn toàn.
+      Hơn nữa, trước khi bạn có thể thực hiện sao lưu đầy đủ hoặc khôi phục một cơ sở dữ liệu hoặc khôi phục
+      một bảng cụ thể đang được sử dụng, bạn sẽ cần phải giết tất cả các kết nối bị ảnh hưởng.</p>
+
+      <p>Hãy nhớ rằng việc giết không phải là một kết thúc thanh lịch và nên được sử dụng một cách tiết kiệm. Ứng dụng
+      khách của bạn nên bắt các truy vấn đã đi sai hướng ngay từ đầu. Để lịch sự,
+      bạn có thể nên thông báo cho vai trò kết nối rằng bạn sắp kết thúc kết nối của nó hoặc thực hiện hành động
+      không đẹp của bạn sau giờ làm việc khi không có ai xung quanh.</p>
+
+      <p>Thường xuyên hơn chúng ta muốn, chúng ta thấy mình phải resort đến ba lệnh SQL để hủy
+      các truy vấn đang chạy và kết thúc các kết nối. Đây là một chuỗi điển hình để theo dõi:</p>
+
+      <ol class="numbered">
+        <li>Lấy danh sách các kết nối gần đây và ID tiến trình:</li>
+      </ol>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Quản lý Kết nối<span class="sep">|</span>23</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

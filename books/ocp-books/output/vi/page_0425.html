@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="6"] {
+      counter-reset: init-step 5;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0424.html">← Trước</a>
+    <a href="page_0426.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">425</span>
+      </header>
+
+      <ol class="numbered" start="6">
+        <li>
+          <p>hai phương thức của interface <code>Path</code>&nbsp;có thể ném ra một <code>IOException</code>&nbsp;. Phương thức còn lại
+          là <code>register</code>&nbsp;, nhưng nó không nằm trong phạm vi của kỳ thi này.</p>
+        </li>
+      </ol>
+
+      <p>Không quan trọng đối với kỳ thi, nhưng tốt hơn hết bạn nên biết rằng các đường dẫn được định dạng đúng không kết thúc bằng
+      ký tự phân tách ở cuối (trừ khi nó tham chiếu đến thư mục gốc như <code>C:\</code>&nbsp;hoặc <code>/</code>&nbsp;). Do đó, ngay cả khi bạn cố gắng
+      tạo một <code>Path</code>&nbsp;với một dấu gạch chéo ở cuối, nó cũng sẽ bị bỏ qua. Ví dụ:</p>
+
+      <p class="no-indent"><code>System.out.print(Path.of("/a/b/"));</code>&nbsp; sẽ in ra <code>/a/b</code>&nbsp; chứ không phải <code>/a/b/</code>&nbsp;.</p>
+
+      <h3 class="section-title section-title--sub">Sử dụng resolve và resolveSibling<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Các đường dẫn tuyệt đối trên các môi trường chạy ứng dụng khác nhau hiếm khi khớp với nhau. Ví
+      dụ, giả sử ứng dụng của bạn cần đọc một tệp thuộc tính có tên là <code>values.properties</code>&nbsp;.</p>
+
+      <p>Trên máy tính Windows của bạn, bạn có thể đang chạy ứng dụng này dưới thư mục
+      <code>C:\dev\projects\fintech</code>&nbsp; và tệp này có thể nằm tại
+      <code>C:\dev\projects\fintech\props\values.properties</code>&nbsp;. Nhưng trên môi trường production, ứng dụng
+      có thể đang chạy dưới thư mục <code>/home/ec2-user/prod/fintech</code>&nbsp; và vị trí thực tế của tệp này
+      có thể là <code>/home/ec2-user/prod/fintech/props/values.properties</code>&nbsp;. Rõ ràng, nếu bạn
+      hardcode đường dẫn tuyệt đối tới tệp này trong mã nguồn dựa trên môi trường phát triển của mình,
+      ứng dụng sẽ không thể tìm thấy tệp này trên production. Do đó, khuyến khích sử dụng các
+      đường dẫn tương đối thay vì đường dẫn tuyệt đối trong mã nguồn Java. Đường dẫn cơ sở (base path) được cung cấp cho
+      ứng dụng thông qua đối số dòng lệnh và ứng dụng sẽ "phân giải" (resolve) các đường dẫn tương đối
+      (giống nhau trên mọi môi trường) tương đối so với đường dẫn cơ sở bất cứ khi nào nó cần xác định vị trí của
+      tệp trong hệ thống tệp. Ví dụ sau đây cho thấy cách thực hiện:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>import java.io.*;
+import java.nio.file.*;
+public class TestClass{
+    public static void main(String[] args) throws IOException{
+        Path basePath = Path.of(System.getProperty("basepath"));</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

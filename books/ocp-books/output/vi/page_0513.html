@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0512.html">← Trước</a>
+    <a href="page_0514.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">513</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>        ticket.setPassengerId(userId);
+    }
+  }
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Lưu ý rằng việc bảo vệ critical section (vùng tới hạn) là phần bổ sung cho các bộ bảo vệ được đặt trên các phương thức của Đối tượng (Object) đang được cập nhật. Vì vậy, ví dụ, việc đồng bộ hóa critical section trên chỉ có ích nếu các phương thức <code>getPassengerId</code>&nbsp;và <code>setPassengerId</code>&nbsp;của Lớp (Class) <code>Ticket</code>&nbsp;cũng được đồng bộ hóa (synchronized).</p>
+
+      <p>Tại thời điểm này, bạn có thể thắc mắc rằng nếu đối tượng ticket đã bị khóa ở đầu critical section (vùng tới hạn), thì làm thế nào có thể gọi các phương thức <code>getPassengerId</code>&nbsp;và <code>setPassengerId</code>&nbsp;từ bên trong critical section khi cả hai đều cần khóa cùng một đối tượng ticket. Điều này là khả thi vì các khóa nội tại (intrinsic locks) có tính chất &ldquo;reentrant&rdquo; (khóa tái vào). Nghĩa là, nếu một Thread (Luồng) đã khóa một Đối tượng (Object), nó có thể khóa lại Đối tượng (Object) đó bao nhiêu lần tùy ý. Việc khóa lại cùng một Đối tượng (Object) chỉ làm tăng số lượng khóa (lock count) của Đối tượng (Object) đó và Thread (Luồng) phải mở khóa monitor cùng số lần tương ứng để monitor sẵn sàng cho các Thread (Luồng) khác khóa. Do đó, trong ví dụ trên, khi một Thread (Luồng) gọi <code>ticket.getPassengerId()</code>, nó chỉ đơn giản là khóa lại đối tượng ticket và điều đó làm tăng số lượng khóa (lock count) của đối tượng ticket lên hai. Khi Thread (Luồng) thoát khỏi phương thức <code>getPassengerId</code>&nbsp;, số lượng khóa được giảm về một. Vì số lượng khóa chưa về không, đối tượng ticket vẫn bị khóa bởi chính Thread (Luồng) đó. Các Thread (Luồng) khác sẽ có thể khóa cùng đối tượng ticket đó sau khi Thread (Luồng) đầu tiên thoát khỏi khối synchronized.</p>
+
+      <h3 class="section-title section-title--sub">20.4.6 Sử dụng các Lớp (Class) atomic<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Nhiều chương trình thường xuyên sử dụng một trường (field) <code>int</code>&nbsp;để lưu giữ bộ đếm của một thứ gì đó, chẳng hạn như số lượng Thread (Luồng) hoạt động, số lượng truy vấn được thực thi, số lượng kết nối, v.v. Họ cũng có các câu lệnh như <code>count++;</code>&nbsp;chứa các toán tử tăng và giảm trước (pre) hoặc sau (post) để quản lý bộ đếm. Các câu lệnh như vậy thực tế liên quan đến ba hành động &mdash; đọc giá trị hiện tại của biến, cộng thêm 1 vào giá trị đó, và</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

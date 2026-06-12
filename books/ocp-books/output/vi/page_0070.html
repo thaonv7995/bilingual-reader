@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets li {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0069.html">← Trước</a>
+    <a href="page_0071.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">70</span>
+      </header>
+
+      <p class="no-indent">cho <code>personCount</code> . Điều này có nghĩa là cả hai Đối tượng (Object) đều có bản sao riêng của <code>name</code> , bản sao mà chúng có thể thao tác mà không ảnh hưởng đến bản sao của đối tượng còn lại, nhưng biến static <code>personCount</code> được chia sẻ bởi cả hai Lớp (Class). Khi đoạn mã cập nhật <code>personCount</code> của <code>Employee</code> , <code>personCount</code> của <code>Person</code> cũng được cập nhật theo. Trên thực tế, <code>Employee</code> hoàn toàn không có được bản sao riêng của <code>personCount</code> . Nó chỉ đơn thuần nhận được quyền truy cập vào <code>personCount</code> của <code>Person</code> .</p>
+
+      <h3 class="section-title section-title--sub">Tính kế thừa (Inheritance) của phương thức instance so với phương thức static<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Vì các phương thức không chiếm bất kỳ không gian nào trong một Đối tượng (Object) (hoặc một Lớp (Class)), nên dù sao cũng chỉ có một bản sao duy nhất của phương thức, bất kể đó là phương thức instance hay phương thức static.</p>
+
+      <p>Tuy nhiên, về mặt khái niệm, sự khác biệt mà tôi đã nhấn mạnh ở trên đối với các biến cũng tồn tại đối với các phương thức. Về mặt khái niệm, một Lớp con (Subclass) kế thừa bản sao riêng của một phương thức instance. Điều này được chứng minh bằng thực tế là một Lớp con (Subclass) có thể <strong>thay thế hoàn toàn</strong> hành vi của một phương thức instance được kế thừa dành cho các Đối tượng (Object) của Lớp con (Subclass) bằng cách &ldquo;<strong>ghi đè (overriding)</strong>&rdquo; nó bằng một triển khai mới của chính nó mà không ảnh hưởng đến hành vi triển khai của Lớp cha (Superclass) dành cho các Đối tượng (Object) của Lớp cha (Superclass). Mặt khác, một Lớp con (Subclass) chỉ đơn thuần có quyền truy cập vào phương thức static của Lớp cha (Superclass) của nó, và vì thế, Lớp con (Subclass) không thể thay đổi hành vi của phương thức static được kế thừa. Lớp con (Subclass) có thể &ldquo;<strong>ẩn đi (hide)</strong>&rdquo; hành vi phương thức static của Lớp cha (Superclass) bằng cách cung cấp một triển khai mới nhưng không thể thay thế phương thức của Lớp cha (Superclass).</p>
+
+      <p>Ghi đè (Overriding) và ẩn đi (hiding) là các thuật ngữ kỹ thuật có ý nghĩa chính xác và liên quan chặt chẽ đến <strong>Tính đa hình (Polymorphism)</strong>. Việc hiểu rõ chúng là rất quan trọng cho kỳ thi cũng như để trở thành một lập trình viên Java giỏi. Tôi sẽ đi sâu hơn vào các thuật ngữ này sau khi chúng ta đi qua các chi tiết cơ bản của việc kế thừa các Lớp (Class) và triển khai các Interface (Giao diện).</p>
+
+      <h3 class="section-title section-title--sub">13.1.5 Lợi ích của Tính kế thừa (Inheritance)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

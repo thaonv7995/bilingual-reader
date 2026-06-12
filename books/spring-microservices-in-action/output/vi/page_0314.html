@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Pipeline build và triển khai</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page ul.manning-bullets li p.continued {
+      margin: 1.5mm 0 0;
+      padding-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0313.html">← Trước</a>
+    <a href="page_0315.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">289</span>
+      </header>
+
+      <p class="no-indent">có thể có vẻ là một nhiệm vụ tầm thường, nhưng trên thực tế đây là một trong những phần quan trọng nhất của kiến trúc microservice của bạn.</p>
+
+      <p>Tại sao? Hãy nhớ rằng một trong những lợi thế chính của kiến trúc microservice là các microservice là các đơn vị mã nguồn nhỏ có thể được build, sửa đổi và triển khai lên môi trường production một cách nhanh chóng, độc lập với nhau. Quy mô nhỏ của dịch vụ có nghĩa là các tính năng mới (và các bản sửa lỗi quan trọng) có thể được giao với tốc độ cao. Velocity (tốc độ) là từ khóa ở đây, vì velocity ngụ ý gần như không có ma sát giữa việc tạo tính năng mới hoặc sửa lỗi và việc triển khai dịch vụ của bạn. Thời gian chờ triển khai nên tính bằng phút, không phải ngày.</p>
+
+      <p>Để đạt được điều này, cơ chế bạn dùng để build và triển khai mã nguồn cần phải</p>
+
+      <ul class="manning-bullets" aria-label="Yêu cầu build và triển khai">
+        <li><strong class="run-in">Tự động hóa—</strong>Khi bạn build mã nguồn, không nên có sự can thiệp của con người trong quá trình build và triển khai, đặc biệt ở các môi trường thấp hơn. Quá trình build phần mềm, cấp phát image máy và triển khai dịch vụ cần được tự động hóa và được khởi chạy bằng hành động commit mã nguồn vào kho lưu trữ nguồn.</li>
+        <li><strong class="run-in">Lặp lại được—</strong>Quy trình build và triển khai phần mềm cần lặp lại được để mỗi lần build và triển khai diễn ra giống nhau. Sự biến đổi trong quy trình thường là nguồn gốc của những lỗi tinh vi khó truy vết và khắc phục.</li>
+        <li><strong class="run-in">Hoàn chỉnh—</strong>Kết quả của artifact đã triển khai phải là một máy ảo hoặc image container (Docker) hoàn chỉnh chứa môi trường runtime &ldquo;hoàn chỉnh&rdquo; cho dịch vụ. Đây là sự thay đổi quan trọng trong cách bạn nghĩ về hạ tầng. Việc cấp phát image máy cần được tự động hóa hoàn toàn bằng script và được giữ trong source control cùng mã nguồn dịch vụ.
+          <p class="continued">Trong môi trường microservice, trách nhiệm này thường chuyển từ nhóm vận hành sang nhóm phát triển sở hữu dịch vụ. Hãy nhớ, một trong những nguyên tắc cốt lõi của phát triển microservice là đẩy trách nhiệm vận hành hoàn chỉnh cho dịch vụ xuống các nhà phát triển.</p>
+        </li>
+        <li><strong class="run-in">Bất biến—</strong>Khi image máy chứa dịch vụ của bạn đã được build, cấu hình runtime của image không nên bị chạm vào hoặc thay đổi sau khi image đã được triển khai. Nếu cần thay đổi, cấu hình phải thực hiện trong các script được giữ trong source control và dịch vụ cùng hạ tầng cần trải qua quy trình build một lần nữa.
+          <p class="continued">Các thay đổi cấu hình runtime (thiết lập garbage collection, Spring profile đang dùng) nên được truyền dưới dạng biến môi trường vào image, trong khi cấu hình ứng dụng nên tách khỏi container (Spring Cloud Config).</p>
+        </li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 1: Các mẫu khả năng phục hồi của client</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.8mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0046.html">← Trước</a>
+    <a href="page_0048.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">22</span>
+        <span class="rh-center">CHƯƠNG 1 <em>Chào mừng đến với đám mây, Spring</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">lan truyền lên và ra ngoài tới các người tiêu dùng dịch vụ. Vì mục đích này, chúng ta sẽ trình bày bốn mẫu khả năng phục hồi của client:</p>
+
+      <ul class="manning-bullets">
+        <li><strong class="run-in">Cân bằng tải phía client</strong>&mdash;Làm thế nào để lưu cache vị trí các phiên bản dịch vụ trên client dịch vụ sao cho các cuộc gọi tới nhiều phiên bản của một microservice được cân bằng tải tới tất cả các phiên bản khỏe mạnh của microservice đó?</li>
+        <li><strong class="run-in">Mẫu ngắt mạch (circuit breaker pattern)</strong>&mdash;Làm thế nào để ngăn client tiếp tục gọi một dịch vụ đang bị lỗi hoặc gặp vấn đề về hiệu năng? Khi một dịch vụ chạy chậm, nó tiêu tốn tài nguyên trên client đang gọi nó. Bạn muốn các cuộc gọi microservice thất bại phải &ldquo;fail-fast&rdquo; để client gọi có thể nhanh chóng phản hồi và thực hiện hành động phù hợp.</li>
+        <li><strong class="run-in">Mẫu dự phòng (fallback pattern)</strong>&mdash;Khi một cuộc gọi dịch vụ thất bại, làm thế nào để cung cấp cơ chế &ldquo;plug-in&rdquo; cho phép client dịch vụ cố gắng thực hiện công việc của mình qua các phương án thay thế khác ngoài microservice đang được gọi?</li>
+        <li><strong class="run-in">Mẫu vách ngăn (bulkhead pattern)</strong>&mdash;Ứng dụng microservice sử dụng nhiều tài nguyên phân tán để thực hiện công việc. Làm thế nào để phân tách các cuộc gọi này sao cho hành vi sai lệch của một cuộc gọi dịch vụ không ảnh hưởng tiêu cực tới phần còn lại của ứng dụng?</li>
+      </ul>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0047_fig_1_10.png" width="1313" height="872" alt="Hình 1.10 — Cân bằng tải phía client, ngắt mạch, dự phòng và vách ngăn bảo vệ người gọi dịch vụ">
+        <figcaption><strong>Hình 1.10</strong><br>Với microservices, bạn phải bảo vệ người gọi dịch vụ khỏi một dịch vụ hoạt động kém. Hãy nhớ, một dịch vụ chậm hoặc ngừng hoạt động có thể gây gián đoạn vượt ra ngoài dịch vụ trực tiếp.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

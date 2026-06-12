@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .ocp-chapter-title {
+      margin: 0 0 8mm;
+      font-size: 24pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-indent: 0;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives {
+      margin: 0 0 10mm;
+    }
+
+    .ocp-exam-objectives__label {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives__rule {
+      flex: 1;
+      height: 0;
+      border-top: 0.35mm solid #ea580c;
+    }
+
+    .ocp-exam-objectives__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ocp-exam-objectives__list li {
+      position: relative;
+      margin: 0;
+      padding-left: 5mm;
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+      text-align: justify;
+    }
+
+    .ocp-exam-objectives__list li::before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #ea580c;
+      font-size: 11pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0550.html">← Trước</a>
+    <a href="page_0552.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">551</span>
+      </header>
+
+      <p class="ocp-chapter-title no-indent">Chương 21 Stream</p>
+
+      <section class="ocp-exam-objectives" aria-labelledby="exam-objectives-label">
+        <h2 class="ocp-exam-objectives__label" id="exam-objectives-label">
+          <span>Mục tiêu Kỳ thi</span>
+          <span class="ocp-exam-objectives__rule" aria-hidden="true"></span>
+        </h2>
+        <ul class="ocp-exam-objectives__list">
+          <li>Sử dụng các Stream đối tượng và primitive trong Java, bao gồm các biểu thức Lambda (Lambda expression) triển khai các Functional Interface, để cung cấp (supply), lọc (filter), ánh xạ (map), tiêu thụ (consume), và sắp xếp (sort) dữ liệu</li>
+          <li>Thực hiện phân rã (decomposition), nối (concatenation) và rút gọn (reduction), gom nhóm (grouping) và phân vùng (partitioning) trên các stream song song (parallel streams)</li>
+          <li>Xử lý đồng thời các Collection trong Java bao gồm cả việc sử dụng các stream song song (parallel streams)</li>
+        </ul>
+      </section>
+
+      <h3 class="section-title">21.1 Kiến thức Cơ bản về Stream<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Trong chương trước, bạn đã tìm hiểu cách xử lý một nhóm các đối tượng (object) liên quan bằng cách sử dụng
+      Collections API. Stream API cũng tương tự ở khía cạnh nó cho phép bạn xử lý một nhóm
+      các đối tượng (object) liên quan nhưng thực hiện theo một cách hoàn toàn khác. Thay vì cho phép bạn
+      thao tác trên bản thân Collection đó (sử dụng các phương thức như add và remove), một <strong>stream</strong> cung cấp một
+      luồng <strong>tuần tự (sequential)</strong> của các đối tượng (object) mà bạn có thể khai thác và thao tác ở một đầu, từ đó tạo ra một
+      stream mới đã được thay đổi hoặc một kết quả ở đầu bên kia. Một <strong>đường ống stream (stream pipeline)</strong>&nbsp;là một chuỗi các
+      stream được kết nối với nhau, có thể xem như một dây chuyền lắp ráp của một nhà máy sản xuất nơi các linh kiện thô
+      đi vào từ một đầu dưới dạng một stream đầu vào, trải qua một chuỗi các bước biến đổi lần lượt từng bước một,
+      và đi ra dưới dạng các sản phẩm hoàn thiện ở đầu bên kia.</p>
+
+      <p>Nhà phát triển chỉ cần chỉ định các thao tác dưới dạng các &ldquo;hàm (function)&rdquo; cần được
+      thực hiện trên các đối tượng (object) và đường ống stream (stream pipeline) sẽ tự động đảm nhận việc gọi thực tế các
+      thao tác đó trên các đối tượng (object). Ví dụ, hãy tưởng tượng một đường ống stream (stream pipeline) nơi stream ký tự đầu vào
+      trước tiên được chuyển đổi thành một stream ký tự viết hoa, sau đó được lọc để
+      tạo ra một stream gồm các ký tự không chứa khoảng trắng, và cuối cùng, các ký tự này được ghép lại với nhau
+      thành một chuỗi (string). Kiểu như thế này:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • CHỨNG CHỈ JAVA SE 17 &amp; 21</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

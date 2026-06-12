@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0536.html">← Prev</a>
+    <a href="page_0538.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">537</span>
+      </header>
+
+      <p class="no-indent">the main thread and the factorial thread. In fact, there is no explicit creation of any thread to
+      compute the factorial. The creation of a new thread and the coordination required to get the
+      result back to the main method is handled transparently by <code>ExecutorService</code>&nbsp;and <code>Future</code>
+      objects. Since <code>Future.get()</code>&nbsp;provides all of the happens-before guarantees, the main thread is
+      able to view the updated value of <code>fact.result</code>&nbsp;as well.</p>
+
+      <p><code>ExecutorService</code>&nbsp;also allows submission of multiple tasks for execution through its two
+      overloaded <code>invokeAll</code>&nbsp;methods. For example:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>List&lt;Callable&lt;BigInteger&gt;&gt; tasks = new ArrayList&lt;&gt;();
+tasks.add(new Factorial(100000));
+tasks.add(new Factorial(100000));
+List&lt;Future&lt;BigInteger&gt;&gt; results = es.invokeAll(tasks);
+System.out.println("All done!");
+for(Future f : results) System.out.println(f.get());</code></pre>
+      </figure>
+
+      <p>The call to <code>invokeAll</code>&nbsp;blocks until all execution of all of the given tasks is complete.</p>
+
+      <p>Depending on what type of <code>ExecutorService</code>&nbsp;is being used, the tasks may be executed in
+      parallel by multiple threads. If you have time, you should check out the method descriptions of
+      <code>invokeAll</code>&nbsp;and <code>invokeAny</code>&nbsp;methods in the JavaDoc.</p>
+
+      <p>Although not important for the exam, using the right <code>ExecutorService</code>&nbsp;for a given situation is
+      crucial for application performance.</p>
+
+      <p>In general, to gain maximum throughput from a machine, the number of threads should be
+      about the same as the number of logical cores in the system, if the tasks are CPU intensive. If the
+      details of the production machine are not known in advance, you can rely on
+      <code>newWorkStealingPool</code>&nbsp;as it figures out the optimum number of threads for the underlying
+      machine.</p>
+
+      <p>If the tasks are mostly I/O bound, you can use a <code>newCachedThreadPool</code>&nbsp;or a
+      <code>newFixedThreadPool</code>&nbsp;with a large number of threads. The best way to arrive at the optimum</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

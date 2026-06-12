@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 12pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page p strong.run-in code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0384.html">← Prev</a>
+    <a href="page_0386.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">385</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Comparator&lt;String&gt; c = (s1, s2) -&gt; s1.length()-s2.length();
+Collections.sort(names, c); //sorted as [a, a, b, aa, bbb]
+System.out.println(Collections.binarySearch(names, "x", c)); //prints 2</code></pre>
+      </figure>
+
+      <p class="no-indent">In the above code, the first search returns <code>-4</code>&nbsp;because <code>aaa</code>&nbsp;is not found in the list. But if I add
+      <code>aaa</code>&nbsp;to the given list and sort the list, I would find <code>aaa</code>&nbsp;at index&nbsp;<code>-(-4+1)</code>, i.e., <code>3</code>&nbsp;(after
+      <code>aa</code>) in the sorted list. Observe that in the second search, I am first sorting the list using a
+      custom <code>Comparator</code>&nbsp;that compares strings based on their lengths, and then I am using the
+      same <code>Comparator</code>&nbsp;to search. It prints <code>2</code>&nbsp;because <code>x</code>&nbsp;(whose length is 1) is found in the list at
+      index <code>2</code>. Although elements at index <code>0</code>&nbsp;and <code>1</code>&nbsp;are also a match, the method does not
+      guarantee which element&rsquo;s index will be returned. It could theoretically return <code>0</code>&nbsp;or <code>1</code>&nbsp;too.</p>
+
+      <h3 class="section-title section-title--sub">Other important methods in the <code>Collections</code>&nbsp;class<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Besides the <code>sort</code>&nbsp;and <code>binarySearch</code>&nbsp;methods, the following is a list of methods in the
+      <code>Collections</code>&nbsp;class that you should be aware of for the exam:</p>
+
+      <p class="no-indent"><strong class="run-in">1. <code>public static void reverse(List&lt;?&gt; list)</code> :</strong> Reverses the order of the elements in
+      the specified list. The given list must be mutable for this method to work because it
+      modifies the given list.</p>
+
+      <p>If you just want to have a reversed view of an existing list without mutating it, use <code>List</code>&rsquo;s
+      default method <code>reversed()</code>.</p>
+
+      <p>So, far, I have only heard of the <code>reversed()</code>&nbsp;method appearing in the exam.</p>
+
+      <h3 class="section-title section-title--sub">18.5.6 Quiz<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent"><strong>Q1.</strong> What will the following code print?</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>List&lt;String&gt; names = new ArrayList(List.of("a3", "a1", "a2"));</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

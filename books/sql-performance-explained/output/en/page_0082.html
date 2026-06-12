@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Smart Logic</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h4.subsection-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">82</span>
+      </header>
+      <p class="chapter-running-head">Chapter 2: The Where Clause</p>
+
+      <p class="no-indent">Without knowing the wildcard&rsquo;s position in the search term, it is impossible to give a qualified answer. The optimizer has no other choice than to &ldquo;guess&rdquo;. If you know that there is always a leading wildcard, you can obfuscate the <code>LIKE</code> condition intentionally so that the optimizer can no longer consider the index on <code>LAST_NAME</code>.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT last_name, first_name, employee_id
+  FROM employees
+ WHERE subsidiary_id = ?
+   AND last_name || '' LIKE ?</code></pre>
+      </figure>
+
+      <p>It is enough to append an empty string to the <code>LAST_NAME</code> column. This is, however, an option of last resort. Only do it when absolutely necessary.</p>
+
+      <h4 class="subsection-title">Smart Logic</h4>
+
+      <p class="no-indent">One of the key features of SQL databases is their support for ad-hoc queries: new queries can be executed at any time. This is only possible because the query optimizer (query planner) works at runtime; it analyzes each statement when received and generates a reasonable execution plan immediately. The overhead introduced by runtime optimization can be minimized with bind parameters.</p>
+
+      <p>The gist of that recap is that databases are optimized for dynamic SQL&mdash;so use it if you need it.</p>
+
+      <p>Nevertheless there is a widely used practice that avoids dynamic SQL in favor of static SQL&mdash;often because of the &ldquo;dynamic SQL is slow&rdquo; myth. This practice does more harm than good if the database uses a shared execution plan cache like DB2, the Oracle database, or SQL Server.</p>
+
+      <p>For the sake of demonstration, imagine an application that queries the <code>EMPLOYEES</code> table. The application allows searching for subsidiary id, employee id and last name (case-insensitive) in any combination. It is still possible to write a single query that covers all cases by using &ldquo;smart&rdquo; logic.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">72</p>
+    </article>
+  </main>
+</body>
+</html>

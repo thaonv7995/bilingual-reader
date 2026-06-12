@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 8: Writing Functions — Aggregates</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0163.html">← Prev</a>
+    <a href="page_0165.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">164</span>
+      </header>
+
+      <p class="no-indent">A trigger function always outputs a data type called a <code>trigger</code>. Because PostgreSQL
+      trigger functions are no different from any other function, you can reuse the same trigger
+      function across different triggers. This is usually not the case for other databases, in
+      which each trigger has its own nonreusable handler code.</p>
+
+      <p>In PostgreSQL, each trigger must have exactly one associated triggering function to
+      handle the firing. To apply multiple triggering functions, you must create multiple trig&shy;gers
+      against the same event. The alphabetical order of the trigger name determines the
+      order of firing. Each trigger will have access to the revised data from the previous trigger.
+      Triggers themselves do not constitute separate transactions. If any trigger issues a roll&shy;back,
+      all data amended by earlier triggers fired by the same event will roll back.</p>
+
+      <p>You can use almost any language to create trigger functions, with SQL being the notable
+      exception. PL/pgSQL is by far the most popular language. We demonstrate writing
+      trigger functions using PL/pgSQL in <span class="accent-word">&ldquo;Writing Trigger Functions in PL/pgSQL&rdquo; on page
+      152</span>.</p>
+
+      <h3 class="subsection-title">Aggregates</h3>
+      <p class="no-indent">Most other databases limit you to ANSI SQL built-in aggregate functions such as <code>MIN</code>,
+      <code>MAX</code>, <code>AVG</code>, <code>SUM</code>, and <code>COUNT</code>. In PostgreSQL, you don&rsquo;t have this limit. If you need a more
+      esoteric aggregate function, you&rsquo;re welcome to write your own. Because you can use any
+      aggregate function in PostgreSQL as a window function (see <span class="accent-word">&ldquo;Window Functions&rdquo; on
+      page 132</span>), you can get twice the use out of any aggregate function that you author.</p>
+
+      <p>You can write aggregates in almost any language, SQL included. An aggregate is gen&shy;erally
+      composed of one or more functions. It must have at least a state transition function
+      to perform the computation; usually this function runs repeatedly to create a single
+      output from two input rows. You can also specify optional functions to manage initial
+      and final states. You can also use a different language for each of the subfunctions. We
+      have various examples of building aggregates using PL/pgSQL, PL/Python, and SQL in
+      the article <span class="accent-word">PostgreSQL Aggregates</span>.</p>
+
+      <p>Regardless of which language you use to code the functions, the glue that brings them
+      all together is the <code>CREATE AGGREGATE</code> command:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE AGGREGATE my_agg (input data type) (
+SFUNC=state function name,
+STYPE=state type,
+FINALFUNC=final function name,
+INITCOND=initial state value, SORTOP=sort_operator
+);</code></pre>
+      </figure>
+
+      <p>The final function is optional, but if specified, it must take as input the result of the state
+      function. The state function always takes a data type as the input along with the result
+      of the last call to the state function. Sometimes this result is what you want as the result
+      of the aggregate function, and sometimes you want to run a final function to massage</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">146<span class="sep">|</span>Chapter 8: Writing Functions</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

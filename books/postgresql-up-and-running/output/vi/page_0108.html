@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0107.html">← Trước</a>
+    <a href="page_0109.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">108</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code> dt                     | mh | tm
+-----------------------+----+----------
+2012-03-11 00:30:00-05 |  0 | 12:30 AM
+2012-03-11 00:45:00-05 |  0 | 12:45 AM
+2012-03-11 01:00:00-05 |  1 | 01:00 AM
+2012-03-11 01:15:00-05 |  1 | 01:15 AM
+2012-03-11 01:30:00-05 |  1 | 01:30 AM
+2012-03-11 01:45:00-05 |  1 | 01:45 AM
+2012-03-11 03:00:00-04 |  3 | 03:00 AM</code></pre>
+      </figure>
+
+      <p class="no-indent">Theo mặc định, <code>generate_series</code> giả định <code>timestamptz</code> nếu bạn không chuyển đổi rõ ràng các giá trị sang
+      <code>timestamp</code>.</p>
+
+      <h3 class="subsection-title">Mảng</h3>
+      <p class="no-indent">Mảng đóng vai trò quan trọng trong PostgreSQL. Chúng đặc biệt hữu ích trong việc xây dựng
+      các hàm tổng hợp, tạo các điều kiện IN và ANY, và giữ các giá trị trung gian để
+      chuyển đổi sang các kiểu dữ liệu khác. Trong PostgreSQL, mỗi kiểu dữ liệu đều có một kiểu mảng tương ứng.
+      Nếu bạn định nghĩa kiểu dữ liệu của riêng mình, PostgreSQL sẽ tạo một kiểu mảng tương ứng
+      ở phía sau cho bạn. Ví dụ, kiểu số nguyên có kiểu mảng số nguyên integer[],
+      kiểu ký tự có kiểu mảng ký tự character[], và cứ như vậy. Chúng tôi sẽ cho bạn thấy một số
+      hàm hữu ích để xây dựng mảng mà không cần phải gõ chúng thủ công. Sau đó, chúng tôi sẽ chỉ ra
+      một số hàm tiện lợi cho việc thao tác mảng. Bạn có thể xem danh sách đầy đủ
+      các hàm và toán tử mảng trong <span class="accent-word">Tài liệu Chính thức: Các Hàm và Toán Tử Mảng</span>.</p>
+
+      <h3 class="subsection-title">Các Bộ Tạo Mảng</h3>
+      <p class="no-indent">Cách cơ bản nhất để tạo một mảng là gõ các phần tử:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT ARRAY[2001, 2002, 2003] As yrs;</code></pre>
+      </figure>
+
+      <p class="no-indent">Nếu các phần tử của mảng của bạn có thể được trích xuất từ một truy vấn, bạn có thể sử dụng hàm bộ tạo tinh vi hơn: <code>array()</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT array(
+SELECT DISTINCT date_part('year', log_ts) FROM logs ORDER BY date_part('year',
+log_ts)
+);</code></pre>
+      </figure>
+
+      <p>Mặc dù hàm mảng phải được sử dụng với một truy vấn trả về một cột duy nhất,
+      bạn có thể chỉ định một kiểu tổng hợp làm đầu ra, từ đó đạt được kết quả nhiều cột.
+      Chúng tôi minh họa điều này trong <span class="accent-word">“Các Kiểu Dữ Liệu Tùy Chỉnh và Tổng Hợp” trên trang 103</span>.</p>
+
+      <p>Bạn có thể chuyển đổi một chuỗi đại diện cho một mảng thành một mảng với cú pháp có dạng:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT '{Alex,Sonia}'::text[] As name, '{43,40}'::smallint[] As age;
+ name         | age
+--------------+--------
+ {Alex,Sonia} | {43,40}</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">90<span class="sep">|</span>Chương 5: Kiểu Dữ Liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

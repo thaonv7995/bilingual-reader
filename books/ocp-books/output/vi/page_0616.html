@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0615.html">← Trước</a>
+    <a href="page_0617.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">616</span>
+      </header>
+
+      <p class="no-indent"><code>findFirst()</code>&nbsp;được phép trả về bất kỳ phần tử nào bất kể stream là tuần tự
+      hay song song. Do đó, <strong>B</strong>&nbsp;là đúng.</p>
+
+      <p>Thứ tự thực thi của các thao tác trung gian không được đảm bảo ngay cả đối với các stream có thứ tự
+      khi stream là song song. Vì stream đã cho là song song, thứ tự gọi thao tác mapping
+      cho các phần tử không được đảm bảo. Do đó, <strong>D</strong> và <strong>F</strong> là không đúng.</p>
+
+      <p>Nếu stream được chuyển thành tuần tự thay vì song song, mỗi phần tử sẽ được xử lý bởi một
+      Thread (Luồng) duy nhất, lần lượt từng phần tử một. Tuy nhiên, thao tác <code>findFirst()</code> sẽ ngắn mạch (short-circuit)
+      stream pipeline sau khi trả về phần tử đầu tiên, khiến các phần tử còn lại không được xử lý. Do đó,
+      thao tác <code>map()</code> sẽ chỉ được thực thi cho phần tử đầu tiên. Vì vậy, việc chuyển stream đã cho
+      thành tuần tự sẽ khiến chương trình chỉ in ra <code>Mapping 1</code> thay vì từ <code>Mapping 1</code> đến
+      <code>Mapping 4</code>&nbsp;và do đó,&nbsp;<strong>E</strong> là không đúng.</p>
+
+      <h3 class="section-title section-title--sub">21.3.5 Parallel Streams và Virtual Threads<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Framework stream sử dụng một nhóm thread chung (common thread pool) được duy trì bởi JVM gọi là
+      common ForkJoin Pool để thực thi song song các thao tác stream. Đừng lo lắng, ForkJoin không có trong
+      kỳ thi, vì vậy phần này chỉ mang tính chất tham khảo (FYI). Các thread trong common ForkJoinPool này là các platform
+      thread (thread nền tảng), nghĩa là một parallel stream sử dụng các platform thread để thực thi stream pipeline.
+      Tuy nhiên, điều gì sẽ xảy ra nếu bản thân stream được tạo trên một Virtual Thread? Hoặc nếu không có
+      thread nào khả dụng trong common thread pool?</p>
+
+      <p>Thực tế, một trong các thread mà một parallel stream sử dụng để thực thi stream pipeline chính là thread
+      yêu cầu thực thi nó. Do đó, nếu thread yêu cầu thực thi một stream pipeline là một Virtual Thread,
+      thì ít nhất một số phần của stream pipeline có thể được thực thi trên một Virtual Thread.</p>
+
+      <p>Dưới đây là một phiên bản sửa đổi nhẹ của chương trình tính tổng song song (parallel summation) mà tôi đã
+      trình bày trước đó. Phiên bản này yêu cầu thực thi stream từ một Virtual Thread:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public class TestClass{</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

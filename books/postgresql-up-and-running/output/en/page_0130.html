@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Exclusion Constraints</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0129.html">← Prev</a>
+    <a href="page_0131.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">130</span>
+      </header>
+
+      <p class="no-indent">The other noteworthy aspect of check constraints is that unlike primary key, foreign
+      key, and unique key constraints, they inherit from parent tables.</p>
+
+      <h3 class="subsection-title">Exclusion Constraints</h3>
+      <p class="no-indent">Introduced in version 9.0, exclusion constraints allow you to incorporate additional
+      operators to enforce uniqueness that can’t be satisfied by the equality operator. Exclusion
+      constraints are especially useful in problems involving scheduling.</p>
+
+      <p>PostgreSQL 9.2 introduced the range data types that are perfect candidates for exclusion
+      constraints. You’ll find a fine example of using exclusion constraints for range data types
+      at <span class="accent-word">Waiting for 9.2 Range Data Types</span>.</p>
+
+      <p>Exclusion constraints are generally enforced using GiST indexes, but you can create
+      compound indexes that incorporate B-Tree as well. Before you do this, you need to
+      install the <code>btree_gist</code> extension. A classic use of a compound exclusion constraint is
+      for scheduling resources.</p>
+
+      <p>Here’s an example using exclusion constraints. Suppose you have a fixed number of
+      conference rooms in your office, and groups must book them in advance. See how we’d
+      prevent double-booking in <span class="accent-word">Example 6-6</span>. Take note of how we are able to use the overlap
+      operator (<code>&amp;&amp;</code>) for our temporal comparison and the usual equality operator for the room
+      number.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 6-6.</strong> Prevent overlapping bookings for same room</figcaption>
+        <pre class="code-block"><code>CREATE TABLE schedules(id serial primary key, room smallint, time_slot tstzrange);
+ALTER TABLE schedules ADD CONSTRAINT ex_schedules
+EXCLUDE USING gist (room WITH =, time_slot WITH &amp;&amp;);</code></pre>
+      </figure>
+
+      <p>Just as with uniqueness constraints, PostgreSQL automatically creates a corresponding
+      index of the type specified in the constraint declaration.</p>
+
+      <h3 class="section-title">Indexes</h3>
+      <p class="no-indent">PostgreSQL ships stocked with a lavish framework for creating and fine-tuning indexes.
+      The art of PostgreSQL indexing could fill a tome all by itself. At the time of writing,
+      PostgreSQL comes with at least four types of indexes, often referred to as index meth‐
+      ods. If you find these insufficient, you can define new index operators and modifiers to
+      supplement them. If still unsatisfied, you’re free to invent your own index type.</p>
+
+      <p>PostgreSQL also allows you to mix and match different index types in the same table
+      with the expectation that the planner will consider them all. For instance, one column
+      could use a B-Tree index while an adjacent column uses a GiST index, with both indexes
+      contributing to the speed of the query. To delve more into the mechanics of how the
+      planner takes advantage of indexes, visit <span class="accent-word">bitmap index scan strategy</span>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">112<span class="sep">|</span>Chapter 6: Tables, Constraints, and Indexes</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — Make Good Use of CASE</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 1mm auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 0.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0193.html">← Prev</a>
+    <a href="page_0195.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">194</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    ) As num_fact_types
+FROM census.lu_tracts As T;</code></pre>
+      </figure>
+
+      <p class="no-indent">Now, if we query our view with this query:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT tract_id FROM vw_stats;</code></pre>
+      </figure>
+
+      <p>execution time is about 21 ms on our server because it doesn&rsquo;t run any computation for
+      certain field such as num_facts and num_fact_types, fields we did not ask for. If you
+      looked at the plan, you may be startled to find that it never even touches the facts table
+      because it&rsquo;s smart enough to know it doesn&rsquo;t need to. But if we use:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM vw_stats;</code></pre>
+      </figure>
+
+      <p>our execution time skyrockets to 681 ms, and the plan is just as we had in <span class="accent-word">Figure 9-4</span>.
+      Although our results in this example suffer the loss of just milliseconds, imagine tables
+      with tens of millions of rows and hundreds of columns. Those milliseconds could
+      translate into overtime at the office waiting for a query to finish.</p>
+
+      <h3 class="section-title">Make Good Use of CASE</h3>
+
+      <p class="no-indent">We&rsquo;re always surprised how frequently people forget about using the ANSI SQL CASE
+      expression. In many aggregate situations, a CASE can obviate the need for inefficient
+      subqueries. We&rsquo;ll demonstrate the point with two equivalent queries and their corresponding
+      plans. <span class="accent-word">Example 9-14</span> uses subqueries.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-14.</strong> Using subqueries instead of CASE</figcaption>
+        <pre class="code-block"><code>SELECT T.tract_id, COUNT(*) As tot, type_1.tot AS type_1
+FROM
+    census.lu_tracts AS T LEFT JOIN
+    (SELECT tract_id, COUNT(*) As tot
+        FROM census.facts
+        WHERE fact_type_id = 131
+        GROUP BY tract_id
+    ) As type_1 ON T.tract_id = type_1.tract_id LEFT JOIN
+    census.facts AS F ON T.tract_id = F.tract_id
+GROUP BY T.tract_id, type_1.tot;</code></pre>
+      </figure>
+
+      <p><span class="accent-word">Figure 9-7</span> shows the graphical plan of <span class="accent-word">Example 9-14</span>.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0194_fig_9_7.png" width="1246" height="132" alt="Figure 9-7. Graphical plan of using subqueries instead of CASE">
+        <figcaption>Figure 9-7. Graphical plan of using subqueries instead of CASE</figcaption>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">176<span class="sep">|</span>Chapter 9: Query Performance Tuning</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

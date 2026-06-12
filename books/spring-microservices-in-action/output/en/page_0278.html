@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 8: Listing 8.10 continuation and Listing 8.11</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.topic-heading {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 7.56pt;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-indent: 0;
+      color: #333;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--810-cont .listing-callouts-right {
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + p.topic-heading,
+    .prose-page.chapter-page p.topic-heading + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0277.html">← Prev</a>
+    <a href="page_0279.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">A Spring Cloud Stream use case: distributed caching</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">253</span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--810-cont" aria-label="Listing 8.10 continuation annotated code">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>        hashOperations = redisTemplate.opsForHash();
+    }
+
+    @Override
+    public void saveOrganization(Organization org) {
+        hashOperations.put(HASH_NAME, org.getId(), org);
+    }
+
+    @Override
+    public void updateOrganization(Organization org) {
+        hashOperations.put(HASH_NAME, org.getId(), org);
+    }
+
+    @Override
+    public void deleteOrganization(String organizationId) {
+        hashOperations.delete(HASH_NAME, organizationId);
+    }
+
+    @Override
+    public Organization findOrganization(String organizationId) {
+       return (Organization) hashOperations.get(HASH_NAME, organizationId);
+    }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Listing 8.10 continuation annotation callout">
+          <p class="listing-callout">All interactions with Redis will be with a single Organization object stored by its key.</p>
+        </div>
+      </div>
+
+      <p class="no-indent">The <code>OrganizationRedisRepositoryImpl</code> contains all the CRUD (Create, Read, Update, Delete) logic used for storing and retrieving data from Redis. There are two key things to note from the code in listing 8.10:</p>
+
+      <ul class="manning-bullets" aria-label="Key points from listing 8.10">
+        <li>All data in Redis is stored and retrieved by a key. Because you&rsquo;re storing data retrieved from the organization service, organization ID is the natural choice for the key being used to store an organization record.</li>
+        <li>The second thing to note in is that a Redis server can contain multiple hashes and data structures within it. In every operation against the Redis server, you need to tell Redis the name of the data structure you&rsquo;re performing the operation against. In listing 8.10, the data structure name you&rsquo;re using is stored in the <code>HASH_NAME</code> constant and is called &ldquo;organization.&rdquo;</li>
+      </ul>
+
+      <p class="topic-heading">Using Redis and the licensing service to store and read organization data</p>
+
+      <p class="no-indent">Now that you have the code in place to perform operations against Redis, you can modify your licensing service so that every time the licensing service needs the organization data, it will check the Redis cache before calling out to the organization service.</p>
+
+      <p>The logic for checking Redis will occur in the <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/clients/OrganizationRestTemplateClient.java</code> class. The code for this class is shown in the following listing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.11</strong><br>OrganizationRestTemplateClient class will implement cache logic</figcaption>
+        <pre class="code-block"><code>package com.thoughtmechanix.licenses.clients;
+
+//Imports removed for conciseness
+@Component</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Listing 7.4 protected resource bootstrap</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--74 .listing-callouts-right {
+      padding-top: 17mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0230.html">← Prev</a>
+    <a href="page_0232.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">206</span>
+        <span class="rh-center">CHAPTER 7 <em>Securing your microservices</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">7.3.2 Configuring the service to point to your OAuth2 authentication service</h4>
+
+      <p class="no-indent">Remember that once you set up the organization service as a protected resource, every time a call is made to the service, the caller has to include the Authentication HTTP header containing an OAuth2 access token to the service. Your protected resource then has to call back to the OAuth2 service to see if the token is valid.</p>
+
+      <p class="block-indent">You define the callback URL in your organization service&rsquo;s <code>application.yml</code> file as the property <code>security.oauth2.resource.userInfoUri</code>. Here&rsquo;s the callback configuration used in the organization service&rsquo;s <code>application.yml</code> file.</p>
+
+      <figure class="code-snippet" aria-label="OAuth2 userInfoUri callback configuration">
+        <pre class="code-block"><code>security:
+ oauth2:
+  resource:
+    userInfoUri: http://localhost:8901/auth/user</code></pre>
+      </figure>
+
+      <p>As you can see from the <code>security.oauth2.resource.userInfoUri</code> property, the callback URL is to the <code>/auth/user</code> endpoint. This endpoint was discussed earlier in the chapter in section 7.2.4, &ldquo;Authenticating the user.&rdquo;</p>
+
+      <p class="block-indent">Finally, you also need to tell the organization service that it&rsquo;s a protected resource. Again, you do this by adding a Spring Cloud annotation to the organization service&rsquo;s bootstrap class. The organization service&rsquo;s bootstrap code is shown in the next listing and can be found in the <code>organization-service/src/main/java/com/thoughtmechanix/organization/Application.java</code> class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.4</strong><br>Configuring the bootstrap class to be a protected resource</figcaption>
+        <div class="listing-annotated listing-annotated--74" aria-label="Listing 7.4 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.organization;
+
+//Most Imports removed for conciseness
+import org.springframework.security.oauth2.
+➥ config.annotation.web.configuration.EnableResourceServer;
+@SpringBootApplication
+@EnableEurekaClient
+@EnableCircuitBreaker
+@EnableResourceServer
+public class Application {
+  @Bean
+public Filter userContextFilter() {
+  UserContextFilter userContextFilter = new UserContextFilter();
+  return userContextFilter;
+}
+
+public static void main(String[] args) {
+  SpringApplication.run(Application.class, args);
+}
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 7.4 annotation callouts">
+            <p class="listing-callout">The <code>@EnableResourceServer</code> annotation is used to tell your microservice it&rsquo;s a protected resource.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>The <code>@EnableResourceServer</code> annotation tells Spring Cloud and Spring Security that the service is a protected resource. The <code>@EnableResourceServer</code> enforces a filter that intercepts all incoming calls to the service, checks to see if there&rsquo;s an OAuth2</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

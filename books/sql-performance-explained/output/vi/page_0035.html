@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Tìm kiếm không phân biệt chữ hoa chữ thường sử dụng UPPER hoặc LOWER</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">35</span>
+      </header>
+      <p class="chapter-running-head">Tìm kiếm không phân biệt chữ hoa chữ thường sử dụng UPPER hoặc LOWER</p>
+
+      <p class="no-indent">Logic của truy vấn này là hoàn toàn hợp lý nhưng kế hoạch thực thi thì không:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>----------------------------------------------------
+| Id | Operation         | Name      | Rows | Cost |
+----------------------------------------------------
+|  0 | SELECT STATEMENT  |           |   10 |  477 |
+|* 1 |  TABLE ACCESS FULL| EMPLOYEES |   10 |  477 |
+----------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - filter(UPPER("LAST_NAME")='WINAND')</code></pre>
+      </figure>
+
+      <p>Đây là một sự trở lại của người bạn cũ, quét bảng đầy đủ. Mặc dù có một chỉ mục trên <code>LAST_NAME</code>, nhưng nó không thể sử dụng được&mdash;bởi vì tìm kiếm không phải trên <code>LAST_NAME</code> mà là trên <code>UPPER(LAST_NAME)</code>. Từ quan điểm của cơ sở dữ liệu, đó là một điều hoàn toàn khác.</p>
+
+      <p>Đây là một cái bẫy mà tất cả chúng ta có thể rơi vào. Chúng ta nhận ra mối quan hệ giữa <code>LAST_NAME</code> và <code>UPPER(LAST_NAME)</code> ngay lập tức và mong đợi cơ sở dữ liệu cũng sẽ “nhìn thấy” điều đó. Trong thực tế, quan điểm của bộ tối ưu hóa giống như thế này:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, phone_number
+  FROM employees
+ WHERE BLACKBOX(...) = 'WINAND';</code></pre>
+      </figure>
+
+      <p>Hàm <code>UPPER</code> chỉ là một hộp đen. Các tham số của hàm không liên quan vì không có mối quan hệ chung giữa các tham số của hàm và kết quả.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Thay thế tên hàm bằng <code>BLACKBOX</code> để hiểu quan điểm của bộ tối ưu hóa.</p>
+      </aside>
+
+      <aside class="sidebar-note">
+        <h3>Đánh giá thời gian biên dịch</h3>
+        <p>Bộ tối ưu hóa có thể đánh giá biểu thức ở phía bên phải trong “thời gian biên dịch” vì nó có tất cả các tham số đầu vào. Kế hoạch thực thi của Oracle (“Thông tin Predicate” phần) do đó chỉ hiển thị ký hiệu chữ hoa của thuật ngữ tìm kiếm. Hành vi này rất giống với một trình biên dịch đánh giá các biểu thức hằng số trong thời gian biên dịch.</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">25</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 12: Luồng điều khiển chương trình</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0010.html">← Trước</a>
+    <a href="page_0012.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">11</span>
+      </header>
+
+      <p class="no-indent">Đoạn mã trên hoàn toàn ổn vì phép gán được phân tách rõ ràng với phép so sánh. Giá trị của biểu thức <code>data = readData()</code> đang được so sánh với <code>null</code>. Hãy nhớ rằng giá trị của biểu thức này giống với giá trị đang được gán cho <code>data</code>. Do đó, phần thân của lệnh if sẽ chỉ được truy cập nếu <code>data</code> được gán một giá trị khác null.</p>
+
+      <h3 class="section-title section-title--sub">Sử dụng các phép toán tăng trước và tăng sau trong điều kiện if<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn sẽ bắt gặp các điều kiện sử dụng các toán tử tăng và giảm trước (pre) và sau (post) trong kỳ thi. Ví dụ như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>int x = 0;
+if(x++ &gt; 0){ //line 2
+    x--; //line 3
+}
+
+if (++x == 2){ //line 6
+    x++; //line 7
+}
+System.out.println(x);</code></pre>
+      </figure>
+
+      <p>Bạn có thể dễ dàng nhận ra mẹo này nếu đã hiểu rõ sự khác biệt giữa giá trị của một biểu thức và giá trị của biến được sử dụng trong biểu thức đó (tôi đã giải thích điều này trong chương &ldquo;Sử dụng toán tử&rdquo;). Tại dòng 2, <code>x</code> sẽ được tăng lên thành <code>1</code> nhưng giá trị của biểu thức <code>x++</code> là <code>0</code> và do đó, điều kiện sẽ được đánh giá là <code>false</code>. Vì vậy, dòng 3 sẽ không được thực thi.</p>
+
+      <p>Tại dòng 6, <code>x</code> được tăng lên thành <code>2</code> và giá trị của biểu thức <code>++x</code> cũng là <code>2</code>. Do đó, điều kiện sẽ được đánh giá là <code>true</code> và dòng 7 sẽ được thực thi, qua đó tăng giá trị của <code>x</code> lên thành <code>3</code>. Vì vậy, đoạn mã trên sẽ in ra <code>3</code>.</p>
+
+      <p>Hãy nhớ rằng các điều kiện cũng được sử dụng trong biểu thức ba ngôi và vòng lặp, vì vậy bạn cũng cần phải lưu ý mẹo này ở đó nữa.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

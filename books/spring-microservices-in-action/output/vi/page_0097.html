@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Release train của Spring Cloud</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0096.html">← Trước</a>
+    <a href="page_0098.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">72</span>
+        <span class="rh-center">CHƯƠNG 3 <em>Kiểm soát cấu hình với Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">các phụ thuộc con. Phần còn lại của ví dụ trong listing 3.1 trình bày cách khai báo các dependency Spring Cloud cụ thể mà bạn sẽ dùng trong dịch vụ. Dependency đầu tiên là dependency <code>spring-cloud-starter-config</code> được dùng bởi tất cả các dự án Spring Cloud. Dependency thứ hai là starter project <code>spring-cloud-config-server</code>. Starter này chứa các thư viện lõi cho <code>spring-cloud-config-server</code>.</p>
+
+      <aside class="sidebar-note" aria-label="Nào, lên tàu thôi — release train">
+        <h3>Nào, lên tàu thôi — release train</h3>
+        <p>Spring Cloud dùng cơ chế phi truyền thống để gắn nhãn các dự án Maven. Spring Cloud là một tập hợp các subproject độc lập. Đội ngũ Spring Cloud phát hành qua cơ chế mà họ gọi là &ldquo;release train.&rdquo; Tất cả subproject tạo nên Spring Cloud được đóng gói trong một Maven bill of materials (BOM) và phát hành như một khối thống nhất. Đội ngũ Spring Cloud đã dùng tên các ga tàu điện ngầm London làm tên cho các bản phát hành, mỗi bản major tiếp theo lấy tên ga có chữ cái cao hơn. Đã có ba bản phát hành: Angel, Brixton và Camden. Camden là bản mới nhất, nhưng vẫn có nhiều nhánh release candidate cho các subproject bên trong.</p>
+        <p>Một điểm cần lưu ý là Spring Boot được phát hành độc lập với release train của Spring Cloud. Do đó, các phiên bản Spring Boot khác nhau không tương thích với các bản phát hành Spring Cloud khác nhau. Bạn có thể xem phụ thuộc phiên bản giữa Spring Boot và Spring Cloud, cùng các phiên bản subproject khác nhau trong release train, tại website Spring Cloud (<a href="http://projects.spring.io/spring-cloud/">http://projects.spring.io/spring-cloud/</a>).</p>
+      </aside>
+
+      <p>Bạn vẫn cần thiết lập thêm một file nữa để khởi chạy configuration server lõi. File này là file <code>application.yml</code> nằm trong thư mục <code>confsvr/src/main/resources</code>. File <code>application.yml</code> sẽ cho dịch vụ Spring Cloud configuration biết port nào cần lắng nghe và vị trí back end sẽ cung cấp dữ liệu cấu hình.</p>
+
+      <p>Bạn sắp sẵn sàng khởi chạy dịch vụ Spring Cloud configuration. Bạn cần trỏ server tới một repository back-end sẽ chứa dữ liệu cấu hình. Trong chương này, bạn sẽ dùng licensing service mà bạn đã bắt đầu xây dựng ở chương 2 làm ví dụ cách dùng Spring Cloud Config. Để đơn giản, bạn sẽ thiết lập dữ liệu cấu hình ứng dụng cho ba môi trường: môi trường mặc định khi chạy dịch vụ cục bộ, môi trường dev và môi trường production.</p>
+
+      <p>Trong Spring Cloud configuration, mọi thứ hoạt động theo một hệ phân cấp. Cấu hình ứng dụng được biểu diễn bằng tên ứng dụng, rồi đến file thuộc tính cho từng môi trường bạn muốn có thông tin cấu hình. Trong mỗi môi trường này, bạn sẽ thiết lập hai thuộc tính cấu hình:</p>
+
+      <ul class="manning-bullets">
+        <li>Một thuộc tính ví dụ sẽ được licensing service dùng trực tiếp</li>
+        <li>Cấu hình database cho Postgres database bạn sẽ dùng để lưu dữ liệu licensing service</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

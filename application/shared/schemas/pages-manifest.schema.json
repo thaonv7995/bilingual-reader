@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://books-html.local/schemas/pages-manifest.json",
+  "title": "Per-language page index",
+  "type": "object",
+  "required": ["schema_version", "book_slug", "lang", "pages"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "book_slug": { "type": "string" },
+    "lang": { "type": "string" },
+    "page_count": { "type": "integer" },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "accepted": { "type": "integer" },
+        "wip": { "type": "integer" },
+        "pending": { "type": "integer" }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["number", "id", "status"],
+        "properties": {
+          "number": { "type": "integer" },
+          "id": { "type": "string", "pattern": "^page_\\d{4}$" },
+          "status": {
+            "enum": ["pending", "wip", "accepted", "blocked"]
+          },
+          "paths": {
+            "type": "object",
+            "properties": {
+              "html": { "type": "string" },
+              "work_dir": { "type": "string" },
+              "scan": { "type": "string" },
+              "extract": { "type": "string" },
+              "design": { "type": "string" }
+            }
+          },
+          "gates": { "type": "object" }
+        }
+      }
+    },
+    "assembled": {
+      "type": "object",
+      "properties": {
+        "book_html": { "type": "string" },
+        "book_pdf": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": true
+}

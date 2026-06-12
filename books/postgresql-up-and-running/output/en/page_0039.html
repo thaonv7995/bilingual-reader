@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 3mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-size: 10pt;
+      font-weight: 600;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9.5pt;
+      line-height: 1.25;
+    }
+    .prose-page.chapter-page p .run-in {
+      font-weight: 700;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0038.html">← Prev</a>
+    <a href="page_0040.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">39</span>
+      </header>
+
+      <p class="no-indent">A common culprit is setting <code>shared_buffers</code> too high. Another suspect is an old
+      <code>postmaster.pid</code> left over from a failed shutdown. You can safely delete this file, which is
+      located in the data cluster folder, and try restarting again.</p>
+
+      <h3 class="tool-title">pg_hba.conf</h3>
+      <p>The <code>pg_hba.conf</code> file controls which and how users can connect to PostgreSQL databa‐
+      ses. Changes to the file require a reload or a server restart to take effect. A typical
+      <code>pg_hba.conf</code> looks like <span class="accent-word">Example 2-3</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 2-3</strong><br>Sample pg_hba.conf</figcaption>
+        <pre class="code-block"><code># TYPE  DATABASE  USER  ADDRESS  METHOD
+# IPv4 local connections:
+host    all       all   127.0.0.1/32    ident ①
+# IPv6 local connections:
+host    all       all   ::1/128         ② trust
+host    all       all   192.168.54.0/24 ③ md5
+hostssl ④ all       all   0.0.0.0/0       md5
+# Allow replication connections from localhost, by a user with the
+# replication privilege. ⑤
+#host    replication  postgres  127.0.0.1/32  trust
+#host    replication  postgres  ::1/128       trust</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong class="run-in">Authentication method.</strong> The usual choices are <code>ident</code>, <code>trust</code>, <code>md5</code>, and <code>password</code>.
+      Version 9.1 introduced the <code>peer</code> authentication method. The <code>ident</code> and <code>peer</code>
+      options are available only on Linux, Unix, and the Mac, not on Windows.
+      More esoteric options, such as <code>gss</code>, <code>radius</code>, <code>ldap</code>, and <code>pam</code>, may not always be
+      installed.</p>
+
+      <p class="no-indent"><strong class="run-in">IPv4 syntax for defining network range.</strong> The first part—in this case,
+      192.168.54.0—is the network address, followed by <code>/24</code> as the bit mask. In our
+      <code>pg_hba.conf</code>, we allow anyone in our subnet of 192.168.54.0 to connect as long
+      as they provide a valid <code>md5</code> hashed password.</p>
+
+      <p class="no-indent"><strong class="run-in">IPv6 syntax for defining network range.</strong> This applies only to servers with IPv6
+      support and may prevent <code>pg_hba.conf</code> from loading if you add this section
+      without actually having IPv6 networking.</p>
+
+      <p class="no-indent"><strong class="run-in">SSL connection rule.</strong> In our example, we allow anyone to connect to our server
+      as long as they connect using SSL and have a valid <code>md5</code> password.</p>
+
+      <p class="no-indent"><strong class="run-in">Definition of a range of IP addresses allowed to replicate with this server.</strong> This
+      is new in version 9.0. These lines are remarked out in this example.</p>
+
+      <p>For each connection request, the <code>postgres</code> service checks the <code>pg_hba.conf</code> file from the
+      top down. As soon as a rule granting access is encountered, processing stops and the
+      connection is allowed. As soon as a rule rejecting access is encountered, processing stops
+      and the connection is denied. If the end of the file is reached without any matching</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">Configuration Files<span class="sep">|</span>21</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Listing 6.8 UserContextFilter</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 2;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--68 .listing-callouts-right {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered + .sidebar-note--gray,
+    .prose-page.chapter-page p + .sidebar-note--gray,
+    .prose-page.chapter-page .sidebar-note--gray + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page p + figure.listing {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0202.html">← Prev</a>
+    <a href="page_0204.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">178</span>
+        <span class="rh-center">CHAPTER 6 <em>Service routing with Spring Cloud and Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Figure 6.13 walkthrough (continued)">
+        <li>The licensing service business logic needs to execute a call to the organization service.</li>
+        <li>A RestTemplate is used to invoke the organization service. The RestTemplate will use a custom Spring Interceptor class (<code>UserContextInterceptor</code>) to inject the correlation ID into the outbound call as an HTTP header.</li>
+      </ol>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="Repeated code vs. shared libraries">
+        <h3>Repeated code vs. shared libraries</h3>
+        <p>The subject of whether you should use common libraries across your microservices is a gray area in microservice design. Microservice purists will tell you that you shouldn&rsquo;t use a custom framework across your services because it introduces artificial dependencies in your services. Changes in business logic or a bug can introduce wide scale refactoring of all your services. On the other side, other microservice practitioners will say that a purist approach is impractical because certain situations exist (like the previous <code>UserContextFilter</code> example) where it makes sense to build a common library and share it across services.</p>
+        <p>I think there&rsquo;s a middle ground here. Common libraries are fine when dealing with infrastructure-style tasks. If you start sharing business-oriented classes, you&rsquo;re asking for trouble because you&rsquo;re breaking down the boundaries between the services.</p>
+        <p>I seem to be breaking my own advice with the code examples in this chapter, because if you look at all the services in the chapter, they all have their own copies of the <code>UserContextFilter</code>, <code>UserContext</code>, and <code>UserContextInterceptor</code> classes. The reason I took a share-nothing approach here is that I don&rsquo;t want to complicate the code examples in this book by having to create a shared library that would have to be published to a third-party Maven repository. Hence, all the classes in the utils package of the service are shared across all the services.</p>
+      </aside>
+
+      <h3 class="section-title">UserContextFilter: Intercepting the incoming HTTP request</h3>
+
+      <p>The first class you&rsquo;re going to build is the <code>UserContextFilter</code> class. This class is an HTTP servlet filter that will intercept all incoming HTTP requests coming into the service and map the correlation ID (and a few other values) from the HTTP request to the <code>UserContext</code> class. The following listing shows the code for the UserContext class. The source for this class can be found in <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/utils/UserContextFilter.java</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.8</strong><br>Mapping the correlation ID to the UserContext class</figcaption>
+        <div class="listing-annotated listing-annotated--68" aria-label="Listing 6.8 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.utils;
+
+//Remove the imports for conciseness
+@Component
+public class UserContextFilter implements Filter {
+  private static final Logger logger =
+    LoggerFactory.getLogger(
+      UserContextFilter.class);
+  @Override</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 6.8 right callout">
+            <p class="listing-callout">The filter is registered and picked up by Spring through the use of the Spring <code>@Component</code> annotation and by implementing a javax.servler.Filter interface.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

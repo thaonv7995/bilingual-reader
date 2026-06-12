@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets li {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0071.html">← Trước</a>
+    <a href="page_0073.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">72</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  public static void printAccounts(Account[] accts){
+    for(Account acct : accts){
+      System.out.println(acct.getAccountNumber()+" "+acct.getBalance());
+    }
+  }
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Dĩ nhiên, mảng này sẽ bao gồm tất cả các loại đối tượng (Object) <code>Account</code> (tức là các đối tượng (Object) của lớp con (Subclass) của lớp (Class) <code>Account</code>), nhưng tiến trình sẽ chỉ nhìn nhận chúng là các đối tượng (Object) <code>Account</code> chứ không phải các đối tượng (Object) <code>CheckingAccount</code>, <code>SavingsAccount</code> hay <code>RetirementAccount</code>. Đoạn mã trên không quan tâm liệu một đối tượng (Object) <code>Account</code> thực sự là một <code>SavingsAccount</code> hay một <code>CheckingAccount</code>. Nó chỉ đơn giản in ra số tài khoản và số dư của tài khoản đó bất kể đó là loại tài khoản nào. Điều này chỉ có thể thực hiện được nhờ vào tính kế thừa (Inheritance). Nếu không có lớp cha (Superclass) chung, bạn sẽ phải có ba phương thức khác nhau &mdash; mỗi phương thức cho một trong ba loại tài khoản &mdash; để in thông tin này.</p>
+
+      <h3 class="section-title section-title--sub">Tính đa hình (Polymorphism)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Cuối cùng, và quan trọng nhất, tính kế thừa (Inheritance) giúp tính đa hình (Polymorphism) có thể thực hiện được. Tính đa hình (Polymorphism) tự bản thân nó là một chủ đề riêng biệt và tôi sẽ sớm thảo luận về nó trong một mục riêng.</p>
+
+      <h3 class="section-title">13.2 Sử dụng super và this để truy cập các đối tượng (Object) và hàm khởi dựng (Constructor)</h3>
+
+      <h3 class="section-title section-title--sub">13.2.1 Xem lại quá trình khởi tạo đối tượng (Object)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Hãy nhớ lại rằng trong mục &ldquo;Tạo và nạp chồng hàm khởi dựng (Constructor)&rdquo; của chương &ldquo;Làm việc với các Phương thức và Tính đóng gói (Encapsulation)&rdquo;, tôi đã nói về bốn bước mà một JVM thực hiện trong khi khởi tạo một lớp (Class). Hãy cùng xem các bước này bị ảnh hưởng như thế nào khi có</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

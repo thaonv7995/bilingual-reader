@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Mục 10.2.1 Triển khai các dịch vụ EagleEye lên ECS thủ công</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0327.html">← Trước</a>
+    <a href="page_0329.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Ngoài cơ sở hạ tầng: triển khai EagleEye</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">303</span>
+      </header>
+
+      <p class="no-indent">công việc này dành cho những người không kiên nhẫn (như tôi) và sẽ hướng dẫn cách triển khai EagleEye thủ công lên instance Amazon của bạn. Điều này giúp bạn hiểu cơ chế triển khai dịch vụ và thấy các dịch vụ đã triển khai đang chạy trong container. Dù tự tay triển khai dịch vụ thủ công cũng thú vị, nhưng cách này không bền vững và không được khuyến nghị.</p>
+
+      <p>Đây là lúc phần thứ hai của mục này phát huy tác dụng. Bạn sẽ tự động hóa toàn bộ quy trình build và triển khai, loại bỏ con người khỏi quy trình. Đây là trạng thái đích mà bạn hướng tới và thực sự kết thúc công việc bạn đã làm trong cuốn sách bằng cách minh họa cách thiết kế, xây dựng và triển khai microservice lên đám mây.</p>
+
+      <h4 class="subsection-title">10.2.1 Triển khai các dịch vụ EagleEye lên ECS thủ công</h4>
+
+      <p class="no-indent">Để triển khai thủ công các dịch vụ EagleEye, bạn sẽ chuyển hướng và không còn dùng bảng điều khiển Amazon AWS. Để triển khai các dịch vụ EagleEye, bạn sẽ dùng Amazon ECS command-line client (<a href="https://github.com/aws/amazon-ecs-cli">https://github.com/aws/amazon-ecs-cli</a>).</p>
+
+      <p>Sau khi cài đặt ECS command-line client, bạn cần cấu hình môi trường runtime ecs-cli để</p>
+
+      <ol class="manning-numbered" aria-label="Các bước cấu hình ECS CLI">
+        <li>Cấu hình ECS client với thông tin xác thực Amazon của bạn</li>
+        <li>Chọn region mà client sẽ làm việc</li>
+        <li>Định nghĩa cluster ECS mặc định mà ECS client sẽ làm việc</li>
+      </ol>
+
+      <p class="no-indent">Công việc này được thực hiện bằng cách chạy lệnh ecs-cli configure:</p>
+
+      <figure class="code-snippet" aria-label="Lệnh ecs-cli configure">
+        <pre class="code-block"><code>ecs-cli configure --region us-west-1 \
+                  --access-key $AWS_ACCESS_KEY \
+                  --secret-key $AWS_SECRET_KEY \
+                  --cluster spmia-tmx-dev</code></pre>
+      </figure>
+
+      <p>Lệnh ecs-cli configure sẽ thiết lập region nơi cluster của bạn đặt, access key và secret key Amazon của bạn, cùng tên cluster (<code>spmia-tmx-dev</code>) mà bạn đã triển khai. Nếu xem lệnh trước, tôi đang dùng biến môi trường (<code>$AWS_ACCESS_KEY</code> và <code>$AWS_SECRET_KEY</code>) để lưu access key và secret key Amazon của mình.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Tôi chọn region us-west-1 chỉ vì mục đích minh họa. Tùy quốc gia bạn đang ở, bạn có thể chọn region Amazon phù hợp hơn với khu vực của mình.</p>
+      </aside>
+
+      <p>Tiếp theo, hãy xem cách build. Khác với các chương khác, bạn phải đặt tên build vì các script Maven trong chương này sẽ được dùng trong pipeline build-triển khai được thiết lập sau trong chương. Bạn sẽ đặt biến môi trường tên <code>$BUILD_NAME</code>. Biến môi trường <code>$BUILD_NAME</code> được dùng để gắn tag cho image Docker được tạo bởi script build. Chuyển tới thư mục gốc của mã chương 10 bạn đã tải từ GitHub và chạy hai lệnh sau:</p>
+
+      <figure class="code-snippet" aria-label="Các lệnh build thủ công">
+        <pre class="code-block"><code>export BUILD_NAME=TestManualBuild
+mvn clean package docker:build</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

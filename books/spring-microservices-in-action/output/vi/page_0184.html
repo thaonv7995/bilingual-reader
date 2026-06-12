@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Listing 6.2 và cấu hình route trong Zuul</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + h3.section-title,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + ul.manning-bullets {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0183.html">← Trước</a>
+    <a href="page_0185.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Cấu hình route trong Zuul</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">159</span>
+      </header>
+
+      <p class="no-indent">Cấu hình trong listing này có vẻ quen thuộc vì đây là cùng cấu hình chúng ta đã đi qua ở chương 4.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.2</strong><br>Cấu hình máy chủ Zuul để giao tiếp với Eureka</figcaption>
+        <pre class="code-block"><code>eureka:
+ instance:
+  preferIpAddress: true
+ client:
+  registerWithEureka: true
+  fetchRegistry: true
+  serviceUrl:
+    defaultZone: http://localhost:8761/eureka/</code></pre>
+      </figure>
+
+      <h3 class="section-title">6.3 Cấu hình route trong Zuul</h3>
+
+      <p>Về bản chất, Zuul là một reverse proxy. Reverse proxy là máy chủ trung gian đứng giữa client đang cố gắng truy cập một tài nguyên và chính tài nguyên đó. Client không hề biết mình đang giao tiếp với một máy chủ khác ngoài proxy. Reverse proxy đảm nhiệm việc thu thập yêu cầu của client rồi gọi tài nguyên từ xa thay mặt client.</p>
+
+      <p>Trong kiến trúc microservice, Zuul (reverse proxy của bạn) nhận lời gọi microservice từ client và chuyển tiếp tới dịch vụ downstream. Service client chỉ nghĩ rằng mình đang giao tiếp với Zuul. Để Zuul giao tiếp với các client downstream, Zuul phải biết cách <em>ánh xạ</em> lời gọi đến tới một route downstream. Zuul có nhiều cơ chế để làm việc này, gồm</p>
+
+      <ul class="manning-bullets" aria-label="Các cơ chế ánh xạ route của Zuul">
+        <li>Ánh xạ route tự động qua service discovery</li>
+        <li>Ánh xạ route thủ công bằng service discovery</li>
+        <li>Ánh xạ route thủ công bằng URL tĩnh</li>
+      </ul>
+
+      <h4 class="subsection-title">6.3.1 Ánh xạ route tự động qua service discovery</h4>
+
+      <p>Mọi ánh xạ route cho Zuul đều được thực hiện bằng cách định nghĩa các route trong tệp <code>zuulsvr/src/main/resources/application.yml</code>. Tuy nhiên, Zuul có thể tự động định tuyến yêu cầu dựa trên service ID của chúng mà không cần cấu hình. Nếu bạn không chỉ định route nào, Zuul sẽ tự động dùng Eureka service ID của dịch vụ đang được gọi và ánh xạ tới một service instance downstream. Ví dụ, nếu bạn muốn gọi <code>organizationservice</code> và dùng định tuyến tự động qua Zuul, bạn sẽ cho client gọi service instance của Zuul, sử dụng <em>URL</em> sau làm endpoint:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>http://localhost:5555/<strong>organizationservice</strong>/v1/organizations/e254f8c-c442-4ebe-
+a82a-e2fc1d1ff78a</code></pre>
+      </figure>
+
+      <p>Máy chủ Zuul của bạn được truy cập qua <code>http://localhost:5555.</code> Dịch vụ bạn đang cố gọi (<code>organizationservice</code>) được biểu diễn bởi phần đầu tiên của đường dẫn endpoint trong service.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

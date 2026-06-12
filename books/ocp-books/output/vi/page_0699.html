@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page table.data-table code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page table.module-readability-table {
+      width: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      font-size: 12pt;
+      line-height: 1.3;
+    }
+
+    .prose-page.ocp-chapter-page table.module-readability-table th {
+      border: 0.25mm solid #888;
+      padding: 1.5mm 2mm;
+      vertical-align: middle;
+      text-align: center;
+      font-weight: 700;
+      background: transparent;
+    }
+
+    .prose-page.ocp-chapter-page table.module-readability-table th.module-readability-table__axis {
+      width: 18%;
+      text-align: left;
+      vertical-align: middle;
+      line-height: 1.25;
+    }
+
+    .prose-page.ocp-chapter-page table.module-readability-table th.module-readability-table__can-read {
+      text-align: center;
+    }
+
+    .prose-page.ocp-chapter-page table.module-readability-table th.module-readability-table__col {
+      width: 27%;
+      font-size: 11pt;
+      line-height: 1.25;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0698.html">← Trước</a>
+    <a href="page_0700.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">699</span>
+      </header>
+
+      <p>Như bạn có thể thấy, một automatic module tương tự như các named module khác nhưng nhờ có các siêu năng lực của mình, nó hoạt động như một cầu nối giữa mã nguồn modular (dạng mô-đun) và non-modular (không mô-đun). Nếu không có các automatic module, mã nguồn modular sẽ không thể sử dụng mã nguồn non-modular hiện có.</p>
+
+      <h3 class="section-title section-title--sub">23.4.4 Unnamed Module<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Tất cả các lớp (class) trên <code>classpath</code>&nbsp;đều được JVM tải lên như là một phần của một “unnamed module” (module không tên) duy nhất. Giống như các lớp (class) của một automatic module, các lớp (class) của unnamed module cũng được phép “đọc” (read) tất cả các package được export của tất cả các module có sẵn trên <code>module-path</code>&nbsp;và tất cả các lớp (class) có sẵn trên <code>classpath</code>&nbsp;. Tuy nhiên, vì unnamed module này không có tên, nên không thể đưa module này vào mệnh đề <code>requires</code>&nbsp;của bất kỳ module nào. Do đó, các lớp (class) của một unnamed module có thể được đọc bởi các lớp (class) khác được tải từ <code>classpath</code>&nbsp;và các lớp (class) trong các automatic module, nhưng không thể được đọc bởi các module được đặt tên tường minh (explicitly named modules).</p>
+
+      <h3 class="section-title section-title--sub">23.4.5 Tóm tắt về khả năng đọc (readability) của các module<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Bảng dưới đây tóm tắt các quy tắc về khả năng đọc (readability) đối với ba loại module:</p>
+
+      <table class="data-table module-readability-table">
+        <thead>
+          <tr>
+            <th class="module-readability-table__axis" rowspan="2">Các lớp (Classes)<br>Trong&darr;</th>
+            <th class="module-readability-table__can-read" colspan="3">Có thể đọc&rarr;</th>
+          </tr>
+          <tr>
+            <th class="module-readability-table__col">Các Module được đặt tên tường minh (Explicitly Named Modules)<br>(với điều kiện là mệnh đề <code>exports</code>&nbsp;tồn tại trong module-info)</th>
+            <th class="module-readability-table__col">Các Automatic<br>Module</th>
+            <th class="module-readability-table__col">Unnamed<br>Module</th>
+          </tr>
+        </thead>
+      </table>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Materialized Views</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0140.html">← Trước</a>
+    <a href="page_0142.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">141</span>
+      </header>
+
+      <p class="no-indent">Nếu chúng ta cố gắng cập nhật một trường không có trong so sánh hàng cập nhật của chúng ta, như được hiển thị ở đây, thì việc cập nhật sẽ không diễn ra:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>UPDATE census.vw_facts SET short_name = 'test';</code></pre>
+      </figure>
+
+      <p>Thông điệp đầu ra sẽ là:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Query returned successfully: 0 rows affected, 931 ms execution time.</code></pre>
+      </figure>
+
+      <p>Mặc dù ví dụ này đã tạo ra một hàm kích hoạt duy nhất để xử lý nhiều sự kiện, chúng ta cũng có thể dễ dàng tạo ra một kích hoạt và hàm kích hoạt riêng cho mỗi sự kiện.</p>
+
+      <h3 class="subsection-title">Chỉ mục vật liệu</h3>
+      <p class="no-indent">Chỉ mục vật liệu lưu trữ dữ liệu đã được lấy. Điều này xảy ra khi bạn lần đầu tiên tạo chỉ mục cũng như khi bạn chạy lệnh REFRESH MATERIALIZED VIEW. Để sử dụng chỉ mục vật liệu, bạn cần ít nhất phiên bản 9.3.</p>
+
+      <p>Các trường hợp thuyết phục nhất để sử dụng chỉ mục vật liệu là khi truy vấn cơ sở dữ liệu mất nhiều thời gian và khi việc có dữ liệu kịp thời không phải là điều quan trọng. Bạn gặp những kịch bản này khi xây dựng các ứng dụng xử lý phân tích trực tuyến (OLAP).</p>
+
+      <p>Khác với các chỉ mục không vật liệu, bạn có thể thêm chỉ mục vào các chỉ mục vật liệu để tăng tốc độ đọc.</p>
+
+      <p><span class="accent-word">Ví dụ 7-6</span> minh họa cách tạo một phiên bản chỉ mục vật liệu của <span class="accent-word">Ví dụ 7-1</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-6.</strong> Chỉ mục vật liệu</figcaption>
+        <pre class="code-block"><code>CREATE MATERIALIZED VIEW census.vw_facts_2011_materialized AS
+SELECT fact_type_id, val, yr, tract_id FROM census.facts WHERE yr = 2011;</code></pre>
+      </figure>
+
+      <p>Tạo một chỉ mục trên một chỉ mục vật liệu như bạn làm trên một bảng thông thường, như được hiển thị trong <span class="accent-word">Ví dụ 7-7</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-7.</strong> Thêm chỉ mục vào chỉ mục vật liệu</figcaption>
+        <pre class="code-block"><code>CREATE UNIQUE INDEX ix
+ON census.vw_facts_2011_materialized (tract_id, fact_type_id, yr);</code></pre>
+      </figure>
+
+      <p>Để truy cập nhanh hơn vào một chỉ mục vật liệu với một số lượng lớn bản ghi, bạn có thể muốn kiểm soát cách sắp xếp vật lý của dữ liệu. Cách dễ nhất là bao gồm một ORDER BY khi bạn tạo chỉ mục. Ngoài ra, bạn có thể thêm một chỉ mục cụm vào chỉ mục. Đầu tiên tạo một chỉ mục theo thứ tự sắp xếp vật lý mà bạn muốn có. Sau đó chạy lệnh CLUSTER, truyền chỉ mục vào, như được hiển thị trong <span class="accent-word">Ví dụ 7-8</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-8.</strong> Cụm một chỉ mục trên một chỉ mục</figcaption>
+        <pre class="code-block"><code>CLUSTER census.vw_facts_2011_materialized USING ix; ①
+CLUSTER census.vw_facts_2011_materialized; ②</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Chỉ mục<span class="sep">|</span>123</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

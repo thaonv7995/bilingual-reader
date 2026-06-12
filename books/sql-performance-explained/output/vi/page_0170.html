@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 8: Modifying Data</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 8: Chỉnh sửa Dữ liệu</p>
+
+      <p class="no-indent">Nếu có các chỉ mục trên bảng, cơ sở dữ liệu phải đảm bảo rằng mục mới cũng được tìm thấy qua các chỉ mục này. Vì lý do này, nó phải thêm mục mới vào từng chỉ mục trên bảng đó. Số lượng chỉ mục do đó là một yếu tố nhân cho chi phí của một câu lệnh chèn.</p>
+
+      <p>Hơn nữa, việc thêm một mục vào một chỉ mục tốn kém hơn nhiều so với việc chèn vào một cấu trúc heap vì cơ sở dữ liệu phải giữ thứ tự chỉ mục và cân bằng cây. Điều đó có nghĩa là mục mới không thể được ghi vào bất kỳ khối nào—nó thuộc về một nút lá cụ thể. Mặc dù cơ sở dữ liệu sử dụng chính cây chỉ mục để tìm nút lá đúng, nó vẫn phải đọc một vài khối chỉ mục để duyệt cây.</p>
+
+      <p>Khi nút lá đúng đã được xác định, cơ sở dữ liệu xác nhận rằng còn đủ không gian trống trong nút này. Nếu không, cơ sở dữ liệu sẽ chia nút lá và phân phối các mục giữa nút cũ và một nút mới. Quá trình này cũng ảnh hưởng đến tham chiếu trong nút nhánh tương ứng vì nó cũng phải được sao chép. Không cần phải nói, nút nhánh cũng có thể hết không gian vì vậy nó cũng có thể phải được chia. Trong trường hợp xấu nhất, cơ sở dữ liệu phải chia tất cả các nút lên nút gốc. Đây là trường hợp duy nhất mà cây có thêm một lớp và tăng chiều sâu.</p>
+
+      <p>Việc bảo trì chỉ mục là, sau tất cả, phần tốn kém nhất của thao tác chèn. Điều này cũng được thể hiện trong Hình&nbsp;8.1, &ldquo;Hiệu suất Chèn theo Số lượng Chỉ mục&rdquo;: thời gian thực thi hầu như không thể nhìn thấy nếu bảng không có bất kỳ chỉ mục nào. Tuy nhiên, việc thêm một chỉ mục đơn lẻ là đủ để tăng thời gian thực thi lên gấp trăm lần. Mỗi chỉ mục bổ sung làm chậm quá trình thực thi hơn nữa.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;8.1.&nbsp;Hiệu suất Chèn theo Số lượng Chỉ mục</figcaption>
+        <img src="../assets/images/page_0170_fig_8_1.png" width="1023" height="357" alt="Hình 8.1. Hiệu suất Chèn theo Số lượng Chỉ mục">
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">160</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

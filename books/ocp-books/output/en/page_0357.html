@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table {
+      width: 100%;
+      margin: 0 0 5mm;
+      border-collapse: collapse;
+      font-size: 12pt;
+      line-height: 1.35;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td {
+      border: 0.25mm solid #888;
+      padding: 1.5mm 2mm;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td p:last-child {
+      margin-bottom: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__class {
+      width: 18%;
+      line-height: 1.25;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__features {
+      width: 42%;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__usage {
+      width: 40%;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p.subsection-heading {
+      margin: 0 0 3.2mm;
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: collection-exception;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: collection-exception;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(collection-exception) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0356.html">← Prev</a>
+    <a href="page_0358.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">357</span>
+      </header>
+
+      <table class="data-table collection-implementation-table">
+        <tbody>
+          <tr>
+            <td class="collection-implementation-table__class">
+              <p>Maps returned by <code>Map</code>&rsquo;s <code>of</code>, <code>ofEntries</code>, and <code>copyOf</code> methods</p>
+            </td>
+            <td class="collection-implementation-table__features">
+              <p>1. Unmodifiable</p>
+              <p>2. Unordered</p>
+              <p>3. null key or value not allowed</p>
+            </td>
+            <td class="collection-implementation-table__usage">
+              <p>Example: <code>Map&lt;String,</code></p>
+              <p><code>String&gt; m = Map.of("key1",</code></p>
+              <p><code>"value1");</code></p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="no-indent subsection-heading"><strong>Exceptions thrown by collection methods</strong></p>
+
+      <p>As you can see from the tables above, implementation classes may impose their own constraints
+      besides the ones that are specified through their interface definitions. For example,
+      <code>ArrayDeque</code> does not allow null and unmodifiable lists do not allow addition/removal, and
+      so on. Since such constraints cannot be expressed in the interfaces or method signatures, the
+      compiler cannot check for their violations in the code at compile time. Such violations are
+      checked at run time through the use of the following five unchecked exceptions:</p>
+
+      <ol class="numbered">
+        <li><code>UnsupportedOperationException</code> : If the operation is not supported by this collection.
+          <p>For example, trying to add an element in a list created using the <code>List.of</code> method will
+          cause an <code>UnsupportedOperationException</code> to be thrown at run time.</p>
+        </li>
+        <li><code>NullPointerException</code> : If the specified element is null and this collection does not
+        permit null elements.</li>
+        <li><code>IllegalArgumentException</code> : If some property of the element prevents it from being
+        added to this collection.</li>
+        <li><code>ClassCastException</code> : If the class of the specified element prevents it from being added
+        to this collection</li>
+        <li><code>IllegalStateException</code> : If the element cannot be added or removed at this time due to
+        insertion/deletion restrictions.</li>
+      </ol>
+
+      <p>Since this information is available only in the JavaDoc description of the class/method, it is
+      important to go through it before using a that class/method.</p>
+
+      <p>The exam does not require you to know all the scenarios that will cause the above exceptions to
+      be thrown but it expects you to detect if an <code>UnsupportedOperationException</code> or a
+      <code>NullPointerException</code> will be</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page code.accent-word {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word,
+    .prose-page.chapter-page code.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0196.html">← Trước</a>
+    <a href="page_0198.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">197</span>
+      </header>
+
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHƯƠNG 10</p>
+        <h1 class="chapter-title no-indent">Sao chép và Dữ liệu bên ngoài</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="no-indent">PostgreSQL có một số tùy chọn để chia sẻ dữ liệu với các máy chủ hoặc nguồn dữ liệu bên ngoài. Tùy chọn đầu tiên là các tùy chọn sao chép tích hợp sẵn của PostgreSQL, cho phép bạn tạo một bản sao của máy chủ của bạn sẵn sàng chạy trên một máy chủ PostgreSQL khác. Tùy chọn thứ hai là sử dụng các tiện ích mở rộng của bên thứ ba, nhiều trong số đó có sẵn miễn phí và đã được kiểm nghiệm theo thời gian. Tùy chọn thứ ba, được công bố trong phiên bản 9.1, là sử dụng <i>foreign data wrappers</i> (FDW). FDW cho bạn sự linh hoạt để truy vấn từ một loạt các nguồn dữ liệu bên ngoài. Kể từ phiên bản 9.3, một số FDW như <code class="accent-word">postgres_fdw</code> và <code class="accent-word">hadoop_fdw</code> cũng cho phép cập nhật.</p>
+
+      <h3 class="section-title">Tổng quan về Sao chép</h3>
+      <p class="no-indent">Có vẻ như có vô số lý do cho việc cần sao chép cơ sở dữ liệu của bạn, nhưng tất cả đều giảm xuống còn hai: khả năng sẵn có và khả năng mở rộng. Nếu máy chủ chính của bạn bị hỏng, bạn muốn một máy chủ khác ngay lập tức đảm nhận vai trò của nó. Đối với các cơ sở dữ liệu nhỏ, bạn chỉ cần đảm bảo rằng bạn có một máy chủ vật lý khác sẵn sàng và khôi phục cơ sở dữ liệu lên đó. Nhưng đối với các cơ sở dữ liệu lớn (trong terabyte), việc khôi phục có thể mất nhiều giờ. Để tránh thời gian ngừng hoạt động, bạn sẽ cần phải sao chép. Lý do chính khác là khả năng mở rộng. Bạn thiết lập một cơ sở dữ liệu để nhân giống những <span class="accent-word">chuột voi</span> đẹp để kiếm lợi nhuận. Sau vài năm nhân giống, bạn giờ đã có hàng ngàn con chuột. Người dân khắp nơi trên thế giới đến trang web của bạn để ngắm nhìn và mua sắm. Bạn bị choáng ngợp bởi lưu lượng truy cập. Sao chép đến để giúp bạn; bạn thiết lập một máy chủ slave chỉ đọc để sao chép với máy chủ chính của bạn. Bạn hướng những người ngắm nhìn vô số đến máy chủ slave, và chỉ cho phép những người mua nghiêm túc vào máy chủ chính để hoàn tất giao dịch của họ.</p>
+
+      <h3 class="section-title">Thuật ngữ Sao chép</h3>
+      <p class="no-indent">Trước khi chúng ta đi quá xa với việc sao chép, chúng ta nên giới thiệu một số thuật ngữ phổ biến được sử dụng liên quan đến nó:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">179</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

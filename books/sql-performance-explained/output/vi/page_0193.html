@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — SQL Server Operations</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 0 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-desc {
+      margin: 0 0 0 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page h3.subsection-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">SQL Server Operations</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="operation-label">Tra cứu RID (Heap)</p>
+      <p class="operation-desc">Lấy một hàng đơn lẻ từ một bảng&mdash;giống như Oracle <code>TABLE ACCESS BY INDEX ROWID</code>. Xem thêm &ldquo;Cấu trúc của một Chỉ mục&rdquo; trên trang&nbsp;1.</p>
+
+      <p class="operation-label">Quét Bảng</p>
+      <p class="operation-desc">Điều này còn được gọi là quét bảng đầy đủ. Đọc toàn bộ bảng&mdash;tất cả các hàng và cột&mdash;như được lưu trên đĩa. Mặc dù các thao tác đọc nhiều khối có thể cải thiện tốc độ của một Quét Bảng đáng kể, nhưng nó vẫn là một trong những thao tác tốn kém nhất. Ngoài tỷ lệ IO cao, một Quét Bảng cũng phải kiểm tra tất cả các hàng trong bảng nên nó cũng có thể tiêu tốn một lượng thời gian CPU đáng kể. Xem thêm &ldquo;Quét Bảng Đầy Đủ&rdquo; trên trang&nbsp;13.</p>
+
+      <h3 class="subsection-title">Các Thao Tác Kết Nối</h3>
+
+      <p class="no-indent">Thông thường, các thao tác kết nối chỉ xử lý hai bảng tại một thời điểm. Trong trường hợp một truy vấn có nhiều kết nối, chúng được thực hiện tuần tự: trước tiên hai bảng, sau đó là kết quả trung gian với bảng tiếp theo. Trong bối cảnh của các kết nối, thuật ngữ &ldquo;bảng&rdquo; cũng có thể có nghĩa là &ldquo;kết quả trung gian&rdquo;.</p>
+
+      <p class="operation-label">Vòng Lặp Lồng Ghép</p>
+      <p class="operation-desc">Kết nối hai bảng bằng cách lấy kết quả từ một bảng và truy vấn bảng còn lại cho mỗi hàng từ bảng đầu tiên. SQL Server cũng sử dụng thao tác vòng lặp lồng ghép để lấy dữ liệu bảng sau khi truy cập chỉ mục. Xem thêm &ldquo;Vòng Lặp Lồng Ghép&rdquo; trên trang&nbsp;92.</p>
+
+      <p class="operation-label">Kết Nối Băm</p>
+      <p class="operation-desc">Kết nối băm tải các bản ghi ứng viên từ một bên của kết nối vào một bảng băm, sau đó được kiểm tra cho mỗi hàng từ bên còn lại của kết nối. Xem thêm &ldquo;Kết Nối Băm&rdquo; trên trang&nbsp;101.</p>
+
+      <p class="operation-label">Kết Nối Gộp</p>
+      <p class="operation-desc">Kết nối gộp kết hợp hai danh sách đã được sắp xếp như một chiếc khóa kéo. Cả hai bên của kết nối phải được sắp xếp trước. Xem thêm &ldquo;Gộp Sắp Xếp&rdquo; trên trang&nbsp;109.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">183</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

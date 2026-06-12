@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Listing 6.6 TrackingFilter pre-filter</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 24%) minmax(0, 46%) minmax(0, 30%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 2;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-mid {
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-self: end;
+      padding-bottom: 18mm;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5mm;
+      padding-top: 1mm;
+    }
+    .prose-page.chapter-page .listing-annotated--66 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 1.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--66 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 0.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--66 .listing-callouts-right .listing-callout:nth-child(4) {
+      margin-top: 0.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--66 .listing-callouts-right .listing-callout:nth-child(5) {
+      margin-top: 1mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9pt;
+      line-height: 1.28;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0198.html">← Prev</a>
+    <a href="page_0200.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">174</span>
+        <span class="rh-center">CHAPTER 6 <em>Service routing with Spring Cloud and Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>Let&rsquo;s go ahead and look at the implementation of the <code>TrackingFilter</code> in the following listing. This code can also be found in the book samples in <code>zuulsvr/src/main/java/com/thoughtmechanix/zuulsvr/filters/TrackingFilter.java</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.6</strong><br>Zuul pre-filter for generating correlation IDs</figcaption>
+        <div class="listing-annotated listing-annotated--66" aria-label="Listing 6.6 annotated code">
+          <div class="listing-callouts-mid" aria-label="Listing 6.6 helper method callout">
+            <p class="listing-callout">The helper methods that actually check if the tmx-correlation-id is present and can also generate a correlation ID GUIID value</p>
+          </div>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.zuulsvr.filters;
+
+import com.netflix.zuul.ZuulFilter;
+import org.springframework.beans.factory.annotation.Autowired;
+
+//Removed other imports for conciseness
+
+@Component
+public class TrackingFilter extends ZuulFilter{
+  private static final int   FILTER_ORDER = 1;
+  private static final boolean SHOULD_FILTER=true;
+
+  private static final Logger logger =
+  ➥ LoggerFactory.getLogger(TrackingFilter.class);
+
+  @Autowired
+  FilterUtils filterUtils;
+
+  @Override
+  public String filterType() {
+    return FilterUtils.PRE_FILTER_TYPE;
+  }
+
+  @Override
+  public int filterOrder() {
+    return FILTER_ORDER;
+  }
+
+  public boolean shouldFilter() {
+    return SHOULD_FILTER;
+  }
+
+  private boolean isCorrelationIdPresent(){
+   if (filterUtils.getCorrelationId() !=null){
+     return true;
+   }
+   return false;
+  }
+
+  private String generateCorrelationId(){
+    return java.util.UUID.randomUUID().toString();
+  }
+
+  public Object run() {
+    if (isCorrelationIdPresent()) {
+      logger.debug("tmx-correlation-id found in tracking filter: {}.
+  ➥ ",</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 6.6 right callouts">
+            <p class="listing-callout">All Zuul filters must extend the ZuulFilter class and override four methods: filterType(), filterOrder(), shouldFilter(), and run().</p>
+            <p class="listing-callout">Commonly used functions that are used across all your filters have been encapsulated in the FilterUtils class.</p>
+            <p class="listing-callout">The filterType() method is used to tell Zuul whether the filter is a pre-, route, or post filter.</p>
+            <p class="listing-callout">The filterOrder() method returns an integer value indicating what order Zuul should send requests through the different filter types.</p>
+            <p class="listing-callout">The shouldFilter() method returns a Boolean indicating whether or not the filter should be active.</p>
+            <p class="listing-callout">The run() method is the code that is executed every time a service passes through the filter. In your run() function, you check to see if the tmx-correlation-id is present and if it isn&rsquo;t, you generate a correlation value and set the tmx-correlation-id HTTP</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

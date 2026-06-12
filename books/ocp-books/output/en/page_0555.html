@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0554.html">← Prev</a>
+    <a href="page_0556.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">555</span>
+      </header>
+
+      <h3 class="section-title section-title--sub">21.1.1 Creating Streams<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>It is important to understand that a stream does not &ldquo;store&rdquo; or &ldquo;keep&rdquo; elements within itself. It
+      merely gets them one by one from an underlying source. The source could be anything that can
+      produce elements on demand such as a hardcoded list of objects, a collection, or an array. It
+      could even be a generator function that creates objects itself or fetches them from somewhere
+      else such as a database. Thus, unlike a collection or an array, a Stream does not have the concept
+      of &ldquo;size&rdquo; or &ldquo;length&rdquo;. A stream will continue to flow until there are elements to process. For the
+      same reason, streams are not modifiable either. Since there are no elements &ldquo;in&rdquo; a Stream, you
+      cannot add or remove elements to/from a stream. You can modify the stream source if it permits
+      modification but whether the modification will be reflected in the stream or not depends on how
+      the source is implemented.</p>
+
+      <p>Streams are represented by the <code>java.util.stream.Stream</code>&nbsp;interface. There is no publicly
+      accessible class in the JDK that implements <code>Stream</code>&nbsp;and so, you cannot directly instantiate a
+      <code>Stream</code>&nbsp;object. However, Java provides several ways to create a <code>Stream</code>&nbsp;from various
+      sources. Let me show you a few of the common ones.</p>
+
+      <p>The easiest way to create a stream over a known number of objects is to use the static <code>of()</code>
+      method. For example:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Stream&lt;Integer&gt; s = Stream.of(1, 2, 3, null);//yes, a stream may have
+null elements
+Stream&lt;String&gt; s = Stream.of("A", "B", "C");</code></pre>
+      </figure>
+
+      <p>Of course, such streams are good for testing purposes only because usually the objects are not
+      hardcoded in the code. In practice, the <code>stream()</code>&nbsp;method of the <code>Collection</code>&nbsp;interface is
+      used quite often to process a collection as a stream:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Collection&lt;String&gt; collection = //get the collection somehow
+Stream&lt;String&gt; s = collection.stream();</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

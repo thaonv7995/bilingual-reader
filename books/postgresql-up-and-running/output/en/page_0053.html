@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0052.html">← Prev</a>
+    <a href="page_0054.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h3 class="section-title">Step 2: Installing into a database (version 9.1 and later)</h3>
+      <p class="no-indent">The new extension support makes installation much simpler and more consistent. Use
+      the <span class="accent-word">CREATE EXTENSION</span> command to install extensions into each database. The three big
+      benefits are that you don’t have to figure out where the extension files are kept (<code>share/
+      extension</code>), you can uninstall them just as easily with <span class="accent-word">DROP EXTENSION</span>, and you have a
+      readily available listing of what is installed and what is available. PostgreSQL installation
+      packages include the most popular extensions, so you really don’t need to do more than
+      run the command. To retrieve extensions not packaged with PostgreSQL, visit the
+      <span class="accent-word">PostgreSQL Extension Network</span>.</p>
+
+      <p>Here is how we would install the fuzzystrmatch extension using a query:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE EXTENSION</strong> fuzzystrmatch;</code></pre>
+      </figure>
+
+      <p>You can still install an extension noninteractively using psql. Make sure you’re connec‐
+      ted to the database where you need the extension, then run a command such as:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>psql -p 5432 -d mydb -c "CREATE EXTENSION fuzzystrmatch;"</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0053_icon_warning.png" width="92" height="87" alt="Warning">
+        </figure>
+        <p class="callout-text">C-based extensions must be installed by a superuser. Most exten‐
+        sions fall into this genre.</p>
+      </div>
+
+      <p>We suggest you create one or more schemas to house extensions to keep them separate
+      from production data. After you create the schema, install extensions into it through a
+      command like:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE EXTENSION</strong> fuzzystrmatch <strong>SCHEMA</strong> my_extensions;</code></pre>
+      </figure>
+
+      <h3 class="section-title">Upgrading to the new extension model</h3>
+      <p class="no-indent">If you’ve been using a version of PostgreSQL older than 9.1 and restored your old da‐
+      tabase into version 9.1 or later during a version upgrade, all extensions should continue
+      to function without intervention. For maintainability, you should upgrade your old
+      extensions in the contrib folder to use the new approach to extensions. You can upgrade
+      extensions, especially the ones that come packaged with PostgreSQL, from the old con‐
+      trib model to the new one. Remember that we’re referring only to the upgrade in the
+      installation model, not to the extension itself.</p>
+
+      <p>For example, suppose you had installed the tablefunc extension (for cross-tab queries)
+      to your PostgreSQL 9.0 in a schema called contrib, and you’ve just restored your da‐
+      tabase to a 9.1 server. Run the following command to upgrade:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE EXTENSION</strong> tablefunc <strong>SCHEMA</strong> contrib <strong>FROM</strong> unpackaged;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Extensions<span class="sep">|</span>35</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 24: Implementing Localization</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: 14pt;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      font-size: 10pt;
+      line-height: 1.35;
+      background: #e2e9f0;
+      border-left: none;
+      white-space: pre-wrap;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0735.html">← Prev</a>
+    <a href="page_0737.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">736</span>
+      </header>
+
+      <p class="no-indent">There are several moving parts in the above code. I will explain all of them but let's get it to run
+      first. If you compile and run it, you will get an exception with the following message:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>java.util.MissingResourceException: Can't find bundle for base name
+helloapp, locale en_IN</code></pre>
+      </figure>
+
+      <p>You may see a different locale name in the output because it depends on the locale of your
+      machine. Now, create a file named <code>helloapp.properties</code> in the same folder that contains
+      <code>HelloApp.class</code> with the following contents:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>What\ is\ your\ name?=What is your name?
+Hi=Hi</code></pre>
+      </figure>
+
+      <p>If you run it now, it will work as expected. The output isn't any different from the previous
+      version but we have accomplished an important thing in the above code. We have managed to
+      look up the keys used in the program and show the resulting values to the user. Although, it still
+      prints messages in English, the application has now been internationalized! All we need to do
+      now is to localize it for the locales in which we want to run this application. But before we do
+      that, let me explain a few points about the above code:</p>
+
+      <p class="no-indent">1. A <code>ResourceBundle</code> object contains locale-specific objects. Every resource bundle has a
+      name and the program uses that name to load the relevant files that contain locale specific
+      entries. Once the entries in the files are loaded in the resource bundle, the program can
+      just lookup up a key in that resource bundle and use the returned locale specific value. A
+      resource bundle is not limited to containing just strings but for the purpose of the exam,
+      we will stick to strings only.</p>
+
+      <p class="no-indent">2. <code>java.util.ResourceBundle</code> is an abstract class but the JDK also provides a couple of
+      concrete subclasses. One of those subclasses is <code>PropertyResourceBundle</code>, which can
+      load key-value pairs from a properties file. However, instead of directly instantiating the
+      <code>PropertyResourceBundle</code> class, we use <code>ResourceBundle</code>'s <code>getBundle</code> method
+      because this method is smart enough to figure out exactly which properties files are
+      needed to create the desired resource bundle based on the user's locale, which is what we
+      want.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

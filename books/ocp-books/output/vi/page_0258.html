@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets li {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ul.bullets code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0257.html">← Trước</a>
+    <a href="page_0259.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">258</span>
+      </header>
+
+      <p class="no-indent">nhiều nhất có thể thay vì chỉ định kiểu một cách rõ ràng khi khởi tạo các đối tượng (Object) kiểu generic.</p>
+
+      <h3 class="section-title section-title--sub">Sử dụng nhiều tham số kiểu<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một lớp (Class) có thể sử dụng bất kỳ số lượng tham số kiểu nào. Việc bạn cần bao nhiêu tham số kiểu trong một lớp (Class) phụ thuộc vào yêu cầu và thiết kế lớp (Class) của bạn. Ví dụ, lớp (Class) dưới đây sử dụng hai tham số kiểu:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class PairHolder&lt;E1, E2&gt; {
+    E1 part1;
+    E2 part2;
+}
+...
+//using the above class in another place
+PairHolder&lt;String, Integer&gt; ph1 = new PairHolder&lt;&gt;();
+String s = ph1.part1;
+PairHolder&lt;String, String&gt; ph2 = new PairHolder&lt;&gt;();</code></pre>
+      </figure>
+
+      <p>Tôi đã sử dụng <code>E1</code> và <code>E2</code> làm tên của các tham số kiểu chỉ để minh họa rằng bạn có thể đặt tên chúng là bất kỳ thứ gì. Nhưng theo quy ước, các chữ cái sau đây thường được sử dụng để đặt tên cho các tham số kiểu:</p>
+
+      <ul class="bullets">
+        <li><code>E</code> cho Element (được sử dụng rộng rãi bởi Collections Framework của Java)</li>
+        <li><code>K</code> cho Key</li>
+        <li><code>N</code> cho Number</li>
+        <li><code>T</code> cho Type</li>
+        <li><code>V</code> cho Value</li>
+        <li><code>S</code>, <code>U</code>, <code>V</code> v.v. &mdash; các kiểu thứ 2, thứ 3, thứ 4</li>
+      </ul>
+
+      <p>Các lớp (Class) trong Collections Framework và Stream API sử dụng nhiều tham số kiểu cũng xuất hiện trong kỳ thi. Các lớp (Class) này thường sử dụng <code>T</code> cho kiểu của các đối tượng (Object) trong collection hoặc stream, <code>A</code> cho kiểu của bộ tích lũy (accumulator), và <code>R</code> cho</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

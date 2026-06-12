@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Oracle Operations</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h2.appendix-section-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Oracle Operations</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">Hiển thị Kế Hoạch Thực Thi</h3>
+
+      <p class="no-indent">Gói <code>DBMS_XPLAN</code> được giới thiệu với phiên bản 9iR2 và có thể định dạng và hiển thị các kế hoạch thực thi từ <code>PLAN_TABLE</code>. Ví dụ sau đây cho thấy cách hiển thị kế hoạch thực thi cuối cùng đã được giải thích trong phiên làm việc cơ sở dữ liệu hiện tại:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>select * from table(dbms_xplan.display);</code></pre>
+      </figure>
+
+      <p>Một lần nữa, nếu câu lệnh đó không hoạt động ngay lập tức, bạn nên hỏi DBA của bạn để được hỗ trợ.</p>
+
+      <p>Câu truy vấn sẽ hiển thị kế hoạch thực thi như được trình bày trong sách:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+| Id | Operation         | Name | Rows | Bytes | Cost (%CPU)|
+--------------------------------------------------------------
+|  0 | SELECT STATEMENT  |      |    1 |     2 |     2   (0)|
+|  1 |  TABLE ACCESS FULL| DUAL |    1 |     2 |     2   (0)|
+--------------------------------------------------------------</code></pre>
+      </figure>
+
+      <p>Một số cột được hiển thị trong kế hoạch thực thi này đã bị loại bỏ trong sách để phù hợp hơn với trang.</p>
+
+      <h2 class="appendix-section-title">Các Hoạt Động</h2>
+
+      <h3 class="section-title">Truy Cập Chỉ Mục và Bảng</h3>
+
+      <p class="operation-label">QUÉT CHỈ MỤC ĐỘC NHẤT</p>
+
+      <p class="no-indent">Câu lệnh <code>INDEX UNIQUE SCAN</code> chỉ thực hiện việc duyệt B-tree. Cơ sở dữ liệu sử dụng hoạt động này nếu một ràng buộc duy nhất đảm bảo rằng tiêu chí tìm kiếm sẽ khớp với không quá một mục. Xem thêm Chương&nbsp;&nbsp;1, &ldquo;Giải Phẫu của Một Chỉ Mục&rdquo;.</p>
+
+      <p class="operation-label">QUÉT PHẠM VI CHỈ MỤC</p>
+
+      <p class="no-indent">Câu lệnh <code>INDEX RANGE SCAN</code> thực hiện việc duyệt B-tree và theo dõi chuỗi nút lá để tìm tất cả các mục khớp. Xem thêm Chương&nbsp;1, &ldquo;Giải Phẫu <i>của Một Chỉ Mục</i>&rdquo;.</p>
+
+      <p>Các điều kiện lọc chỉ mục thường gây ra các vấn đề về hiệu suất cho một <code>INDEX RANGE SCAN</code>. Phần tiếp theo giải thích cách xác định chúng.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">167</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: Listing 4.1 and Listing 4.2 Eureka setup</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--pom .listing-callouts {
+      padding-top: 52mm;
+    }
+    .prose-page.chapter-page .listing-annotated--yml .listing-callouts {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--yml .listing-callout:nth-child(1) {
+      margin-bottom: 4mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .footnotes {
+      margin: 0 0 2.5mm;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+    .prose-page.chapter-page .footnotes p {
+      text-indent: 0;
+      margin: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0129.html">← Prev</a>
+    <a href="page_0131.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Building your Spring Eureka Service</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">105</span>
+      </header>
+
+      <h4 class="subsection-title">4.3 Building your Spring Eureka Service</h4>
+
+      <p>In this section, you&rsquo;ll set up our Eureka service using Spring Boot. Like the Spring Cloud configuration service, setting up a Spring Cloud Eureka Service starts with building a new Spring Boot project and applying annotations and configurations.</p>
+
+      <p>Let&rsquo;s begin with your maven pom.xml.<sup>5</sup> The following listing shows the Eureka service dependencies you&rsquo;ll need for the Spring Boot project you&rsquo;re setting up.</p>
+
+      <div class="listing-annotated listing-annotated--pom">
+        <figure class="listing">
+          <figcaption><strong>Listing 4.1</strong><br>Adding dependencies to your pom.xml</figcaption>
+          <pre class="code-block"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://
+www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://
+maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+  &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+  &lt;groupId&gt;com.thoughtmechanix&lt;/groupId&gt;
+  &lt;artifactId&gt;eurekasvr&lt;/artifactId&gt;
+  &lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+  &lt;packaging&gt;jar&lt;/packaging&gt;
+  &lt;name&gt;Eureka Server&lt;/name&gt;
+  &lt;description&gt;Eureka Server demo project&lt;/description&gt;
+&lt;!--Not showing the maven definitions for using Spring Cloud Parent--&gt;
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+      &lt;artifactId&gt;spring-cloud-starter-eureka-server&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+Rest of pom.xml removed for conciseness
+....
+&lt;/project&gt;</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Listing 4.1 annotation callout">
+          <p class="listing-callout">Tells your maven build to include the Eureka libraries (which will include Ribbon)</p>
+        </div>
+      </div>
+
+      <p>You&rsquo;ll then need to set up the <code>src/main/resources/application.yml</code> file with the configuration needed to set up the Eureka service running in standalone mode (for example, no other nodes in the cluster), as shown in the next listing.</p>
+
+      <div class="listing-annotated listing-annotated--yml">
+        <figure class="listing">
+          <figcaption><strong>Listing 4.2</strong><br>Setting up your Eureka configuration in the application.yml file</figcaption>
+          <pre class="code-block"><code>server:
+ port: 8761
+
+eureka:
+ client:
+  registerWithEureka: false</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Listing 4.2 annotation callouts">
+          <p class="listing-callout">Port Eureka Server is going to listen on</p>
+          <p class="listing-callout">Don&rsquo;t register with Eureka service.</p>
+        </div>
+      </div>
+
+      <div class="footnotes">
+        <p><sup>5</sup> All source code in this chapter can be downloaded from GitHub (<a href="https://github.com/carnellj/spmia-chapter4">https://github.com/carnellj/spmia-chapter4</a>). The Eureka service is in the chapter 4/eurekasvr example. All services in this chapter were built using Docker and Docker Compose so they can be brought up in a single instance.</p>
+      </div>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

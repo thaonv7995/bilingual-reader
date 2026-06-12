@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: psql (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0069.html">← Prev</a>
+    <a href="page_0071.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">70</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Indexes:
+"pg_ts_dict_dictname_index" UNIQUE, btree (dictname, dictnamespace)
+"pg_ts_dict_oid_index" UNIQUE, btree (oid)
+Has OIDs: yes</code></pre>
+      </figure>
+
+      <h3 class="section-title">Importing and Exporting Data</h3>
+      <p class="no-indent">psql has a <code>\copy</code> command that lets you import data from and export data to a text file.
+      Tab is the default delimiter, but you can specify others. New line breaks must separate
+      the rows. For our first example, we downloaded data from <span class="accent-word">US Census Fact Finder</span>
+      covering racial demographics of housing in Massachusetts. You can download the file
+      we use in this example, DEC_10_SF1_QTH1_with_ann.csv, from the <span class="accent-word">PostgreSQL Book
+      Data</span>.</p>
+
+      <h3 class="subsection-title">psql Import</h3>
+      <p class="no-indent">Our usual practice in loading denormalized or unfamiliar data is to create a separate
+      staging schema to accept the incoming data. We then write a series of explorative queries
+      to get a good sense of what we have on our hands. Finally, we distribute the data into
+      various normalized production tables and delete the staging schema.</p>
+
+      <p>Before bringing the data into PostgreSQL, you must first create a table to hold the
+      incoming data. The data must match the file both in the number of columns and data
+      types. This could be an annoying extra step for a well-formed file, but it does obviate
+      the need for psql to guess at data types. psql processes the entire import as a single
+      transaction; if it encounters any errors in the data, the entire import will fail. If you’re
+      unsure about the data contained in the file, we recommend setting up the table with the
+      most accommodating data types and then recasting them later if necessary. For example,
+      if you can’t be sure that a column will just have numeric values, make it character
+      varying to get the data in for inspection and then recast it later.</p>
+
+      <p>Launch psql from the command line and run the commands in <span class="accent-word">Example 3-7</span> in the psql
+      console.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 3-7.</strong> Importing data with psql</figcaption>
+        <pre class="code-block"><code>\connect postgresql_book
+\cd /postgresql_book/ch03
+\copy staging.factfinder_import FROM DEC_10_SF1_QTH1_with_ann.csv CSV</code></pre>
+      </figure>
+
+      <p class="no-indent">In <span class="accent-word">Example 3-7</span>, we launch interactive psql, connect to our database, use <code>\cd</code> to change
+      the current directory to the folder containing our file, and import our data using the
+      <code>\copy</code> command. Because the default delimiter is a tab, we augment our statement with
+      CSV to tell psql that our data is comma-separated instead.</p>
+
+      <p>If your file has nonstandard delimiters such as pipes, indicate the delimiter:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">52<span class="sep">|</span>Chapter 3: psql</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

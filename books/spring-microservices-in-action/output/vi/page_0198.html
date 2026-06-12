@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Xây dựng pre-filter Zuul đầu tiên tạo correlation ID</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0197.html">← Trước</a>
+    <a href="page_0199.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Xây dựng pre-filter Zuul đầu tiên tạo correlation ID</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">173</span>
+      </header>
+
+      <p class="no-indent">Theo luồng của hình 6.12, bạn sẽ thấy các filter sau được sử dụng:</p>
+
+      <ol class="manning-numbered" aria-label="Các filter Zuul được dùng trong hình 6.12">
+        <li><strong class="run-in">TrackingFilter</strong>&mdash;TrackingFilter sẽ là pre-filter đảm bảo mọi yêu cầu đi qua Zuul đều có correlation ID gắn với nó. Correlation ID là một ID duy nhất được mang theo qua tất cả các microservice được thực thi khi xử lý yêu cầu của khách hàng. Correlation ID cho phép bạn truy vết chuỗi sự kiện xảy ra khi một lời gọi đi qua hàng loạt lời gọi microservice.</li>
+        <li><strong class="run-in">SpecialRoutesFilter</strong>&mdash;SpecialRoutesFilter là filter route Zuul sẽ kiểm tra route đến và xác định xem bạn có muốn thực hiện kiểm thử A/B trên route hay không. Kiểm thử A/B là kỹ thuật trong đó người dùng (trong trường hợp này là một dịch vụ) được ngẫu nhiên trình bày hai phiên bản dịch vụ khác nhau sử dụng cùng một dịch vụ. Ý tưởng đằng sau kiểm thử A/B là các tính năng mới có thể được kiểm thử trước khi được triển khai cho toàn bộ cơ sở người dùng. Trong ví dụ của chúng ta, bạn sẽ có hai phiên bản khác nhau của cùng một dịch vụ organization. Một số ít người dùng sẽ được định tuyến tới phiên bản mới hơn của dịch vụ, trong khi đa số người dùng sẽ được định tuyến tới phiên bản cũ hơn của dịch vụ.</li>
+        <li><strong class="run-in">ResponseFilter</strong>&mdash;ResponseFilter là post-filter sẽ chèn correlation ID gắn với lời gọi dịch vụ vào HTTP response header được gửi lại cho client. Như vậy, client sẽ có quyền truy cập vào correlation ID gắn với yêu cầu họ đã thực hiện.</li>
+      </ol>
+
+      <h3 class="section-title">6.5 Xây dựng pre-filter Zuul đầu tiên tạo correlation ID</h3>
+
+      <p>Xây dựng filter trong Zuul là hoạt động vô cùng đơn giản. Để bắt đầu, bạn sẽ xây dựng một pre-filter Zuul, gọi là TrackingFilter, sẽ kiểm tra mọi yêu cầu đến gateway và xác định xem có HTTP header tên <code>tmx-correlation-id</code> trong yêu cầu hay không. HTTP header <code>tmx-correlation-id</code> sẽ chứa một GUID duy nhất (Globally Universal Id) có thể dùng để theo dõi yêu cầu của người dùng qua nhiều microservice.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Chúng ta đã thảo luận khái niệm correlation ID ở chương 5. Ở đây chúng ta sẽ đi sâu hơn vào cách dùng Zuul để tạo correlation ID. Nếu bạn đã đọc lướt qua cuốn sách, tôi rất khuyên bạn xem lại chương 5 và đọc phần về Hystrix và ngữ cảnh thread. Triển khai correlation ID của bạn sẽ dùng biến ThreadLocal và cần thêm công việc để biến ThreadLocal hoạt động với Hystrix.</p>
+      </aside>
+
+      <p>Nếu <code>tmx-correlation-id</code> không có trên HTTP header, TrackingFilter Zuul của bạn sẽ tạo và thiết lập correlation ID. Nếu đã có correlation ID, Zuul sẽ không làm gì với correlation ID đó. Sự hiện diện của correlation ID có nghĩa là lời gọi dịch vụ cụ thể này là một phần của chuỗi lời gọi dịch vụ thực hiện yêu cầu của người dùng. Trong trường hợp này, class TrackingFilter của bạn sẽ không làm gì.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

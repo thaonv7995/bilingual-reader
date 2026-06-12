@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Hash Join</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Hash Join</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">Hash Join</h3>
+
+      <p class="no-indent">Thuật toán hash join nhắm vào điểm yếu của phép nối vòng lặp lồng nhau: nhiều lần duyệt B-tree khi thực thi truy vấn bên trong. Thay vào đó, nó tải các bản ghi ứng viên từ một bên của phép nối vào một bảng băm có thể được truy vấn rất nhanh cho mỗi hàng từ bên kia của phép nối. Tinh chỉnh một hash join yêu cầu một cách tiếp cận chỉ mục hoàn toàn khác so với phép nối vòng lặp lồng nhau. Hơn nữa, cũng có thể cải thiện hiệu suất hash join bằng cách chọn ít <i>cột</i>&mdash;một thách thức cho hầu hết các công cụ ORM.</p>
+
+      <p>Chiến lược chỉ mục cho một hash join rất khác vì không cần chỉ mục cho các cột nối. Chỉ có các chỉ mục cho các điều kiện <i>độc lập</i> <code><strong>where</strong></code> mới cải thiện hiệu suất hash join.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Chỉ mục các điều kiện <i>độc lập</i> <code><strong>where</strong></code> để cải thiện hiệu suất hash join.</p>
+      </aside>
+
+      <p>Xem xét ví dụ sau. Nó chọn tất cả doanh số trong sáu tháng qua với các chi tiết nhân viên tương ứng:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM sales s
+  JOIN employees e ON (s.subsidiary_id = e.subsidiary_id
+                  AND  s.employee_id   = e.employee_id  )
+ WHERE <strong>s.sale_date > trunc(sysdate) - INTERVAL '6' MONTH</strong></code></pre>
+      </figure>
+
+      <p>Điều kiện lọc <code>SALE_DATE</code> là điều kiện <code><strong>where</strong></code> độc lập duy nhất&mdash;điều đó có nghĩa là nó chỉ tham chiếu đến một bảng và không thuộc về các điều kiện nối.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">101</p>
+    </article>
+  </main>
+</body>
+</html>

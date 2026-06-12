@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Listing 7.7 and Section 7.4 JWT</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--77 .listing-callouts-right {
+      padding-top: 11mm;
+    }
+    .prose-page.chapter-page .listing-annotated--77 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 42mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page p + h3.section-title,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + h3.section-title,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0237.html">← Prev</a>
+    <a href="page_0239.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">JavaScript Web Tokens and OAuth2</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">213</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.7</strong><br>Using the OAuth2RestTemplate to propagate the OAuth2 access token</figcaption>
+        <div class="listing-annotated listing-annotated--77" aria-label="Listing 7.7 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.clients;
+
+//Removed for conciseness
+
+@Component
+public class OrganizationRestTemplateClient {
+@Autowired
+OAuth2RestTemplate restTemplate;
+
+private static final Logger logger =
+    LoggerFactory.getLogger(
+        OrganizationRestTemplateClient.class);
+
+public Organization getOrganization(String organizationId){
+  logger.debug("In Licensing Service .getOrganization: {}",
+    UserContext.getCorrelationId());
+
+  ResponseEntity&lt;Organization&gt; restExchange =
+    restTemplate.exchange(
+        "http://zuulserver:5555/api/organization/v1/organizations/{organizationId}",
+    HttpMethod.GET,
+    null, Organization.class, organizationId);
+
+    /*Save the record from cache*/
+    return restExchange.getBody();
+  }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 7.7 annotation callouts">
+            <p class="listing-callout">The <code>OAuth2RestTemplate</code> is a drop-in replacement for the standard <code>RestTemplate</code> and handles the propagation of the OAuth2 access token.</p>
+            <p class="listing-callout">The invocation of the organization service is done in the exact same manner as a standard <code>RestTemplate</code>.</p>
+          </div>
+        </div>
+      </figure>
+
+      <h3 class="section-title">7.4 JavaScript Web Tokens and OAuth2</h3>
+
+      <p class="no-indent">OAuth2 is a token-based authentication framework, but ironically it doesn&rsquo;t provide any standards for how the tokens in its specification are to be defined. To rectify the lack of standards around OAuth2 tokens, a new standard is emerging called JavaScript Web Tokens (JWT). JWT is an open standard (RFC-7519) proposed by the Internet Engineering Task Force (IETF) that attempts to provide a standard structure for OAuth2 tokens. JWT tokens are</p>
+
+      <ul class="manning-bullets" aria-label="JWT token characteristics">
+        <li><strong class="run-in">Small—</strong>JWT tokens are encoded to Base64 and can be easily passed via a URL, HTTP header, or an HTTP POST parameter.</li>
+        <li><strong class="run-in">Cryptographically signed—</strong>A JWT token is signed by the authenticating server that issues it. This means you can be guaranteed that the token hasn&rsquo;t been tampered with.</li>
+        <li><strong class="run-in">Self-contained—</strong>Because a JWT token is cryptographically signed, the microservice receiving the service can be guaranteed that the contents of the token are valid. There&rsquo;s no need to call back to the authenticating service to validate the contents of the token because the signature of the token can be validated and</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

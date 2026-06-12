@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 6: Bảng, Ràng buộc và Chỉ mục — Chỉ mục chức năng</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0133.html">← Trước</a>
+    <a href="page_0135.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">134</span>
+      </header>
+
+      <p class="no-indent">Cuối cùng, hãy nhớ rằng mỗi chỉ mục bạn tạo chỉ hoạt động với một opclass duy nhất. Nếu bạn muốn một chỉ mục trên một cột bao phủ nhiều opclass, bạn phải tạo các chỉ mục riêng biệt. Để thêm chỉ mục mặc định <code>text_ops</code> vào một bảng, hãy chạy:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx2 ON census.lu_tracts USING btree (tract_name);</code></pre>
+      </figure>
+
+      <p>Bây giờ bạn có hai chỉ mục trên cùng một cột. (Không có giới hạn nào về số lượng chỉ mục bạn có thể xây dựng trên một cột duy nhất.) Bộ lập kế hoạch sẽ chọn <code>idx2</code> cho các truy vấn so sánh cơ bản và <code>idx1</code> cho các so sánh sử dụng <code>like</code>.</p>
+
+      <p>Bạn sẽ tìm thấy các lớp toán tử được chi tiết trong <span class="accent-word">Các lớp toán tử</span>. Chúng tôi cũng rất khuyến nghị bạn đọc bài viết của chúng tôi để có mẹo về việc khắc phục sự cố chỉ mục, <span class="accent-word">Tại sao chỉ mục của tôi không được sử dụng?</span></p>
+
+      <h3 class="subsection-title">Chỉ mục chức năng</h3>
+      <p class="no-indent">PostgreSQL cho phép bạn thêm chỉ mục vào các hàm của các cột. Chỉ mục chức năng chứng minh tính hữu ích của chúng trong dữ liệu văn bản hỗn hợp. PostgreSQL là một cơ sở dữ liệu phân biệt chữ hoa chữ thường. Để thực hiện tìm kiếm không phân biệt chữ hoa chữ thường, bạn có thể tạo một chỉ mục chức năng:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX fidx ON featnames_short
+ USING btree (upper(fullname) varchar_pattern_ops);</code></pre>
+      </figure>
+
+      <p>Việc tạo một chỉ mục như vậy đảm bảo rằng các truy vấn như <code>SELECT fullname FROM featnames_short WHERE upper(fullname) LIKE 'S%';</code> có thể sử dụng một chỉ mục. Luôn sử dụng cùng một hàm khi truy vấn để đảm bảo sử dụng chỉ mục.</p>
+
+      <p>Cả PostgreSQL và Oracle đều cung cấp chỉ mục chức năng. MySQL và SQL Server cung cấp các cột tính toán, mà bạn có thể lập chỉ mục. Từ phiên bản 9.3, PostgreSQL hỗ trợ chỉ mục trên các view vật liệu cũng như bảng.</p>
+
+      <h3 class="subsection-title">Chỉ mục một phần</h3>
+      <p class="no-indent">Chỉ mục một phần (đôi khi được gọi là chỉ mục lọc) là các chỉ mục chỉ bao phủ các hàng phù hợp với một điều kiện <code>WHERE</code> đã được định nghĩa trước. Ví dụ, nếu bạn có một bảng với 1.000.000 hàng, nhưng bạn chỉ quan tâm đến một tập hợp cố định gồm 10.000 hàng, bạn sẽ tốt hơn nếu tạo các chỉ mục một phần. Các chỉ mục kết quả có thể nhanh hơn vì nhiều chỉ mục hơn có thể vừa vặn vào RAM, cộng với việc bạn sẽ tiết kiệm một chút không gian đĩa trên chính chỉ mục.</p>
+
+      <p>Chỉ mục một phần cho phép bạn đặt các ràng buộc tính duy nhất chỉ trên một số hàng của dữ liệu. Giả sử bạn quản lý các thuê bao báo chí đã đăng ký trong 10 năm qua và muốn đảm bảo rằng không ai nhận nhiều hơn một tờ báo mỗi ngày. Với sự quan tâm giảm dần đối với truyền thông in ấn, chỉ khoảng 5% số thuê bao của bạn có đăng ký hiện tại. Bạn không quan tâm đến việc các thuê bao đã ngừng nhận báo bị trùng lặp, vì họ không có trong danh sách của các nhà phân phối. Bảng của bạn trông như thế này:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">116<span class="sep">|</span>Chương 6: Bảng, Ràng buộc và Chỉ mục</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

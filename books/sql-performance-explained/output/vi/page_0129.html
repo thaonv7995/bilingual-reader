@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Quét Chỉ Mục Chỉ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Quét Chỉ Mục Chỉ</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Từ góc nhìn của bộ tối ưu hóa, chỉ mục này có hai lợi thế so với <code>SALES_SUB_EUR</code>. Bộ tối ưu hóa tin rằng bộ lọc trên <code>SALE_DATE</code> chọn lọc hơn so với bộ lọc trên <code>SUBSIDIARY_ID</code>. Bạn có thể thấy điều đó trong cột &ldquo;Rows&rdquo; tương ứng của hai kế hoạch thực thi cuối cùng (khoảng 10.000 so với 40.000). Tuy nhiên, những ước lượng này hoàn toàn tùy ý vì truy vấn sử dụng các tham số ràng buộc. Điều kiện <code>SALE_DATE</code> có thể, ví dụ, chọn toàn bộ bảng khi cung cấp ngày của lần bán đầu tiên.</p>
+
+      <p>Lợi thế thứ hai của chỉ mục <code>SALES_DATE</code> là nó có yếu tố phân cụm tốt hơn. Đây là một lý do hợp lệ vì bảng <code>SALES</code> chỉ phát triển theo thời gian. Các hàng mới luôn được thêm vào cuối bảng miễn là không có hàng nào bị xóa. Thứ tự bảng do đó tương ứng với thứ tự chỉ mục vì cả hai đều được sắp xếp theo thời gian&mdash;chỉ mục có yếu tố phân cụm tốt.</p>
+
+      <p>Khi sử dụng một chỉ mục với yếu tố phân cụm tốt, các hàng bảng được chọn được lưu trữ gần nhau để cơ sở dữ liệu chỉ cần đọc một vài khối bảng để lấy tất cả các hàng. Sử dụng chỉ mục này, truy vấn có thể đủ nhanh mà không cần quét chỉ mục chỉ. Trong trường hợp này, chúng ta nên loại bỏ các cột không cần thiết từ chỉ mục khác.</p>
+
+      <aside class="sidebar-note">
+        <h3>Chú ý</h3>
+        <p>Một số chỉ mục tự động có yếu tố phân cụm tốt để lợi thế hiệu suất của một quét chỉ mục chỉ là tối thiểu.</p>
+      </aside>
+
+      <p>Trong ví dụ cụ thể này, có một sự trùng hợp hạnh phúc. Bộ lọc mới trên <code>SALE_DATE</code> không chỉ ngăn chặn một quét chỉ mục chỉ mà còn mở ra một đường truy cập mới cùng lúc. Do đó, bộ tối ưu hóa có thể hạn chế tác động hiệu suất của sự thay đổi này. Tuy nhiên, cũng có thể ngăn chặn một quét chỉ mục chỉ bằng cách thêm các cột vào các điều khoản khác. Tuy nhiên, việc thêm một cột vào điều khoản <code>select</code> không bao giờ có thể mở ra một đường truy cập mới có thể hạn chế tác động của việc mất quét chỉ mục chỉ.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Giữ cho các quét chỉ mục chỉ của bạn.</p>
+        <p>Thêm các chú thích nhắc nhở bạn về một quét chỉ mục chỉ và tham chiếu đến trang đó để bất kỳ ai cũng có thể đọc về nó.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">119</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      line-height: 1.2;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0142.html">← Trước</a>
+    <a href="page_0144.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">143</span>
+      </header>
+
+      <p class="no-indent">3. bằng cách gọi <code>getVIN()</code> trên bất kỳ phương tiện (vehicle) nào. Hơn nữa, bạn không muốn bất kỳ lớp con (subclass) nào thay đổi
+      hành vi của phương thức <code>getVIN</code>. Bạn sẽ viết mã cho phương thức <code>getVIN</code> ở đâu và như thế nào?</p>
+
+      <p class="no-indent">4. Tạo một giao diện (interface) tên là <code>Drivable</code> với một phương thức mặc định (default method) <code>start()</code>. Gọi
+      <code>start()</code> trên các instance của các lớp (class) triển khai (implement) <code>Drivable</code>. Ghi đè <code>start()</code> để
+      nó in ra một thông điệp khác nhau trong mỗi lớp (class).</p>
+
+      <p class="no-indent">5. Đảm bảo rằng mọi phương tiện (vehicle) đều được tạo với một VIN.</p>
+
+      <p class="no-indent">6. Tạo một lớp (class) tên là <code>ToyCar</code> kế thừa (extends) <code>Car</code> nhưng không yêu cầu bất kỳ đối số (argument) nào khi
+      khởi tạo.</p>
+
+      <p class="no-indent">7. Bạn có một danh sách các tính năng (feature) như chiều cao, chiều rộng, chiều dài, công suất và dung tích cốp mà
+      bạn muốn so sánh giữa hai phương tiện (vehicle) bất kỳ. Các tên tính năng mới sẽ được thêm vào danh sách này
+      trong tương lai. Tạo một phương thức <code>getFeature(String featureName)</code> sao cho nó sẽ trả về
+      <code>&quot;N.A&quot;</code> đối với bất kỳ tính năng nào không được hỗ trợ bởi một phương tiện (vehicle) cụ thể.</p>
+
+      <p class="no-indent">8. Tạo một giao diện (interface) tên là <code>VehicleHelper</code> với một phương thức static <code>register(Vehicle
+      v)</code> in ra VIN của phương tiện (vehicle). Đảm bảo rằng phương thức <code>register</code> của <code>VehicleHelper</code> được
+      gọi bất cứ khi nào một instance của phương tiện (vehicle) được tạo.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

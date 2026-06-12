@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0500.html">← Trước</a>
+    <a href="page_0502.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">501</span>
+      </header>
+
+      <p class="no-indent"><code>InterruptedException</code>&nbsp;khi nó bị ngắt. Do đó, nhiệm vụ của Thread (Luồng) <code>RUNNABLE</code>&nbsp;là kiểm tra trạng thái bị ngắt của nó thường xuyên và quyết định xem cần làm gì khi phát hiện ra rằng nó đã bị ngắt. Ví dụ, method <code>run</code>&nbsp;của Lớp (Class) <code>Factorial</code>&nbsp;có thể hủy bỏ việc tính toán nếu nó phát hiện mình đã bị ngắt như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public void run(){
+BigInteger start = BigInteger.ONE;
+for(int i=1; i&lt;n; i++) {
+start = start.multiply(BigInteger.valueOf(i));
+if(i%1000 == 0 &amp;&amp; Thread.interrupted()){
+System.out.println("Computation interrupted!");
+break;
+}
+}
+result = start;
+System.out.println("Factorial "+n+" computed.");
+consumer.interrupt();
+}</code></pre>
+      </figure>
+
+      <p>Tôi có thể đã sử dụng <code>Thread.currentThread().isInterrupted()</code>&nbsp;thay vì
+      <code>Thread.interrupted()</code>&nbsp;trong ví dụ này, nhưng trong một số trường hợp <code>interrupted()</code>&nbsp;có thể phù hợp hơn vì nó xóa trạng thái bị ngắt trong khi <code>isInterrupted()</code>&nbsp;thì không.</p>
+
+      <h3 class="section-title section-title--sub">20.3.4 Sử dụng wait và notify<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Mặc dù các method <strong>wait</strong>, <strong>notify</strong>, và <strong>notifyAll</strong> chính thức không có trong kỳ thi OCP, chúng cung cấp
+      một kỹ thuật hiệu quả để điều phối Thread (Luồng). Vì chúng cũng quan trọng trong các cuộc phỏng vấn kỹ thuật,
+      tôi sẽ trình bày ngắn gọn về chủ đề này.</p>
+
+      <p>Các method <code>wait</code>, <code>notify</code>, và <code>notifyAll</code>&nbsp;là các instance method của <code>Object</code></p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

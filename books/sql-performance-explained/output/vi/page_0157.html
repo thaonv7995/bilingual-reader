@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Phân trang qua kết quả</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phân trang qua kết quả</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">với số lượng hàng đã chọn. Nói cách khác, thời gian phản hồi của một truy vấn top-N theo ống dẫn luôn giống nhau; điều này gần như không phụ thuộc vào kích thước bảng. Chỉ khi độ sâu của B-tree tăng lên thì truy vấn mới trở nên chậm hơn một chút.</p>
+
+      <p>Hình&nbsp;7.1 cho thấy khả năng mở rộng cho cả hai biến thể qua một khối lượng dữ liệu ngày càng tăng. Sự tăng trưởng thời gian phản hồi tuyến tính cho một truy vấn không có <code><strong>order by</strong></code> theo ống dẫn là rõ ràng. Thời gian phản hồi cho việc thực thi theo ống dẫn vẫn giữ nguyên.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;7.1.&nbsp;Khả năng mở rộng của các truy vấn Top-N</figcaption>
+        <img src="../assets/images/page_0157_fig_7_1.png" width="1027" height="360" alt="Hình 7.1. Khả năng mở rộng của các truy vấn Top-N">
+      </figure>
+
+      <p>Mặc dù thời gian phản hồi của một truy vấn top-N theo ống dẫn không phụ thuộc vào kích thước bảng, nhưng nó vẫn tăng lên với số lượng hàng đã chọn. Thời gian phản hồi sẽ gấp đôi khi chọn gấp đôi số hàng. Điều này đặc biệt quan trọng đối với các truy vấn &ldquo;phân trang&rdquo; tải thêm kết quả vì những truy vấn này thường bắt đầu lại từ mục đầu tiên; chúng sẽ đọc các hàng đã được hiển thị trên trang trước đó và loại bỏ chúng trước khi cuối cùng đạt được kết quả cho trang thứ hai. Tuy nhiên, vẫn có một giải pháp cho vấn đề này như chúng ta sẽ thấy trong phần tiếp theo.</p>
+
+      <h3 class="section-title">Phân trang qua kết quả</h3>
+
+      <p class="no-indent">Sau khi triển khai một truy vấn top-N theo ống dẫn để lấy trang đầu tiên một cách hiệu quả, bạn sẽ thường cần một truy vấn khác để lấy các trang tiếp theo. Thách thức phát sinh là nó phải bỏ qua các hàng từ các trang trước. Có hai phương pháp khác nhau để đáp ứng thách thức này: đầu tiên là phương pháp offset, đánh số các hàng từ đầu và sử dụng một bộ lọc trên số hàng này để loại bỏ các hàng trước trang yêu cầu. Phương pháp thứ hai, mà tôi gọi là phương pháp seek, tìm kiếm mục cuối cùng của trang trước và chỉ lấy các hàng tiếp theo.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">147</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

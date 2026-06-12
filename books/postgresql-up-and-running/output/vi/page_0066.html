@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: psql (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 0 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0065.html">← Trước</a>
+    <a href="page_0067.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">66</span>
+      </header>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0066_icon_warning.png" width="50" height="48" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Mỗi lệnh set nên được đặt trên một dòng duy nhất. Ví dụ, các câu lệnh qstats92 trong Ví dụ 3-2 nên được đặt tất cả trên cùng một dòng. Chúng tôi đã phải chia nó thành nhiều dòng để phù hợp với trang in.</p>
+      </div>
+
+      <p class="no-indent">Khi bạn khởi động psql bây giờ, bạn sẽ thấy kết quả của việc thực thi tệp khởi động:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Null display is "NULL".
+Timing is on.
+Pager is always used.
+psql (9.3.2)
+Type "help" for help.
+postgres@localhost:5442 postgresql_book#</code></pre>
+      </figure>
+
+      <p>Các lệnh một số chỉ hoạt động trên hệ thống Linux/Unix, không hoạt động trên Windows, và ngược lại. Trong cả hai hệ điều hành, bạn nên sử dụng dấu gạch chéo Linux/Unix (solidus) cho đường dẫn để phân biệt nó với dấu gạch chéo được sử dụng cho các tùy chọn. Nếu bạn muốn khởi động psql mà không qua psqlrc, hãy sử dụng tùy chọn <code>-X</code>.</p>
+
+      <p>Để xóa một biến cấu hình hoặc đặt lại về mặc định, hãy thực hiện lệnh <code>\unset</code> theo sau bởi tên biến, như trong: <code>\unset qstat92</code>.</p>
+
+      <p>Chúng tôi sẽ đề cập đến các cài đặt cấu hình psql phổ biến. Ngay cả khi bạn không thêm chúng vào tệp psqlrc của mình, bạn vẫn có thể thiết lập chúng trong phiên của bạn khi cần thiết. Bạn có thể tìm thêm ví dụ tại <span class="accent-word">Tệp psqlrc cho DBA</span> và <span class="accent-word">Tắt lệnh trong .psqlrc</span>.</p>
+
+      <h3 class="subsection-title">Lời nhắc tùy chỉnh</h3>
+      <p class="no-indent">Nếu bạn dành thời gian thức để chơi với psql và bạn kết nối với nhiều máy chủ và cơ sở dữ liệu, có khả năng bạn sẽ chuyển đổi giữa chúng bằng cách sử dụng <code>\connect</code>. Tùy chỉnh lời nhắc của bạn để hiển thị máy chủ và cơ sở dữ liệu mà bạn đang kết nối sẽ nâng cao nhận thức tình huống của bạn và tránh thảm họa. Trong tệp psqlrc ví dụ của chúng tôi, chúng tôi đã đặt lời nhắc của mình như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>\set PROMPT1 '%n@%M:%>%x %/# '</code></pre>
+      </figure>
+
+      <p>Điều này bao gồm ai là người đang đăng nhập (<code>%n</code>), máy chủ host (<code>%M</code>), cổng (<code>%></code>), trạng thái giao dịch (<code>%x</code>), và cơ sở dữ liệu (<code>%/</code>). Điều này có thể là quá mức, vì vậy hãy tiết kiệm theo cách bạn thấy phù hợp. Danh sách đầy đủ các ký hiệu lời nhắc được tài liệu trong <span class="accent-word">Hướng dẫn tham khảo psql</span>.</p>
+
+      <p>Khi chúng tôi kết nối với psql đến cơ sở dữ liệu của mình, lời nhắc của chúng tôi trông như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>postgres@localhost:5442 postgresql_book#</code></pre>
+      </figure>
+
+      <p>Nếu chúng tôi chuyển sang một cơ sở dữ liệu khác với <code>\connect postgis_book</code>, lời nhắc của chúng tôi sẽ thay đổi thành:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>postgres@localhost:5442 postgis_book#</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">48<span class="sep">|</span>Chương 3: psql</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

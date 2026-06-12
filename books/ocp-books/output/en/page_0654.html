@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 22: Date and Time API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered.numbered--from-2 {
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered.numbered--from-3 {
+      counter-reset: init-step 2;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0653.html">← Prev</a>
+    <a href="page_0655.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">654</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>LocalDate ld2 = LocalDate.parse("2024-04-30");
+System.out.println(ld1.equals(ld2)); //prints true
+LocalDateTime ltd = LocalDateTime.now();
+System.out.println(ltd.equals(ld2)); //prints false</code></pre>
+      </figure>
+
+      <p>Recall that the signature of <code>equals</code> is <code>equals(Object obj)</code>, therefore, there is no
+      compilation error when you pass an object of a different class to <code>equals</code>.</p>
+
+      <ol class="numbered numbered--from-2">
+        <li>Using the <code>compareTo</code> method - All date/time classes implement
+        <code>java.util.Comparable</code> interface, which has a <code>compareTo</code> method. Unlike the
+        <code>equals</code> method, this method returns an <code>int</code>. If the date/time passed in the argument
+        is later, this method returns a negative number, if the argument is exactly same, this
+        method returns 0, and a positive number otherwise.</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>LocalDateTime ltd1 = LocalDateTime.now();//assuming today is 2024-04-30
+LocalDateTime ltd2 = LocalDateTime.parse("2024-05-30T10:20");
+System.out.println(ltd1.compareTo(ltd2)); //prints -1
+LocalDateTime ltd3 = LocalDateTime.parse("2024-03-30T10:20");
+System.out.println(ltd1.compareTo(ltd3)); //prints 1</code></pre>
+      </figure>
+
+      <p>One might expect that the return value would be the difference between the two dates, but
+      the JavaDoc API description for this method does not make any such promise. Thus, you
+      should rely only on the sign of the return value and not on the actual value.</p>
+
+      <ol class="numbered numbered--from-3">
+        <li>Using the <code>isAfter</code>/<code>isBefore</code> methods - As their names suggest, these methods check if
+        this date is after or before the date/time passed in the argument.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

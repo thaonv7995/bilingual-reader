@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0259.html">← Trước</a>
+    <a href="page_0261.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">260</span>
+      </header>
+
+      <p>Type erasure loại bỏ sự cần thiết phải tạo các tệp lớp (Class) riêng biệt cho các cách sử dụng kiểu khác nhau, nghĩa là các thể hiện được tham số hóa khác nhau của một lớp (Class) generic. Điều này đảm bảo khả năng tương thích ngược (backward compatibility) vì về mặt bản chất, không có sự khác biệt giữa mã nguồn nhận biết generics và mã nguồn thông thường dưới góc nhìn của JVM.</p>
+
+      <p>Tại thời điểm này, người ta có thể thắc mắc làm thế nào generics giúp tăng cường an toàn kiểu (type safety) nếu JVM không hề biết về chúng ở thời điểm runtime. Câu trả lời là generics chỉ nhằm mục đích tăng cường an toàn kiểu cho mã nguồn tại thời điểm compile (biên dịch). Việc sử dụng các kiểu được tham số hóa sẽ nâng cao khả năng kiểm tra kiểu của trình biên dịch (compiler). Chúng ta có thể vượt qua sự kiểm tra kiểu của trình biên dịch bằng cách ép kiểu một kiểu được tham số hóa sang dạng không được tham số hóa của nó, như được minh họa trong ví dụ sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ArrayList&lt;Integer&gt; al = new ArrayList&lt;&gt;();
+ArrayList rawList = (ArrayList) al;
+rawList.add("string");
+Integer i = al.get(0);//ClassCastException at runtime</code></pre>
+      </figure>
+
+      <p>Đoạn mã trên sẽ thất bại ở thời điểm runtime với một lỗi <code>ClassCastException</code>. Trình biên dịch cũng rất hữu ích khi tạo ra một thông báo cảnh báo cho biết mã nguồn sử dụng các thao tác không được kiểm tra (unchecked) hoặc không an toàn (unsafe), điều này cảnh báo cho lập trình viên biết rằng có gì đó bất thường đang diễn ra trong đoạn mã này và nếu bạn biên dịch nó với tùy chọn <code>-Xlint:unchecked</code>, nó sẽ cung cấp nhiều thông tin chi tiết hơn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>warning: [unchecked] unchecked call to add(E) as a member of the raw type
+ArrayList
+rawList.add("string");
+       ^
+  where E is a type-variable:
+    E extends Object declared in class ArrayList
+1 warning</code></pre>
+      </figure>
+
+      <p>Thông báo làm rõ rằng <code>ArrayList</code> sử dụng một biến kiểu <code>E</code> nhưng nó không được thiết lập trong đoạn mã đã cho, đó là lý do tại sao trình biên dịch không thể đảm bảo rằng việc thêm một <code>String</code> vào danh sách này sẽ không gây ra lỗi ở thời điểm runtime!</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

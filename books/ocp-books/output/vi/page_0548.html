@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0547.html">← Trước</a>
+    <a href="page_0549.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">548</span>
+      </header>
+
+      <p class="no-indent">Hãy quan sát các điểm sau trong chương trình trên:</p>
+
+      <ol class="numbered">
+        <li>Một <code>CyclicBarrier</code>&nbsp;với số lượng party là 2&nbsp;đang được tạo ra. Một <code>Runnable</code>&nbsp;sẽ được thực thi sau khi cả hai party đến nơi cũng được truyền vào constructor. .</li>
+        <li>Mỗi thread người bạn bắt đầu chờ đợi khi gọi <code>cb.await()</code>&nbsp;.</li>
+        <li><code>Runnable</code>&nbsp;này được truyền dưới dạng hành động rào cản (barrier action) được thực thi ngay khi party cuối cùng đến và trước khi các party tiếp tục thực thi. Đó là lý do tại sao <code>Barrier Lifted</code>&nbsp;được in ra trước hai dòng cuối cùng.</li>
+        <li>Lưu ý rằng thứ tự đến của các người bạn là không xác định vì điều đó phụ thuộc vào thread nào được chạy trước. Do đó, thứ tự của hai dòng đầu tiên và hai dòng cuối cùng có thể khác nhau.</li>
+      </ol>
+
+      <p>Từ cyclic trong <code>CyclicBarrier</code>&nbsp;ngụ ý rằng rào cản (barrier) đã sẵn sàng để chặn các thread một lần nữa sau khi số lượng party được chỉ định đã đến. Kỳ thi có thể kiểm tra bạn về khía cạnh này. Vì vậy, ví dụ, bạn nên biết điều gì sẽ xảy ra nếu có thêm ba người bạn nữa cố gắng chờ (await) trên cùng một rào cản:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public static void main(String[] args) {
+...same as before
+Thread.ofPlatform().start(new Friend("Paul", cb));
+Thread.ofPlatform().start(new Friend("Peter", cb));
+Thread.ofPlatform().start(new Friend("Amy", cb));
+Thread.ofPlatform().start(new Friend("Bella", cb));
+Thread.ofPlatform().start(new Friend("Cathy", cb));
+}</code></pre>
+      </figure>
+
+      <p>Rào cản sẽ được nâng lên sau khi hai người bạn đầu tiên đến và sau đó lại được nâng lên sau khi hai người bạn tiếp theo đến.&nbsp;Do đó, hành động rào cản (barrier action) sẽ được thực thi hai lần, điều đó có nghĩa là <code>Barrier Lifted</code> sẽ được in hai lần. Rào cản sẽ tiếp tục được hạ xuống sau khi người bạn thứ năm đến. Vì chỉ có năm người bạn, người bạn thứ năm sẽ không thể tiếp tục và rào cản sẽ chờ để nâng lên một lần nữa mãi mãi.&nbsp;Còn rất nhiều điều về class này hơn những gì ví dụ trên minh họa, vì vậy, hãy cố gắng đọc qua JavaDoc của nó.</p>
+
+      <p>Mặc dù cả năm bộ đồng bộ hóa (synchronizer) đều hữu ích, kỳ thi chỉ có các câu hỏi về <code>CyclicBarrier</code>&nbsp;. Vì vậy, tôi sẽ không thảo luận về những phần còn lại ở đây. Nhưng tôi khuyến khích bạn nên</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

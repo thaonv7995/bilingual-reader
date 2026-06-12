@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — Writing Better Queries</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0189.html">← Prev</a>
+    <a href="page_0191.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">190</span>
+      </header>
+
+      <p class="no-indent">The second time you run the query, you should notice at least a 10% performance speed
+      increase and should see the following cached in the buffer:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    relname    | dirty_buffers | num_buffers
+---------------+---------------+-------------
+ facts         |             0 |         736
+ lu_fact_types |             0 |           4</code></pre>
+      </figure>
+
+      <p>The more onboard memory you have dedicated to the cache, the more room you&rsquo;ll have
+      to cache data. You can set the amount of dedicated memory by changing the <code>shared_buffers</code>
+      setting in <code>postgresql.conf</code>. Don&rsquo;t go overboard; raising <code>shared_buffers</code> too much
+      will bloat your cache, leading to more time wasted scanning the cache.</p>
+
+      <p>Nowadays, there&rsquo;s no shortage of onboard memory. You can take advantage of this by
+      precaching commonly used tables using an extension called <code>pg_prewarm</code>, now pack&shy;aged as
+      <a href="http://bit.ly/1rX2Rey" class="accent-word">part of PostgreSQL 9.4</a>. <code>pg_prewarm</code> lets you prime your PostgreSQL by loading
+      data from commonly used tables into memory so that the first user to hit the database
+      can experience the same performance boost offered by caching as later users. A good
+      article that describes this feature is <a href="http://bit.ly/1FUkmNa" class="accent-word">Prewarming relational data</a>.</p>
+
+      <h3 class="section-title">Writing Better Queries</h3>
+
+      <p class="no-indent">The best and easiest way to improve query performance is to start with well-written
+      queries. Four out of five queries we encounter are not written as efficiently as they could
+      be.</p>
+
+      <p>There appear to be two primary causes for all this bad querying. First, we see people
+      reuse SQL patterns without thinking. For example, if they successfully write a query
+      using a left join, they will continue to use left join when incorporating more tables
+      instead of considering the sometimes more appropriate inner join. Unlike other pro&shy;gramming
+      languages, the SQL language does not lend itself well to blind reuse.</p>
+
+      <p>Second, people don&rsquo;t tend to keep up with the latest developments in their dialect of
+      SQL. If a PostgreSQL user is still writing SQL as if he still had an early version, he would
+      be oblivious to all the syntax-saving (and sanity-saving) addenda that have come along.</p>
+
+      <p>Writing efficient SQL takes practice. There&rsquo;s no such thing as a wrong query as long as
+      you get the expected result, but there is such a thing as a slow query. In this section, we
+      point out some of the common mistakes we see people make. Although this book is
+      about PostgreSQL, our recommendations are applicable to other relational databases
+      as well.</p>
+
+      <h3 class="subsection-title">Overusing Subqueries in SELECT</h3>
+
+      <p class="no-indent">A classic newbie mistake is to think of subqueries as independent entities. Unlike con&shy;ventional
+      programming languages, SQL doesn&rsquo;t take kindly to the idea of black-boxing</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">172<span class="sep">|</span>Chapter 9: Query Performance Tuning</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

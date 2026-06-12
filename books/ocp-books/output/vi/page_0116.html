@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0115.html">← Trước</a>
+    <a href="page_0117.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">116</span>
+      </header>
+
+      <p class="no-indent">biến được định nghĩa ngay tại thời điểm biên dịch và không thể bị thay đổi sau khi đã định nghĩa. Điều này có nghĩa là, trình biên dịch phải đảm bảo rằng mã nguồn không gán một đối tượng (Object) của kiểu này cho một biến của kiểu khác. Nó không được phép cho mã nguồn gọi các phương thức không được hỗ trợ bởi kiểu của biến đó. Tuy nhiên, việc chỉ phụ thuộc vào thông tin kiểu dữ liệu có sẵn tại thời điểm biên dịch sẽ áp đặt quá nhiều hạn chế lên mã nguồn. Ví dụ, nếu bạn định nghĩa một biến tham chiếu có kiểu <code>java.util.List</code>, trình biên dịch không được phép cho mã nguồn gọi các phương thức được định nghĩa trong một lớp (Class) khác bằng cách sử dụng biến đó. Tuy nhiên, sự cứng nhắc này sẽ khiến tính đa hình (Polymorphism) trở nên bất khả thi bởi vì toàn bộ tiền đề của tính đa hình (Polymorphism) là một đối tượng (Object) có thể hành xử khác đi ở thời điểm chạy (run time) so với những gì đã được hứa hẹn ở thời điểm biên dịch.</p>
+
+      <p>Bạn có thể thấy rằng có hai yêu cầu mâu thuẫn nhau mà trình biên dịch cần phải đáp ứng. Một mặt, bạn muốn trình biên dịch kiểm tra kiểu (type check) của mã nguồn để đảm bảo mã nguồn không gọi các phương thức ngẫu nhiên bằng cách sử dụng một tham chiếu, và mặt khác, bạn lại muốn trình biên dịch cho phép mã nguồn bỏ qua việc kiểm tra kiểu trong một số trường hợp. Java cố gắng đáp ứng cả hai mục tiêu này bằng cách để trình biên dịch đưa ra một số giả định nhất định và để lập trình viên đưa ra các cam kết với trình biên dịch rằng họ không cố gắng làm bất kỳ điều gì mờ ám.</p>
+
+      <p>Bây giờ chúng ta hãy xem hai điều này được thực hiện như thế nào trong thực tế.</p>
+
+      <h3 class="section-title section-title--minor">Phép thử &ldquo;is a&rdquo;<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Phép thử <strong>is-a</strong> là một phép thử trực quan để xác định mối quan hệ giữa hai kiểu tham chiếu. Nó cho phép bạn kiểm tra xem có quan hệ cha - con giữa hai kiểu tham chiếu hay không, và nếu có, thì kiểu nào trong hai kiểu là lớp cha (Superclass), và kiểu nào là lớp con (Subclass). Ví dụ, việc nói một con Chó (Dog) là một Thú cưng (Pet) hoặc một con Mèo (Cat) là một Thú cưng (Pet) thì hoàn toàn hợp lý, nhưng không hợp lý nếu nói một con Chó (Dog) là một con Mèo (Cat). Một mối quan hệ tương tự cũng tồn tại giữa Quả táo (Apple) và Trái cây (Fruit) hoặc Quả xoài (Mango) và Trái cây (Fruit).</p>
+
+      <p>Một Quả táo (Apple) là một Trái cây (Fruit), một Quả xoài (Mango) là một Trái cây (Fruit), nhưng một Quả táo (Apple) không phải là một Quả xoài (Mango). Nếu bạn mô hình hóa Apple, Mango, và Fruit thành các lớp (Class), bạn sẽ đưa tất cả các đặc tính chung của trái cây vào một lớp <code>Fruit</code> và để các lớp <code>Apple</code> và <code>Mango</code> kế thừa (extend) từ <code>Fruit</code>. Tầm quan trọng của việc thiết lập mối quan hệ này là nó cho phép bạn sử dụng một đối tượng (Object) của lớp con (Subclass) ở bất kỳ nơi nào thay cho đối tượng (Object) của lớp cha (Superclass). Thật vậy, nếu bạn hứa cho ai đó một trái cây, bạn chắc chắn có thể cho họ một quả táo vì quả táo là một trái cây. Điều ngược lại rõ ràng là không đúng. Nếu bạn</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

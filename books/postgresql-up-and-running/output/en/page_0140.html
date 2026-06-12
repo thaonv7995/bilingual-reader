@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Bind trigger function to view</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0139.html">← Prev</a>
+    <a href="page_0141.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">140</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>        RETURN NEW;
+    END IF;
+    IF (TG_OP = 'UPDATE') THEN
+        IF
+            ROW(OLD.fact_type_id, OLD.tract_id, OLD.yr, OLD.val, OLD.perc) !=
+            ROW(NEW.fact_type_id, NEW.tract_id, NEW.yr, NEW.val, NEW.perc)
+        THEN
+            UPDATE census.facts AS f
+            SET
+                tract_id = NEW.tract_id,
+                yr = NEW.yr,
+                fact_type_id = NEW.fact_type_id,
+                val = NEW.val,
+                perc = NEW.perc
+            WHERE
+                f.tract_id = OLD.tract_id AND
+                f.yr = OLD.yr AND
+                f.fact_type_id = OLD.fact_type_id;
+            RETURN NEW;
+        ELSE
+            RETURN NULL;
+        END IF;
+    END IF;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> Handle deletes. Delete only the record with matching keys in the <code>OLD</code> record.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> Handle inserts.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> Handle the updates. Use the <code>OLD</code> record to determine which records to update
+      with the <code>NEW</code> record data.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">④</span> Update rows only if at least one of the columns from facts table has changed.</p>
+
+      <p>Next, we bind the trigger function to the view, as shown in <span class="accent-word">Example 7-5</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-5.</strong> Bind trigger function to view</figcaption>
+        <pre class="code-block"><code>CREATE TRIGGER census.trig_01_vw_facts_ins_upd_del
+INSTEAD OF INSERT OR UPDATE OR DELETE ON census.vw_facts
+FOR EACH ROW EXECUTE PROCEDURE census.trig_vw_facts_ins_upd_del();</code></pre>
+      </figure>
+
+      <p>Now when we update, delete, or insert into our view, it will update the underlying facts
+      table instead:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>UPDATE census.vw_facts SET yr = 2012 WHERE yr = 2011 AND tract_id =
+'25027761200';</code></pre>
+      </figure>
+
+      <p>This will output a note:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Query returned successfully: 56 rows affected, 40 ms execution time.</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">122<span class="sep">|</span>Chapter 7: SQL: The PostgreSQL Way</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 7: Partial Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-label {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .chapter-title {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 20.7pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">153</span>
+      </header>
+
+      <p class="chapter-label">Chapter 7</p>
+      <h1 class="chapter-title">Partial Results</h1>
+
+      <p class="no-indent">Sometimes you do not need the full result of an SQL query but only the first few rows&mdash;e.g., to show only the ten most recent messages. In this case, it is also common to allow users to browse through older messages&mdash;either using traditional paging navigation or the more modern &ldquo;infinite scrolling&rdquo; variant. The related SQL queries used for this function can, however, cause serious performance problems if <i>all</i> messages must be sorted in order to find the most recent ones. A pipelined <code><strong>order by</strong></code> is therefore a very powerful means of optimization for such queries.</p>
+
+      <p>This chapter demonstrates how to use a pipelined <code><strong>order by</strong></code> to efficiently retrieve partial results. Although the syntax of these queries varies from database to database, they still execute the queries in a very similar way. Once again, this illustrates that they all put their pants on one leg at a time.</p>
+
+      <h3 class="section-title">Querying Top-N Rows</h3>
+
+      <p class="no-indent">Top-N queries are queries that limit the result to a specific number of rows. These are often queries for the most recent or the &ldquo;best&rdquo; entries of a result set. For efficient execution, the ranking must be done with a pipelined <code><strong>order by</strong></code>.</p>
+
+      <p>The simplest way to fetch only the first rows of a query is fetching the required rows and then closing the statement. Unfortunately, the optimizer cannot foresee that when preparing the execution plan. To select the best execution plan, the optimizer has to know if the application will ultimately fetch all rows. In that case, a full table scan with explicit sort operation might perform best, although a pipelined <code><strong>order by</strong></code> could be better when fetching only ten rows&mdash;even if the database has to fetch each row individually. That means that the optimizer has to know if you are going to abort the statement before fetching all rows so it can select the best execution plan.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">143</p>
+    </article>
+  </main>
+</body>
+</html>

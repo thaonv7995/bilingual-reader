@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">54</span>
+      </header>
+      <p class="chapter-running-head">Chapter 2: The Where Clause</p>
+
+      <aside class="sidebar-note">
+        <h3>Important</h3>
+        <p>The access predicates are the start and stop conditions for an index lookup. They define the scanned index range.</p>
+        <p>Index filter predicates are applied during the leaf node traversal only. They do not narrow the scanned index range.</p>
+        <p>Appendix&nbsp;A explains how to recognize access predicates in other databases.</p>
+      </aside>
+
+      <p class="no-indent">The database can use all conditions as access predicates if we turn the index definition around:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+| Id | Operation                    | Name      | Rows | Cost |
+---------------------------------------------------------------
+|  0 | SELECT STATEMENT             |           |    1 |    3 |
+|* 1 |  FILTER                      |           |      |      |
+|  2 |   TABLE ACCESS BY INDEX ROWID| EMPLOYEES |    1 |    3 |
+|* 3 |    INDEX RANGE SCAN          | EMP_TEST2 |    1 |    2 |
+---------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+1 - filter(:END_DT &gt;= :START_DT)
+3 - access(SUBSIDIARY_ID  = :SUBS_ID
+       AND DATE_OF_BIRTH &gt;= :START_DT
+       AND DATE_OF_BIRTH &lt;= :END_DT)</code></pre>
+      </figure>
+
+      <p>Finally, there is the between operator. It allows you to specify the upper and lower bounds in a single condition:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>DATE_OF_BIRTH BETWEEN '01-JAN-71'
+                  AND '10-JAN-71'</code></pre>
+      </figure>
+
+      <p>Note that between always includes the specified values, just like using the less than or equal to (&lt;=) and greater than or equal to (&gt;=) operators:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    DATE_OF_BIRTH &gt;= '01-JAN-71'
+AND DATE_OF_BIRTH &lt;= '10-JAN-71'</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">44</p>
+    </article>
+  </main>
+</body>
+</html>

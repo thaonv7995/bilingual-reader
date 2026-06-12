@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Listing 7.10 và 7.11 Truyền JWT qua RestTemplate</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.list-continuation {
+      position: relative;
+      margin: 0 0 2.5mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.list-continuation::before {
+      content: "2";
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--710 .listing-callouts-right {
+      padding-top: 34mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.list-continuation + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0243.html">← Trước</a>
+    <a href="page_0245.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">219</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">JavaScript Web Tokens và OAuth2</span>
+      </header>
+
+      <p class="no-indent list-continuation">xem ví dụ về class <code>JWTTokenStoreConfig</code> ở cả hai class <code>licensing-service/src/main/com/thoughtmechanix/licensing-service/security/JWTTokenStoreConfig.java</code> và <code>organization-service/src/main/com/thoughtmechanix/organization-service/security/JWTTokenStoreConfig.java</code>.</p>
+
+      <p>Bạn cần làm thêm một phần việc cuối cùng. Vì licensing service gọi organization service, bạn cần đảm bảo rằng OAuth2 token được truyền đi. Việc này thường được thực hiện qua class <code>OAuth2RestTemplate</code>; tuy nhiên, class <code>OAuth2RestTemplate</code> không truyền token dựa trên JWT. Để đảm bảo licensing service của bạn thực hiện việc này, bạn cần thêm một bean <code>RestTemplate</code> tùy chỉnh sẽ thực hiện việc inject này cho bạn. <code>RestTemplate</code> tùy chỉnh này có thể tìm thấy trong class <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/Application.java</code>.</p>
+
+      <p>Listing sau đây cho thấy định nghĩa bean tùy chỉnh này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.10</strong><br>Tạo class <code>RestTemplate</code> tùy chỉnh để inject JWT token</figcaption>
+        <div class="listing-annotated listing-annotated--710" aria-label="Code có chú thích Listing 7.10">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>public class Application {
+   //Code removed for conciseness
+    @Primary
+    @Bean
+    public RestTemplate getCustomRestTemplate() {
+        RestTemplate template = new RestTemplate();
+        List interceptors = template.getInterceptors();
+        if (interceptors == null) {
+          template.setInterceptors(
+          ➥ Collections.singletonList(
+              new UserContextInterceptor()));
+        } else {
+            interceptors.add(new UserContextInterceptor());
+            template.setInterceptors(interceptors);
+        }
+
+        return template;
+    }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 7.10">
+            <p class="listing-callout"><code>UserContextInterceptor</code> sẽ inject header Authorization vào mọi lệnh gọi Rest.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>Trong code trước đó, bạn đang định nghĩa một bean <code>RestTemplate</code> tùy chỉnh sẽ sử dụng <code>ClientHttpRequestInterceptor</code>. Hãy nhớ lại từ chương 6 rằng <code>ClientHttpRequestInterceptor</code> là class Spring cho phép bạn gắn thêm chức năng để thực thi trước khi một lệnh gọi dựa trên REST được thực hiện. Class interceptor này là biến thể của class <code>UserContextInterceptor</code> mà bạn đã định nghĩa ở chương 6. Class này nằm trong <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/utils/UserContextInterceptor.java</code>. Listing sau đây cho thấy class này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.11</strong><br><code>UserContextInterceptor</code> sẽ inject JWT token vào các lệnh gọi REST của bạn</figcaption>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>public class UserContextInterceptor
+    implements ClientHttpRequestInterceptor {</code></pre>
+        </figure>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

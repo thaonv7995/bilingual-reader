@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0701.html">← Trước</a>
+    <a href="page_0703.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">702</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>javac --module-source-path src --module-path thirdpartymodules/abc.util.jar -d out --module moduleA</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong class="run-in">5. <code>-classpath</code> or <code>-cp</code> or <code>--class-path</code> :</strong> Tùy chọn này được sử dụng để biên dịch mã nguồn không mô-đun (non-modular code). Nếu bạn đang biên dịch mã nguồn không mô-đun thông thường nhưng mã nguồn đó phụ thuộc vào một số lớp (class), bạn có thể đưa các lớp/file jar đó vào classpath bằng cách sử dụng tùy chọn <code>-classpath</code>.</p>
+
+      <p class="no-indent"><strong>Lưu ý:</strong> Tùy chọn này không hữu ích cho việc biên dịch mã nguồn mô-đun (modular code) vì các lớp (class) trong mã nguồn mô-đun không thể đọc các lớp (class) hiện diện trên classpath. Mã nguồn mô-đun chỉ có thể nhìn thấy mã nguồn mô-đun khác. Đó là lý do tại sao các lớp (class) không mô-đun phải được chuyển đổi thành &ldquo;automatic module&rdquo; và được chỉ định trên <code>--module-path</code> như đã giải thích ở trước.</p>
+
+      <h3 class="section-title">23.4.7 Tóm tắt các tùy chọn dòng lệnh dùng để thực thi<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Bạn cần biết về ba tùy chọn dòng lệnh sau đây để chạy một lớp (class) được chứa trong một module:</p>
+
+      <p class="no-indent"><strong class="run-in">1. <code>--module-path</code> or <code>-p</code> :</strong> Tùy chọn này chỉ ra vị trí định nghĩa của module. Nếu module được đóng gói trong một file jar, bạn có thể chỉ định đường dẫn đến file jar đó, hoặc chỉ định đường dẫn đến thư mục chứa file jar (tương đối so với thư mục hiện tại hoặc đường dẫn tuyệt đối). Ví dụ, <code>--module-path c:\javatest\modulejars</code></p>
+
+      <p>Bạn cũng có thể chỉ định vị trí nơi module đã biên dịch tồn tại dưới dạng thư mục giải nén (exploded form). Ví dụ, nếu module của bạn có tên là <code>abc.math.utils</code>&nbsp;và module này được lưu trữ trong <code>c:\javatest\output</code>, bạn có thể sử dụng: <code>--module-path c:\javatest\output</code>.&nbsp;&nbsp;Hãy nhớ rằng thư mục <code>c:\javatest\output</code>&nbsp;phải chứa thư mục <code>abc.math.utils</code>&nbsp;và các file module (bao gồm cả <code>module-info.class</code>) phải hiện diện trong cấu trúc thư mục thích hợp của chúng dưới thư mục <code>abc.math.utils</code>.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

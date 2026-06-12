@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0682.html">← Trước</a>
+    <a href="page_0684.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">683</span>
+      </header>
+
+      <p class="no-indent">module. Yêu cầu thứ hai là mệnh đề &ldquo;requires&rdquo;, điều mà tôi sẽ sớm giới thiệu ngay sau đây.</p>
+
+      <p>Cấu trúc thư mục của module này tuân theo định dạng định nghĩa module nguồn đã được giải thích
+      trước đó. Thư mục&nbsp;<code>c:\ocp21\moduletest\src\calculators</code>&nbsp;là thư mục nguồn cho
+      module này. Nó chứa các file&nbsp;<code>module-info.java</code>&nbsp;và <code>calculators\InterestCalculator.java</code>.
+      Hãy chạy lệnh sau để biên dịch module này:</p>
+
+      <figure class="code-snippet code-snippet--terminal">
+        <pre class="code-block"><code>c:\ocp21\moduletest&gt;javac -d out --module-source-path src --module
+calculators</code></pre>
+      </figure>
+
+      <p class="no-indent">Lệnh này sẽ tạo ra đầu ra thích hợp trong thư mục <code>out</code>.&nbsp;</p>
+
+      <p>Bây giờ, hãy chuyển sự chú ý của chúng ta sang module <code>simpleinterest</code>. Vì chúng ta muốn
+      <code>SimpleInterestCalculator</code>&nbsp;triển khai Interface (Giao diện) <code>InterestCalculator</code>, trước tiên chúng ta cần
+      làm rõ ý định bằng cách tuyên bố rằng module <code>simpleinterest</code>&nbsp;của chúng ta &ldquo;requires&rdquo; quyền truy cập vào
+      module <code>calculators</code>&nbsp;bằng cách sửa đổi bộ mô tả module của <code>simpleinterest</code>&nbsp;như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>module simpleinterest{
+requires calculators;
+}</code></pre>
+      </figure>
+
+      <p>Mệnh đề <code>requires</code>&nbsp;là đối trọng của mệnh đề <code>exports</code>. Mệnh đề <code>requires</code>&nbsp;làm cho
+      module khác có thể &ldquo;đọc được&rdquo; (readable) trong module này. Điều này còn được gọi là khả năng đọc của module (module readability). Nói
+      cách khác, tất cả các package được export bởi module khác đều có thể được truy cập bởi một module khai báo
+      sự phụ thuộc của nó vào module đó bằng cách sử dụng mệnh đề <code>requires</code>.</p>
+
+      <p>Mục đích của việc có mệnh đề <code>requires</code>&nbsp;là để làm cho các phụ thuộc của một module hiển thị rõ ràng,
+      tường minh đối với người dùng. Người dùng của một module không cần phải xem qua các câu lệnh <code>import</code>&nbsp;của từng
+      Lớp (Class) trong module để biết module này phụ thuộc vào những module nào khác. Tất cả những gì họ cần làm là
+      kiểm tra <code>module-info</code>&nbsp;.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

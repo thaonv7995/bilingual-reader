@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Constraints</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0127.html">← Prev</a>
+    <a href="page_0129.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">128</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Example 6-4.</strong> Using TYPE to define new table structure</figcaption>
+        <pre class="code-block"><code>CREATE TABLE super_users OF basic_user (CONSTRAINT pk_su PRIMARY KEY (user_name));</code></pre>
+      </figure>
+
+      <p class="no-indent">When creating tables from data types, you can&rsquo;t alter the columns of the table. Instead,
+      add or remove columns to the composite data type, and PostgreSQL will automatically
+      propagate the changes to the table structure. Much like inheritance, the advantage of
+      this approach is that if you have many tables sharing the same underlying structure and
+      you need to make a universal alteration, you can do so by simply changing the under‐
+      lying composite type.</p>
+
+      <p>Let&rsquo;s say we now need to add a phone number to our super_users table from
+      <span class="accent-word">Example 6-4</span>. All we have to do is execute the following command to alter the underlying
+      type:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TYPE basic_user ADD ATTRIBUTE phone varchar(10) CASCADE;</code></pre>
+      </figure>
+
+      <p>Normally, you can&rsquo;t change the definition of a type if tables depend on that type. The
+      CASCADE modifier overrides this restriction, applying the same change to all the depen‐
+      dent tables.</p>
+
+      <h3 class="section-title">Constraints</h3>
+      <p class="no-indent">PostgreSQL constraints are the most advanced (and most complex) of any database
+      we&rsquo;ve worked with. Not only do you create constraints, but you can also control all facets
+      of how a constraint handles existing data, any cascade options, how to perform the
+      matching, which indexes to incorporate, conditions under which the constraint can be
+      violated, and more. On top of it all, you can pick your own name for each constraint.</p>
+
+      <p>For the full treatment, we suggest you review the official documentation. You&rsquo;ll find
+      comfort in knowing that taking the default settings usually works out fine. We&rsquo;ll start
+      off with something familiar to most relational folks: foreign key, unique, and check
+      constraints. Then we&rsquo;ll move on to exclusion constraints, introduced in version 9.0.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0128_icon_tip.png" width="43" height="57" alt="Tip">
+        </figure>
+        <p class="callout-text">Names of primary key and unique key constraints must be unique
+        within a given schema. The general practice is to include the name
+        of the table and column as part of the name of the key. For the sake
+        of brevity, our examples might not abide by this general practice.</p>
+      </div>
+
+      <h3 class="subsection-title">Foreign Key Constraints</h3>
+      <p class="no-indent">PostgreSQL follows the same convention as most databases that support referential
+      integrity. You can specify cascade update and delete rules to avoid pesky orphaned re‐
+      cords. We show you how to add foreign key constraints in <span class="accent-word">Example 6-5</span>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">110<span class="sep">|</span>Chapter 6: Tables, Constraints, and Indexes</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

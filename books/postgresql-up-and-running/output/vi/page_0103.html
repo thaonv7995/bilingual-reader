@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.type-name {
+      margin: 0 0 1mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.type-desc {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0102.html">← Trước</a>
+    <a href="page_0104.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">103</span>
+      </header>
+
+      <p class="no-indent">vô hạn tự nhiên, giải phóng chúng ta khỏi việc phải tạo ra các quy ước mà chúng ta chắc chắn sẽ quên.
+      Cuối cùng, phiên bản 9.2 đã công bố các loại phạm vi cung cấp hỗ trợ cho các phạm vi tạm thời với
+      một loạt các toán tử, hàm và chỉ mục đi kèm. Chúng tôi đề cập đến các loại phạm vi trong
+      <span class="accent-word">“Các loại phạm vi” trên trang 93</span>.</p>
+
+      <p>Đến thời điểm hiện tại, PostgreSQL có chín loại dữ liệu tạm thời. Hiểu sự khác biệt của chúng là quan trọng để đảm bảo rằng bạn chọn đúng loại dữ liệu cho công việc. Tất cả các loại trừ phạm vi đều tuân theo tiêu chuẩn ANSI SQL. Các sản phẩm cơ sở dữ liệu hàng đầu khác hỗ trợ một số, nhưng không phải tất cả, các loại dữ liệu này. Oracle có nhiều loại tạm thời nhất; SQL Server đứng thứ hai; và MySQL đứng cuối cùng, không hỗ trợ múi giờ trong bất kỳ phiên bản nào.</p>
+
+      <p>Bởi vì các loại tạm thời của PostgreSQL có thể là duy nhất, chúng tôi sẽ mô tả từng loại một cách chi tiết hơn:</p>
+
+      <p class="type-name no-indent"><code>date</code></p>
+      <p class="type-desc">Chỉ lưu trữ tháng, ngày và năm, không có nhận thức về múi giờ và không có khái niệm
+      về giờ, phút hoặc giây.</p>
+
+      <p class="type-name no-indent"><code>time</code> (còn gọi là <code>time without time zone</code>)</p>
+      <p class="type-desc">Ghi lại giờ, phút và giây mà không có nhận thức về múi giờ hoặc ngày tháng lịch.</p>
+
+      <p class="type-name no-indent"><code>timestamp</code> (còn gọi là <code>timestamp without time zone</code>)</p>
+      <p class="type-desc">Ghi lại cả ngày tháng lịch và thời gian (giờ, phút, giây) nhưng không quan tâm
+      đến múi giờ. Do đó, giá trị hiển thị của dữ liệu này sẽ không thay đổi khi
+      bạn thay đổi múi giờ của máy chủ.</p>
+
+      <p class="type-name no-indent"><code>timestamptz</code> (còn gọi là <code>timestamp with time zone</code>)</p>
+      <p class="type-desc">Một loại dữ liệu ngày và giờ có nhận thức về múi giờ. Nội bộ, <code>timestamptz</code> được lưu trữ trong
+      Giờ Phối hợp Quốc tế (UTC), nhưng hiển thị mặc định theo múi giờ của
+      máy chủ (hoặc cơ sở dữ liệu/người dùng/phiên nếu bạn quan sát các múi giờ khác nhau ở các cấp độ đó).
+      Nếu bạn nhập một timestamp không có múi giờ và chuyển đổi nó thành một loại có múi giờ,
+      PostgreSQL giả định múi giờ của máy chủ. Nếu bạn thay đổi múi giờ của máy chủ,
+      bạn sẽ thấy tất cả các thời gian hiển thị thay đổi.</p>
+
+      <p class="type-name no-indent"><code>timetz</code> (còn gọi là <code>time with time zone</code>)</p>
+      <p class="type-desc">Người chị ít được sử dụng hơn của <code>timestamptz</code>. Nó có nhận thức về múi giờ nhưng không lưu trữ ngày. Nó luôn giả định DST của thời gian hiện tại. Đối với một số ngôn ngữ lập trình
+      không có khái niệm về thời gian mà không có ngày, nó có thể ánh xạ <code>timetz</code> đến một timestamp với một
+      múi giờ vào thời điểm bắt đầu của thời gian (ví dụ, Unix Epoch 1970, do đó dẫn đến
+      việc sử dụng DST của năm 1970).</p>
+
+      <p class="type-name no-indent"><code>interval</code></p>
+      <p class="type-desc">Một khoảng thời gian tính bằng giờ, ngày, tháng, phút và các đơn vị khác. Nó rất hữu ích
+      cho việc thực hiện phép toán ngày-giờ. Ví dụ, nếu thế giới dự kiến sẽ kết thúc trong
+      đúng 666 ngày từ bây giờ, tất cả những gì bạn cần làm là thêm một khoảng thời gian 666 ngày vào
+      thời gian hiện tại để có được khoảnh khắc chính xác khi nó sẽ xảy ra (và lập kế hoạch cho phù hợp).</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Thời gian tạm thời<span class="sep">|</span>85</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: Build environment variables</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.subsequent-point {
+      margin-left: 4mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-checks {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-checks > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-checks > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-checks > li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-checks code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ul.manning-checks + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + .sidebar-note--topic {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0343.html">← Prev</a>
+    <a href="page_0345.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Enabling your service to build in Travis CI</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">319</span>
+      </header>
+
+      <ul class="manning-checks" aria-label="Build environment variables">
+        <li><code>BUILD_NAME</code></li>
+        <li><code>CONTAINER_IP</code></li>
+        <li><code>PLATFORM_TEST_NAME</code></li>
+      </ul>
+
+      <p class="no-indent">The actual values set in these environment variables are</p>
+
+      <figure class="code-snippet" aria-label="Build environment variable export commands">
+        <pre class="code-block"><code>- export BUILD_NAME=chapter10-$TRAVIS_BRANCH-
+  ➥ $(date -u "+%Y%m%d%H%M%S")-$TRAVIS_BUILD_NUMBER
+- export CONTAINER_IP=52.53.169.60
+- export PLATFORM_TEST_NAME="chapter10-platform-tests"</code></pre>
+      </figure>
+
+      <p class="no-indent">The first environment variable, <code>BUILD_NAME</code>, generates a unique build name that contains the name of the build, followed by the date and time (down to the seconds field) and then the build number in Travis. This <code>BUILD_NAME</code> will be used to tag your source code in GitHub and your Docker image when it&rsquo;s pushed to the Docker hub repository.</p>
+
+      <p class="subsequent-point">The second environment variable, <code>CONTAINER_IP</code>, contains the IP address of the Amazon ECS virtual machine that your Docker containers will run on. This <code>CONTAINER_IP</code> will be passed later to another Travis CI job that will execute your platform tests.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>I&rsquo;m not assigning a static IP address to the Amazon ECS server that&rsquo;s spun. If I tear down the container completely, I&rsquo;ll be given a new IP. In a real production environment, the servers in your ECS cluster will probably have static (non-changing) IPs assigned to them, and the cluster will have an Amazon Enterprise Load Balancer (ELB) and an Amazon Route 53 DNS name so that the actual IP address of the ECS server would be transparent to the services. However, setting up this much infrastructure is outside the scope of the example I&rsquo;m trying to demonstrate in this chapter.</p>
+      </aside>
+
+      <p>The third environment variable, <code>PLATFORM_TEST_NAME</code>, contains the name of the build job being executed. We&rsquo;ll explore its use later in the chapter.</p>
+
+      <aside class="sidebar-note sidebar-note--topic" aria-labelledby="auditing-heading">
+        <h3 id="auditing-heading">On auditing and traceability</h3>
+        <p>A common requirement in many financial services and healthcare companies is that they have to prove traceability of the deployed software in production, all the way back through all the lower environments, back to the build job that built the software, and then back to when the code was checked into the source code repository. The immutable server pattern really shines in helping organizations meet this requirement. As you saw in our build example, you tagged the source control repository and the container image that&rsquo;s going to be deployed with the same build name. That build name is unique and tied into a Travis build number. Because you only promote the container image through each environment and each container image is labeled with the build name, you&rsquo;ve established traceability of that container image back to the source code associated with it. Because the containers are never changed once they&rsquo;re tagged, you have a strong audit position to show that the deployed code matches the</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

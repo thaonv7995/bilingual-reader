@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Các loại grant OAuth2 và mục 7.2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0219.html">← Trước</a>
+    <a href="page_0221.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Bắt đầu từ nhỏ: dùng Spring và OAuth2 để bảo vệ một endpoint duy nhất</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">195</span>
+      </header>
+
+      <p class="no-indent">token có thể được trình bày mỗi khi một dịch vụ mà ứng dụng của người dùng đang sử dụng cố gắng truy cập một tài nguyên được bảo vệ (microservice).</p>
+
+      <p>Tài nguyên được bảo vệ sau đó có thể liên hệ máy chủ OAuth2 để xác định tính hợp lệ của token và truy xuất các role được gán cho người dùng. Role được dùng để nhóm các người dùng liên quan lại với nhau và định nghĩa tài nguyên mà nhóm người dùng đó có thể truy cập. Trong phạm vi chương này, bạn sẽ dùng OAuth2 và role để định nghĩa service endpoint nào và HTTP verb nào mà một người dùng có thể gọi trên một endpoint.</p>
+
+      <p>Bảo mật dịch vụ web là một chủ đề cực kỳ phức tạp. Bạn phải hiểu ai sẽ gọi các dịch vụ của mình (người dùng nội bộ trong mạng doanh nghiệp, người dùng bên ngoài), họ sẽ gọi dịch vụ của bạn như thế nào (client web nội bộ, thiết bị di động, ứng dụng web bên ngoài mạng doanh nghiệp), và họ sẽ thực hiện hành động gì với mã của bạn. OAuth2 cho phép bạn bảo vệ các dịch vụ dựa trên REST của mình trong các kịch bản khác nhau này thông qua các sơ đồ xác thực khác nhau gọi là grant. Đặc tả OAuth2 có bốn loại grant:</p>
+
+      <ul class="manning-bullets" aria-label="Các loại grant OAuth2">
+        <li>Password</li>
+        <li>Client credential</li>
+        <li>Authorization code</li>
+        <li>Implicit</li>
+      </ul>
+
+      <p>Chúng ta sẽ không đi qua từng loại grant này hay cung cấp ví dụ mã cho từng loại grant. Đơn giản là có quá nhiều nội dung để bao phủ trong một chương. Thay vào đó, tôi sẽ làm những việc sau:</p>
+
+      <ul class="manning-bullets" aria-label="Các chủ đề bảo mật chương 7">
+        <li>Thảo luận cách dịch vụ microservice của bạn có thể dùng OAuth2 thông qua một trong các loại grant OAuth2 đơn giản hơn (loại grant password).</li>
+        <li>Dùng JavaScript Web Token để cung cấp giải pháp OAuth2 mạnh mẽ hơn và thiết lập một chuẩn để mã hóa thông tin trong token OAuth2.</li>
+        <li>Đi qua các cân nhắc bảo mật khác cần được tính đến khi xây dựng microservice.</li>
+      </ul>
+
+      <p>Tôi có cung cấp tài liệu tổng quan về các loại grant OAuth2 khác trong phụ lục B, &ldquo;OAuth2 grant types.&rdquo; Nếu bạn muốn đi sâu hơn vào đặc tả OAuth2 và cách triển khai tất cả các loại grant, tôi rất khuyến nghị cuốn sách <em>OAuth2 in Action</em> (Manning, 2017) của Justin Richer và Antonio Sanso, đây là một giải thích toàn diện về OAuth2.</p>
+
+      <h4 class="subsection-title">7.2 Bắt đầu từ nhỏ: dùng Spring và OAuth2 để bảo vệ một endpoint duy nhất</h4>
+
+      <p>Để hiểu cách thiết lập các phần xác thực và phân quyền của OAuth2, bạn sẽ triển khai loại grant password OAuth2. Để triển khai grant này, bạn sẽ làm những việc sau:</p>
+
+      <ul class="manning-bullets" aria-label="Các bước triển khai password grant OAuth2">
+        <li>Thiết lập dịch vụ xác thực OAuth2 dựa trên Spring Cloud.</li>
+        <li>Đăng ký một ứng dụng EagleEye UI giả làm ứng dụng được ủy quyền có thể xác thực và phân quyền danh tính người dùng với dịch vụ OAuth2 của bạn.</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

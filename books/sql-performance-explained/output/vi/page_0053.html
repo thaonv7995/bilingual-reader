@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Greater, Less and BETWEEN</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">53</span>
+      </header>
+      <p class="chapter-running-head">Greater, Less and BETWEEN</p>
+
+      <p class="no-indent">Với ví dụ này, chúng ta cũng có thể bác bỏ huyền thoại rằng cột có tính chọn lọc cao nhất nên ở vị trí chỉ mục bên trái nhất. Nếu chúng ta nhìn vào các số liệu và xem xét tính chọn lọc của cột đầu tiên, chúng ta thấy rằng cả hai điều kiện đều khớp với 13 bản ghi. Điều này đúng bất kể chúng ta lọc theo <code>DATE_OF_BIRTH</code> hay chỉ theo <code>SUBSIDIARY_ID</code>. Tính chọn lọc ở đây không có tác dụng, nhưng một thứ tự cột vẫn tốt hơn thứ tự khác.</p>
+
+      <p>Để tối ưu hóa hiệu suất, rất quan trọng để biết phạm vi chỉ mục được quét. Với hầu hết các cơ sở dữ liệu, bạn thậm chí có thể thấy điều này trong kế hoạch thực thi&mdash;bạn chỉ cần biết tìm kiếm điều gì. Kế hoạch thực thi sau đây từ cơ sở dữ liệu Oracle chỉ ra rõ ràng rằng chỉ mục <code>EMP_TEST</code> bắt đầu với cột <code>DATE_OF_BIRTH</code>.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+|Id | Operation                    | Name      | Rows | Cost |
+--------------------------------------------------------------
+| 0 | SELECT STATEMENT             |           |    1 |    4 |
+|*1 |  FILTER                      |           |      |      |
+| 2 |   TABLE ACCESS BY INDEX ROWID| EMPLOYEES |    1 |    4 |
+|*3 |    INDEX RANGE SCAN          | EMP_TEST  |    2 |    2 |
+--------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+1 - filter(:END_DT &gt;= :START_DT)
+3 - access(DATE_OF_BIRTH &gt;= :START_DT
+       AND DATE_OF_BIRTH &lt;= :END_DT)
+    filter(SUBSIDIARY_ID  = :SUBS_ID)</code></pre>
+      </figure>
+
+      <p>Thông tin điều kiện cho <code>INDEX RANGE SCAN</code> cung cấp gợi ý quan trọng. Nó xác định các điều kiện của mệnh đề where là điều kiện truy cập hoặc điều kiện lọc. Đây là cách mà cơ sở dữ liệu cho chúng ta biết nó sử dụng từng điều kiện như thế nào.</p>
+
+      <aside class="sidebar-note">
+        <h3>Ghi chú</h3>
+        <p>Kế hoạch thực thi đã được đơn giản hóa để rõ ràng hơn. Phụ lục ở trang 170 giải thích chi tiết về phần &ldquo;Thông tin điều kiện&rdquo; trong một kế hoạch thực thi Oracle.</p>
+      </aside>
+
+      <p>Các điều kiện trên cột <code>DATE_OF_BIRTH</code> là những điều kiện duy nhất được liệt kê như là điều kiện truy cập; chúng giới hạn phạm vi chỉ mục được quét. Do đó, <code>DATE_OF_BIRTH</code> là cột đầu tiên trong chỉ mục <code>EMP_TEST</code>. Cột <code>SUBSIDIARY_ID</code> chỉ được sử dụng như một điều kiện lọc.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">43</p>
+    </article>
+  </main>
+</body>
+</html>

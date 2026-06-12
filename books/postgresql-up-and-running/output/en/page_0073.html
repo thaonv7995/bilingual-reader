@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: psql (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.22;
+    }
+    .prose-page.chapter-page ol.listing-annotations {
+      margin: 0 0 3mm 6mm;
+      padding: 0;
+      list-style: none;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page ol.listing-annotations li {
+      margin: 0 0 1.5mm;
+      padding: 0 0 0 6mm;
+      text-indent: -6mm;
+      text-align: left;
+    }
+    .prose-page.chapter-page ol.listing-annotations .marker {
+      display: inline-block;
+      width: 5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      text-align: center;
+    }
+    .prose-page.chapter-page ol.listing-annotations code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0072.html">← Prev</a>
+    <a href="page_0074.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">73</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>FROM pg_settings
+WHERE category LIKE '%Planner%'
+GROUP BY category
+ORDER BY category;
+\H
+\qecho '&lt;/td&gt;&lt;td&gt;&lt;h2&gt;File Locations&lt;/h2&gt;'
+\x off
+\t on
+\pset format html
+SELECT name, setting FROM pg_settings WHERE category = 'File Locations' ORDER BY
+name;
+\qecho '&lt;h2&gt;Memory Settings&lt;/h2&gt;'
+SELECT name, setting, unit FROM pg_settings WHERE category ILIKE '%memory%' ORDER
+BY name;
+\qecho '&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;'
+\qecho '&lt;/body&gt;&lt;/html&gt;'
+\o</code></pre>
+      </figure>
+
+      <ol class="listing-annotations" aria-label="Example 3-11 annotations">
+        <li><span class="marker" aria-hidden="true">❶</span> Redirects query output to a file.</li>
+        <li><span class="marker" aria-hidden="true">❷</span> HTML table settings for query output.</li>
+        <li><span class="marker" aria-hidden="true">❸</span> Appends additional HTML.</li>
+        <li><span class="marker" aria-hidden="true">❹</span> Expand mode. Repeats the column headers for each row and outputs each
+        column of each row as a separate row.</li>
+        <li><span class="marker" aria-hidden="true">❻</span> Forces the queries to output as HTML tables.</li>
+        <li><span class="marker" aria-hidden="true">❼</span> <code>string_agg()</code>, introduced in PostgreSQL 9.0 to concatenate all properties in the
+        same category into a single column.</li>
+        <li><span class="marker" aria-hidden="true">❽</span> Turns off expand mode. The second and third queries should output one row
+        per table row.</li>
+        <li><span class="marker" aria-hidden="true">❺</span> Toggles tuples mode. When on, column headers and row counts are omitted.</li>
+      </ol>
+
+      <p class="no-indent">Example 3-11 demonstrates that by interspersing SQL and psql commands, you can
+      create a fairly comprehensive tabular report replete with subreports. Run Example 3-11
+      by connecting interactively with psql and executing <code>\i settings_report.psql</code>, or run
+      <code>psql -f settings_report.psql</code> from your OS command line. The output generated
+      by <em>settings_report.html</em> is shown in Figure 3-2.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Basic Reporting<span class="sep">|</span>55</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

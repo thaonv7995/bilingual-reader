@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 21</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0020.html">← Prev</a>
+      <span>Page 21 / 30</span>
+      <a href="page_0022.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<p class="lead">You can subscribe to multiple channels (<code>subscribe channel1 channel2 ...</code>), subscribe to a pattern of channels (<code>psubscribe warnings:*</code>) and use the <code>unsubscribe</code> and <code>punsubscribe</code> commands to stop listening to one or more channels, or a channel pattern.</p><p>Finally, notice that the <code>publish</code> command returned the value 1. This indicates the number of clients that received the message.</p><h3 class="section-title">Monitor and Slow Log</h3><p>The <code>monitor</code> command lets you see what Redis is up to. It's a great debugging tool that gives you insight into how your application is interacting with Redis. In one of your two redis-cli windows (if one is still subscribed, you can either use the <code>unsubscribe</code> command or close the window down and re-open a new one) enter the <code>monitor</code> command. In the other, execute any other type of command (like <code>get</code> or <code>set</code>). You should see those commands, along with their parameters, in the first window.</p><p>You should be wary of running monitor in production, it really is a debugging and development tool. Aside from that, there isn't much more to say about it. It's just a really useful tool.</p><p>Along with monitor, Redis has a slowlog which acts as a great profiling tool. It logs any command which takes longer than a specified number of microseconds. In the next section we'll briefly cover how to configure Redis, for now you can configure Redis to log all commands by entering:</p><figure class="code-snippet"><pre class="code-block"><code>config set slowlog-log-slower-than 0</code></pre></figure><p>Next, issue a few commands. Finally you can retrieve all of the logs, or the most recent logs via:</p><figure class="code-snippet"><pre class="code-block"><code>slowlog get
+slowlog get 10</code></pre></figure><p>You can also get the number of items in the slow log by entering <code>slowlog len</code></p><p>For each command you entered you should see four parameters:</p><ul class="bullets"><li>An auto-incrementing id</li><li>A Unix timestamp for when the command happened</li><li>The time, in microseconds, it took to run the command</li><li>The command and its parameters</li></ul><p>The slow log is maintained in memory, so running it in production, even with a low threshold, shouldn't be a problem. By default it will track the last 1024 logs.</p><h3 class="section-title">Sort</h3><p>One of Redis' most powerful commands is <code>sort</code>. It lets you sort the values within a list, set or sorted set (sorted sets are ordered by score, not the members within the set). In its simplest form, it allows us to do:</p>
+      <p class="page-folio">20</p>
+    </article>
+  </main>
+</body>
+</html>

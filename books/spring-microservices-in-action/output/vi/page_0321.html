@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Hình 10.5 Cơ sở dữ liệu RDS và cluster Redis</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .diagram-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 62%) minmax(0, 38%);
+      gap: 0 2mm;
+      margin: 0 0 1.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page .diagram-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+      padding-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .diagram-annotated + figure.diagram.fig-caption-only,
+    .prose-page.chapter-page figure.diagram.fig-caption-only + p,
+    .prose-page.chapter-page p + h4.subsection-title {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0320.html">← Trước</a>
+    <a href="page_0322.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">CHƯƠNG 10</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">296</span>
+      </header>
+
+      <div class="diagram-annotated" aria-label="Hình 10.5 ảnh chụp màn hình bảng điều khiển RDS có chú thích">
+        <figure class="diagram">
+          <img src="../assets/images/page_0321_fig_10_5.png" width="1313" height="485" alt="Hình 10.5 — Bảng điều khiển AWS RDS hiển thị cơ sở dữ liệu PostgreSQL eagle-eye-aws-dev đã tạo">
+        </figure>
+        <div class="diagram-callouts" aria-label="Chú thích Hình 10.5">
+          <p class="listing-callout">Đây là endpoint bạn sẽ dùng để kết nối tới cơ sở dữ liệu.</p>
+        </div>
+      </div>
+
+      <figure class="diagram fig-caption-only" aria-label="Chú thích Hình 10.5">
+        <figcaption><strong>Hình 10.5</strong><br>Cơ sở dữ liệu Amazon RDS/PostgreSQL bạn đã tạo</figcaption>
+      </figure>
+
+      <p class="no-indent">Tại thời điểm này, quá trình tạo cơ sở dữ liệu của bạn sẽ bắt đầu (có thể mất vài phút). Sau khi hoàn tất, bạn cần cấu hình các dịch vụ Eagle Eye để sử dụng cơ sở dữ liệu.</p>
+
+      <p>Sau khi cơ sở dữ liệu được tạo (việc này sẽ mất vài phút), bạn sẽ quay lại bảng điều khiển RDS và thấy cơ sở dữ liệu của mình đã được tạo. Hình 10.5 cho thấy màn hình này.</p>
+
+      <p>Trong chương này, tôi đã tạo một application profile mới có tên <code>aws-dev</code> cho từng microservice cần truy cập cơ sở dữ liệu PostgreSQL trên Amazon. Tôi đã thêm một application profile máy chủ Spring Cloud Config mới trong kho GitHub Spring Cloud Config (<a href="https://github.com/carnellj/config-repo">https://github.com/carnellj/config-repo</a>) chứa thông tin kết nối cơ sở dữ liệu Amazon. Các tệp property tuân theo quy ước đặt tên <code>(service-name)-aws-dev.yml</code> trong mỗi tệp property dùng cơ sở dữ liệu mới (licensing service, organization service và authentication service).</p>
+
+      <p>Tại thời điểm này, cơ sở dữ liệu của bạn đã sẵn sàng (không tệ khi thiết lập chỉ với khoảng năm cú nhấp chuột). Hãy chuyển sang phần hạ tầng ứng dụng tiếp theo và xem cách tạo cluster Redis mà licensing service EagleEye của bạn sẽ sử dụng.</p>
+
+      <h4 class="subsection-title">10.1.2 Tạo cluster Redis trên Amazon</h4>
+
+      <p class="no-indent">Để thiết lập cluster Redis, bạn sẽ dùng dịch vụ Amazon ElastiCache. Amazon ElastiCache cho phép bạn xây dựng bộ nhớ đệm dữ liệu in-memory bằng Redis hoặc Memcached (<a href="https://memcached.org/">https://memcached.org/</a>). Với các dịch vụ EagleEye, bạn sẽ chuyển máy chủ Redis đang chạy trong Docker sang ElastiCache.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

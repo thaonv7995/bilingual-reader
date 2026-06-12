@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 10: Replication and External Data — Initiating the Replication Process</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ol.numbered > li figure.code-snippet {
+      margin: 1mm 0 1.5mm;
+      padding-left: 8mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0201.html">← Prev</a>
+    <a href="page_0203.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">202</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>hoo'
+trigger_file = 'failover.now'</code></pre>
+      </figure>
+
+      <ol class="numbered" start="7">
+        <li>If you find that the slave can&rsquo;t play back WALs fast enough, you can specify a location
+        for caching. In that case, add to the <code>recovery.conf</code> file a line such as the following,
+        which varies depending on the OS:
+        On Linux/Unix
+          <figure class="code-snippet">
+            <pre class="code-block"><code>restore_command = 'cp %p ../archive/%f'</code></pre>
+          </figure>
+        On Windows
+          <figure class="code-snippet">
+            <pre class="code-block"><code>restore_command = 'copy %p ..\\archive\\%f'</code></pre>
+          </figure>
+        In this example, the archive folder is where we&rsquo;re caching.</li>
+      </ol>
+
+      <h3 class="subsection-title">Initiating the Replication Process</h3>
+
+      <p class="no-indent">It&rsquo;s a good idea to start up the postgres service on all the slaves before starting it on the
+      master. Otherwise, the master might start writing data or altering the database before
+      the slaves can capture and replicate the changes. When you start up each slave server,
+      you&rsquo;ll get an error in logs saying that it can&rsquo;t connect to the master. Ignore the message.
+      Once the slaves have started, start up the postgres service on the master.</p>
+
+      <p>You should now be able to connect to both servers. Any changes you make on the master,
+      even structural changes such as installing extensions or creating tables, should trickle
+      down to the slaves. You should also be able to query the slaves.</p>
+
+      <p>When and if the time comes to liberate a chosen slave, create a blank file called <code>failover.now</code>
+      in the data folder of the slave. PostgreSQL will then complete playback of WAL
+      and rename the <code>recovery.conf</code> file to <code>recover.done</code>. At that point, your slave will be un&shy;shackled
+      from the master and continue life on its own with all the data from the last
+      WAL. Once the slave has tasted freedom, there&rsquo;s no going back. In order to make it a
+      slave again, you&rsquo;ll need to go through the whole process from the beginning.</p>
+
+      <h3 class="section-title">Foreign Data Wrappers</h3>
+
+      <p class="no-indent">Foreign data wrappers (FDWs) are an extensible, standard-complaint method for your
+      PostgreSQL server to query other data sources: other PostgreSQL servers, and many
+      types of non-PostgreSQL data sources. FDW was first introduced in PostgreSQL 9.1. At
+      the center of the concept is a foreign table, a table that you can query like one in your
+      PostgreSQL database but that resides in another data source, perhaps even on another
+      physical server. Once you put in the effort to establish foreign tables, they persist in your
+      database and you&rsquo;re forever free from having to worry about the intricate protocols of
+      communicating with alien data sources. You can find a catalog of FDWs for PostgreSQL
+      at <a href="http://pgxn.org/tag/fdw/" class="accent-word">PGXN FDW</a> and <a href="http://bit.ly/1z3j9D3" class="accent-word">PGXN Foreign Data Wrapper</a>. You can also find examples of usage
+      in <a href="http://wiki.postgresql.org/wiki/Foreign_data_wrappers" class="accent-word">PostgreSQL Wiki FDW</a>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">184<span class="sep">|</span>Chapter 10: Replication and External Data</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

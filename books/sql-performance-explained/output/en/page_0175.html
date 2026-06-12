@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Appendix A: Execution Plans</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/toc-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-label {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .chapter-title {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 20.7pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+    }
+
+    .prose-page .appendix-contents-title {
+      margin: 8mm 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .appendix-toc {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 0;
+    }
+
+    .prose-page .appendix-toc .toc-row {
+      font-size: 10pt;
+      font-weight: 400;
+      text-transform: none;
+      margin-top: 0;
+    }
+
+    .prose-page .appendix-toc .toc-row.chapter {
+      margin-top: 5.5mm;
+      font-weight: 400;
+      text-transform: none;
+      font-size: 10pt;
+    }
+
+    .prose-page .appendix-toc .toc-row.chapter:first-child {
+      margin-top: 0;
+    }
+
+    .prose-page .appendix-toc .toc-row.section {
+      padding-left: 6.35mm;
+      margin-top: 1.4mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-label">Appendix&nbsp;A</p>
+      <h1 class="chapter-title">Execution Plans</h1>
+
+      <p class="no-indent">Before the database can execute an SQL statement, the optimizer has to create an execution plan for it. The database then executes this plan in a step-by-step manner. In this respect, the optimizer is very similar to a compiler because it translates the source code (SQL statement) into an executable program (execution plan).</p>
+
+      <p>The execution plan is the first place to look when searching for the cause of slow statements. The following sections explain how to retrieve and read an execution plan to optimize performance in various databases.</p>
+
+      <h2 class="appendix-contents-title">Contents</h2>
+
+      <nav class="appendix-toc" aria-label="Appendix A contents">
+        <div class="toc-row chapter">
+          <span class="label">Oracle Database</span>
+          <span class="page">166</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Getting an Execution Plan</span>
+          <span class="page">166</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Operations</span>
+          <span class="page">167</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Distinguishing Access and Filter-Predicates</span>
+          <span class="page">170</span>
+        </div>
+
+        <div class="toc-row chapter">
+          <span class="label">PostgreSQL</span>
+          <span class="page">172</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Getting an Execution Plan</span>
+          <span class="page">172</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Operations</span>
+          <span class="page">174</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Distinguishing Access and Filter-Predicates</span>
+          <span class="page">177</span>
+        </div>
+
+        <div class="toc-row chapter">
+          <span class="label">SQL Server</span>
+          <span class="page">180</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Getting an Execution Plan</span>
+          <span class="page">180</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Operations</span>
+          <span class="page">182</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Distinguishing Access and Filter-Predicates</span>
+          <span class="page">185</span>
+        </div>
+
+        <div class="toc-row chapter">
+          <span class="label">MySQL</span>
+          <span class="page">188</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Getting an Execution Plan</span>
+          <span class="page">188</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Operations</span>
+          <span class="page">188</span>
+        </div>
+        <div class="toc-row section">
+          <span class="label">Distinguishing Access and Filter-Predicates</span>
+          <span class="page">190</span>
+        </div>
+      </nav>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">165</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Appendix A: Listing A.3 run.sh script</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      padding-left: 1.25em;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 1;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A3 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 52mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0357.html">← Prev</a>
+    <a href="page_0359.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Launching the services with Docker Compose</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">333</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Listing A.3</strong><br>run.sh script used to launch the licensing service</figcaption>
+        <div class="listing-annotated listing-annotated--A3" aria-label="Listing A.3 annotated run.sh script">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>#!/bin/sh
+echo "********************************************************"
+echo "Waiting for the configuration server to start on port
+$CONFIGSERVER_PORT"
+echo "********************************************************"
+while ! `nc -z configserver $CONFIGSERVER_PORT `;
+   do sleep 3; done
+echo "&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Configuration Server has started"
+
+echo "********************************************************"
+echo "Waiting for the database server to start on port $DATABASESERVER_PORT"
+echo "********************************************************"
+while ! `nc -z database $DATABASESERVER_PORT`; do sleep 3; done
+echo "&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Database Server has started"
+
+echo "********************************************************"
+echo "Starting License Server with Configuration Service :
+$CONFIGSERVER_URI";
+echo "********************************************************"
+java -Dspring.cloud.config.uri=$CONFIGSERVER_URI \
+     -Dspring.profiles.active=$PROFILE \
+     -jar /usr/local/licensingservice/licensing-service-0.0.1-SNAPSHOT.jar</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing A.3 annotation callouts">
+            <p class="listing-callout">The run.sh scripts waits for the port of the dependent service to be open before continuing to trying to start the service.</p>
+            <p class="listing-callout">Launch the licensing service by using Java to call the executable jar the Dockerfile script installed. $&lt;&lt;VARIABLE_NAME&gt;&gt; represents an environment variable being passed to the Docker image.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Once the run.sh command is copied to your licensing service Docker image, the <code>CMD ./run.sh</code> Docker command is used to tell Docker to execute the run.sh launch script when the actual image starts.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>I&rsquo;m giving you a high-level overview of how Docker provisions an image. If you want to learn more about Docker in depth, I suggest looking at Jeff Nickoloff&rsquo;s <em>Docker in Action</em> (Manning, 2016) or Adrian Mouat&rsquo;s <em>Using Docker</em> (O&rsquo;Reilly, 2016). Both books are excellent Docker resources.</p>
+      </aside>
+
+      <h4 class="subsection-title">A.6 Launching the services with Docker Compose</h4>
+
+      <p class="no-indent">After the Maven build has been executed, you can now launch all the services for the chapter by using Docker Compose. Docker Compose is installed as part of the Docker installation process. It&rsquo;s a service orchestration tool that allows you to define services as a group and then launch together as a single unit. Docker Compose includes capabilities for also defining environment variables with each service.</p>
+
+      <p>Docker Compose uses a YAML file for defining the services that are going to be launched. Each chapter in this book has a file called &ldquo;&lt;&lt;chapter&gt;&gt;/docker/common/</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

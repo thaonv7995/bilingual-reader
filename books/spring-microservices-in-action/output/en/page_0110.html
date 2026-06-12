@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 3: Listing 3.7 LicenseRepository and Listing 3.8 LicenseService</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(1) {
+      margin-bottom: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(2) {
+      margin-bottom: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(3) {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0109.html">← Prev</a>
+    <a href="page_0111.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Integrating Spring Cloud Config with a Spring Boot client</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">85</span>
+      </header>
+
+      <p class="no-indent">will at startup parse the name of the methods from the Repository interface, convert them over to a SQL statement based on the names, and then generate a dynamic proxy class under the covers to do the work. The repository for the licensing service is shown in the following listing.</p>
+
+      <div class="listing-annotated">
+        <figure class="listing">
+          <figcaption><strong>Listing 3.7</strong><br>LicenseRepository interface defines the query methods</figcaption>
+          <pre class="code-block"><code>package com.thoughtmechanix.licenses.repository;
+
+import com.thoughtmechanix.licenses.model.License;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface LicenseRepository
+    extends CrudRepository&lt;License,String&gt;
+{
+    public List&lt;License&gt; findByOrganizationId
+        (String organizationId);
+    public License findByOrganizationIdAndLicenseId
+        (String organizationId,String licenseId);
+}</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Listing 3.7 annotation callouts">
+          <p class="listing-callout">Tells Spring Boot that this is a JPA repository class</p>
+          <p class="listing-callout">Defines that you&rsquo;re extending the Spring CrudRepository</p>
+          <p class="listing-callout">Individual query methods are parsed by Spring into a SELECT&hellip;FROM query.</p>
+        </div>
+      </div>
+
+      <p>The repository interface, LicenseRepository, is marked with the <code>@Repository</code> annotation which tells Spring that it should treat this interface as a repository and generate a dynamic proxy for it. Spring offers different types of repositories for data access. You&rsquo;ve chosen to use the Spring CrudRepository base class to extend your LicenseRepository class. The CrudRepository base class contains basic CRUD methods. In addition to the CRUD method extended from CrudRepository, you&rsquo;ve added two custom query methods for retrieving data from the licensing table. The Spring Data framework will pull apart the name of the methods to build a query to access the underlying data.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>The Spring Data framework provides an abstraction layer over various database platforms and isn&rsquo;t limited to relational databases. NoSQL databases such as MongoDB and Cassandra are also supported.</p>
+      </aside>
+
+      <p class="no-indent">Unlike the previous incarnation of the licensing service in chapter 2, you&rsquo;ve now separated the business and data access logic for the licensing service out of the LicenseController and into a standalone Service class called LicenseService.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 3.8</strong><br>LicenseService class used to execute database commands</figcaption>
+        <pre class="code-block"><code>package com.thoughtmechanix.licenses.services;
+
+import com.thoughtmechanix.licenses.config.ServiceConfig;
+import com.thoughtmechanix.licenses.model.License;
+import com.thoughtmechanix.licenses.repository.LicenseRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

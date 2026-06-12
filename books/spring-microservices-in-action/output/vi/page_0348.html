@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Listing 10.7 triển khai ECS</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left,
+    .prose-page.chapter-page .running-head .rh-right {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      padding-left: 1.25em;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + .sidebar-note {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0347.html">← Trước</a>
+    <a href="page_0349.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Cho phép dịch vụ của bạn xây dựng trong Travis CI</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">323</span>
+      </header>
+
+      <p class="no-indent">Trong lệnh trước, bạn yêu cầu công cụ dòng lệnh Docker đẩy lên Docker hub (hub mặc định mà các công cụ dòng lệnh Docker sử dụng) vào tài khoản johncarnell. Image được đẩy lên sẽ là image tmx-confsvr với tên thẻ lấy từ giá trị của biến môi trường <code>$BUILD_NAME</code>.</p>
+
+      <h4 class="subsection-title">10.6.7 Khởi động các dịch vụ trong Amazon ECS</h4>
+
+      <p class="no-indent">Đến thời điểm này, toàn bộ mã đã được build, gắn thẻ và một Docker image đã được tạo. Bạn đã sẵn sàng triển khai các dịch vụ lên container Amazon ECS mà bạn đã tạo ở mục 10.1.3. Công việc thực hiện triển khai này nằm trong <code>travis_scripts/deploy_to_amazon_ecs.sh</code>. Listing sau đây trình bày mã từ script này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 10.7</strong><br>Triển khai Docker Image lên EC2</figcaption>
+        <pre class="code-block"><code>echo "Launching $BUILD_NAME IN AMAZON ECS"
+ecs-cli configure --region us-west-1 \
+                  --access-key $AWS_ACCESS_KEY \
+                  --secret-key $AWS_SECRET_KEY \
+                  --cluster spmia-tmx-dev
+ecs-cli compose --file docker/common/docker-compose.yml up
+rm –rf ~/.ecs</code></pre>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="Lưu ý">
+        <h3>LƯU Ý</h3>
+        <p>Trên bảng điều khiển Amazon, Amazon chỉ hiển thị tên bang/thành phố/quốc gia nơi đặt region chứ không hiển thị tên region thực tế (us-west-1, us-east-1, v.v.). Ví dụ, nếu bạn xem trên bảng điều khiển Amazon và muốn tìm region Bắc California, sẽ không có chỉ dẫn nào cho biết tên region là us-west-1. Để xem danh sách tất cả các region Amazon (và endpoint cho từng dịch vụ), hãy tham khảo <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html">http://docs.aws.amazon.com/general/latest/gr/rande.html</a>.</p>
+      </aside>
+
+      <p>Vì mỗi lần build Travis đều khởi chạy một máy ảo build mới, bạn cần cấu hình client <code>ecs-cli</code> trong môi trường build với AWS access key và secret key. Sau khi hoàn tất, bạn có thể khởi chạy triển khai lên cluster ECS bằng lệnh <code>ecs-cli compose</code> và tệp <code>docker-compose.yml</code>. Tệp <code>docker-compose.yml</code> của bạn được tham số hóa để dùng tên build (nằm trong biến môi trường <code>$BUILD_NAME</code>).</p>
+
+      <h4 class="subsection-title">10.6.8 Khởi chạy các kiểm thử nền tảng</h4>
+
+      <p class="no-indent">Bạn còn một bước cuối trong quy trình build: khởi chạy bài kiểm thử nền tảng. Sau mỗi lần triển khai lên môi trường mới, bạn khởi chạy một tập các kiểm thử nền tảng để đảm bảo tất cả dịch vụ hoạt động đúng. Mục tiêu của các kiểm thử nền tảng là gọi các microservice trong build đã triển khai và đảm bảo các dịch vụ hoạt động đúng.</p>
+
+      <p>Tôi đã tách job kiểm thử nền tảng khỏi build chính để có thể gọi độc lập với build chính. Để làm điều này, tôi dùng Travis CI REST API để gọi các kiểm thử nền tảng theo chương trình. Script <code>travis_scripts/trigger_platform_tests.sh</code> thực hiện công việc này. Listing sau đây trình bày mã từ script này.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

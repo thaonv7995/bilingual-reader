@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Configuring EagleEye users and Listing 7.3</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0224.html">← Prev</a>
+    <a href="page_0226.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">200</span>
+        <span class="rh-center">CHAPTER 7 <em>Securing your microservices</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Thus you&rsquo;re going to register the EagleEye application with the same application name and secret key, but the web application will only use the &ldquo;webclient&rdquo; scope while the mobile phone version of the application will use the &ldquo;mobileclient&rdquo; scope. By using scope, you can then define authorization rules in your protected services that can limit what actions a client application can take based on the application they are logging in with. This will be regardless of what permissions the user has. For example, you might want to restrict what data a user can see based on whether they&rsquo;re using a browser inside the corporate network versus browsing using an application on a mobile device. The practice of restricting data based on the access mechanism of the data is common when dealing with sensitive customer information (such as health records or tax information).</p>
+
+      <p class="block-indent">At this point you&rsquo;ve registered a single application, EagleEye, with your OAuth2 server. However, because you&rsquo;re using a password grant, you need to set up user accounts and passwords for those users before you start.</p>
+
+      <h4 class="subsection-title">7.2.3 Configuring EagleEye users</h4>
+
+      <p class="no-indent">You&rsquo;ve defined and stored application-level key names and secrets. You&rsquo;re now going to set up individual user credentials and the roles that they belong to. User roles will be used to define the actions a group of users can do with a service.</p>
+
+      <p>Spring can store and retrieve user information (the individual user&rsquo;s credentials and the roles assigned to the user) from an in-memory data store, a JDBC-backed relational database, or an LDAP server.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>I want to be careful here in terms of definition. The OAuth2 application information for Spring can store its data in an in-memory or relational database. The Spring user credentials and security roles can be stored in an in-memory database, relational database, or LDAP (Active Directory) server. To keep things simple because our primary purpose is to walk through OAuth2, you&rsquo;re going to use an in-memory data store.</p>
+      </aside>
+
+      <p>For the code examples in this chapter, you&rsquo;re going to define user roles using an in-memory data store. You&rsquo;re going to define two user accounts: <code>john.carnell</code> and <code>william.woodward</code>. The <code>john.carnell</code> account will have the role of USER and the <code>william.woodward</code> account will have the role of ADMIN.</p>
+
+      <p>To configure your OAuth2 server to authenticate user IDs, you have to set up a new class: <code>authentication-service/src/main/com/thoughtmechanix/authentication/security/WebSecurityConfigurer.java</code>. The following listing shows the code for this class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.3</strong><br>Defining the User ID, password and roles for your application</figcaption>
+        <pre class="code-block"><code>package com.thoughtmechanix.authentication.security;
+
+//Imports removed for conciseness
+
+@Configuration</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

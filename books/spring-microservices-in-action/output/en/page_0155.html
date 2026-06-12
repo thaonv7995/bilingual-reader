@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 5: Listings 5.2 and 5.3</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--52 .listing-callouts {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--53 .listing-callouts {
+      padding-top: 1.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--53 .listing-callout:nth-child(1) {
+      margin-bottom: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing + .sidebar-note,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0154.html">← Prev</a>
+    <a href="page_0156.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">130</span>
+        <span class="rh-center">CHAPTER 5 <em>When bad things happen: client resiliency patterns with Spring Cloud and Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">You&rsquo;re going to wrap the <code>getLicensesByOrg()</code> method in your <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/services/LicenseService.java</code> class, as shown in the following listing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.2</strong><br>Wrappering a remote resource call with a circuit breaker</figcaption>
+        <div class="listing-annotated listing-annotated--52" aria-label="Listing 5.2 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>//Imports removed for conciseness
+@HystrixCommand
+public List&lt;License&gt; getLicensesByOrg(String organizationId){
+    return licenseRepository.findByOrganizationId(organizationId);
+  }</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Listing 5.2 annotation callouts">
+            <p class="listing-callout"><code>@HystrixCommand</code> annotation is used to wrapper the <code>getLicenseByOrg()</code> method with a Hystrix circuit breaker.</p>
+          </div>
+        </div>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>If you look at the code in listing 5.2 in the source code repository, you&rsquo;ll see several more parameters on the <code>@HystrixCommand</code> annotation than what&rsquo;s shown in the previous listing. We&rsquo;ll get into those parameters later in the chapter. The code in listing 5.2 is using the <code>@HystrixCommand</code> annotation with all its default values.</p>
+      </aside>
+
+      <p class="no-indent">This doesn&rsquo;t look like a lot of code, and it&rsquo;s not, but there is a lot of functionality inside this one annotation. With the use of the <code>@HystrixCommand</code> annotation, any time the <code>getLicensesByOrg()</code> method is called, the call will be wrapped with a Hystrix circuit breaker. The circuit breaker will interrupt any call to the <code>getLicensesByOrg()</code> method any time the call takes longer than 1,000 milliseconds.</p>
+
+      <p>This code example would be boring if the database is working properly. Let&rsquo;s simulate the <code>getLicensesByOrg()</code> method running into a slow database query by having the call take a little over a second on approximately every one in three calls. The following listing demonstrates this.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.3</strong><br>Randomly timing out a call to the licensing service database</figcaption>
+        <div class="listing-annotated listing-annotated--53" aria-label="Listing 5.3 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>private void randomlyRunLong(){
+   Random rand = new Random();
+
+   int randomNum = rand.nextInt((3 - 1) + 1) + 1;
+
+   if (randomNum==3) sleep();
+  }
+
+  private void sleep(){
+    try {
+      Thread.sleep(11000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @HystrixCommand</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Listing 5.3 annotation callouts">
+            <p class="listing-callout">The <code>randomlyRunLong()</code> method gives you a one in three chance of a database call running long.</p>
+            <p class="listing-callout">You sleep for 11,000 milliseconds (11 seconds). Default Hystrix behavior is to time a call out after 1 second.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

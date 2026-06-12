@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Định cỡ thread pool và tinh chỉnh Hystrix</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.formula-line {
+      margin: 0 0 2.5mm;
+      padding-left: 1.5em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0162.html">← Prev</a>
+    <a href="page_0164.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">138</span>
+        <span class="rh-center">CHƯƠNG 5 <em>Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>Điều đầu tiên bạn nên để ý là chúng ta đã thêm một thuộc tính mới, <code>threadPoolKey</code>, vào annotation <code>@HystrixCommand</code> của bạn. Điều này báo cho Hystrix rằng bạn muốn thiết lập một thread pool mới. Nếu bạn không đặt thêm giá trị nào cho thread pool, Hystrix sẽ thiết lập một thread pool dựa trên tên trong thuộc tính <code>threadPoolKey</code>, nhưng sẽ dùng tất cả giá trị mặc định cho cách thread pool được cấu hình.</p>
+
+      <p>Để tùy chỉnh thread pool, bạn dùng thuộc tính <code>threadPoolProperties</code> trên <code>@HystrixCommand</code>. Thuộc tính này nhận một mảng các đối tượng <code>HystrixProperty</code>. Các đối tượng <code>HystrixProperty</code> này có thể dùng để điều khiển hành vi của thread pool. Bạn có thể đặt kích thước thread pool bằng thuộc tính <code>coreSize</code>.</p>
+
+      <p>Bạn cũng có thể thiết lập một hàng đợi phía trước thread pool để kiểm soát số yêu cầu được phép chờ đợi khi các thread trong thread pool đang bận. Kích thước hàng đợi này được đặt bởi thuộc tính <code>maxQueueSize</code>. Khi số yêu cầu vượt quá kích thước hàng đợi, mọi yêu cầu bổ sung tới thread pool sẽ thất bại cho đến khi còn chỗ trong hàng đợi.</p>
+
+      <p>Hãy lưu ý hai điều về thuộc tính <code>maxQueueSize</code>. Thứ nhất, nếu bạn đặt giá trị là -1, một Java <code>SynchronousQueue</code> sẽ được dùng để giữ tất cả yêu cầu đến. Hàng đợi đồng bộ về cơ bản buộc bạn không bao giờ có nhiều yêu cầu đang xử lý hơn số thread có sẵn trong thread pool. Đặt <code>maxQueueSize</code> thành giá trị lớn hơn một sẽ khiến Hystrix dùng Java <code>LinkedBlockingQueue</code>. Việc dùng <code>LinkedBlockingQueue</code> cho phép nhà phát triển xếp hàng các yêu cầu ngay cả khi tất cả thread đang bận xử lý yêu cầu.</p>
+
+      <p>Điều thứ hai cần lưu ý là thuộc tính <code>maxQueueSize</code> chỉ có thể được đặt khi thread pool được khởi tạo lần đầu (ví dụ, lúc khởi động ứng dụng). Hystrix cho phép bạn thay đổi động kích thước hàng đợi bằng thuộc tính <code>queueSizeRejectionThreshold</code>, nhưng thuộc tính này chỉ có thể được đặt khi thuộc tính <code>maxQueueSize</code> có giá trị lớn hơn 0.</p>
+
+      <p>Kích thước phù hợp cho một thread pool tùy chỉnh là bao nhiêu? Netflix khuyến nghị công thức sau:</p>
+
+      <p class="formula-line">(số yêu cầu mỗi giây ở mức đỉnh khi dịch vụ khỏe mạnh * độ trễ phần trăm thứ 99 tính bằng giây) + một lượng nhỏ thread bổ sung cho overhead</p>
+
+      <p>Bạn thường không biết đặc tính hiệu năng của một dịch vụ cho đến khi nó chịu tải. Một chỉ báo quan trọng cho thấy cần điều chỉnh các thuộc tính thread pool là khi một lời gọi dịch vụ bị timeout ngay cả khi tài nguyên từ xa được nhắm tới vẫn khỏe mạnh.</p>
+
+      <h4 class="subsection-title">5.8 Vượt ra ngoài các kiến thức cơ bản; tinh chỉnh Hystrix</h4>
+
+      <p>Đến điểm này, chúng ta đã xem các khái niệm cơ bản về thiết lập circuit breaker và mẫu bulkhead bằng Hystrix. Giờ chúng ta sẽ đi qua và xem cách thực sự tùy chỉnh hành vi circuit breaker của Hystrix. Hãy nhớ rằng Hystrix không chỉ timeout các lời gọi chạy lâu. Hystrix còn theo dõi số lần một lời gọi thất bại và nếu đủ số lời gọi thất bại, Hystrix sẽ tự động ngăn các lời gọi trong tương lai tiếp cận dịch vụ bằng cách làm thất bại lời gọi trước khi yêu cầu kịp chạm tài nguyên từ xa.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã nguồn đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0518.html">← Trước</a>
+    <a href="page_0520.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">519</span>
+      </header>
+
+      <p class="no-indent">đã bị khóa), điều này là khả thi khi sử dụng Lớp (Class) <code>ReentrantLock</code>&nbsp;mà bạn sẽ sớm được tìm hiểu.</p>
+
+      <h3 class="section-title">20.5 Sử dụng package java.util.concurrent.locks<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Cơ chế khóa nội tại (intrinsic locking) được cung cấp bởi từ khóa <code>synchronized</code>&nbsp;là đủ cho hầu hết các chương trình, nhưng có một vài tình huống mà cơ chế khóa nội tại hoặc là quá cứng nhắc về mặt cấu trúc hoặc đơn giản là không đủ. Cụ thể, cơ chế khóa nội tại (intrinsic locking) có những nhược điểm sau:</p>
+
+      <ol class="numbered">
+        <li>Nó chỉ có thể được sử dụng trong một cấu trúc dạng khối (block structure) như một khối mã nguồn (code block) hoặc một phương thức (method). Điều này có nghĩa là, bạn không thể khóa một monitor ở phương thức này và mở khóa nó ở một phương thức khác, hoặc nếu một khối mã nguồn khóa nhiều monitor, chúng phải được mở khóa theo thứ tự ngược lại với thứ tự thu nhận.</li>
+        <li>Các khóa nội tại (intrinsic lock) không cho phép bất kỳ sự kiểm soát nào đối với &ldquo;tính công bằng&rdquo; (fairness). Nghĩa là, trong số tất cả các Thread (Luồng) đang cạnh tranh cho một khóa nội tại, bất kỳ Thread (Luồng) nào cũng có thể khóa monitor, bất kể các Thread (Luồng) khác đã chờ đợi khóa đó trong bao lâu. Một khóa công bằng (fair lock) sẽ ưu tiên Thread (Luồng) đã chờ đợi lâu nhất và do đó, có thể ngăn chặn tình trạng đói Thread (thread starvation).</li>
+        <li>Một khi một Thread (Luồng) cố gắng khóa monitor, nó không thể rút lui. Nó sẽ bị kẹt ở trạng thái <code>BLOCKED</code>&nbsp;cho đến khi nhận được khóa bất kể mất bao lâu. Thậm chí việc ngắt (interrupt) Thread (Luồng) đó cũng không làm cho nó ngừng chờ đợi khóa.</li>
+        <li>Ghim Thread (Thread pinning) &mdash; Kể từ Java 21, một virtual thread (thread ảo) không thể bị hủy gắn (unmount) khi nó đang thực thi một khối <code>synchronized</code>&nbsp;. Hành vi này được gọi là &ldquo;pinning&rdquo; (ghim). Mặc dù pinning không gây ra vấn đề nghiêm trọng nếu khối synchronized chứa các thao tác ngắn hạn, nhưng nếu nó bao gồm một thao tác chạy lâu dài hoặc nếu khối synchronized được thực thi thường xuyên, platform thread (thread nền tảng) sẽ không sẵn sàng để thực thi các virtual thread khác và điều đó sẽ làm mất đi mục đích của việc sử dụng virtual thread.</li>
+      </ol>
+
+      <p>Mặc dù không quan trọng cho kỳ thi, hãy lưu ý rằng một virtual</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

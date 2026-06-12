@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0097.html">← Trước</a>
+    <a href="page_0099.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">98</span>
+      </header>
+
+      <h3 class="subsection-title">Chuỗi</h3>
+      <p class="no-indent"><code>serial</code> và người anh lớn hơn của nó, <code>bigserial</code>, là các số nguyên tự động tăng thường được sử dụng làm
+      khóa chính của các bảng mà trong đó không có khóa tự nhiên rõ ràng. Kiểu dữ liệu này có
+      những tên gọi khác nhau trong các sản phẩm cơ sở dữ liệu khác nhau, với autonumber là tên gọi
+      thay thế phổ biến nhất. Khi bạn tạo một bảng và chỉ định một cột là <code>serial</code>,
+      PostgreSQL trước tiên tạo một cột số nguyên và sau đó tạo một đối tượng chuỗi có tên
+      <code>table_name_column_name_seq</code> nằm trong cùng một lược đồ với bảng. Sau đó, nó thiết lập
+      giá trị mặc định của cột số nguyên mới để đọc giá trị của nó từ chuỗi. Nếu bạn xóa cột,
+      PostgreSQL cũng xóa đối tượng chuỗi đi kèm.</p>
+
+      <p>Trong PostgreSQL, loại chuỗi là một tài sản cơ sở dữ liệu độc lập. Bạn có thể kiểm tra
+      và chỉnh sửa chuỗi bằng cách sử dụng pgAdmin hoặc SQL với lệnh <code>ALTER SEQUENCE</code>. Bạn
+      có thể thiết lập giá trị hiện tại của nó, giá trị biên (giới hạn trên và dưới), và thậm chí là số
+      lượng số để tăng mỗi lần. Mặc dù hiếm khi tăng xuống, bạn
+      có thể thiết lập giá trị tăng lên thành một số âm để đạt được điều đó. Bởi vì các chuỗi
+      là tài sản cơ sở dữ liệu độc lập, bạn có thể tạo chúng riêng biệt với một bảng bằng cách sử dụng
+      lệnh <code>CREATE SEQUENCE</code>, và bạn có thể sử dụng cùng một đối tượng chuỗi cho nhiều
+      hơn một bảng. Việc chia sẻ chuỗi giữa các bảng khác nhau rất hữu ích khi bạn đang
+      gán một khóa “vũ trụ” trong cơ sở dữ liệu của mình.</p>
+
+      <p>Để sử dụng cùng một chuỗi cho nhiều bảng, hãy định nghĩa cột là <code>integer</code> hoặc
+      <code>bigint</code>, sau đó thiết lập giá trị mặc định của cột thành số chuỗi tiếp theo bằng cách sử dụng
+      hàm <code>nextval(sequence_name)</code>.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0098_icon_warning.png" width="92" height="87" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Nếu bạn đổi tên một bảng có một chuỗi dựa trên một chuỗi, PostgreSQL
+        sẽ không tự động đổi tên đối tượng chuỗi. Nếu việc duy trì sự đối xứng trong tên là quan trọng,
+        bạn nên đổi tên đối tượng chuỗi.</p>
+      </div>
+
+      <h3 class="subsection-title">Hàm Generate Series</h3>
+      <p class="no-indent">PostgreSQL có một hàm thú vị gọi là <code>generate_series</code> mà chúng ta chưa tìm thấy trong
+      các sản phẩm cơ sở dữ liệu khác. Điều làm cho <code>generate_series</code> trở nên tiện lợi là nó cho phép
+      bạn mô phỏng hiệu quả một vòng lặp for trong SQL. Giả sử chúng ta muốn có danh sách ngày cuối cùng của mỗi
+      tháng cho một khoảng thời gian cụ thể. Làm điều này mà không có <code>generate_series</code> sẽ liên quan đến
+      việc sử dụng một vòng lặp thủ tục hoặc tạo ra một sản phẩm Đề-các khổng lồ của các ngày và sau đó
+      lọc chúng. Với <code>generate_series</code>, mã của bạn chỉ là một dòng, như được thể hiện sau này trong
+      <span class="accent-word">Ví dụ 5-11</span>.</p>
+
+      <p><span class="accent-word">Ví dụ 5-1</span> sử dụng các số nguyên với một tham số bước tùy chọn.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-1.</strong> generate_series() với bước nhảy 13</figcaption>
+        <pre class="code-block"><code>SELECT x FROM generate_series(1,51,13) As x;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">80<span class="sep">|</span>Chương 5: Kiểu Dữ Liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

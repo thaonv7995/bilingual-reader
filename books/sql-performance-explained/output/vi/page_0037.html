@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Tìm kiếm không phân biệt chữ hoa chữ thường bằng UPPER hoặc LOWER</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">37</span>
+      </header>
+      <p class="chapter-running-head">Tìm kiếm không phân biệt chữ hoa chữ thường bằng UPPER hoặc LOWER</p>
+
+      <p class="no-indent">không cập nhật thống kê bảng khi tạo một chỉ mục mới (xem thêm &ldquo;Thống kê Oracle cho các chỉ mục dựa trên hàm&rdquo; trên trang&nbsp;28).</p>
+
+      <p class="no-indent">Sau khi cập nhật thống kê, bộ tối ưu hóa tính toán các ước lượng chính xác hơn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+|Id |Operation                   | Name        | Rows | Cost |
+--------------------------------------------------------------
+| 0 |SELECT STATEMENT            |             |    1 |    3 |
+| 1 | TABLE ACCESS BY INDEX ROWID| EMPLOYEES   |    1 |    3 |
+|*2 |  INDEX RANGE SCAN          | EMP_UP_NAME |    1 |    1 |
+--------------------------------------------------------------
+
+Thông tin điều kiện (được xác định bởi id hoạt động):
+---------------------------------------------------
+  2 - access(UPPER("LAST_NAME")='WINAND')</code></pre>
+      </figure>
+
+      <aside class="sidebar-note">
+        <h3>Ghi chú</h3>
+        <p>Các &ldquo;thống kê mở rộng&rdquo; trên các biểu thức và nhóm cột đã được giới thiệu với phiên bản Oracle 11g.</p>
+      </aside>
+
+      <p>Mặc dù các thống kê đã cập nhật không cải thiện hiệu suất thực thi trong trường hợp này&mdash;chỉ mục đã được sử dụng đúng cách&mdash;nhưng luôn là một ý tưởng tốt để kiểm tra các ước lượng của bộ tối ưu hóa. Số lượng hàng được xử lý cho mỗi hoạt động (ước lượng độ cardinality) là một con số đặc biệt quan trọng cũng được hiển thị trong các kế hoạch thực thi của SQL Server và PostgreSQL.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Phụ lục&nbsp;A, &ldquo;Kế hoạch thực thi&rdquo;, mô tả các ước lượng số hàng trong các kế hoạch thực thi của SQL Server và PostgreSQL.</p>
+      </aside>
+
+      <p>SQL Server không hỗ trợ các chỉ mục dựa trên hàm như đã mô tả nhưng nó cung cấp các cột tính toán có thể được sử dụng thay thế. Để sử dụng điều này, bạn phải đầu tiên thêm một cột tính toán vào bảng mà có thể được lập chỉ mục sau đó:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE employees ADD last_name_up AS UPPER(last_name);
+CREATE INDEX emp_up_name ON employees (last_name_up);</code></pre>
+      </figure>
+
+      <p>SQL Server có thể sử dụng chỉ mục này bất cứ khi nào biểu thức đã được lập chỉ mục xuất hiện trong câu lệnh. Bạn không cần phải viết lại truy vấn của mình để sử dụng cột tính toán.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">27</p>
+    </article>
+  </main>
+</body>
+</html>

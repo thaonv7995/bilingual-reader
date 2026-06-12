@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Math</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h4.subsection-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">87</span>
+      </header>
+      <p class="chapter-running-head">Math</p>
+
+      <h4 class="subsection-title">Math</h4>
+
+      <p class="no-indent">There is one more class of obfuscations that is smart and prevents proper index usage. Instead of using logic expressions it is using a calculation.</p>
+
+      <p>Consider the following statement. Can it use an index on <code>NUMERIC_NUMBER</code>?</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT numeric_number
+  FROM table_name
+ WHERE numeric_number - 1000 &gt; ?</code></pre>
+      </figure>
+
+      <p>Similarly, can the following statement use an index on <code>A</code> and <code>B</code>&mdash;you choose the order?</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT a, b
+  FROM table_name
+ WHERE 3*a + 5 = b</code></pre>
+      </figure>
+
+      <p>Let&rsquo;s put these questions into a different perspective; if you were developing an SQL database, would you add an equation solver? Most database vendors just say &ldquo;No!&rdquo; and thus, neither of the two examples uses the index.</p>
+
+      <p>You can even use math to obfuscate a condition intentionally&mdash;as we did it previously for the full text <code>LIKE</code> search. It is enough to add zero, for example:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT numeric_number
+  FROM table_name
+ WHERE numeric_number + 0 = ?</code></pre>
+      </figure>
+
+      <p>Nevertheless we can index these expressions with a function-based index if we use calculations in a smart way and transform the where clause like an equation:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT a, b
+  FROM table_name
+ WHERE 3*a - b = -5</code></pre>
+      </figure>
+
+      <p>We just moved the table references to the one side and the constants to the other. We can then create a function-based index for the left hand side of the equation:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX math ON table_name (3*a - b)</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">77</p>
+    </article>
+  </main>
+</body>
+</html>

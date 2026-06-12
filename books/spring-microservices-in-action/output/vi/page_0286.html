@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Spring Cloud Sleuth và correlation ID</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0285.html">← Prev</a>
+    <a href="page_0287.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Spring Cloud Sleuth và correlation ID</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">261</span>
+      </header>
+
+      <p class="no-indent">sẽ đảm bảo mọi lời gọi HTTP từ một dịch vụ truyền correlation ID bằng cách thêm correlation ID vào HTTP header trên mọi lời gọi đi ra.</p>
+
+      <p>Ồ, và bạn còn phải thực hiện các thao tác &ldquo;magic&rdquo; với Spring và Hystrix để đảm bảo thread context của luồng cha đang giữ correlation ID được truyền đúng sang Hystrix. Thật khó tin&mdash;cuối cùng đây là rất nhiều hạ tầng được dựng lên cho một thứ mà bạn hy vọng chỉ được xem khi có sự cố (dùng correlation ID để theo dõi những gì đang diễn ra với một giao dịch).</p>
+
+      <p>May mắn là, Spring Cloud Sleuth quản lý toàn bộ hạ tầng mã và độ phức tạp này cho bạn. Bằng cách thêm Spring Cloud Sleuth vào Spring Microservices của bạn, bạn có thể</p>
+
+      <ul class="manning-bullets" aria-label="Khả năng của Spring Cloud Sleuth">
+        <li>Tạo và inject correlation ID vào các lời gọi dịch vụ một cách trong suốt nếu chưa có correlation ID nào tồn tại.</li>
+        <li>Quản lý việc truyền correlation ID tới các lời gọi dịch vụ đi ra để correlation ID cho một giao dịch được tự động thêm vào các lời gọi đi ra.</li>
+        <li>Thêm thông tin correlation vào logging MDC của Spring để correlation ID được tạo tự động được ghi log bởi triển khai SL4J và Logback mặc định của Spring Boot.</li>
+        <li>Tùy chọn, publish thông tin tracing trong lời gọi dịch vụ tới nền tảng distributed tracing Zipkin.</li>
+      </ul>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Với Spring Cloud Sleuth, nếu bạn dùng triển khai logging của Spring Boot, bạn sẽ tự động có correlation ID được thêm vào các câu lệnh log mà bạn đặt trong microservice của mình.</p>
+      </aside>
+
+      <p class="no-indent">Hãy tiếp tục và thêm Spring Cloud Sleuth vào licensing service và organization service của bạn.</p>
+
+      <h4 class="subsection-title">9.1.1 Thêm Spring Cloud Sleuth vào licensing và organization</h4>
+
+      <p class="no-indent">Để bắt đầu dùng Spring Cloud Sleuth trong hai dịch vụ (licensing và organization), bạn cần thêm một dependency Maven duy nhất vào tệp <code>pom.xml</code> ở cả hai dịch vụ:</p>
+
+      <figure class="code-snippet" aria-label="Dependency Maven Spring Cloud Sleuth">
+        <pre class="code-block"><code>&lt;dependency&gt;
+&lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+&lt;artifactId&gt;spring-cloud-starter-sleuth&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <p class="no-indent">Dependency này sẽ kéo theo tất cả thư viện lõi cần thiết cho Spring Cloud Sleuth.</p>
+
+      <p>Vậy là xong. Khi dependency này được kéo vào, dịch vụ của bạn sẽ</p>
+
+      <ol class="manning-numbered" aria-label="Hành vi tự động của Spring Cloud Sleuth">
+        <li>Kiểm tra mọi lời gọi HTTP đến và xác định liệu thông tin tracing Spring Cloud Sleuth có tồn tại trong lời gọi đến hay không. Nếu dữ liệu tracing Spring Cloud Sleuth tồn tại, thông tin tracing được truyền vào microservice của bạn sẽ được capture và cung cấp cho dịch vụ để ghi log và xử lý.</li>
+        <li>Thêm thông tin tracing Spring Cloud Sleuth vào Spring MDC để mọi câu lệnh log do microservice của bạn tạo ra sẽ được thêm vào logs.</li>
+        <li>Inject thông tin tracing Spring Cloud vào mọi lời gọi HTTP đi ra và message trên kênh messaging Spring mà dịch vụ của bạn thực hiện.</li>
+      </ol>
+
+      <p class="license-watermark no-indent">Licensed to Jianjun Shou &lt;seanshou@gmail.com&gt;</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

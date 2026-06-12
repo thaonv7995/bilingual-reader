@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0036.html">← Trước</a>
+    <a href="page_0038.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> <code>unit</code> cho bạn biết đơn vị đo lường được báo cáo bởi các cài đặt. Điều này đôi khi gây nhầm lẫn khi nói đến bộ nhớ vì, như bạn có thể thấy trong <span class="accent-word">Ví dụ 2-2</span>, một số được báo cáo bằng đơn vị 8 KB và một số chỉ bằng KB. Trong <em>postgresql.conf</em>, thường thì, bạn cố ý đặt những cái này thành một đơn vị đo lường mà bạn chọn; 128 MB là một ứng cử viên tốt. Bạn cũng có thể nhận được một hiển thị dễ đọc hơn về một cài đặt cụ thể bằng cách chạy một câu lệnh như <code>SHOW effective_cache_size;</code> hoặc <code>SHOW maintenance_work_mem;</code>, cả hai đều hiển thị cài đặt bằng MB. Nếu bạn muốn xem tất cả các cài đặt bằng các đơn vị thân thiện, hãy sử dụng <code>SHOW ALL</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> <code>setting</code> là cài đặt hiện tại; <code>boot_val</code> là cài đặt mặc định; <code>reset_val</code> là cài đặt mới nếu bạn khởi động lại hoặc tải lại máy chủ. Hãy chắc chắn rằng sau bất kỳ thay đổi nào bạn thực hiện đối với <em>postgresql.conf</em>, <code>setting</code> và <code>reset_val</code> là giống nhau. Nếu không, máy chủ vẫn cần khởi động lại hoặc tải lại.</p>
+
+      <p class="no-indent">Chú ý đặc biệt đến các cài đặt mạng sau trong <em>postgresql.conf</em>; thay đổi giá trị của chúng yêu cầu khởi động lại dịch vụ.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0037_icon_warning.png" width="92" height="87" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Nếu bạn đang chạy phiên bản 9.4 hoặc mới hơn, các cài đặt cùng tên trong <em>postgresql.auto.conf</em> có ưu tiên hơn các cài đặt trong <em>postgresql.conf</em>.</p>
+      </div>
+
+      <p class="object-term">listen_addresses</p>
+      <p class="object-def">Thông báo cho PostgreSQL biết địa chỉ IP nào để lắng nghe. Điều này thường mặc định là <code>localhost</code> hoặc <code>local</code>, nhưng nhiều người thay đổi nó thành <code>*</code>, có nghĩa là tất cả các địa chỉ IP có sẵn.</p>
+
+      <p class="object-term">port</p>
+      <p class="object-def">Mặc định là 5432. Nếu bạn đang sử dụng Red Hat hoặc CentOS, hãy thay đổi giá trị <code>PGPORT</code> trong <code><em>/etc/sysconfig/pgsql/your_service_name_here</em></code> để thay đổi cổng lắng nghe.</p>
+
+      <p class="object-term">max_connections</p>
+      <p class="object-def">Số lượng kết nối đồng thời tối đa được phép.</p>
+
+      <p class="no-indent">Theo kinh nghiệm của chúng tôi, chúng tôi thấy ba cài đặt sau ảnh hưởng đến hiệu suất trên toàn bộ và có thể đáng để thử nghiệm cho cấu hình cụ thể của bạn:</p>
+
+      <p class="object-term">shared_buffers</p>
+      <p class="object-def">Xác định lượng bộ nhớ được chia sẻ giữa tất cả các kết nối để lưu trữ các trang đã được truy cập gần đây. Cài đặt này ảnh hưởng sâu sắc đến tốc độ của các truy vấn của bạn. Bạn muốn cài đặt này ở mức khá cao, có thể lên đến 25% bộ nhớ onboard của bạn. Tuy nhiên, bạn sẽ thường thấy lợi nhuận giảm dần sau hơn 8 GB. Các thay đổi yêu cầu khởi động lại.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Tệp cấu hình<span class="sep">|</span>19</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

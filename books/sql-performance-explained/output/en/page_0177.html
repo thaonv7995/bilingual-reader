@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Oracle Operations</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h2.appendix-section-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Oracle Operations</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">Showing Execution Plans</h3>
+
+      <p class="no-indent">The package <code>DBMS_XPLAN</code> was introduced with release 9iR2 and can format and display execution plans from the <code>PLAN_TABLE</code>. The following example shows how to display the last execution plan that was explained in the current database session:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>select * from table(dbms_xplan.display);</code></pre>
+      </figure>
+
+      <p>Once again, if that statement doesn&rsquo;t work out of the box, you should ask your DBA for assistance.</p>
+
+      <p>The query will display the execution plan as shown in the book:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+| Id | Operation         | Name | Rows | Bytes | Cost (%CPU)|
+--------------------------------------------------------------
+|  0 | SELECT STATEMENT  |      |    1 |     2 |     2   (0)|
+|  1 |  TABLE ACCESS FULL| DUAL |    1 |     2 |     2   (0)|
+--------------------------------------------------------------</code></pre>
+      </figure>
+
+      <p>Some of the columns shown in this execution plan were removed in the book for a better fit on the page.</p>
+
+      <h2 class="appendix-section-title">Operations</h2>
+
+      <h3 class="section-title">Index and Table Access</h3>
+
+      <p class="operation-label">INDEX UNIQUE SCAN</p>
+
+      <p class="no-indent">The <code>INDEX UNIQUE SCAN</code> performs the B-tree traversal only. The database uses this operation if a unique constraint ensures that the search criteria will match no more than one entry. See also Chapter&nbsp;&nbsp;1, &ldquo;Anatomy of an Index&rdquo;.</p>
+
+      <p class="operation-label">INDEX RANGE SCAN</p>
+
+      <p class="no-indent">The <code>INDEX RANGE SCAN</code> performs the B-tree traversal and follows the leaf node chain to find all matching entries. See also Chapter&nbsp;1, &ldquo;Anatomy <i>of an Index</i>&rdquo;.</p>
+
+      <p>The so-called index filter predicates often cause performance problems for an <code>INDEX RANGE SCAN</code>. The next section explains how to identify them.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">167</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

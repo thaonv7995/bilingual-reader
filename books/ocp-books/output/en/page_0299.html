@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0298.html">← Prev</a>
+    <a href="page_0300.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">299</span>
+      </header>
+
+      <p class="no-indent">because it allows the compiler to apply the principle of substitutability while validating the
+      type safety of method calls and that allows us to use a subtype object where ever an object of a
+      supertype is needed, such as in assignment statements, method arguments, and return
+      values. Without such relationships, covariance would also not be possible in generics and they
+      would become too rigid to be useful.</p>
+
+      <h3 class="section-title section-title--sub">Establishing supertype-subtype relationships among parameterized types<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>There are only the following three rules that you need to apply while determining whether a
+      parameterized type is a subtype of another parameterized type:</p>
+
+      <ol class="numbered">
+        <li>If the type arguments of the two parameterized types are an exact match, then they have
+        the same relationship as their generic types.
+        For example, <code>ArrayList&lt;?&gt;</code>&nbsp;is a subtype of <code>List&lt;?&gt;</code>&nbsp;and <code>ArrayList&lt;? extends
+        Number&gt;</code>&nbsp;is a subtype of <code>List&lt;? extends Number&gt;</code>&nbsp;because <code>ArrayList</code>&nbsp;is a subtype of
+        <code>List</code>&nbsp;and their type arguments are an exact match.</li>
+        <li>If the generic types of the two parameterized types are an exact match, then the
+        relationship is determined by their type arguments. The type argument that matches a
+        subset of the types matched by the other is considered a subtype of the other.
+        For example, since an unbounded wildcard (i.e <code>&lt;?&gt;</code>&nbsp;) matches a superset of the types
+        matched by an upper bounded wildcard (i.e. <code>? extends X</code>&nbsp;) and also matches a superset
+        of the types matched by a lower bounded wildcard (i.e. <code>? super X</code>&nbsp;), <code>List&lt;?&gt;</code>&nbsp;is a
+        supertype of <code>List&lt;? extends Number&gt;</code>&nbsp;and is also a supertype of <code>List&lt;? super
+        Number&gt;</code>&nbsp;. But <code>List&lt;? extends Number&gt;</code>&nbsp;and <code>List&lt;? super Number&gt;</code>&nbsp;have no
+        relationship because <code>? extends Number</code>&nbsp;and <code>? super Number</code>&nbsp;match a disjoint set of
+        types. Similarly, <code>List&lt;? extends Number&gt;</code>&nbsp;is a subtype of <code>List&lt;? extends Object&gt;</code>
+        and <code>List&lt;? super Number&gt;</code>&nbsp;is a subtype of <code>List&lt;? super Integer&gt;</code>&nbsp;.</li>
+        <li>If neither of the two are an exact match, then both of the above rules must be satisfied
+        individually to establish a relationship, i.e., their generic types as well as their type
+        arguments must have the same supertype-subtype relationship.
+        For example: <code>ArrayList&lt;Integer&gt;</code>&nbsp;is a subtype of <code>List&lt;? extends Number&gt;</code>&nbsp;because
+        <code>ArrayList</code>&nbsp;is a subtype of <code>List</code>&nbsp;and its type argument</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0051.html">← Trước</a>
+    <a href="page_0053.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">52</span>
+      </header>
+
+      <h3 class="section-title">Cài đặt Mở rộng</h3>
+      <p class="no-indent">Để đưa một mở rộng vào cơ sở dữ liệu của bạn cần hai bước cài đặt. Đầu tiên, tải xuống
+      mở rộng và cài đặt nó lên máy chủ của bạn. Thứ hai, cài đặt mở rộng vào cơ sở dữ liệu của bạn.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0052_icon_tip.png" width="43" height="57" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Chúng tôi sẽ sử dụng cùng một thuật ngữ—cài đặt—để chỉ cả hai quy trình
+        nhưng phân biệt giữa cài đặt trên máy chủ và cài đặt vào cơ sở dữ liệu khi ngữ cảnh không rõ ràng.</p>
+      </div>
+
+      <p>Chúng tôi sẽ đề cập đến cả hai bước trong phần này cũng như cách cài đặt các gói contrib trên các phiên bản PostgreSQL trước khi hỗ trợ mở rộng.</p>
+
+      <h3 class="subsection-title">Bước 1: Cài đặt trên máy chủ</h3>
+      <p>Các bước cài đặt mở rộng trên máy chủ của bạn khác nhau tùy theo hệ điều hành. Ý tưởng tổng thể là tải xuống
+      các tệp nhị phân và thư viện cần thiết, sau đó sao chép các tệp nhị phân tương ứng vào các thư mục <code>bin</code> và
+      <code>lib</code> và các tệp kịch bản vào <code>share/extension</code> (các phiên bản 9.1 trở lên) hoặc <code>share/
+      contrib</code> (trước 9.1). Điều này làm cho mở rộng có sẵn cho bước thứ hai.</p>
+
+      <p>Đối với các mở rộng nhỏ hơn, nhiều thư viện cần thiết đã được đóng gói sẵn với cài đặt PostgreSQL của bạn hoặc có thể dễ dàng lấy được bằng cách sử dụng <code>yum</code> hoặc <code>apt get postgresql-
+      contrib</code>. Đối với những cái khác, bạn sẽ cần tự biên dịch, tìm các trình cài đặt mà ai đó đã tạo ra, hoặc sao chép các tệp từ một thiết lập máy chủ tương đương khác. Các mở rộng lớn hơn, chẳng hạn như PostGIS, thường có thể được tìm thấy tại cùng một vị trí mà bạn đã tải xuống
+      PostgreSQL. Để xem tất cả các tệp nhị phân mở rộng đã có sẵn trên máy chủ của bạn, hãy nhập:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM pg_available_extensions;</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Bước 2: Cài đặt vào cơ sở dữ liệu (trước 9.1)</h3>
+      <p>Trước phiên bản 9.1, bạn phải cài đặt các mở rộng bằng tay bằng cách chạy một hoặc nhiều kịch bản SQL
+      trong cơ sở dữ liệu của bạn. Theo quy ước, nếu bạn tải xuống một mở rộng với một trình cài đặt,
+      nó tự động đổ các kịch bản bổ sung vào thư mục <code>contrib</code> của cài đặt PostgreSQL của bạn. Vị trí của thư mục này khác nhau tùy thuộc vào hệ điều hành cụ thể của bạn và
+      phân phối PostgreSQL.</p>
+
+      <p>Ví dụ, trên một CentOS chạy phiên bản 9.0, để chạy kịch bản SQL cho gói mở rộng pgAdmin,
+      hãy gõ lệnh sau từ dòng lệnh hệ điều hành:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>psql -p 5432 -d postgres -f /usr/pgsql-9.0/share/contrib/adminpack.sql</code></pre>
+      </figure>
+
+      <p>Lệnh này gọi psql không tương tác, truyền vào tệp SQL.</p>
+
+      <p>Bởi vì các kịch bản không được đóng gói vào các mở rộng, không có bảng mở rộng nào để
+      truy vấn trên các hệ thống trước 9.1.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">34<span class="sep">|</span>Chương 2: Quản trị cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Recursive CTE</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0155.html">← Trước</a>
+    <a href="page_0157.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">156</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>)
+INSERT INTO logs_2011_01_02 SELECT * FROM t;</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">CTE Đệ Quy</h3>
+      <p class="no-indent">Tài liệu chính thức của PostgreSQL mô tả nó tốt nhất: &ldquo;Bộ sửa đổi RECURSIVE tùy chọn
+      thay đổi CTE từ một sự tiện lợi cú pháp đơn thuần thành một tính năng thực hiện
+      những điều không thể thực hiện được trong SQL chuẩn.&rdquo; Một CTE thú vị hơn là một CTE sử dụng
+      một cấu trúc định nghĩa đệ quy để xây dựng một biểu thức. CTE đệ quy của PostgreSQL sử dụng
+      UNION ALL để kết hợp các bảng, một loại kết hợp có thể được thực hiện lặp đi lặp lại khi
+      truy vấn thêm các bảng nhiều lần.</p>
+
+      <p>Để biến một CTE cơ bản thành một CTE đệ quy, thêm bộ sửa đổi RECURSIVE sau từ khóa WITH. WITH
+      RECURSIVE có thể chứa một sự kết hợp giữa các biểu thức bảng đệ quy và không đệ quy. Trong hầu hết
+      các cơ sở dữ liệu khác, từ khóa RECURSIVE không cần thiết để chỉ định đệ quy.</p>
+
+      <p>Một ứng dụng phổ biến của CTE đệ quy là để đại diện cho các chuỗi tin nhắn và các cấu trúc giống như cây khác. Chúng ta có một ví dụ về điều này trong <span class="accent-word">CTE Đệ Quy để Hiển Thị Cấu Trúc Cây</span>.</p>
+
+      <p>Trong <span class="accent-word">Ví dụ 7-31</span>, chúng ta truy vấn catalog hệ thống để liệt kê các mối quan hệ bảng nối tiếp
+      mà chúng ta có trong cơ sở dữ liệu của mình.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-31.</strong> CTE Đệ Quy</figcaption>
+        <pre class="code-block"><code>WITH RECURSIVE tbls AS (
+    SELECT
+        c.oid As tableoid,
+        n.nspname AS schemaname,
+        c.relname AS tablename
+    FROM
+        pg_class c LEFT JOIN
+        pg_namespace n ON n.oid = c.relnamespace LEFT JOIN
+        pg_tablespace t ON t.oid = c.reltablespace LEFT JOIN
+        pg_inherits As th ON th.inhrelid = c.oid
+    WHERE
+        th.inhrelid IS NULL AND
+        c.relkind = 'r'::"char" AND c.relhassubclass
+    UNION ALL
+    SELECT
+        c.oid As tableoid,
+        n.nspname AS schemaname,
+        tbls.tablename || '->' || c.relname AS tablename
+
+    FROM
+        tbls INNER JOIN
+        pg_inherits As th ON th.inhparent = tbls.tableoid INNER JOIN
+        pg_class c ON th.inhrelid = c.oid LEFT JOIN
+        pg_namespace n ON n.oid = c.relnamespace LEFT JOIN
+    pg_tablespace t ON t.oid = c.reltablespace
+)
+SELECT * FROM tbls ORDER BY tablename;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">138<span class="sep">|</span>Chương 7: SQL: The PostgreSQL Way</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

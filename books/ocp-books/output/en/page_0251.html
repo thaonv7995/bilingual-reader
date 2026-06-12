@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0250.html">← Prev</a>
+    <a href="page_0252.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">251</span>
+      </header>
+
+      <p class="no-indent">In the above code, instead of using any specific class as the type of <code>data</code> variable, I have used a
+      placeholder named <code>E</code>. Observe the part where it says <code>&lt;E&gt;</code> in the class declaration. This tells
+      the compiler that <code>E</code> is just a placeholder and that <code>E</code> will be replaced by the actual type when
+      this class is actually used by another piece of code. The code in <code>DataHolder</code> is written as if the
+      type of the <code>data</code> variable is <code>E</code>. The code in this class is generic enough to not care about the
+      type with which <code>E</code> is replaced. In technical parlance, <code>DataHolder</code> is a <strong>generic class</strong> because
+      it uses a <strong>type parameter</strong> (the part between <code>&lt;</code> and <code>&gt;</code>, which, in this example, is just <code>E</code>, is
+      called type parameter). The placeholder itself is called <strong>type variable</strong>, which, in this example, is
+      also <code>E</code>.</p>
+
+      <p>The <code>useData</code> method illustrates an important point here. Since <code>E</code> is not a real type, we do
+      not know anything about its properties. Specifically, we don&rsquo;t know what methods or fields does
+      <code>E</code> have. Neither does the compiler. Therefore, we can&rsquo;t invoke any method on the <code>data</code>
+      variable except the ones that are defined in the <code>Object</code> class. This is a serious limitation and I
+      will show you how to overcome it soon.</p>
+
+      <p>Let us now see how this class can be used by other people. Let us say there is a class that
+      consumes a <code>DataHolder</code> object containing <code>String</code>. Here is the code for such a class:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public class SomeClass {
+    public static void consumeStringData(DataHolder&lt;String&gt; stringData){
+        String s = stringData.getData(); //no cast required
+        //do something with s
+        //Integer i = (Integer) stringData.getData(); //will not compile
+    }
+}</code></pre>
+      </figure>
+
+      <p>Observe the usage of <code>&lt;String&gt;</code> while declaring <code>stringData</code> parameter. Here, <code>String</code> is a
+      <strong>type argument</strong> that is being passed to the generic class <code>DataHolder</code>. That makes
+      <code>DataHolder&lt;String&gt;</code> a <strong>parameterized type</strong>. In</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

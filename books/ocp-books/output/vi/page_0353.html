@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table {
+      width: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      font-size: 12pt;
+      line-height: 1.35;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td {
+      border: 0.25mm solid #888;
+      padding: 1.5mm 2mm;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td p:last-child {
+      margin-bottom: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table .interface-extends {
+      font-style: italic;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__class {
+      width: 18%;
+      line-height: 1.25;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__features {
+      width: 42%;
+    }
+
+    .prose-page.ocp-chapter-page table.collection-implementation-table td.collection-implementation-table__usage {
+      width: 40%;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0352.html">← Trước</a>
+    <a href="page_0354.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">353</span>
+      </header>
+
+      <table class="data-table collection-implementation-table">
+        <tbody>
+          <tr>
+            <td class="collection-implementation-table__class">
+              <p><code>ArrayList</code></p>
+              <p class="interface-extends">implements<br><code>List</code></p>
+            </td>
+            <td class="collection-implementation-table__features">
+              <p>1. Được sắp thứ tự dựa trên chỉ số</p>
+              <p>2. Cho phép các phần tử trùng lặp và giá trị <code>null</code></p>
+              <p>3. Có thể sửa đổi</p>
+            </td>
+            <td class="collection-implementation-table__usage">
+              <p>1. Được hỗ trợ bởi một mảng</p>
+              <p>2. Truy cập nhanh nhưng chèn chậm</p>
+              <p>3. Các constructor: <code>ArrayList()</code>,</p>
+              <p><code>ArrayList(int initialCapacity)</code>,</p>
+              <p><code>ArrayList(Collection c)</code></p>
+            </td>
+          </tr>
+          <tr>
+            <td class="collection-implementation-table__class">
+              <p><code>LinkedList</code></p>
+              <p class="interface-extends">implements<br><code>List</code><br>và <code>Deque</code></p>
+            </td>
+            <td class="collection-implementation-table__features">
+              <p>1. Được sắp thứ tự dựa trên chỉ số</p>
+              <p>2. Cho phép các phần tử trùng lặp và giá trị null</p>
+              <p>3. Có thể sửa đổi</p>
+            </td>
+            <td class="collection-implementation-table__usage">
+              <p>1. Được hỗ trợ bởi một danh sách liên kết kép</p>
+              <p>2. Chèn nhanh nhưng truy cập chậm</p>
+              <p>3. Các giá trị null được cho phép nhưng khuyến nghị không nên thêm</p>
+              <p>các giá trị <code>null</code> vì phương thức <code>poll()</code> của <code>Queue</code></p>
+              <p>trả về <code>null</code> để chỉ ra hàng đợi rỗng</p>
+              <p>4. Các constructor: <code>LinkedList()</code>,</p>
+              <p><code>LinkedList(Collection c)</code></p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

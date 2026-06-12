@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: psql (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 8.5pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 8.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0063.html">← Trước</a>
+    <a href="page_0065.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">Cửa sổ console sẽ mở từ pgAdmin với psql và đã kết nối với cơ sở dữ liệu.</p>
+
+      <h3 class="section-title">psql Tương tác và Không Tương tác</h3>
+      <p class="no-indent">Bạn có thể chạy psql một cách tương tác bằng cách đơn giản gõ <code>psql</code> từ dòng lệnh hệ điều hành của bạn. Dấu nhắc của bạn sẽ chuyển sang dấu nhắc psql, báo hiệu rằng bạn hiện đang ở trong console psql tương tác. Bắt đầu gõ các lệnh. Đừng quên kết thúc các câu lệnh SQL bằng dấu chấm phẩy. Nếu bạn nhấn Enter mà không có dấu chấm phẩy, psql sẽ giả định rằng câu lệnh của bạn vẫn tiếp tục.</p>
+
+      <p>Gõ <code>\?</code> trong console psql sẽ hiển thị danh sách tất cả các lệnh có sẵn. Để tiện lợi, chúng tôi đã in lại danh sách này trong phụ lục, làm nổi bật các bổ sung mới trong các phiên bản mới nhất; xem <span class="accent-word">“Các Lệnh Tương Tác psql” trên trang 199</span>. Gõ <code>\h</code> theo sau là lệnh sẽ hiển thị các phần liên quan trong tài liệu PostgreSQL liên quan đến lệnh đó.</p>
+
+      <p>Để sử dụng psql không tương tác, hãy thực thi psql từ dấu nhắc hệ điều hành của bạn và truyền vào một tệp kịch bản. Trong tệp kịch bản này, bạn có thể trộn một số lượng không giới hạn các lệnh SQL và psql. Ngoài ra, bạn có thể truyền vào một hoặc nhiều câu lệnh SQL được bao quanh bởi dấu ngoặc kép. psql không tương tác rất phù hợp cho các tác vụ tự động. Gộp các lệnh của bạn vào một tệp, và sau đó lên lịch để chạy định kỳ bằng cách sử dụng một tác nhân lập lịch công việc như pgAgent (được đề cập trong <span class="accent-word">“Lập Lịch Công Việc với pgAgent” trên trang 73</span>), crontab Linux/Unix, hoặc trình lập lịch Windows. Đối với những tình huống mà nhiều lệnh phải được chạy theo thứ tự hoặc lặp lại, bạn nên tạo một kịch bản trước và sau đó chạy nó bằng psql. Về mặt cú pháp, không tương tác chỉ cung cấp một vài tùy chọn vì tệp kịch bản thực hiện hầu hết công việc. Để thực thi một tệp, sử dụng tùy chọn <code>-f</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     psql -f some_script_file</code></pre>
+      </figure>
+
+      <p class="no-indent">Để thực thi các câu lệnh SQL ngay lập tức, sử dụng tùy chọn <code>-c</code>. Kết hợp nhiều câu lệnh với dấu chấm phẩy:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     psql -d postgresql_book -c "DROP TABLE IF EXISTS dross; CREATE SCHEMA staging;"</code></pre>
+      </figure>
+
+      <p>Để xem danh sách tất cả các tùy chọn, xem <span class="accent-word">“Các Lệnh Không Tương Tác psql” trên trang 201</span>.</p>
+
+      <p>Bạn có thể nhúng các lệnh tương tác bên trong các tệp kịch bản. Giả sử bạn đã tạo kịch bản trong Ví dụ 3-1 và đặt tên là <code>build_stage.psql</code>:</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 3-1.</strong> Kịch bản với các lệnh psql tương tác</figcaption>
+        <pre class="code-block"><code>\a \t ①
+SELECT 'CREATE TABLE
+ staging.count_to_50 (array_to_string(array_agg('x' || i::text ' varchar(10)));' As
+create_sql ②
+FROM generate_series(1,9) As i;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">46<span class="sep">|</span>Chương 3: psql</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

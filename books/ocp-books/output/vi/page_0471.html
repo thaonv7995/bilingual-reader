@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 8mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0470.html">← Trước</a>
+    <a href="page_0472.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">471</span>
+      </header>
+
+      <p>Bạn nên đọc qua phần mô tả JavaDoc của <code>Thread.Builder</code>&nbsp;nhưng bốn phương thức sau đây của nó được sử dụng thường xuyên hơn những phương thức khác:</p>
+
+      <ol class="numbered">
+        <li><code>Thread.Builder name(String name)</code> : Thiết lập tên cho Thread (Luồng).</li>
+        <li><code>Thread.Builder name(String prefix, long start)</code> : Thiết lập tên Thread (Luồng) bằng cách ghép chuỗi tiền tố (prefix) với dạng biểu diễn chuỗi của một giá trị bộ đếm. Phương thức này hữu ích khi đối tượng <code>Thread.Builder</code>&nbsp;được dùng để tạo nhiều Thread (Luồng), mỗi Thread (Luồng) có một tên khác nhau.</li>
+        <li><code>Thread start(Runnable task)</code> : Tạo một Thread (Luồng) mới từ trạng thái hiện tại của builder và lập lịch để nó thực thi.</li>
+        <li><code>Thread unstarted(Runnable task)</code> : Tạo một Thread (Luồng) mới từ trạng thái hiện tại của builder để chạy tác vụ đã cho.</li>
+      </ol>
+
+      <h3 class="section-title section-title--minor">Daemon Threads (Luồng Daemon)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Khi chạy chương trình trên, bạn sẽ nhận thấy rằng chương trình không kết thúc ngay cả khi đã đi đến cuối phương thức <code>main</code>. Bạn sẽ thấy con trỏ nhấp nháy một lúc sau khi câu lệnh in trong phương thức <code>main</code>&nbsp;được thực thi. Chương trình chỉ kết thúc sau khi câu lệnh in trong phương thức <code>run</code>&nbsp;của lớp <code>Factorial</code>&nbsp;được thực thi. Đó là vì một chương trình Java không chỉ bao gồm riêng Thread (Luồng) main. Một chương trình Java được cấu thành từ tất cả các Thread (Luồng) được khởi chạy rõ ràng bởi mã nguồn của chúng ta, cũng như các Thread (Luồng) do JVM tự khởi chạy như Thread (Luồng) main. Do đó, một chương trình không thể kết thúc cho đến khi tất cả các Thread (Luồng) đang chạy kết thúc. Tuy nhiên, có một ngoại lệ.</p>
+
+      <p>Một số Thread (Luồng) mà JVM khởi chạy chỉ nhằm mục đích &ldquo;quản lý nội bộ&rdquo; (housekeeping) và chúng không thực thi bất kỳ logic nào liên quan đến người dùng (được gọi là &ldquo;logic nghiệp vụ&rdquo; hay &ldquo;business logic&rdquo;). Những Thread (Luồng) chỉ tồn tại để đóng vai trò hỗ trợ trong chương trình như vậy được gọi là <strong>daemon threads (luồng daemon)</strong>. Ví dụ, khi bạn khởi chạy một chương trình Java, JVM cũng tự động khởi chạy một Thread (Luồng) dành cho Bộ thu dọn rác (Garbage Collection). Ở đây, việc thu dọn rác chỉ cần thiết nếu chương trình đang thực thi một số logic nghiệp vụ (business logic) nào đó. Sẽ không có ý nghĩa gì nếu tiếp tục duy trì Thread (Luồng) này hoạt động khi không còn logic nghiệp vụ (business logic) nào để thực thi. Vì lý do này, JVM sẽ tự động kết thúc tất cả các daemon thread (luồng daemon) sau khi tất cả các Thread (Luồng) không phải daemon (non-daemon threads) kết thúc. Do đó, <strong>một chương trình Java sẽ kết thúc khi tất cả các Thread (Luồng) không phải daemon (non-daemon threads) kết thúc.</strong></p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

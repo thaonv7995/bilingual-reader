@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 7: Partial Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 7: Kết quả một phần</p>
+
+      <p class="no-indent">Tuy nhiên, có thể sử dụng một biến thể xấp xỉ của phương pháp tìm kiếm với các cơ sở dữ liệu không hỗ trợ đúng cách các giá trị hàng&mdash;mặc dù xấp xỉ này không thanh lịch và hiệu quả như các giá trị hàng trong PostgreSQL. Để thực hiện xấp xỉ này, chúng ta phải sử dụng các so sánh &ldquo;thông thường&rdquo; để diễn đạt logic cần thiết như trong ví dụ Oracle này:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM ( SELECT *
+           FROM sales
+          WHERE sale_date &lt;= ?
+            <strong>AND NOT (sale_date = ? AND sale_id &gt;= ?)</strong>
+          ORDER BY sale_date DESC, sale_id DESC
+       )
+ WHERE rownum &lt;= 10;</code></pre>
+      </figure>
+
+      <p>Câu lệnh <code><strong>where</strong></code> bao gồm hai phần. Phần đầu tiên chỉ xem xét <code>SALE_DATE</code> và sử dụng điều kiện nhỏ hơn hoặc bằng (&lt;=)&mdash;nó chọn nhiều hàng hơn khi cần thiết. Phần này của câu lệnh <code><strong>where</strong></code> đủ đơn giản để tất cả các cơ sở dữ liệu có thể sử dụng nó để truy cập vào chỉ mục. Phần thứ hai của câu lệnh <code><strong>where</strong></code> loại bỏ các hàng dư thừa đã được hiển thị trên trang trước. Hộp có tiêu đề &ldquo;Logic Tương đương với Chỉ mục&rdquo; giải thích lý do tại sao câu lệnh <code><strong>where</strong></code> được diễn đạt theo cách này.</p>
+
+      <p>Kế hoạch thực thi cho thấy rằng cơ sở dữ liệu sử dụng phần đầu tiên của câu lệnh <code><strong>where</strong></code> như một điều kiện truy cập.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id | Operation                      | Name    |  Rows | Cost |
+---------------------------------------------------------------
+| 0 | SELECT STATEMENT               |         |    10 |    4 |
+|*1 |  <strong>COUNT STOPKEY</strong>                 |         |       |      |
+| 2 |   VIEW                         |         |    10 |    4 |
+| 3 |    TABLE ACCESS BY INDEX ROWID | SALES   | 50218 |    4 |
+|*4 |     <strong>INDEX RANGE SCAN DESCENDING</strong>| SL_DTIT |     2 |    3 |
+---------------------------------------------------------------
+Thông tin điều kiện (được xác định bởi id hoạt động):
+---------------------------------------------------
+   1 - filter(ROWNUM&lt;=10)
+   4 - access("SALE_DATE"&lt;=:SALE_DATE)
+       filter("SALE_DATE"&lt;&gt;:SALE_DATE
+           OR "SALE_ID"&lt;TO_NUMBER(:SALE_ID))</code></pre>
+      </figure>
+
+      <p>Các điều kiện truy cập trên <code>SALE_DATE</code> cho phép cơ sở dữ liệu bỏ qua những ngày đã được hiển thị đầy đủ trên các trang trước. Phần thứ hai của câu lệnh <code><strong>where</strong></code> chỉ là một điều kiện lọc. Điều đó có nghĩa là cơ sở dữ liệu kiểm tra một</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">152</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 3: On refreshing microservices / 3.4 Protecting sensitive configuration</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0113.html">← Prev</a>
+    <a href="page_0115.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Protecting sensitive configuration information</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">89</span>
+      </header>
+
+      <p class="no-indent">Note a couple of things about the <code>@RefreshScope</code> annotation. First, the annotation will only reload the custom Spring properties you have in your application configuration. Items such as your database configuration that are used by Spring Data won&rsquo;t be reloaded by the <code>@RefreshScope</code> annotation. To perform the refresh, you can hit the <code>http://&lt;yourserver&gt;:8080/refresh</code> endpoint.</p>
+
+      <aside class="sidebar-note" aria-label="On refreshing microservices">
+        <h3>On refreshing microservices</h3>
+        <p>When using Spring Cloud configuration service with microservices, one thing you need to consider before you dynamically change properties is that you might have multiple instances of the same service running, and you&rsquo;ll need to refresh all of those services with their new application configurations. There are several ways you can approach this problem:</p>
+        <p>Spring Cloud configuration service does offer a &ldquo;push&rdquo;-based mechanism called Spring Cloud Bus that will allow the Spring Cloud configuration server to publish to all the clients using the service that a change has occurred. Spring Cloud configuration requires an extra piece of middleware running (RabbitMQ). This is an extremely useful means of detecting changes, but not all Spring Cloud configuration backends support the &ldquo;push&rdquo; mechanism (that is, the Consul server).</p>
+        <p>In the next chapter you&rsquo;ll use Spring Service Discovery and Eureka to register all instances of a service. One technique I&rsquo;ve used to handle application configuration refresh events is to refresh the application properties in Spring Cloud configuration and then write a simple script to query the service discovery engine to find all instances of a service and call the <code>/refresh</code> endpoint directly.</p>
+        <p>Finally, you can restart all the servers or containers to pick up the new property. This is a trivial exercise, especially if you&rsquo;re running your services in a container service such as Docker. Restarting Docker containers literally takes seconds and will force a reread of the application configuration.</p>
+        <p>Remember, cloud-based servers are ephemeral. Don&rsquo;t be afraid to start new instances of a service with their new configuration, direct traffic to the new services, and then tear down the old ones.</p>
+      </aside>
+
+      <h4 class="subsection-title">3.4 Protecting sensitive configuration information</h4>
+
+      <p>By default, Spring Cloud configuration server stores all properties in plain text within the application&rsquo;s configuration files. This includes sensitive information such as database credentials.</p>
+
+      <p>It&rsquo;s an extremely poor practice to keep sensitive credentials stored as plain text in your source code repository. Unfortunately, it happens far more often than you think. Spring Cloud Config does give you the ability to encrypt your sensitive properties easily. Spring Cloud Config supports using both symmetric (shared secret) and asymmetric encryption (public/private key).</p>
+
+      <p>We&rsquo;re going to see how to set up your Spring Cloud configuration server to use encryption using with a symmetric key. To do this you&rsquo;ll need to</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

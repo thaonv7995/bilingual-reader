@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0592.html">← Trước</a>
+    <a href="page_0594.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">593</span>
+      </header>
+
+      <p class="no-indent">các method) không chấp nhận một downstream collector.</p>
+
+      <h3 class="section-title section-title--sub">21.2.7 Xác định kiểu dữ liệu đầu vào và kiểu trả về khi sử dụng các collector<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Collectors API phụ thuộc rất nhiều vào generics khi nó suy luận kiểu dữ liệu từ ngữ cảnh. Bạn có thể đọc qua chương Collections và Generics để ôn lại những kiến thức cơ bản về generics trước khi tiếp tục.</p>
+
+      <p>Hãy bắt đầu với interface <code>Stream</code>&nbsp;. Nó khai báo một tham số kiểu <code>T</code>&nbsp;, đại diện cho kiểu của các đối tượng mà stream này sẽ xử lý. Tiếp theo, hãy xem khai báo của method <code>collect</code>&nbsp;của <code>Stream</code>&nbsp;: <code>&lt;R,A&gt; R collect(Collector&lt;? super T,A,R&gt; collector)</code>&nbsp;. Method này khai báo thêm hai tham số kiểu tên là <code>R</code>&nbsp;và <code>A</code>&nbsp;, đồng thời cũng sử dụng <code>R</code>&nbsp;làm kiểu trả về của method. Tại thời điểm này, method <code>collect</code>&nbsp;có quyền truy cập vào ba tham số kiểu &mdash; <code>T</code>&nbsp;, <code>A</code>&nbsp;và <code>R</code>&nbsp;, trong đó <code>T</code>&nbsp;có thể truy cập được trong toàn bộ interface <code>Stream</code>&nbsp;trong khi <code>A</code>&nbsp;và <code>R</code>&nbsp;chỉ có thể truy cập được bên trong method <code>collect</code>&nbsp;.</p>
+
+      <p>Bây giờ, hãy xem định nghĩa của interface <code>Collector</code>&nbsp;. <code>Collector</code>&nbsp;cũng là một generic interface xử lý các đối tượng thuộc ba kiểu dữ liệu. Ba kiểu dữ liệu này được đại diện bởi ba tham số kiểu tên là <code>T</code>&nbsp;, <code>A</code>&nbsp;và <code>R</code>&nbsp;mà nó khai báo. Lưu ý rằng ba tên tham số kiểu này chưa có liên hệ gì với ba tham số kiểu được khai báo trong method <code>collect</code>&nbsp;bởi vì <code>Collector</code>&nbsp;và <code>Stream</code>&nbsp;là hai interface khác nhau, và do đó, các tham số kiểu này thuộc về hai phạm vi (scope) khác nhau. (Điều này tương tự như việc hai class cùng có một biến trùng tên. Chúng không có liên hệ gì với nhau.)</p>
+
+      <p>Quay trở lại với method <code>collect</code>&nbsp;của <code>Stream</code>&nbsp;, hãy quan sát kiểu dữ liệu của tham số method tên là <code>collector</code>&nbsp;. Kiểu của tham số method này là một <code>Collector</code>&nbsp;được định kiểu theo ba biến kiểu có thể truy cập được ở đây, tức là <code>? super T</code>&nbsp;, <code>A</code>&nbsp;và <code>R</code>&nbsp;. Nói cách khác, các tham số kiểu <code>T</code>&nbsp;, <code>A</code>&nbsp;và <code>R</code>&nbsp;của interface <code>Collector</code>&nbsp;đang được định kiểu theo các tham số kiểu <code>? super T</code>&nbsp;, <code>A</code>&nbsp;và <code>R</code>&nbsp;của</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Hình 10.17 Các bước build Travis CI</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page figure.diagram.fig-simple {
+      margin: 0 auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram.fig-simple img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram.fig-simple figcaption {
+      margin: 1mm 0 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 1;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.diagram.fig-simple + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0337.html">← Trước</a>
+    <a href="page_0339.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">313</span>
+        <span class="rh-center">Kích hoạt build dịch vụ trong Travis CI</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="diagram fig-simple" aria-label="Hình 10.17 Các bước do tệp .travis.yml thực hiện">
+        <img src="../assets/images/page_0338_fig_10_17.png" width="1313" height="358" alt="Hình 10.17 — GitHub, Travis CI, travis.yml, Maven, Docker Hub, Amazon ECS và kiểm thử nền tảng trong pipeline build và triển khai">
+        <figcaption><strong>Hình 10.17</strong><br>Các bước cụ thể do tệp .travis.yml thực hiện để build và triển khai phần mềm của bạn</figcaption>
+      </figure>
+
+      <ol class="manning-numbered continued" aria-label="Các bước quy trình build Travis CI (tiếp theo)">
+        <li>Thông báo tài khoản GitHub. Travis CI sẽ khởi động máy ảo dùng để thực thi build. Travis CI sau đó checkout mã nguồn từ GitHub rồi dùng tệp <code>.travis.yml</code> để bắt đầu toàn bộ quy trình build và triển khai.</li>
+        <li>Travis CI thiết lập cấu hình cơ bản trong build và cài đặt các dependency. Cấu hình cơ bản bao gồm ngôn ngữ sẽ dùng trong build (Java), liệu có cần Sudo để cài đặt phần mềm và truy cập Docker (để tạo và gắn tag container Docker), đặt các biến môi trường bảo mật cần thiết trong build, và định nghĩa cách bạn được thông báo khi build thành công hay thất bại.</li>
+        <li>Trước khi build thực sự được thực thi, Travis CI có thể được hướng dẫn cài đặt bất kỳ thư viện bên thứ ba hoặc công cụ dòng lệnh nào có thể cần trong quy trình build. Bạn dùng hai công cụ như vậy: công cụ dòng lệnh <code>travis</code> và Amazon <code>ecs-cli</code> (EC2 Container Service client).</li>
+        <li>Đối với quy trình build, luôn bắt đầu bằng gắn tag mã trong kho mã nguồn để bất cứ lúc nào trong tương lai bạn có thể lấy ra phiên bản đầy đủ mã nguồn dựa trên tag của build.</li>
+        <li>Quy trình build sau đó sẽ thực thi các script Maven cho các dịch vụ. Các script Maven sẽ biên dịch microservice Spring, chạy kiểm thử đơn vị và tích hợp, rồi build image Docker dựa trên build.</li>
+        <li>Khi image Docker cho build hoàn tất, quy trình build sẽ đẩy image lên Docker Hub với cùng tên tag bạn đã dùng để gắn tag kho mã nguồn.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 1: Những Điều Cơ Bản (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0031.html">← Trước</a>
+    <a href="page_0033.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">có nhiều PL để lựa chọn. Điều này mở ra cánh cửa cho sự trừu tượng phức tạp hơn
+      bằng cách sử dụng các view.</p>
+
+      <ul class="bullets">
+        <li>Các cải tiến được thêm vào bởi chỉ mục KNN GiST cho các tiện ích phổ biến, chẳng hạn như tìm kiếm toàn văn,
+        trigrams (cho tìm kiếm mờ và tìm kiếm không phân biệt chữ hoa chữ thường), và PostGIS.</li>
+      </ul>
+
+      <h3 class="section-title">Trình điều khiển cơ sở dữ liệu</h3>
+      <p>Nếu bạn đang sử dụng hoặc có kế hoạch sử dụng PostgreSQL, có khả năng bạn sẽ không sử dụng nó trong
+      một môi trường tách biệt. Để nó tương tác với các ứng dụng khác, bạn cần một trình điều khiển cơ sở dữ liệu. 
+      PostgreSQL có một số lượng lớn trình điều khiển miễn phí hỗ trợ nhiều ngôn ngữ lập trình và công cụ. Ngoài ra, 
+      nhiều tổ chức thương mại cung cấp trình điều khiển với các tính năng bổ sung với mức giá hợp lý. Một số trình điều khiển mã nguồn mở phổ biến có sẵn:</p>
+
+      <ul class="bullets">
+        <li>PHP là một ngôn ngữ phổ biến được sử dụng để phát triển ứng dụng web, và hầu hết các bản phân phối PHP 
+        đi kèm với ít nhất một trình điều khiển PostgreSQL: trình điều khiển pgsql cũ và trình điều khiển pdo_pgsql mới hơn. 
+        Bạn có thể cần kích hoạt chúng trong <i>php.ini</i>, nhưng chúng thường đã được cài đặt sẵn.</li>
+        <li>Đối với phát triển Java, trình điều khiển JDBC theo kịp các phiên bản PostgreSQL mới nhất. Tải xuống từ 
+        <a href="http://jdbc.postgresql.org" class="accent-word">PostgreSQL</a>.</li>
+        <li>Đối với .NET (cả Microsoft và Mono), bạn có thể sử dụng trình điều khiển 
+        <a href="http://npgsql.projects.pgfoundry.org" class="accent-word">Npgsql</a>. Cả mã nguồn và nhị phân đều có sẵn cho .NET Framework 3.5 trở lên, Microsoft Entity Framework, và Mono.NET.</li>
+        <li>Nếu bạn cần kết nối từ Microsoft Access, phần mềm văn phòng, hoặc bất kỳ sản phẩm nào khác hỗ trợ Open Database Connectivity (ODBC), tải xuống trình điều khiển từ 
+        <a href="http://www.postgresql.org/ftp/odbc/versions/msi" class="accent-word">PostgreSQL</a>. Liên kết dẫn bạn đến cả trình điều khiển ODBC 32-bit và 64-bit.</li>
+        <li>LibreOffice 3.5 (và các phiên bản sau) đi kèm với một trình điều khiển PostgreSQL gốc. Đối với OpenOffice và các phiên bản cũ hơn của LibreOffice, bạn có thể sử dụng trình điều khiển JDBC hoặc trình điều khiển SDBC. Bạn có thể tìm hiểu thêm chi tiết từ bài viết của chúng tôi 
+        <a href="http://www.postgresonline.com/journal/categories/23-oobase" class="accent-word">OO Base và PostgreSQL</a>.</li>
+        <li>Python hỗ trợ PostgreSQL thông qua nhiều 
+        <a href="http://wiki.postgresql.org/wiki/Python" class="accent-word">trình điều khiển cơ sở dữ liệu Python</a>; hiện tại, 
+        <a href="http://initd.org/psycopg/" class="accent-word">psycopg</a> là phổ biến nhất. Hỗ trợ phong phú cho PostgreSQL cũng có sẵn trong 
+        <a href="http://bit.ly/1w5GbtX" class="accent-word">framework web Django</a>.</li>
+        <li>Nếu bạn sử dụng Ruby, kết nối với PostgreSQL bằng cách sử dụng 
+        <a href="http://bit.ly/1vXsUSk" class="accent-word">rubygems pg</a>.</li>
+        <li>Bạn sẽ tìm thấy hỗ trợ kết nối của Perl cho PostgreSQL trong các trình điều khiển DBI và DBD::Pg. 
+        Ngoài ra, có trình điều khiển DBD::PgPP thuần Perl từ 
+        <a href="http://bit.ly/1u00tOc" class="accent-word">CPAN</a>.</li>
+        <li>Node.js là một framework để chạy các chương trình mạng có thể mở rộng được viết bằng JavaScript. 
+        Nó được xây dựng trên engine Google V8. Có ba trình điều khiển PostgreSQL</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">14<span class="sep">|</span>Chương 1: Những Điều Cơ Bản</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 8: Section 8.4 distributed caching</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + .sidebar-note--gray {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0273.html">← Prev</a>
+    <a href="page_0275.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">A Spring Cloud Stream use case: distributed caching</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">249</span>
+      </header>
+
+      <p class="no-indent">Now you have two services communicating with each other using messaging. Spring Cloud Stream is acting as the middleman for these services. From a messaging perspective, the services know nothing about each other. They&rsquo;re using a messaging broker to communicate as an intermediary and Spring Cloud Stream as an abstraction layer over the messaging broker.</p>
+
+      <h4 class="subsection-title">8.4 A Spring Cloud Stream use case: distributed caching</h4>
+
+      <p class="no-indent">At this point you have two services communicating with messaging, but you&rsquo;re not really doing anything with the messages. Now you&rsquo;ll build the distributed caching example we discussed earlier in the chapter. You&rsquo;ll have the licensing service always check a distributed Redis cache for the organization data associated with a particular license. If the organization data exists in the cache, you&rsquo;ll return the data from the cache. If it doesn&rsquo;t, you&rsquo;ll call the organization service and cache the results of the call in a Redis hash.</p>
+
+      <p>When data is updated in the organization service, the organization service will issue a message to Kafka. The licensing service will pick up the message and issue a delete against Redis to clear out the cache.</p>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="Cloud caching and messaging">
+        <p class="no-indent"><strong class="run-in">Cloud caching and messaging</strong> Using Redis as a distributed cache is very relevant to microservices development in the cloud. With my current employer, we build our solution using Amazon&rsquo;s Web Services (AWS) and are a heavy user of Amazon&rsquo;s DynamoDB. We also use Amazon&rsquo;s ElastiCache (Redis) to</p>
+        <ul class="manning-bullets" aria-label="Benefits of Redis caching with DynamoDB">
+          <li><strong class="run-in">Improve performance for lookup of commonly held data</strong>&mdash;By using a cache, we&rsquo;ve significantly improved the performance of several of our key services. All the tables in the products we sell are multi-tenant (hold multiple customer records in a single table), which means they can be quite large. Because caching tends to pin &ldquo;heavily&rdquo; used data we&rsquo;ve seen significant performance improvements by using Redis and caching to avoid the reads out to Dynamo.</li>
+          <li><strong class="run-in">Reduce the load (and cost) on the Dynamo tables holding our data</strong>&mdash;Accessing data in Dynamo can be a costly proposition. Every read you make is a chargeable event. Using a Redis server is significantly cheaper for reads by a primary key then a Dynamo read.</li>
+          <li><strong class="run-in">Increase resiliency so that our services can degrade gracefully if our primary data store (Dynamo) is having performance problems</strong>&mdash;If AWS Dynamo is having problems (it does occasionally happen), using a cache such as Redis can help your service degrade gracefully. Depending on how much data you keep in your cache, a caching solution can help reduce the number of errors you get from hitting your data store.</li>
+        </ul>
+        <p>Redis is far more than a caching solution, but it can fill that role if you need a distributed cache.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

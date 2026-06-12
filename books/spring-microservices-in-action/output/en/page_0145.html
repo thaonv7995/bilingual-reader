@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 5: Client-side resiliency patterns</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-left em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page ol.manning-numbered--patterns {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered--patterns li {
+      margin-bottom: 0.8mm;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0144.html">← Prev</a>
+    <a href="page_0146.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">CHAPTER 5 <em>When bad things happen: client resiliency patterns with Spring Cloud and Netflix</em></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">120</span>
+      </header>
+
+      <p class="no-indent">While these approaches take into account the complete (and often spectacular) loss of a system component, they address only one small part of building resilient systems. When a service crashes, it&rsquo;s easy to detect that it&rsquo;s no longer there, and the application can route around it. However, when a service is running slow, detecting that poor performance and routing around it is extremely difficult because</p>
+
+      <ol class="manning-numbered" aria-label="Why detecting slow services is difficult">
+        <li><strong class="run-in">Degradation of a service can start out as intermittent and build momentum</strong>&mdash;The degradation might occur only in small bursts. The first signs of failure might be a small group of users complaining about a problem, until suddenly the application container exhausts its thread pool and collapses completely.</li>
+        <li><strong class="run-in">Calls to remote services are usually synchronous and don&rsquo;t cut short a long-running call</strong>&mdash;The caller of a service has no concept of a timeout to keep the service call from hanging out forever. The application developer calls the service to perform an action and waits for the service to return.</li>
+        <li><strong class="run-in">Applications are often designed to deal with complete failures of remote resources, not partial degradations.</strong> Often, as long as the service has not completely failed, an application will continue to call the service and won&rsquo;t fail fast. The application will continue to call the poorly behaving service. The calling application or service may degrade gracefully or, more likely, crash because of resource exhaustion. Resource exhaustion is when a limited resource such as a thread pool or database connection maxes out and the calling client must wait for that resource to become available.</li>
+      </ol>
+
+      <p>What&rsquo;s insidious about problems caused by poorly performing remote services is that they&rsquo;re not only difficult to detect, but can trigger a cascading effect that can ripple throughout an entire application ecosystem. Without safeguards in place, a single poorly performing service can quickly take down multiple applications. Cloud-based, microservice-based applications are particularly vulnerable to these types of outages because these applications are composed of a large number of fine-grained, distributed services with different pieces of infrastructure involved in completing a user&rsquo;s transaction.</p>
+
+      <h4 class="subsection-title">5.1 What are client-side resiliency patterns?</h4>
+
+      <p>Client resiliency software patterns are focused on protecting a remote resource&rsquo;s (another microservice call or database lookup) client from crashing when the remote resource is failing because that remote service is throwing errors or performing poorly. The goal of these patterns is to allow the client to &ldquo;fail fast,&rdquo; not consume valuable resources such as database connections and thread pools, and prevent the problem of the remote service from spreading &ldquo;upstream&rdquo; to consumers of the client.</p>
+
+      <p class="no-indent">There are four client resiliency patterns:</p>
+
+      <ol class="manning-numbered manning-numbered--patterns" aria-label="Four client resiliency patterns">
+        <li>Client-side load balancing</li>
+        <li>Circuit breakers</li>
+        <li>Fallbacks</li>
+        <li>Bulkheads</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

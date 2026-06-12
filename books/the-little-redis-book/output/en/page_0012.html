@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 12</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0011.html">← Prev</a>
+      <span>Page 12 / 30</span>
+      <a href="page_0013.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<p class="lead no-indent"><code>getrange</code> commands being useful in some custom space-efficient serialization. As a more concrete example I give you the <code>incr</code>, <code>incrby</code>, <code>decr</code> and <code>decrby</code> commands. These increment or decrement the value of a string:</p><figure class="code-snippet"><pre class="code-block"><code><span class="cli-prompt">&gt;</span> incr stats:page:about
+(integer) 1
+<span class="cli-prompt">&gt;</span> incr stats:page:about
+(integer) 2
+<span class="cli-prompt">&gt;</span> incrby ratings:video:12333 5
+(integer) 5
+<span class="cli-prompt">&gt;</span> incrby ratings:video:12333 3
+(integer) 8</code></pre></figure><p>As you can imagine, Redis strings are great for analytics. Try incrementing <code>users:leto</code> (a non-integer value) and see what happens (you should get an error).</p><p>A more advanced example is the <code>setbit</code> and <code>getbit</code> commands. There's a wonderful post on how Spool uses these two commands to efficiently answer the question "how many unique visitors did we have today". For 128 million users a laptop generates the answer in less than 50ms and takes only 16MB of memory.</p><p>It isn't important that you understand how bitmaps work, or how Spool uses them, but rather to understand that Redis strings are more powerful than they initially seem. Still, the most common cases are the ones we gave above: storing objects (complex or not) and counters. Also, since getting a value by key is so fast, strings are often used to cache data.</p><h3 class="section-title">Hashes</h3><p>Hashes are a good example of why calling Redis a key-value store isn't quite accurate. You see, in a lot of ways, hashes are like strings. The important difference is that they provide an extra level of indirection: a field. Therefore, the hash equivalents of <code>set</code> and <code>get</code> are:</p><figure class="code-snippet"><pre class="code-block"><code>hset users:goku powerlevel 9000
+hget users:goku powerlevel</code></pre></figure><p>We can also set multiple fields at once, get multiple fields at once, get all fields and values, list all the fields or delete a specific field:</p><figure class="code-snippet"><pre class="code-block"><code>hmset users:goku race saiyan age 737
+hmget users:goku race powerlevel
+hgetall users:goku
+hkeys users:goku
+hdel users:goku age</code></pre></figure><p>As you can see, hashes give us a bit more control over plain strings. Rather than storing a user as a single serialized value, we could use a hash to get a more accurate representation. The benefit would be the ability to pull and update/delete specific pieces of data, without having to get or write the entire value.</p>
+      <p class="page-folio">11</p>
+    </article>
+  </main>
+</body>
+</html>

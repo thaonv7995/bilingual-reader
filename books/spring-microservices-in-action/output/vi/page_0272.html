@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Hình 8.6 và consumer group</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page figure.diagram + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.diagram {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0271.html">← Trước</a>
+    <a href="page_0273.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">247</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">Viết message producer và consumer đơn giản</span>
+      </header>
+
+      <p class="no-indent">property có tên <code>spring.cloud.stream.bindings.input.group</code>. Property <code>group</code> xác định tên của consumer group sẽ consume message.</p>
+
+      <p>Khái niệm consumer group như sau: Bạn có thể có nhiều service, mỗi service có nhiều instance đang lắng nghe cùng một message queue. Bạn muốn mỗi service riêng biệt xử lý một bản sao của message, nhưng bạn chỉ muốn một instance service trong nhóm các instance service consume và xử lý message. Property <code>group</code> xác định consumer group mà service thuộc về. Miễn là tất cả các instance service có cùng tên group, Spring Cloud Stream và message broker bên dưới sẽ đảm bảo rằng chỉ có một bản sao của message được consume bởi một instance service thuộc group đó. Trong trường hợp licensing service của bạn, giá trị property <code>group</code> sẽ được gọi là <code>licensingGroup</code>.</p>
+
+      <p>Hình 8.6 minh họa cách consumer group được dùng để đảm bảo ngữ nghĩa consume một lần cho message được consume qua nhiều service.</p>
+
+      <figure class="diagram" aria-label="Hình 8.6">
+        <img src="../assets/images/page_0272_fig_8_6.png" width="1313" height="780" alt="Hình 8.6 — Consumer group đảm bảo một message chỉ được xử lý một lần bởi một nhóm các instance service">
+        <figcaption><strong>Hình 8.6</strong><br>Consumer group đảm bảo một message chỉ được xử lý một lần bởi một nhóm các instance service.</figcaption>
+      </figure>
+
+      <h4 class="subsection-title">8.3.3 Xem message service hoạt động</h4>
+
+      <p class="no-indent">Đến thời điểm này, bạn đã có organization service publish một message tới <code>orgChangeTopic</code> mỗi khi một bản ghi được thêm, cập nhật hoặc xóa, và licensing service nhận message từ cùng topic đó. Giờ bạn sẽ thấy code này hoạt động bằng cách cập nhật một bản ghi organization service và theo dõi console để thấy thông báo log tương ứng xuất hiện từ licensing service.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

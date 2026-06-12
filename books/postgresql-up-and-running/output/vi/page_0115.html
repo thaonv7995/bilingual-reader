@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types — JSON</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-size: 9.1pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0114.html">← Trước</a>
+    <a href="page_0116.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">115</span>
+      </header>
+
+      <p class="no-indent">kiểu dữ liệu, là một dạng nhị phân của JSON cũng có thể tận dụng các chỉ mục. Chúng ta sẽ
+      chủ yếu đề cập đến các hàm và toán tử JSON được giới thiệu trong phiên bản 9.3. Chúng tôi cũng sẽ chỉ cho
+      bạn cách sử dụng <code>jsonb</code>, các hàm mà nó chia sẻ với các đồng nghiệp <code>json</code> của nó, và các toán tử mới mà nó
+      hỗ trợ. Tham khảo <span class="accent-word">Các hàm và toán tử JSON</span> để có danh sách đầy đủ.</p>
+
+      <h3 class="subsection-title">Chèn Dữ Liệu JSON</h3>
+      <p class="no-indent">Để tạo một bảng để chứa các đối tượng json, định nghĩa một cột là kiểu json:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE families_j (id serial PRIMARY KEY, profile json);</code></pre>
+      </figure>
+
+      <p class="no-indent"><span class="accent-word">Ví dụ 5-23</span> chèn dữ liệu JSON. PostgreSQL sẽ xác thực đầu vào để đảm bảo rằng những gì
+      bạn đang thêm là JSON hợp lệ.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-23.</strong> Điền trường JSON</figcaption>
+        <pre class="code-block"><code>INSERT INTO families_j (profile) VALUES (
+'{"name":"Gomez", "members":[
+{"member":{"relation":"padre", "name":"Alex"}},
+{"member":{"relation":"madre", "name":"Sonia"}},
+{"member":{"relation":"hijo", "name":"Brandon"}},
+{"member":{"relation":"hija", "name":"Azaleah"}}
+]}');</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0115_icon_tip.png" width="50" height="48" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Bạn không thể chuyển đổi các chuỗi JSON không hợp lệ sang kiểu <code>json</code>, cũng như không thể
+        lưu trữ các chuỗi JSON không hợp lệ trong một cột <code>json</code>. PostgreSQL thực hiện
+        kiểm tra nền để đảm bảo rằng chuỗi JSON hoạt động tốt
+        trước khi cho phép nó cư trú trong cơ sở dữ liệu.</p>
+      </div>
+
+      <h3 class="subsection-title">Truy Vấn JSON</h3>
+      <p class="no-indent">Mới trong phiên bản 9.3 là nhiều hàm để kiểm tra dữ liệu JSON. <span class="accent-word">Ví dụ 5-24</span> sử dụng
+      <code>json_extract_path</code>, <code>json_array_elements</code>, và <code>json_extract_path_text</code> để lấy
+      các thành viên trong gia đình.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-24.</strong> Truy vấn các phần tử con</figcaption>
+        <pre class="code-block"><code>SELECT json_extract_path_text(profile, 'name') As family, ① json_ex
+tract_path_text( ② json_array_elements( ③ json_extract_path(profile,'mem
+bers') ④ ), 'member','name' ) As member
+FROM families_j;
+
+ family |member
+-------+------
+ Gomez  |Alex
+ Gomez  |Sonia
+ Gomez  |Brandon
+ Gomez  |Azaleah</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> Trả về tên của gia đình dưới dạng văn bản.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">JSON<span class="sep">|</span>97</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

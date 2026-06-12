@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0624.html">← Trước</a>
+    <a href="page_0626.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">625</span>
+      </header>
+
+      <p class="no-indent">máy tính chỉ quan tâm đến số mili giây đã trôi qua kể từ Epoch. Đó chính xác là
+      những gì một <code>Instant</code>&nbsp;chứa đựng. Nó không có khái niệm về AM/PM hay múi giờ. Tuy nhiên,
+      vì điểm số không của dòng thời gian máy tính đã được định nghĩa tương ứng với <code>00.00AM</code>&nbsp;<code>1st</code>&nbsp;<code>Jan,</code>&nbsp;<code>1970</code>&nbsp;<code>UTC</code>,
+      việc chuyển đổi một <code>Instant</code>&nbsp;sang thời gian trong dòng thời gian UTC không yêu cầu bất kỳ
+      thông tin nào khác. Do đó, bạn có thể nói rằng một đối tượng (Object) <code>Instant</code>&nbsp;tương ứng chính xác với một ngày
+      và giờ trong UTC.&nbsp; Bạn có thể tạo một <code>Instant</code>&nbsp;cho bất kỳ khoảng thời gian nào đã trôi qua kể từ
+      epoch. Ví dụ, <code>Instant.ofEpochMilli(1735711200000L)</code>.</p>
+
+      <p class="no-indent"><strong class="run-in">LocalDate/LocalTime/LocalDateTime:</strong> Các lớp (Class) này chỉ đại diện cho một ngày, một giờ, hoặc
+      ngày và giờ mà không có bất kỳ chỉ dẫn nào về địa điểm áp dụng ngày/giờ đó. Hãy nghĩ
+      theo cách này - nếu ai đó nói với bạn rằng Tổng thống sẽ phát biểu trước quốc gia vào lúc <code>8PM</code>&nbsp;vào ngày <code>1st</code>&nbsp;<code>Jan</code>&nbsp;<code>2025</code>,
+      bạn không thực sự chắc chắn chính xác khi nào bạn cần chuẩn bị sẵn sàng để xem vì bạn
+      chưa được cho biết địa điểm áp dụng ngày và giờ này. Nếu không có thông tin này,
+      bạn có thể xem quá sớm hoặc quá muộn. Do đó, bạn không thể lấy thông tin
+      có sẵn trong một đối tượng (Object) <code>LocalDateTime</code>&nbsp;và xác định một điểm cụ thể trên dòng thời gian của máy tính.</p>
+
+      <p>Tốt nhất, bạn chỉ có thể đoán rằng thời gian này là tương ứng với khu vực bạn đang ở và sử dụng thông tin
+      đó để quyết định khi nào cần sẵn sàng xem bài phát biểu của Tổng thống. Theo nghĩa đó, nó
+      đại diện cho ngày/giờ của hệ thống mà chương trình đang chạy. Bạn sẽ thấy một vài
+      cách để tạo các đối tượng (Object) thuộc các kiểu này trong phần tiếp theo.</p>
+
+      <p class="no-indent"><strong class="run-in">ZoneId:</strong>&nbsp;Một <code>ZoneId</code>&nbsp;xác định một khu vực hoặc vùng, được gọi là &ldquo;Múi giờ (Time Zone)&rdquo;, mà ở đó có các quy tắc
+      chính xác để xác định ngày và giờ trong ngày đối với UTC. Các quy tắc này
+      cho phép bạn lấy một điểm trên dòng thời gian của máy tính, tức là một đối tượng (Object) <code>Instant</code>&nbsp;, và xác định
+      chính xác ngày và giờ ở khu vực đó tại thời điểm đó. Lưu ý rằng bản thân đối tượng (Object) <code>ZoneId</code>&nbsp;không
+      chứa bất kỳ quy tắc nào. Nó chỉ là một id. JDK duy trì các quy tắc trong một loại cơ sở dữ liệu nội bộ (thực chất là trong
+      lớp (Class) <code>ZoneRules</code>&nbsp;, nhưng bạn không cần phải lo lắng về nó) bên trong thư viện tiêu chuẩn của nó,
+      có thể được lấy ra bằng cách sử dụng id này. Có nhiều cách để tạo một đối tượng (Object) <code>ZoneId</code>&nbsp;nhưng
+      thông thường, bạn sẽ thấy một <code>ZoneId</code>&nbsp;được tạo bằng cách sử dụng một chuỗi có định dạng <code>&lt;area&gt;/&lt;city&gt;</code>. Ví
+      dụ,<br>
+      <code>ZoneId.of("Asia/Calcutta")</code>&nbsp; hoặc<br>
+      <code>ZoneId.of("America/New_York")</code>. Nếu bạn
+      xem JavaDoc của phương thức <code>of</code>&nbsp;, bạn sẽ nhận thấy rằng framework nền tảng
+      do JDK cung cấp khá mạnh mẽ và có thể tạo <code>ZoneId</code>&nbsp;từ một</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

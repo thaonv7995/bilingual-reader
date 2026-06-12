@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.diagram {
+      margin: 0 0 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page.ocp-chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0393.html">← Trước</a>
+    <a href="page_0395.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">394</span>
+      </header>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0394_fig_diagram.png" width="1440" height="902" alt="Sơ đồ stream I/O trong Java hiển thị Nguồn (Source), Chương trình Java với các stream input và output thô (raw) và cấp cao hơn (higher-level), và Đích (Destination)">
+      </figure>
+
+      <p class="no-indent">Trong hình trên, hãy quan sát thấy rằng một chương trình Java nhận các byte thô từ nguồn thông qua một input stream thô và dịch các byte thô đó thành các kiểu dữ liệu cần thiết cho chương trình. Tương tự, chương trình ghi các kiểu dữ liệu bằng cách sử dụng một stream cấp cao hơn để chuyển đổi chúng thành các byte. Stream cấp cao hơn sau đó sử dụng một output stream thô để ghi các byte vào đích. Nguồn hoặc đích không quan tâm đến việc các byte được chương trình Java thông dịch hoặc tạo ra như thế nào.</p>
+
+      <h3 class="section-title section-title--sub">I/O Blocking vs Non-blocking<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Trong một thời gian dài, Java chỉ có các lớp trong package <code>java.io</code> để thực hiện các tác vụ liên quan đến I/O. Tuy nhiên, các lớp này triển khai những hoạt động được gọi là hoạt động I/O &ldquo;blocking&rdquo; (chặn). Chúng được gọi là blocking vì một khi bạn gọi một phương thức để đọc hoặc ghi dữ liệu bằng cách sử dụng các lớp này, lệnh gọi đó sẽ bị chặn cho đến khi thao tác hoàn tất hoặc cho đến khi stream kết thúc. Ví dụ, nếu bạn cố gắng đọc dữ liệu từ một tệp tin từ xa hoặc từ một socket mạng, Thread (Luồng) đang thực thi phương thức đọc có thể bị chặn trong một thời gian dài và sẽ không có sẵn để thực hiện các tác vụ khác. Mặc dù cách tiếp cận này hoạt động tốt đối với nhiều ứng dụng, nhưng nó không có khả năng mở rộng tốt. Hãy tưởng tượng một máy chủ đang xử lý hàng triệu kết nối từ người dùng và đọc dữ liệu do họ gửi bằng cách sử dụng</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

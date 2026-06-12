@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="2"] {
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0112.html">← Prev</a>
+    <a href="page_0114.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">113</span>
+      </header>
+
+      <p class="no-indent">method of a superclass.</p>
+
+      <h3 class="section-title section-title--sub">Overriding final methods<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">By marking a method as <code>final</code>, you prohibit subclasses from overriding that method.
+      Therefore, if you try to have a method with the same signature as a final method of a superclass,
+      it will not compile. The <code>final</code> keyword works similarly for static methods as well. It prevents
+      you from hiding a static method in the subclass.</p>
+
+      <p>Note that final works very differently in case of fields. A subclass is allowed to have a field by the
+      same name even if that field is declared final in the superclass. As discussed earlier, final just
+      prevents you from the changing the value of that field.</p>
+
+      <h3 class="section-title section-title--sub">13.4.4 The @Override annotation<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">The <code>@Override</code> annotation informs the compiler that the method on which it is applied is meant
+      to override a method declared in a super type. Although optional, it is a good idea to apply this
+      annotation while overriding a method for two reasons:</p>
+
+      <ol class="numbered">
+        <li>It makes your intention of overriding the method well documented. That makes the code
+        more maintainable.</li>
+        <li>It allows the compiler to check whether a method actually does override a super type&rsquo;s
+        method or not and generate an error at compile time if it does not. This is a great benefit
+        because while coding a method, a programmer may mistype the method name or have a
+        slightly different parameter list. While the programmer may believe that they have
+        successfully overridden a method, in reality, they would have created a new or an
+        overloaded method inadvertently. This will introduce hard to trace bugs in the code. But if
+        the programmer applies <code>@Override</code> to the method, the compiler will prevent them from
+        making such mistakes. For the same reason, you should apply <code>@Override</code> to an accessor
+        method of a record as well if you ever define it explicitly.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

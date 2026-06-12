@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0058.html">← Trước</a>
+    <a href="page_0060.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h3 class="section-title">Sử dụng pg_restore</h3>
+      <p class="no-indent">Nếu bạn đã sao lưu bằng <code>pg_dump</code> và chọn định dạng như <code>tar</code>, <code>custom</code>, hoặc <code>directory</code>, bạn có thể sử dụng tiện ích đa năng <code>pg_restore</code> để phục hồi. <code>pg_restore</code> cung cấp cho bạn một loạt các tùy chọn đáng kinh ngạc và vượt xa bất kỳ tiện ích phục hồi nào có trong các sản phẩm cơ sở dữ liệu khác mà chúng tôi đã sử dụng. Một số tính năng nổi bật của nó là:</p>
+
+      <ul class="bullets">
+        <li>Bạn có thể thực hiện phục hồi song song bằng cách sử dụng tùy chọn <code>-j</code> để kiểm soát số lượng luồng sử dụng. Điều này cho phép mỗi luồng phục hồi một bảng riêng biệt đồng thời, từ đó tăng tốc độ của những gì có thể là một quá trình kéo dài.</li>
+        <li>Bạn có thể sử dụng nó để tạo một tệp mục lục từ tệp sao lưu của bạn để xác nhận những gì đã được sao lưu. Bạn cũng có thể chỉnh sửa tệp mục lục này và sử dụng tệp đã chỉnh sửa để kiểm soát các đối tượng cần phục hồi.</li>
+        <li>Giống như <code>pg_dump</code> cho phép bạn thực hiện sao lưu chọn lọc các đối tượng để tiết kiệm thời gian, <code>pg_restore</code> cho phép bạn thực hiện phục hồi chọn lọc, ngay cả từ trong một bản sao lưu của một cơ sở dữ liệu đầy đủ.</li>
+        <li><code>pg_restore</code> tương thích ngược, phần lớn. Bạn có thể sao lưu một cơ sở dữ liệu trên phiên bản PostgreSQL cũ hơn và phục hồi lên phiên bản mới hơn.</li>
+      </ul>
+
+      <p>Xem <span class="accent-word">“Phục hồi cơ sở dữ liệu: pg_restore” trên trang 198</span> để có danh sách các tùy chọn lệnh <code>pg_restore</code>.</p>
+
+      <p>Để thực hiện phục hồi bằng <code>pg_restore</code>, trước tiên hãy tạo cơ sở dữ liệu bằng SQL:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE</strong> <strong>DATABASE</strong> mydb;</code></pre>
+      </figure>
+
+      <p>Rồi phục hồi:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_restore --dbname=mydb --jobs=4 --verbose mydb.backup</code></pre>
+      </figure>
+
+      <p>Nếu cơ sở dữ liệu giống như cơ sở dữ liệu mà bạn đã sao lưu, bạn có thể tạo và phục hồi cơ sở dữ liệu trong một bước:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_restore --dbname=postgres --create --jobs=4 --verbose mydb.backup</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0059_icon_tip.png" width="43" height="57" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Khi bạn sử dụng tùy chọn <code>--create</code>, tên cơ sở dữ liệu luôn là tên của cơ sở dữ liệu mà bạn đã sao lưu. Bạn không thể đổi tên nó. Nếu bạn cũng đang sử dụng tùy chọn <code>--dbname</code>, tên cơ sở dữ liệu đó phải khác với tên của cơ sở dữ liệu đang được phục hồi. Chúng tôi thường chỉ chỉ định cơ sở dữ liệu <code>postgres</code>.</p>
+      </div>
+
+      <p>Nếu bạn đang chạy phiên bản 9.2 trở lên, bạn có thể tận dụng tùy chọn <code>--section</code> để phục hồi chỉ cấu trúc mà không có dữ liệu. Điều này hữu ích nếu bạn muốn sử dụng một cơ sở dữ liệu hiện có làm mẫu cho một cơ sở dữ liệu mới. Để làm như vậy, trước tiên hãy tạo cơ sở dữ liệu mục tiêu:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE</strong> <strong>DATABASE</strong> mydb2;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Sao lưu và Phục hồi<span class="sep">|</span>41</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Listing 5.11 DelegatingUserContextCallable</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.action-step-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.action-step-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 24%) minmax(0, 46%) minmax(0, 30%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 2;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts-left {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding-bottom: 18mm;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 5mm;
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-annotated--511 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 4mm;
+    }
+    .prose-page.chapter-page .listing-annotated--511 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0173.html">← Prev</a>
+    <a href="page_0175.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Ngữ cảnh thread và Hystrix</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">149</span>
+      </header>
+
+      <p class="no-indent">Hãy lưu ý vài điểm trong cách triển khai lớp ở listing 5.10. Đầu tiên, vì Spring Cloud đã định nghĩa sẵn một <code>HystrixConcurrencyStrategy</code>, mọi phương thức có thể bị ghi đè cần kiểm tra xem đã có chiến lược đồng thời hay chưa, rồi hoặc gọi phương thức của chiến lược đồng thời hiện có, hoặc gọi phương thức của chiến lược đồng thời Hystrix cơ bản. Bạn phải làm vậy theo quy ước để đảm bảo gọi đúng <code>HystrixConcurrencyStrategy</code> của Spring Cloud đã tồn tại — chiến lược xử lý bảo mật. Nếu không, bạn có thể gặp hành vi không mong muốn khi cố dùng ngữ cảnh bảo mật Spring trong mã được Hystrix bảo vệ.</p>
+
+      <p>Điểm thứ hai cần lưu ý là phương thức <code>wrapCallable()</code> trong listing 5.11. Trong phương thức này, bạn truyền vào implementation <code>Callable</code>, <code>DelegatingUserContextCallable</code>, dùng để đặt <code>UserContext</code> từ thread cha đang thực thi lời gọi dịch vụ REST của người dùng sang thread lệnh Hystrix bảo vệ phương thức đang thực hiện công việc bên trong.</p>
+
+      <h4 class="action-step-title">Định nghĩa lớp Java Callable để đưa UserContext vào lệnh Hystrix</h4>
+
+      <p>Bước tiếp theo trong việc truyền ngữ cảnh thread của thread cha sang lệnh Hystrix của bạn là triển khai lớp <code>Callable</code> thực hiện việc truyền đó. Trong ví dụ này, lớp này nằm trong package hystrix và có tên <code>DelegatingUserContextCallable.java</code>. Listing sau đây cho thấy mã từ lớp này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.11</strong><br>Truyền UserContext bằng DelegatingUserContextCallable.java</figcaption>
+        <div class="listing-annotated listing-annotated--511" aria-label="Listing 5.11 mã có chú thích">
+          <div class="listing-callouts-left" aria-label="Chú thích trái Listing 5.11">
+            <p class="listing-callout">Hàm <code>call()</code> được gọi trước phương thức được bảo vệ bởi annotation <code>@HystrixCommand</code>.</p>
+          </div>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.hystrix;
+
+//imports removed for conciseness
+public final class DelegatingUserContextCallable&lt;V&gt;
+    implements Callable&lt;V&gt; {
+    private final Callable&lt;V&gt; delegate;
+    private UserContext originalUserContext;
+
+    public DelegatingUserContextCallable(
+        Callable&lt;V&gt; delegate,
+        UserContext userContext) {
+        this.delegate = delegate;
+        this.originalUserContext = userContext;
+    }
+
+    public V call() throws Exception {
+        UserContextHolder.setContext( originalUserContext );
+
+        try {
+            return delegate.call();
+        }
+        finally {
+            this.originalUserContext = null;
+        }
+    }
+
+    public static &lt;V&gt; Callable&lt;V&gt; create(Callable&lt;V&gt; delegate,
+                                         UserContext userContext) {
+        return new DelegatingUserContextCallable&lt;V&gt;(delegate, userContext);
+    }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích phải Listing 5.11">
+            <p class="listing-callout">Lớp Callable tùy chỉnh sẽ nhận lớp Callable gốc — lớp sẽ gọi mã được Hystrix bảo vệ của bạn — cùng UserContext từ thread cha</p>
+            <p class="listing-callout">UserContext được đặt. Biến ThreadLocal lưu UserContext được gắn với thread đang chạy phương thức được Hystrix bảo vệ.</p>
+            <p class="listing-callout">Sau khi UserContext được đặt, gọi phương thức <code>call()</code> trên phương thức được Hystrix bảo vệ; ví dụ phương thức <code>LicenseServer.getLicenseByOrg()</code> của bạn.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

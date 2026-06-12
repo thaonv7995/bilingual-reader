@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0484.html">← Prev</a>
+    <a href="page_0486.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">485</span>
+      </header>
+
+      <p class="no-indent">worry, there are only six of them that we care about the most at the moment.</p>
+
+      <h3 class="section-title section-title--sub">Establishing a happens-before relationship<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent"><strong class="run-in">1. Program order&mdash;</strong> Each action in a thread happens before every action in that thread that
+      comes later in the program. This is the simplest of the guarantees and it means that if a
+      line of code appears before another line of code in a method then a thread executing that
+      code will observe that the first line of code has indeed been executed before the second. In
+      other words, a thread always observes the execution order to be the same as the program
+      order. For example, consider the following code:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//assume that the variable x is accessible in this context.
+//x could be a static field or an instance field
+x = 0;
+x = 10;
+System.out.println(x);</code></pre>
+      </figure>
+
+      <p>In the above code, a value of <code>10</code>&nbsp;is assigned to <code>x</code>&nbsp;before a call to the <code>println</code>&nbsp;method
+      is made. Thus, the <code>println</code>&nbsp;method will observe the value of <code>x</code>&nbsp;to be <code>10</code>&nbsp;. This is kind
+      of obvious because the sequential execution order of instructions by a thread forms the
+      bedrock of programming but this guarantee restricts the compiler and the JVM from
+      changing the apparent order of the three statements.</p>
+
+      <p class="no-indent"><strong class="run-in">2. Starting a thread&mdash;</strong> A call to <code>start()</code>&nbsp;on a thread happens before any actions in the
+      started thread. This rule implies that updates made by a thread cannot be seen by other
+      threads unless that thread has already been started. This rules also kind of states the
+      obvious but needs to be stated to avoid overzealous optimizations and reordering that
+      might make the updates visible to other threads even before the thread is started.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

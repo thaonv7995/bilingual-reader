@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 5: Setting up Hystrix dependencies</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.no-indent + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + h4.subsection-title,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0151.html">← Prev</a>
+    <a href="page_0153.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">127</span>
+        <span class="rh-center">Setting up the licensing server to use Spring Cloud and Hystrix</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">robust threading code is an art (which I&rsquo;ve never mastered) and doing it correctly is difficult. To implement a high-quality set of implementations for the circuit-breaker, fallback, and bulkhead patterns would require a tremendous amount of work. Fortunately, you can use Spring Cloud and Netflix&rsquo;s Hystrix library to provide you a battle-tested library that&rsquo;s used daily in Netflix&rsquo;s microservice architecture.</p>
+
+      <p>In the next several sections of this chapter we&rsquo;re going to cover how to</p>
+
+      <ul class="manning-bullets" aria-label="Topics covered in upcoming sections">
+        <li>Configure the licensing service&rsquo;s maven build file (pom.xml) to include the Spring Cloud/Hystrix wrappers.</li>
+        <li>Use the Spring Cloud/Hystrix annotations to wrapper remote calls with a circuit breaker pattern.</li>
+        <li>Customize the individual circuit breakers on a remote resource to use custom timeouts for each call made. I&rsquo;ll also demonstrate how to configure the circuit breakers so that you control how many failures occur before a circuit breaker &ldquo;trips.&rdquo;</li>
+        <li>Implement a fallback strategy in the event a circuit breaker has to interrupt a call or the call fails.</li>
+        <li>Use individual thread pools in your service to isolate service calls and build bulkheads between different remote resources being called.</li>
+      </ul>
+
+      <h4 class="subsection-title">5.4 Setting up the licensing server to use<br>Spring Cloud and Hystrix</h4>
+
+      <p>To begin our exploration of Hystrix, you need to set up your project pom.xml to import the Spring Hystrix dependencies. You&rsquo;ll take your licensing service that we&rsquo;ve been building and modify its pom.xml by adding the maven dependencies for Hystrix:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>&lt;dependency&gt;
+ &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+ &lt;artifactId&gt;spring-cloud-starter-hystrix&lt;/artifactId&gt; 
+&lt;/dependency&gt; 
+&lt;dependency&gt;
+  &lt;groupId&gt;com.netflix.hystrix&lt;/groupId&gt;       
+  &lt;artifactId&gt;hystrix-javanica&lt;/artifactId&gt;
+  &lt;version&gt;1.5.9&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <p>The first <code>&lt;dependency&gt;</code> tag (spring-cloud-starter-hystrix) tells Maven to pull down the Spring Cloud Hystrix dependencies. This second <code>&lt;dependency&gt;</code> tag (hystrix-javanica) will pull down the core Netflix Hystrix libraries. With the Maven dependencies set up, you can go ahead and begin your Hystrix implementation using the licensing and organization services you built in previous chapters.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>You don&rsquo;t have to include the hystrix-javanica dependencies directly in the pom.xml. By default, the spring-cloud-starter-hystrix includes a version of the hystrix-javanica dependencies. The Camden.SR5 release of the book used hystrix-javanica-1.5.6. The version of</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

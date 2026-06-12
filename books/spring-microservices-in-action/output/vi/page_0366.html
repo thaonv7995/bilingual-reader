@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Phụ lục B: Hình B.3 các bước (tiếp theo) và B.4 Implicit grant</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 1;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered li ul.manning-dashes {
+      margin: 1.5mm 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-dashes li {
+      position: relative;
+      margin: 0 0 1mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-dashes li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 10pt;
+      line-height: 1.4;
+      color: #262626;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0365.html">← Prev</a>
+    <a href="page_0367.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">341</span>
+        <span class="rh-center"></span>
+        <span class="rh-right"><em>Implicit grant</em></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Các bước luồng authorization code grant Hình B.3 (tiếp theo)">
+        <li>Người dùng cấu hình ứng dụng Salesforce của họ với các thông tin sau:
+          <ul class="manning-dashes" aria-label="Chi tiết cấu hình ứng dụng Salesforce">
+            <li>Tên ứng dụng họ đã tạo cho Salesforce</li>
+            <li>Khóa bí mật họ đã tạo cho Salesforce</li>
+            <li>URL trỏ đến trang đăng nhập OAuth2 của EagleEye</li>
+            <li>Khi người dùng cố dùng ứng dụng Salesforce và truy cập dữ liệu EagleEye qua organization service, họ sẽ được chuyển hướng đến trang đăng nhập EagleEye qua URL mô tả ở gạch đầu dòng trước. Người dùng sẽ cung cấp thông tin đăng nhập EagleEye. Nếu thông tin đăng nhập EagleEye hợp lệ, máy chủ OAuth2 EagleEye sẽ tạo một authorization code và chuyển hướng người dùng trở lại Salesforce qua URL được cung cấp ở mục 1. Authorization code sẽ được gửi dưới dạng tham số query trên URL callback.</li>
+          </ul>
+        </li>
+        <li>Ứng dụng Salesforce tùy chỉnh sẽ lưu trữ authorization code này. Lưu ý: authorization code này không phải là token truy cập OAuth2.</li>
+        <li>Sau khi authorization code đã được lưu, ứng dụng Salesforce tùy chỉnh có thể gửi cho máy chủ OAuth2 EagleEye khóa bí mật mà ứng dụng Salesforce đã tạo trong quá trình đăng ký cùng authorization code. Máy chủ OAuth2 EagleEye sẽ xác thực authorization code hợp lệ rồi trả về token OAuth2 cho ứng dụng Salesforce tùy chỉnh. Authorization code này được dùng mỗi khi ứng dụng Salesforce tùy chỉnh cần xác thực người dùng và lấy token truy cập OAuth2.</li>
+        <li>Ứng dụng Salesforce sẽ gọi organization service EagleEye, truyền token OAuth2 trong header.</li>
+        <li>Organization service sẽ xác thực token truy cập OAuth2 được truyền vào lời gọi dịch vụ EagleEye với dịch vụ OAuth2 EagleEye. Nếu token hợp lệ, organization service sẽ xử lý yêu cầu của người dùng.</li>
+      </ol>
+
+      <p>Chà! Tôi cần nghỉ một chút. Tích hợp từ ứng dụng sang ứng dụng thật phức tạp. Điểm then chốt cần ghi nhớ từ toàn bộ quy trình này là: dù người dùng đã đăng nhập vào Salesforce và đang truy cập dữ liệu EagleEye, thông tin đăng nhập EagleEye của họ không bao giờ bị lộ trực tiếp cho Salesforce. Sau khi authorization code ban đầu được tạo và cung cấp bởi dịch vụ OAuth2 EagleEye, người dùng không bao giờ phải cung cấp lại thông tin đăng nhập cho dịch vụ EagleEye.</p>
+
+      <h4 class="subsection-title">B.4 Implicit grant</h4>
+
+      <p class="no-indent">Authorization grant được dùng khi bạn chạy ứng dụng web qua môi trường lập trình web server-side truyền thống như Java hoặc .NET. Điều gì xảy ra nếu ứng dụng client của bạn là ứng dụng JavaScript thuần hoặc ứng dụng di động chạy hoàn toàn trong trình duyệt web và không phụ thuộc vào lời gọi phía server để gọi dịch vụ bên thứ ba?</p>
+
+      <p>Đây là lúc loại grant cuối cùng, implicit grant, phát huy tác dụng. Hình B.4 trình bày luồng tổng quát diễn ra trong implicit grant.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

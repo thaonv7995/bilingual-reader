@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: Figure 10.5 RDS database and Redis cluster</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .diagram-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 62%) minmax(0, 38%);
+      gap: 0 2mm;
+      margin: 0 0 1.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page .diagram-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+      padding-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .diagram-annotated + figure.diagram.fig-caption-only,
+    .prose-page.chapter-page figure.diagram.fig-caption-only + p,
+    .prose-page.chapter-page p + h4.subsection-title {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0320.html">← Prev</a>
+    <a href="page_0322.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">CHAPTER 10</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">296</span>
+      </header>
+
+      <div class="diagram-annotated" aria-label="Figure 10.5 annotated RDS dashboard screenshot">
+        <figure class="diagram">
+          <img src="../assets/images/page_0321_fig_10_5.png" width="1313" height="485" alt="Figure 10.5 — AWS RDS dashboard showing the created eagle-eye-aws-dev PostgreSQL database">
+        </figure>
+        <div class="diagram-callouts" aria-label="Figure 10.5 annotation callout">
+          <p class="listing-callout">This is the endpoint you&rsquo;ll use to connect to the database.</p>
+        </div>
+      </div>
+
+      <figure class="diagram fig-caption-only" aria-label="Figure 10.5 caption">
+        <figcaption><strong>Figure 10.5</strong><br>Your created Amazon RDS/PostgreSQL database</figcaption>
+      </figure>
+
+      <p class="no-indent">At this point, your database creation process will begin (it can take several minutes). Once it&rsquo;s done, you&rsquo;ll need to configure the Eagle Eye services to use the database.</p>
+
+      <p>After the database is created (this will take several minutes), you&rsquo;ll navigate back to the RDS dashboard and see your database created. Figure 10.5 shows this screen.</p>
+
+      <p>For this chapter, I created a new application profile called <code>aws-dev</code> for each microservice that needs to access the Amazon-based PostgreSQL database. I added a new Spring Cloud Config server application profile in the Spring Cloud Config GitHub repository (<a href="https://github.com/carnellj/config-repo">https://github.com/carnellj/config-repo</a>) containing the Amazon database connection information. The property files follow the naming convention <code>(service-name)-aws-dev.yml</code> in each of the property files using the new database (licensing service, organization service, and authentication service).</p>
+
+      <p>At this point your database is ready to go (not bad for setting it up in approximately five clicks). Let&rsquo;s move to the next piece of application infrastructure and see how to create the Redis cluster that your EagleEye licensing service is going to use.</p>
+
+      <h4 class="subsection-title">10.1.2 Creating the Redis cluster in Amazon</h4>
+
+      <p class="no-indent">To set up the Redis cluster, you&rsquo;re going to use the Amazon ElastiCache service. Amazon ElastiCache allows you to build in-memory data caches using Redis or Memcached (<a href="https://memcached.org/">https://memcached.org/</a>). For the EagleEye services, you&rsquo;re going to move the Redis server you were running in Docker to ElastiCache.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

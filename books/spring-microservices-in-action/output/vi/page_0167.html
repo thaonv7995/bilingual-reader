@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Xem lại cấu hình Hystrix</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + .sidebar-note {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0166.html">← Prev</a>
+    <a href="page_0168.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">142</span>
+        <span class="rh-center">CHƯƠNG 5 <em>Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">5.8.1 Xem lại cấu hình Hystrix</h4>
+
+      <p>Thư viện Hystrix có khả năng cấu hình rất linh hoạt và cho phép bạn kiểm soát chặt chẽ hành vi của các mẫu circuit breaker và vách ngăn mà bạn định nghĩa bằng nó. Bằng cách chỉnh sửa cấu hình của circuit breaker Hystrix, bạn có thể kiểm soát thời gian Hystrix chờ trước khi timeout một lời gọi từ xa. Bạn cũng có thể kiểm soát hành vi về thời điểm circuit breaker Hystrix sẽ kích hoạt và khi nào Hystrix cố gắng đặt lại circuit breaker.</p>
+
+      <p>Với Hystrix, bạn cũng có thể tinh chỉnh các triển khai vách ngăn bằng cách định nghĩa các nhóm thread riêng cho từng lời gọi dịch vụ từ xa, rồi cấu hình số lượng thread gắn với mỗi nhóm thread. Điều này cho phép bạn tinh chỉnh các lời gọi dịch vụ từ xa vì một số lời gọi sẽ có khối lượng cao hơn những lời gọi khác, trong khi các lời gọi tài nguyên từ xa khác lại có khối lượng cao hơn.</p>
+
+      <p>Điều quan trọng cần nhớ khi cấu hình môi trường Hystrix là bạn có ba cấp độ cấu hình với Hystrix:</p>
+
+      <ol class="manning-numbered" aria-label="Ba cấp độ cấu hình Hystrix">
+        <li>Mặc định cho toàn bộ ứng dụng</li>
+        <li>Mặc định cho class</li>
+        <li>Cấp độ thread pool được định nghĩa trong class</li>
+      </ol>
+
+      <p>Mọi thuộc tính Hystrix đều có giá trị mặc định sẽ được dùng bởi mọi annotation <code>@HystrixCommand</code> trong ứng dụng, trừ khi chúng được đặt ở cấp Java class hoặc được ghi đè cho từng thread pool Hystrix trong một class.</p>
+
+      <p>Hystrix cho phép bạn đặt các tham số mặc định ở cấp class để tất cả lệnh Hystrix trong một class cụ thể dùng chung cấu hình. Các thuộc tính cấp class được đặt qua annotation cấp class tên <code>@DefaultProperties</code>. Ví dụ, nếu bạn muốn mọi tài nguyên trong một class cụ thể có timeout 10 giây, bạn có thể đặt <code>@DefaultProperties</code> như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>@DefaultProperties(
+  commandProperties = {
+   @HystrixProperty(
+   ➥ name = "execution.isolation.thread.timeoutInMilliseconds",
+   value = "10000")}
+class MyService { ... }</code></pre>
+      </figure>
+
+      <p class="no-indent">Trừ khi được ghi đè rõ ràng ở cấp thread pool, mọi thread pool sẽ kế thừa hoặc các thuộc tính mặc định ở cấp ứng dụng hoặc các thuộc tính mặc định được định nghĩa trong class. Các thuộc tính <code>threadPoolProperties</code> và <code>commandProperties</code> của Hystrix cũng gắn với command key đã định nghĩa.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Đối với các ví dụ mã, tôi đã hard-code tất cả giá trị Hystrix trong mã ứng dụng. Trong hệ thống production, dữ liệu Hystrix có khả năng cao cần được tinh chỉnh (tham số timeout, số lượng thread pool) sẽ được đưa ra ngoài sang Spring Cloud Config. Như vậy nếu bạn cần thay đổi giá trị tham số, bạn có thể thay đổi các giá trị đó rồi khởi động lại các instance dịch vụ mà không cần biên dịch lại và triển khai lại ứng dụng.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

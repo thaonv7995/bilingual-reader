@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0520.html">← Trước</a>
+    <a href="page_0522.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">521</span>
+      </header>
+
+      <ol class="numbered">
+        <li><code>void lockInterruptibly()</code>&nbsp;- Nhận khóa trừ khi thread (luồng) hiện tại bị
+        gián đoạn.</li>
+        <li><code>boolean tryLock()</code>&nbsp;- Chỉ nhận khóa nếu khóa đang rảnh tại thời điểm gọi.</li>
+        <li><code>boolean tryLock(long time, TimeUnit unit)</code>&nbsp;- Nhận khóa nếu khóa đang rảnh trong
+        khoảng thời gian chờ được chỉ định và thread (luồng) hiện tại chưa bị gián đoạn.</li>
+        <li><code>Condition newCondition()</code>&nbsp;- Trả về một instance <code>Condition</code>&nbsp;mới được liên kết với
+        instance <code>Lock</code>&nbsp;này. Một <code>Condition</code>&nbsp;cung cấp cơ chế điều phối tương tự như cơ chế
+        wait và notify mà tôi đã giải thích trước đó.</li>
+      </ol>
+
+      <h3 class="section-title section-title--sub">20.5.1 Sử dụng ReentrantLock<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Lớp (Class) <code>ReentrantLock</code>&nbsp;là một bản triển khai chuẩn của interface (giao diện) <code>Lock</code>. Nó có hai
+      constructor&nbsp;- <code>ReentrantLock()</code>&nbsp;và <code>ReentrantLock(boolean fair)</code>. Constructor thứ hai
+      tạo ra một instance của <code>ReentrantLock</code>&nbsp;với chính sách công bằng (fairness policy) được chỉ định. Nếu là
+      <code>true</code>, thread (luồng) chờ đợi lâu nhất sẽ nhận được khóa.</p>
+
+      <p>Từ &ldquo;<strong>reentrant</strong>&rdquo; trong tên của nó biểu thị rằng nếu một thread (luồng) đã nắm giữ khóa, thread
+      đó có thể khóa lại một lần nữa. Điều này giống hệt như các khóa nội tại (intrinsic locks) mà bạn đã thấy trước đó. Mỗi hành động
+      khóa sẽ làm tăng số lượng nắm giữ (hold count) của khóa và mỗi hành động mở khóa sẽ làm giảm số lượng đó. Lớp (Class)
+      <code>ReentrantLock</code>&nbsp;định nghĩa một phương thức&nbsp;<code>int getHoldCount()</code>&nbsp;có thể được gọi để tìm hiểu xem
+      thread (luồng) hiện tại đang có bao nhiêu lượt nắm giữ đối với khóa này. Một <code>ReentrantLock</code>&nbsp;sẽ không được mở khóa
+      trừ khi số lượng nắm giữ giảm về không. Do đó, một thread (luồng) phải gọi <code>unlock()</code>&nbsp;<strong>chính xác</strong> số
+      lần tương tự như khi nó gọi <code>lock()</code>&nbsp;để mở khóa một <code>ReentrantLock</code>. Việc gọi <code>unlock()</code>
+      thêm một lần nữa sẽ khiến một <code>IllegalMonitorStateException</code>&nbsp;bị ném ra.</p>
+
+      <p class="no-indent">Chương trình dưới đây cho thấy cách sử dụng một <code>ReentrantLock</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public class TestClass {</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

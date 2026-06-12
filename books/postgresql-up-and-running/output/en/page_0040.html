@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0039.html">← Prev</a>
+    <a href="page_0041.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">rules, the connection is denied. A common mistake people make is to not put the rules
+      in the proper order. For example, if you put <code>+0.0.0.0/0 reject+</code> before <code>+127.0.0.1/32</code>
+      <code>trust+</code>, local users won’t be able to connect, even though a rule is in place allowing them
+      to do so.</p>
+
+      <h3 class="subsection-title">“I edited my pg_hba.conf and now my server is broken.”</h3>
+      <p>Don’t worry. This happens quite often, but it’s easily recoverable. This error is generally
+      caused by typos or by adding an unavailable authentication scheme. When the postgres
+      service can’t parse <i>pg_hba.conf</i> file, it blocks all access for safety or won’t even start
+      up. The easiest way to figure out what you did wrong is to read the log file. This is located
+      in the root of the data folder or in the pg_log subfolder. Open the latest file and read the
+      last line. The error message is usually self-explanatory. If you’re prone to slippery fingers,
+      back up the file prior to editing.</p>
+
+      <h3 class="subsection-title">Authentication methods</h3>
+      <p>PostgreSQL gives you many choices for authenticating users—probably more than any
+      other database product. Most people stick with the most popular ones: <code>trust</code>, <code>peer</code>,
+      <code>ident</code>, <code>md5</code>, and <code>password</code>. There is also <code>reject</code>, which applies an immediate denial.
+      Authentication methods stipulated in <i>pg_hba.conf</i> serve as gatekeepers to the entire
+      PostgreSQL server. Users or devices must still meet role and database access restrictions
+      after connecting.</p>
+
+      <p>For more information on the various authentication methods, refer to <span class="accent-word">PostgreSQL Client
+      Authentication</span>. The most commonly used authentication methods are:</p>
+
+      <p class="object-term">trust</p>
+      <p class="object-def">The least secure of the authentication schemes. It allows people to self-identify and
+      doesn’t ask for a password. As long as the request meets the IP address, user, and
+      database criteria, the user can connect. You should limit <code>trust</code> to local connections
+      or private network connections. Even then it’s possible for someone to spoof IP
+      addresses, so the more security-minded among us discourage its use entirely. Nev‐
+      ertheless, it’s the most common for PostgreSQL installed on a desktop for single-
+      user local access where security is not as much of a concern. The username defaults
+      to the logged-in OS user if not specified.</p>
+
+      <p class="object-term">md5</p>
+      <p class="object-def">Very common, requiring an md5-encrypted password to connect.</p>
+
+      <p class="object-term">password</p>
+      <p class="object-def">Uses clear-text password authentication.</p>
+
+      <p class="object-term">ident</p>
+      <p class="object-def">Uses <i>pg_ident.conf</i> to see whether the OS account of the user trying to connect has
+      a mapping to a PostgreSQL account. No password is checked.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Chapter 2: Database Administration<span class="sep">|</span>22</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

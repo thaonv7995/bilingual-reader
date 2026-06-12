@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0481.html">← Trước</a>
+    <a href="page_0483.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">482</span>
+      </header>
+
+      <p class="no-indent">không thể sử dụng được. Trên thực tế, chương trình thậm chí còn không kết thúc trên máy của tôi và rất có khả năng nó cũng sẽ không kết thúc trên máy của bạn. Vấn đề là thread chính (main thread) vẫn liên tục nhìn thấy giá trị ban đầu (<code>null</code>) của trường <code>result</code> ngay cả sau khi thread tính giai thừa (factorial thread) gán một giá trị mới cho nó. Đây không phải là một lỗi (bug). Đó là cách ngôn ngữ Java được thiết kế để hoạt động. Để khắc phục vấn đề này, bạn cần biết về &ldquo;Memory Model&rdquo; (Mô hình Bộ nhớ) của Java. Mặc dù các mục tiêu của kỳ thi OCP không bao gồm chủ đề này một cách rõ ràng, nhưng nếu không hiểu về nó, bạn chỉ có thể viết được các chương trình Java đa luồng không có lỗi (bug-free) một cách tình cờ. Vì vậy, tôi sẽ trình bày ngắn gọn các điểm quan trọng về chủ đề này.</p>
+
+      <h3 class="section-title section-title--sub">20.2.1 Mô hình Bộ nhớ (Memory Model)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Như tôi đã đề cập trước đó, tất cả các thread (luồng) đều chia sẻ vùng nhớ heap của chương trình. Chúng truy cập các đối tượng (object) trong vùng nhớ heap này thông qua các tham chiếu đối tượng (object reference), vốn không gì khác ngoài địa chỉ của các ô nhớ ảo. Khi một chương trình Java đọc hoặc ghi một trường của đối tượng (object field), lệnh gọi này được dịch bởi JVM và hệ điều hành (OS) thành một chỉ thị CPU để đọc từ hoặc ghi vào một ô nhớ thực tế theo sơ đồ đánh địa chỉ của CPU. Bây giờ, hãy nhớ lại rằng một hệ thống có thể có nhiều CPU logic và nhiều thread (luồng) hệ điều hành có thể chạy song song trên các CPU đó. Để đảm bảo rằng nhiều CPU có thể thực thi các chỉ thị đồng thời với hiệu suất cao, các CPU có xu hướng lưu trữ nội dung của các ô nhớ trong các bộ nhớ đệm nhiều cấp (multilevel cache) cũng như trong các thanh ghi CPU. Vì vậy, hoàn toàn có khả năng trong khi một CPU đã lưu giá trị của một ô nhớ vào thanh ghi của nó, thì một CPU khác lại thay đổi giá trị tại ô nhớ thực tế. Do đó, một giá trị được lưu đệm bởi một CPU có thể trở nên &ldquo;lệch pha&rdquo; (out of sync) với giá trị tại ô nhớ hoặc với giá trị được lưu đệm bởi một CPU khác. Ở tầng trên cùng, tức là trong chương trình Java, một giá trị lưu đệm bị lệch pha sẽ dẫn đến việc một hoặc nhiều thread (luồng) nhìn thấy giá trị cũ (stale value) của biến chia sẻ. Đây chính xác là những gì xảy ra trong chương trình trên. Thread tính giai thừa (factorial thread) cập nhật giá trị của biến <code>result</code> nhưng thread chính (main thread) không bao giờ nhìn thấy giá trị được cập nhật vì cả hai thread rất có thể đang chạy trên các CPU khác nhau và bộ nhớ đệm của chúng bị lệch pha. Tình huống này rất phổ biến trên các CPU đa nhân.</p>
+
+      <p>Một lý do khác khiến một thread (luồng) có thể không quan sát thấy giá trị được cập nhật của một biến ngay sau khi nó được cập nhật bởi một thread khác là &ldquo;instruction reordering&rdquo; (sắp xếp lại chỉ thị).</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

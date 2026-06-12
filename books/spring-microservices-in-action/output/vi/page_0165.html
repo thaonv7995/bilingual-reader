@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Listing 5.7 cấu hình circuit breaker</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0164.html">← Prev</a>
+    <a href="page_0166.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">140</span>
+        <span class="rh-center">CHƯƠNG 5 <em>Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">lời gọi đã xảy ra để chúng có thể &ldquo;kích hoạt&rdquo; circuit breaker dù cả 15 lời gọi đều thất bại. Hystrix sẽ tiếp tục cho phép các lời gọi đi qua tới dịch vụ từ xa.</p>
+
+      <p>Khi đã đạt số lượng tối thiểu các lời gọi tài nguyên từ xa trong cửa sổ 10 giây, Hystrix sẽ bắt đầu xem xét tỷ lệ phần trăm tổng số lỗi đã xảy ra. Nếu tỷ lệ lỗi tổng thể vượt ngưỡng, Hystrix sẽ kích hoạt circuit breaker và làm thất bại hầu hết các lời gọi trong tương lai. Như chúng ta sẽ thảo luận ngay sau đây, Hystrix sẽ cho một phần lời gọi đi qua để &ldquo;thử&rdquo; và xem dịch vụ đã hoạt động trở lại chưa. Giá trị mặc định cho ngưỡng lỗi là 50%.</p>
+
+      <p>Nếu tỷ lệ phần trăm đó đã vượt ngưỡng, Hystrix sẽ &ldquo;kích hoạt&rdquo; circuit breaker và ngăn các lời gọi tiếp theo chạm tới tài nguyên từ xa. Nếu tỷ lệ phần trăm lỗi trên các lời gọi từ xa chưa vượt ngưỡng và cửa sổ 10 giây đã trôi qua, Hystrix sẽ đặt lại thống kê circuit breaker.</p>
+
+      <p>Khi Hystrix đã &ldquo;kích hoạt&rdquo; circuit breaker trên một lời gọi từ xa, nó sẽ cố bắt đầu một cửa sổ hoạt động mới. Cứ mỗi năm giây (giá trị này có thể cấu hình), Hystrix sẽ cho một lời gọi đi qua tới dịch vụ đang gặp sự cố. Nếu lời gọi thành công, Hystrix sẽ đặt lại circuit breaker và bắt đầu cho phép các lời gọi đi qua trở lại. Nếu lời gọi thất bại, Hystrix sẽ giữ circuit breaker ở trạng thái đóng và thử lại sau năm giây nữa.</p>
+
+      <p>Dựa trên điều này, bạn có thể thấy có năm thuộc tính bạn có thể dùng để tùy chỉnh hành vi circuit breaker. Annotation <code>@HystrixCommand</code> cung cấp năm thuộc tính này thông qua thuộc tính <code>commandPoolProperties</code>. Trong khi thuộc tính <code>threadPoolProperties</code> cho phép bạn thiết lập hành vi của thread pool nền tảng được dùng trong lệnh Hystrix, thuộc tính <code>commandPoolProperties</code> cho phép bạn tùy chỉnh hành vi của circuit breaker gắn với lệnh Hystrix. Listing sau đây trình bày tên các thuộc tính cùng cách thiết lập giá trị cho từng thuộc tính.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.7</strong><br>Cấu hình hành vi của circuit breaker</figcaption>
+        <pre class="code-block"><code>@HystrixCommand(
+   fallbackMethod = "buildFallbackLicenseList",
+   threadPoolKey = "licenseByOrgThreadPool",
+   threadPoolProperties ={
+        @HystrixProperty(name = "coreSize",value="30"),
+        @HystrixProperty(name="maxQueueSize"value="10"),
+   },
+   commandPoolProperties ={
+     @HystrixProperty(
+      name="circuitBreaker.requestVolumeThreshold",
+      ➥ value="10"),
+      ➥ @HystrixProperty(
+      name="circuitBreaker.errorThresholdPercentage",
+      ➥ value="75"),
+
+         @HystrixProperty(
+           name="circuitBreaker.sleepWindowInMilliseconds",
+           value="7000"),
+           ➥ @HystrixProperty(</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

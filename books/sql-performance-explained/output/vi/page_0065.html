@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục NULL</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">65</span>
+      </header>
+      <p class="chapter-running-head">Chỉ mục NULL</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>----------------------------------------------------
+| Id | Operation         | Name      | Rows | Cost |
+----------------------------------------------------
+|  0 | SELECT STATEMENT  |           |    1 |  477 |
+|* 1 |  TABLE ACCESS FULL| EMPLOYEES |    1 |  477 |
+----------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - filter("DATE_OF_BIRTH" IS NULL)</code></pre>
+      </figure>
+
+      <p class="no-indent">Tuy nhiên, bản ghi sẽ được chèn vào một chỉ mục nối nếu ít nhất một cột chỉ mục không phải là <code>NULL</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX demo_null
+          ON employees (subsidiary_id, date_of_birth);</code></pre>
+      </figure>
+
+      <p>Bản ghi được tạo ở trên được thêm vào chỉ mục vì <code>SUBSIDIARY_ID</code> không phải là <code>NULL</code>. Do đó, chỉ mục này có thể hỗ trợ một truy vấn cho tất cả nhân viên của một chi nhánh cụ thể mà không có giá trị <code>DATE_OF_BIRTH</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name
+  FROM employees
+ WHERE subsidiary_id = ?
+   AND date_of_birth IS NULL;</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+| Id | Operation                   | Name      | Rows | Cost |
+--------------------------------------------------------------
+|  0 | SELECT STATEMENT            |           |    1 |    2 |
+|  1 |  TABLE ACCESS BY INDEX ROWID| EMPLOYEES |    1 |    2 |
+|* 2 |   INDEX RANGE SCAN          | DEMO_NULL |    1 |    1 |
+--------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - access("SUBSIDIARY_ID"=TO_NUMBER(?)
+          AND "DATE_OF_BIRTH" IS NULL)</code></pre>
+      </figure>
+
+      <p>Xin lưu ý rằng chỉ mục bao phủ toàn bộ <code>where</code> clause; tất cả các bộ lọc được sử dụng như các điều kiện truy cập trong <code>INDEX RANGE SCAN</code>.</p>
+
+      <p>Chúng ta có thể mở rộng khái niệm này cho truy vấn gốc để tìm tất cả các bản ghi mà <code>DATE_OF_BIRTH IS NULL</code>. Để làm điều đó, cột <code>DATE_OF_BIRTH</code> phải là cột bên trái nhất trong chỉ mục để có thể được sử dụng như một điều kiện truy cập. Mặc dù chúng ta không cần một cột chỉ mục thứ hai cho chính truy vấn, nhưng chúng ta thêm một cột khác mà không bao giờ có thể là <code>NULL</code> để đảm bảo rằng chỉ mục có tất cả các hàng.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">55</p>
+    </article>
+  </main>
+</body>
+</html>

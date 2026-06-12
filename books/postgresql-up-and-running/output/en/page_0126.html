@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Basic Table Creation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0125.html">← Prev</a>
+    <a href="page_0127.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">126</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Example 6-1.</strong> Basic table creation</figcaption>
+        <pre class="code-block"><code>CREATE TABLE logs ( log_id serial PRIMARY KEY,
+ ① user_name varchar(50),
+ ② description text,
+ ③ log_ts timestamp with time zone NOT NULL DEFAULT current_timestamp);
+④ CREATE INDEX idx_logs_log_ts ON logs USING btree (log_ts);</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> <code>serial</code> is the data type used to represent an incrementing autonumber. Adding
+      a <code>serial</code> column automatically adds an accompanying sequence object to the
+      database schema. A <code>serial</code> data type is always an integer with the default value
+      set to the next value of the sequence object. Each table usually has just one serial
+      column, which often serves as the primary key.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> <code>varchar</code> is shorthand for <code>character varying</code>, a variable-length string similar
+      to what you will find in other databases. You don’t need to specify a maximum
+      length; if you don’t, <code>varchar</code> is almost identical to the <code>text</code> data type.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> <code>text</code> is a string of indeterminate length. It’s never followed by a length restriction.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">④</span> <code>timestamp with time zone</code> (shorthand <code>timestamptz</code>) is a date and time data
+      type, always stored in UTC. It always displays date and time in the server’s own
+      time zone unless you tell it to otherwise. See <span class="accent-word">“Time Zones: What They Are and
+      Are Not” on page 86</span> for a a more thorough discussion.</p>
+
+      <h3 class="subsection-title">Inherited Tables</h3>
+      <p class="no-indent">PostgreSQL stands alone as the only database offering inherited tables. When you spec‐
+      ify that a table (the child table) inherit from another table (the parent table), PostgreSQL
+      creates the child table with its own columns plus all the columns of the parent table(s).
+      PostgreSQL will remember this parent-child relationship so that any structural changes
+      later made to the parent automatically propagate to its children. Parent-child table de‐
+      sign is perfect for partitioning your data. When you query the parent table, PostgreSQL
+      automatically includes all rows in the child tables. Not every trait of the parent passes
+      down to the child. Notably, primary key constraints, uniqueness constraints, and in‐
+      dexes are never inherited. Check constraints are inherited, but children can have their
+      own check constraints in addition to the ones they inherit from their parents (see
+      <span class="accent-word">Example 6-2</span>).</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 6-2.</strong> Inherited table creation</figcaption>
+        <pre class="code-block"><code>CREATE TABLE logs_2011 (PRIMARY KEY(log_id)) INHERITS (logs);
+CREATE INDEX idx_logs_2011_log_ts ON logs USING btree(log_ts);
+ALTER TABLE logs_2011 ADD CONSTRAINT chk_y2011
+ CHECK (log_ts &gt;= '2011-1-1'::timestamptz
+   AND log_ts &lt; '2012-1-1'::timestamptz ); ①</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">108<span class="sep">|</span>Chapter 6: Tables, Constraints, and Indexes</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

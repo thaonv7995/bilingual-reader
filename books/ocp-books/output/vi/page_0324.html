@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 17: Biểu thức Lambda (Lambda expression) và Tham chiếu phương thức</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0323.html">← Trước</a>
+    <a href="page_0325.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">324</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>List&lt;Car&gt; showCars(Predicate&lt;Car&gt; cp){
+    ArrayList&lt;Car&gt; carsToShow = new ArrayList&lt;&gt;();
+    for(Car c : cars){
+        if(cp.test(c)) carsToShow.add(c);
+    }
+    return carsToShow;
+}</code></pre>
+      </figure>
+
+      <p>Hãy quan sát rằng chúng ta đã định kiểu <code>Predicate</code> thành <code>Car</code> trong đoạn mã nguồn trên. Ngoài điểm đó ra, đoạn mã trên hoàn toàn giống với đoạn mã trước. Nhưng bằng cách sử dụng Interface (Giao diện) <code>Predicate</code> thay vì tự viết một Interface (Giao diện) riêng, chúng ta đã giảm bớt được thêm ba dòng mã nguồn.</p>
+
+      <p>Không có sự thay đổi nào trong đoạn mã nguồn gọi phương thức <code>showCars</code>. Biểu thức Lambda (Lambda expression) mà chúng ta đã sử dụng trước đó, tức là <code>cm.showCars(c -&gt; c.company.equals(&quot;Honda&quot;))</code>, cũng hoạt động tốt với phương thức mới này. Nó hoạt động vì Biểu thức Lambda (Lambda expression) không bao giờ yêu cầu chúng ta phải sử dụng tên của bất kỳ Interface (Giao diện) hoặc phương thức nào. Do đó, Biểu thức Lambda (Lambda expression) không bị ràng buộc vào một Interface (Giao diện) hoặc phương thức cụ thể nào. Nó chỉ liên kết với một hành vi cụ thể &mdash; nghĩa là, một phương thức nhận <code>Car</code> làm đối số và trả về một giá trị <code>boolean</code>. Chúng ta chỉ việc tin tưởng vào trình biên dịch để tạo ra một Class (Lớp) phù hợp với một phương thức phù hợp. Chúng ta chỉ cung cấp mã nguồn thô cho phần thân phương thức. Trước đây, trình biên dịch đã tạo ra một Class (Lớp) triển khai Interface (Giao diện) <code>CarFilter</code> và giờ đây nó tạo ra một Class (Lớp) triển khai Interface (Giao diện) <code>Predicate&lt;Car&gt;</code> bằng cách sử dụng cùng một mã nguồn mà chúng ta đã viết trong Biểu thức Lambda (Lambda expression)! Trên thực tế, sự thay đổi này tinh tế đến mức nếu bạn có cả hai phiên bản của phương thức <code>showCars</code> trong <code>CarMall</code>, trình biên dịch sẽ từ chối dòng mã <code>cm.showCars(c -&gt; c.company.equals(&quot;Honda&quot;))</code> với thông báo lỗi: &quot;reference to showCars is ambiguous. Both method showCars(java.util.function.Predicate&lt;Car&gt;) in CarMall and method showCars(CarFilter) in CarMall match&quot;.</p>
+
+      <p>Tôi chỉ mới giới thiệu một phương thức trong Interface (Giao diện) <code>Predicate</code> nhưng thực tế nó có ba phương thức <code>default</code> và một phương thức <code>static</code> bên cạnh phương thức trừu tượng <code>test</code>. Trước đây tôi không đề cập đến chúng vì chúng không liên quan gì đến các Biểu thức Lambda (Lambda expression). Bạn sẽ nhận thấy rằng các phương thức này về cơ bản chỉ là các phương thức tiện ích hữu ích. Chúng ta chưa</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

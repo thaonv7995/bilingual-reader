@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục hợp nhất</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">59</span>
+      </header>
+      <p class="chapter-running-head">Chỉ mục hợp nhất</p>
+
+      <h3 class="section-title">Chỉ mục hợp nhất</h3>
+
+      <p class="no-indent">Đây là một trong những câu hỏi phổ biến nhất về chỉ mục: liệu có tốt hơn khi tạo một chỉ mục cho mỗi cột hay một chỉ mục duy nhất cho tất cả các cột của một <code>where</code> clause? Câu trả lời rất đơn giản trong hầu hết các trường hợp: một chỉ mục với nhiều cột thì tốt hơn.</p>
+
+      <p>Tuy nhiên, có những truy vấn mà một chỉ mục duy nhất không thể thực hiện tốt, bất kể bạn định nghĩa chỉ mục như thế nào; ví dụ, các truy vấn với hai hoặc nhiều điều kiện phạm vi độc lập như trong ví dụ sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, date_of_birth
+  FROM employees
+ WHERE UPPER(last_name) &lt; ?
+   AND date_of_birth    &lt; ?</code></pre>
+      </figure>
+
+      <p>Không thể định nghĩa một chỉ mục B-tree hỗ trợ cho truy vấn này mà không có các điều kiện lọc. Để giải thích, bạn chỉ cần nhớ rằng một chỉ mục là một danh sách liên kết.</p>
+
+      <p>Nếu bạn định nghĩa chỉ mục là <code>UPPER(LAST_NAME)</code>, <code>DATE_OF_BIRTH</code> (theo thứ tự đó), danh sách bắt đầu bằng A và kết thúc bằng Z. Ngày sinh chỉ được xem xét khi có hai nhân viên cùng tên. Nếu bạn định nghĩa chỉ mục theo cách ngược lại, nó sẽ bắt đầu với những nhân viên lớn tuổi nhất và kết thúc với những người trẻ tuổi nhất. Trong trường hợp đó, tên chỉ có tác động nhỏ đến thứ tự sắp xếp.</p>
+
+      <p>Dù bạn có xoay chuyển định nghĩa chỉ mục như thế nào, các mục luôn được sắp xếp dọc theo một chuỗi. Ở một đầu, bạn có các mục nhỏ và ở đầu kia là các mục lớn. Do đó, một chỉ mục chỉ có thể hỗ trợ một điều kiện phạm vi như một điều kiện truy cập. Hỗ trợ hai điều kiện phạm vi độc lập yêu cầu một trục thứ hai, ví dụ như một bàn cờ. Truy vấn ở trên sẽ khớp với tất cả các mục từ một góc của bàn cờ, nhưng một chỉ mục không giống như một bàn cờ—nó giống như một chuỗi. Không có góc nào cả.</p>
+
+      <p>Bạn có thể chấp nhận điều kiện lọc và vẫn sử dụng một chỉ mục nhiều cột. Đó là giải pháp tốt nhất trong nhiều trường hợp. Định nghĩa chỉ mục nên đề cập đến cột chọn lọc hơn trước để nó có thể được sử dụng với một điều kiện truy cập. Điều đó có thể là nguồn gốc của huyền thoại &ldquo;chọn lọc nhất trước&rdquo; nhưng quy tắc này chỉ đúng nếu bạn không thể tránh một điều kiện lọc.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">49</p>
+    </article>
+  </main>
+</body>
+</html>

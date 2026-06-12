@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets li {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0066.html">← Prev</a>
+    <a href="page_0068.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">67</span>
+      </header>
+
+      <p class="no-indent">1. Since <code>Account</code> has default access, it is visible only in the <code>accts</code> package and thus
+      <code>RetirementAccount</code> cannot access or extend the <code>Account</code> class.</p>
+
+      <p class="no-indent">2. Since <code>accountNumber</code> has default access, it is visible only in the <code>accts</code> package and
+      thus, it will be inherited by all the subclasses of <code>Account</code> that belong to the same
+      package. Thus, <code>accountNumber</code> will be inherited by <code>CheckingAccount</code> and
+      <code>SavingsAccount</code>.</p>
+
+      <p class="no-indent">3. Since <code>balance</code> has protected access, it is visible in all the classes of the <code>accts</code> package
+      and all the subclasses of the <code>Account</code> class irrespective of their package. Thus, it will be
+      inherited by <code>CheckingAccount</code> and <code>SavingsAccount</code>. Since <code>Account</code> is not visible
+      outside the <code>accts</code> package, making <code>balance</code> protected doesn't seem to make much
+      sense but it does. Observe what happens with <code>RetirementAccount</code>.</p>
+
+      <p class="no-indent">4. Since <code>RetirementAccount</code> extends <code>SavingsAccount</code> but belongs to a different
+      package, it only inherits the public and protected (but not default) members of
+      <code>SavingsAccount</code>. This means, the protected field <code>balance</code> is passed on to the
+      <code>RetirementAccount</code> as well. Since the <code>interestRate</code> field of <code>SavingsAccount</code> has
+      default access, it is not visible in <code>RetirementAccount</code> and therefore, is not inherited by
+      <code>RetirementAccount</code>.</p>
+
+      <p class="no-indent">5. Even though the <code>balance</code> field of <code>Account</code> is visible and inherited in
+      <code>RetirementAccount</code>, <code>sa.balance</code> will still not compile because
+      <code>RetirementAccount</code> class does not own <code>SavingsAccount</code>'s <code>balance</code> as explained in
+      the previous chapter. In technical terms, code of <code>RetirementAccount</code> class is not
+      responsible for the implementation of <code>SavingsAccount</code> class and
+      so, <code>RetirementAccount</code> cannot access <code>SavingsAccount</code>'s <code>balance</code>. It can access its
+      own <code>balance</code>, which it inherits from <code>SavingsAccount</code>, and which is why
+      <code>ra.balance</code> compiles fine, but not <code>SavingsAccount</code>'s <code>balance</code>.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

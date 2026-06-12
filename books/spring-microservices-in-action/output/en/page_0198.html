@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Building your first Zuul pre-filter</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0197.html">← Prev</a>
+    <a href="page_0199.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Building your first Zuul pre-filter generating correlation IDs</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">173</span>
+      </header>
+
+      <p class="no-indent">Following the flow of figure 6.12, you&rsquo;ll see the following filters being used:</p>
+
+      <ol class="manning-numbered" aria-label="Zuul filters used in figure 6.12">
+        <li><strong class="run-in">TrackingFilter</strong>&mdash;The TrackingFilter will be a pre-filter that will ensure that every request flowing from Zuul has a correlation ID associated with it. A correlation ID is a unique ID that gets carried across all the microservices that are executed when carrying out a customer request. A correlation ID allows you to trace the chain of events that occur as a call goes through a series of microservice calls.</li>
+        <li><strong class="run-in">SpecialRoutesFilter</strong>&mdash;The SpecialRoutesFilter is a Zuul routes filter that will check the incoming route and determine if you want to do A/B testing on the route. A/B testing is a technique in which a user (in this case a service) is randomly presented with two different versions of services using the same service. The idea behind A/B testing is that new features can be tested before they&rsquo;re rolled out to the entire user base. In our example, you&rsquo;re going to have two different versions of the same organization service. A small number of users will be routed to the newer version of the service, while the majority of users will be routed to the older version of the service.</li>
+        <li><strong class="run-in">ResponseFilter</strong>&mdash;The ResponseFilter is a post filter that will inject the correlation ID associated with the service call into the HTTP response header being sent back to the client. This way, the client will have access to the correlation ID associated with the request they made.</li>
+      </ol>
+
+      <h3 class="section-title">6.5 Building your first Zuul pre-filter generating correlation IDs</h3>
+
+      <p>Building filters in Zuul is an extremely simple activity. To begin, you&rsquo;ll build a Zuul pre-filter, called the TrackingFilter, that will inspect all incoming requests to the gateway and determine whether there&rsquo;s an HTTP header called <code>tmx-correlation-id</code> present in the request. The <code>tmx-correlation-id</code> header will contain a unique GUID (Globally Universal Id) that can be used to track a user&rsquo;s request across multiple microservices.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>We discussed the concept of a correlation ID in chapter 5. Here we&rsquo;re going to walk through in more detail how to use Zuul to generate a correlation ID. If you skipped around in the book, I highly recommend you look at chapter 5 and read the section on Hystrix and Thread context. Your implementation of correlation IDs will be implemented using ThreadLocal variables and there&rsquo;s extra work to do to have ThreadLocal variables work with Hystrix.</p>
+      </aside>
+
+      <p>If the <code>tmx-correlation-id</code> isn&rsquo;t present on the HTTP header, your Zuul TrackingFilter will generate and set the correlation ID. If there&rsquo;s already a correlation ID present, Zuul won&rsquo;t do anything with the correlation ID. The presence of a correlation ID means that this particular service call is part of a chain of service calls carrying out the user&rsquo;s request. In this case, your TrackingFilter class will do nothing.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

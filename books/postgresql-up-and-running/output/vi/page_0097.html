@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0096.html">← Trước</a>
+    <a href="page_0098.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">97</span>
+      </header>
+
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHƯƠNG 5</p>
+        <h1 class="chapter-title no-indent">Các Kiểu Dữ Liệu</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="no-indent">PostgreSQL hỗ trợ các kiểu dữ liệu chính của bất kỳ cơ sở dữ liệu nào: số, chuỗi, ngày
+      và giờ, và Boolean. Nhưng PostgreSQL vượt trội hơn bằng cách thêm hỗ trợ cho mảng,
+      ngày giờ với múi giờ, khoảng thời gian, phạm vi, JSON, XML, và nhiều kiểu khác.
+      Nếu điều đó vẫn chưa đủ, bạn có thể tạo ra các kiểu tùy chỉnh. Trong chương này, chúng tôi không có ý định
+      đề cập đến mọi kiểu dữ liệu. Để làm điều đó, luôn có tài liệu hướng dẫn. Chúng tôi sẽ tập trung vào việc cho bạn thấy
+      một số kiểu dữ liệu độc đáo của PostgreSQL và những điểm tinh tế của các kiểu dữ liệu phổ biến.</p>
+
+      <p>Không có kiểu dữ liệu nào sẽ hữu ích nếu không có các hàm và toán tử được sử dụng để điều hướng và
+      làm việc với nó. PostgreSQL có một đội ngũ các hàm và toán tử phục vụ cho từng kiểu dữ liệu, và nhiều tiện ích mở rộng thêm của riêng họ. Chúng tôi sẽ đề cập đến một số trong số những cái phổ biến hơn
+      trong chương này.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0097_icon_tip.png" width="43" height="57" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Khi chúng tôi sử dụng thuật ngữ hàm, chúng tôi đang nói về một cái gì đó có dạng <code>f(x)</code>. Khi chúng tôi sử dụng thuật ngữ toán tử, chúng tôi đang nói về
+        một cái gì đó có tính biểu tượng và hoặc đơn (chỉ có một đối số)
+        hoặc nhị phân (có hai đối số) như <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>. Toán tử đơn giản nhất là một ký hiệu thay thế cho một hàm nhận một hoặc nhiều
+        đối số. Khi sử dụng các toán tử, hãy nhớ rằng cùng một ký hiệu
+        có thể mang một ý nghĩa khác nhau khi áp dụng cho các kiểu dữ liệu khác nhau. Ví dụ, dấu cộng có nghĩa là cộng cho số nhưng
+        hợp nhất cho các phạm vi.</p>
+      </div>
+
+      <h3 class="section-title">Số Học</h3>
+      <p class="no-indent">Bạn sẽ tìm thấy các số nguyên, số thập phân và số thực hàng ngày của bạn trong Post‐
+      greSQL. Trong các kiểu số, chúng tôi muốn thảo luận về các kiểu dữ liệu tuần tự và một hàm thú vị
+      để nhanh chóng tạo ra các chuỗi số học của các số nguyên.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">79</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

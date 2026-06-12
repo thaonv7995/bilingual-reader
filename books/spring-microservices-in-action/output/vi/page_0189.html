@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Hình 6.7 và Listing 6.3 các route Zuul có tiền tố</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 22%) minmax(0, 48%) minmax(0, 30%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 2;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts-left {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding-bottom: 2mm;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 4mm;
+      padding-top: 6mm;
+    }
+    .prose-page.chapter-page .listing-annotated--63 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page figure.diagram figcaption + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0188.html">← Trước</a>
+    <a href="page_0190.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">164</span>
+        <span class="rh-center">CHƯƠNG 6 <em>Định tuyến dịch vụ với Spring Cloud và Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="diagram" aria-label="Hình 6.7">
+        <img src="../assets/images/page_0189_fig_6_7.png" width="1313" height="590" alt="Hình 6.7 — Dùng tiền tố, Zuul sẽ ánh xạ tiền tố /api tới mọi dịch vụ mà nó quản lý">
+        <figcaption><strong>Hình 6.7</strong><br>Dùng tiền tố, Zuul sẽ ánh xạ tiền tố <code>/api</code> tới mọi dịch vụ mà nó quản lý.</figcaption>
+      </figure>
+
+      <p class="no-indent">điều này bằng cách dùng thuộc tính prefix trong cấu hình Zuul. Hình 6.7 mô tả khái niệm về tiền tố ánh xạ này sẽ trông như thế nào.</p>
+
+      <p>Trong listing sau đây, chúng ta sẽ thấy cách thiết lập các route cụ thể tới các dịch vụ organization và Licensing riêng lẻ, loại trừ tất cả các dịch vụ do eureka tạo ra, và thêm tiền tố <code>/api</code> cho các dịch vụ của bạn.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.3</strong><br>Thiết lập các route tùy chỉnh với tiền tố</figcaption>
+        <div class="listing-annotated listing-annotated--63" aria-label="Mã nguồn Listing 6.3 có chú thích">
+          <div class="listing-callouts-left" aria-label="Chú thích trái Listing 6.3">
+            <p class="listing-callout">Tất cả các dịch vụ đã định nghĩa sẽ được thêm tiền tố <code>/api</code>.</p>
+          </div>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>zuul:
+ ignored-services: '*'
+ prefix: /api
+ routes:
+  organizationservice: /organization/**
+  licensingservice: /licensing/**</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích phải Listing 6.3">
+            <p class="listing-callout">Thuộc tính <code>ignored-services</code> được đặt thành <code>*</code> để loại trừ việc đăng ký tất cả các route dựa trên Eureka service ID.</p>
+            <p class="listing-callout"><code>organizationservice</code> và <code>licensingservice</code> của bạn được ánh xạ lần lượt tới các endpoint <code>organization</code> và <code>licensing</code>.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

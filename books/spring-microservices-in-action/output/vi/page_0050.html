@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 1: Các mẫu xây dựng và triển khai microservice</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 10pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0049.html">← Prev</a>
+    <a href="page_0051.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Microservices không chỉ là viết mã</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">25</span>
+      </header>
+
+      <h4 class="subsection-title">1.9.6 Các mẫu xây dựng và triển khai microservice</h4>
+
+      <p>Một trong những phần cốt lõi của kiến trúc microservice là mỗi phiên bản của một microservice phải giống hệt tất cả các phiên bản khác của nó. Bạn không thể cho phép &ldquo;configuration drift&rdquo; (sự thay đổi xảy ra trên máy chủ sau khi đã triển khai) diễn ra, vì điều này có thể gây mất ổn định cho ứng dụng của bạn.</p>
+
+      <p>Vì vậy, mục tiêu của chúng ta là tích hợp cấu hình cơ sở hạ tần vào quy trình build-triển khai để bạn không còn triển khai các artifact phần mềm như Java WAR hoặc EAR lên một phần cơ sở hạ tần đang chạy sẵn. Thay vào đó, bạn muốn build và biên dịch microservice cùng với ảnh máy chủ ảo mà nó chạy trên đó như một phần của quy trình build. Sau đó, khi microservice được triển khai, toàn bộ ảnh máy (machine image) với máy chủ đang chạy trên đó sẽ được triển khai.</p>
+
+      <aside class="sidebar-note">
+        <h3>Một câu quá thường được nói</h3>
+        <p>&ldquo;Tôi chỉ thay đổi một chút trên máy chủ stage, nhưng quên áp dụng thay đổi đó ở production.&rdquo; Giải pháp cho nhiều hệ thống sập khi tôi làm việc với các nhóm tình huống khẩn cấp qua nhiều năm thường bắt đầu bằng những lời đó từ một nhà phát triển hoặc quản trị hệ thống. Các kỹ sư (và hầu hết mọi người nói chung) đều có ý định tốt. Họ không đi làm để mắc lỗi hay làm sập hệ thống. Thay vào đó, họ đang làm hết sức mình, nhưng bị bận rộn hoặc mất tập trung. Họ chỉnh sửa điều gì đó trên một máy chủ, hoàn toàn có ý định quay lại và thực hiện điều đó ở tất cả các môi trường.</p>
+        <p>Sau đó, một sự cố gián đoạn xảy ra và mọi người bối rối tự hỏi điều gì khác biệt giữa các môi trường thấp hơn và production. Tôi nhận thấy quy mô nhỏ và phạm vi hạn chế của microservice tạo ra cơ hội hoàn hảo để đưa khái niệm &ldquo;immutable infrastructure&rdquo; (cơ sở hạ tần bất biến) vào một tổ chức: một khi dịch vụ được triển khai, cơ sở hạ tần mà nó chạy trên đó sẽ không bao giờ bị con người can thiệp lại.</p>
+        <p>Cơ sở hạ tần bất biến là một phần then chốt để sử dụng kiến trúc microservice thành công, vì bạn phải đảm bảo trong production rằng mọi phiên bản microservice bạn khởi động cho một microservice cụ thể đều giống hệt nhau.</p>
+      </aside>
+
+      <p>Hình 1.13 minh họa quy trình này. Ở cuối cuốn sách, chúng ta sẽ xem cách thay đổi pipeline build và triển khai để microservices và các máy chủ mà chúng chạy trên đó được triển khai như một đơn vị công việc duy nhất. Ở chương 10, chúng ta đề cập các mẫu và chủ đề sau:</p>
+
+      <ul class="manning-bullets">
+        <li><strong class="run-in">Pipeline build và triển khai</strong>&mdash;Làm thế nào để tạo quy trình build và triển khai có thể lặp lại, nhấn mạnh việc build và triển khai chỉ với một nút bấm đến bất kỳ môi trường nào trong tổ chức của bạn?</li>
+        <li><strong class="run-in">Infrastructure as code</strong>&mdash;Làm thế nào để coi việc cấp phát (provisioning) dịch vụ của bạn như mã có thể thực thi và quản lý dưới source control?</li>
+        <li><strong class="run-in">Máy chủ bất biến</strong>&mdash;Sau khi ảnh microservice được tạo, làm thế nào để đảm bảo nó không bao giờ bị thay đổi sau khi đã triển khai?</li>
+        <li><strong class="run-in">Máy chủ Phoenix</strong>&mdash;Máy chủ chạy càng lâu, càng có nhiều cơ hội cho configuration drift. Làm thế nào để đảm bảo các máy chủ chạy microservices được dỡ bỏ định kỳ và tái tạo từ một ảnh bất biến?</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

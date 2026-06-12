@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Phụ lục A: Listing A.2 Dockerfile</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      padding-left: 1.25em;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 1;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 1mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A2 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A2 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A2 .listing-callouts-right .listing-callout:nth-child(4) {
+      margin-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0356.html">← Prev</a>
+    <a href="page_0358.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">332</span>
+        <span class="rh-center">PHỤ LỤC A <em>Chạy cloud trên desktop của bạn</em></span>
+        <span class="rh-right">3</span>
+      </header>
+
+      <p class="no-indent">Nó đẩy image Docker lên kho lưu trữ image Docker cục bộ được cài khi bạn cài Docker.</p>
+
+      <p class="no-indent">Listing sau đây trình bày nội dung Dockerfile từ licensing service của bạn.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing A.2</strong><br>Dockerfile chuẩn bị image Docker</figcaption>
+        <div class="listing-annotated listing-annotated--A2" aria-label="Listing A.2 chú thích Dockerfile">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>FROM openjdk:8-jdk-alpine
+RUN  apk update &amp;&amp; apk upgrade &amp;&amp; apk add netcat-openbsd
+RUN mkdir -p /usr/local/licensingservice
+ADD licensing-service-0.0.1-SNAPSHOT.jar /usr/local/licensingservice/
+ADD run.sh run.sh
+RUN chmod +x run.sh
+CMD ./run.sh</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích Listing A.2">
+            <p class="listing-callout">Đây là image Docker Linux mà bạn sẽ dùng trong môi trường chạy Docker. Bản cài đặt này được tối ưu cho ứng dụng Java.</p>
+            <p class="listing-callout">Bạn cài nc (netcat), một tiện ích dùng để ping các dịch vụ phụ thuộc nhằm kiểm tra chúng đã sẵn sàng chưa.</p>
+            <p class="listing-callout">Lệnh ADD của Docker sao chép file JAR thực thi từ hệ thống tệp cục bộ sang image Docker.</p>
+            <p class="listing-callout">Bạn thêm một shell script BASH tùy chỉnh sẽ theo dõi các phụ thuộc dịch vụ rồi khởi chạy dịch vụ thực tế.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Trong Dockerfile từ listing này, bạn đang cấp phát instance bằng Alpine Linux (<a href="https://alpinelinux.org/">https://alpinelinux.org/</a>). Alpine Linux là một bản phân phối Linux nhỏ thường dùng để build image Docker. Image Alpine Linux mà bạn dùng đã có Java JDK cài sẵn.</p>
+
+      <p>Khi cấp phát image Docker, bạn sẽ cài một tiện ích dòng lệnh tên là nc. Lệnh nc dùng để ping một máy chủ và kiểm tra một cổng cụ thể có đang trực tuyến không. Bạn sẽ dùng nó trong script lệnh run.sh để đảm bảo trước khi khởi chạy dịch vụ, tất cả dịch vụ phụ thuộc của nó (ví dụ, cơ sở dữ liệu và dịch vụ Spring Cloud Config) đã khởi động. Lệnh nc làm điều này bằng cách theo dõi các cổng mà dịch vụ phụ thuộc lắng nghe. Việc cài nc được thực hiện qua lệnh <code>RUN apk update &amp;&amp; apk upgrade &amp;&amp; apk add netcat-openbsd</code>, chạy các dịch vụ bằng Docker Compose.</p>
+
+      <p>Tiếp theo, Dockerfile sẽ tạo một thư mục cho file jar thực thi của licensing service rồi sao chép file jar từ hệ thống tệp cục bộ sang thư mục đã tạo trên image Docker. Tất cả được thực hiện qua lệnh <code>ADD licensing-service-0.0.1-SNAPSHOT.jar /usr/local/licensingservice/</code>.</p>
+
+      <p>Bước tiếp theo trong quy trình cấp phát là cài script run.sh qua lệnh ADD. Script run.sh là script tùy chỉnh tôi viết để khởi chạy dịch vụ đích khi image Docker được khởi động. Nó dùng lệnh nc để lắng nghe các cổng của mọi phụ thuộc dịch vụ then chốt mà licensing service cần, rồi chặn cho đến khi các phụ thuộc đó đã khởi động.</p>
+
+      <p>Listing sau đây cho thấy cách run.sh được dùng để khởi chạy licensing service.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

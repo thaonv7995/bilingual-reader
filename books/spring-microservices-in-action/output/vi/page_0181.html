@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Các mối quan tâm xuyên suốt của service gateway</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page p + .sidebar-note--gray {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note--gray h3 {
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ol.manning-numbered {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page .sidebar-note ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 2mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page .sidebar-note ol.manning-numbered li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0180.html">← Trước</a>
+    <a href="page_0182.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">156</span>
+        <span class="rh-center">CHƯƠNG 6 <em>Định tuyến dịch vụ với Spring Cloud và Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ul class="manning-bullets" aria-label="Các mối quan tâm xuyên suốt triển khai trong service gateway (tiếp theo)">
+        <li><strong class="run-in">Định tuyến động</strong>&mdash;Service gateway có thể kiểm tra các yêu cầu dịch vụ đến và, dựa trên dữ liệu từ yêu cầu đó, thực hiện định tuyến thông minh dựa trên danh tính người gọi dịch vụ. Ví dụ, khách hàng tham gia chương trình beta có thể được định tuyến mọi lời gọi dịch vụ tới một cụm dịch vụ cụ thể đang chạy phiên bản mã khác với những gì mọi người khác đang dùng.</li>
+        <li><strong class="run-in">Xác thực và ủy quyền</strong>&mdash;Vì mọi lời gọi dịch vụ đều đi qua service gateway, service gateway là nơi tự nhiên để kiểm tra xem người gọi dịch vụ đã xác thực và được ủy quyền thực hiện lời gọi dịch vụ hay chưa.</li>
+        <li><strong class="run-in">Thu thập metric và ghi log</strong>&mdash;Service gateway có thể được dùng để thu thập metric và thông tin log khi một lời gọi dịch vụ đi qua service gateway. Bạn cũng có thể dùng service gateway để đảm bảo các thông tin quan trọng có mặt trên yêu cầu người dùng nhằm đảm bảo ghi log nhất quán. Điều này không có nghĩa là bạn không nên vẫn thu thập metric từ bên trong các dịch vụ riêng lẻ của mình, mà là service gateway cho phép bạn tập trung hóa việc thu thập nhiều metric cơ bản, như số lần dịch vụ được gọi và thời gian phản hồi dịch vụ.</li>
+      </ul>
+
+      <p class="no-indent">Hãy cùng xem cách triển khai service gateway bằng Spring Cloud và Netflix Zuul.</p>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="Khoan—service gateway có phải điểm lỗi duy nhất và nút thắt tiềm năng không?">
+        <h3>Khoan&mdash;service gateway có phải điểm lỗi duy nhất và nút thắt tiềm năng không?</h3>
+        <p>Ở chương 4 trước đó khi giới thiệu Eureka, tôi đã nói về cách load balancer tập trung có thể là điểm lỗi duy nhất và nút thắt cho các dịch vụ của bạn. Service gateway, nếu không triển khai đúng cách, có thể mang cùng rủi ro. Hãy ghi nhớ những điều sau khi xây dựng triển khai service gateway của bạn.</p>
+        <ol class="manning-numbered" aria-label="Các cân nhắc khi triển khai service gateway">
+          <li>Load balancer vẫn hữu ích khi đặt phía trước từng nhóm dịch vụ riêng lẻ. Trong trường hợp này, một load balancer đặt phía trước nhiều instance service gateway là thiết kế phù hợp và đảm bảo triển khai service gateway của bạn có thể mở rộng. Việc đặt một load balancer phía trước tất cả service instance của bạn không phải ý tưởng hay vì nó trở thành nút thắt.</li>
+          <li>Giữ mọi mã bạn viết cho service gateway ở trạng thái stateless. Đừng lưu bất kỳ thông tin nào trong bộ nhớ cho service gateway. Nếu không cẩn thận, bạn có thể hạn chế khả năng mở rộng của gateway và phải đảm bảo dữ liệu được sao chép trên tất cả các instance service gateway.</li>
+          <li>Giữ mã bạn viết cho service gateway nhẹ. Service gateway là &ldquo;nút thắt cổ chai&rdquo; cho việc gọi dịch vụ của bạn. Mã phức tạp với nhiều lời gọi cơ sở dữ liệu có thể là nguồn gốc của các vấn đề hiệu năng khó truy vết trong service gateway.</li>
+        </ol>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

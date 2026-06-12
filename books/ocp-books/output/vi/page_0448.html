@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0447.html">← Trước</a>
+    <a href="page_0449.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">448</span>
+      </header>
+
+      <p class="no-indent">một chương trình Java.</p>
+
+      <h3 class="section-title section-title--minor">19.4.1 Sử dụng <code>System.out</code> và <code>System.in</code><span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--minor">Ghi ra console bằng cách sử dụng <code>System.out</code></h3>
+
+      <p>Cách dễ nhất để xuất văn bản ra console là sử dụng biến <strong>public static</strong> có tên <code>out</code> của lớp <code>java.lang.System</code>. Thật vậy, chúng ta đã sử dụng nó kể từ chương trình Java đầu tiên của mình! Biến <code>out</code> có kiểu là <code>java.io.PrintStream</code> và đối tượng <code>PrintStream</code> được trỏ bởi biến này được kết nối với console. Đó là lý do tại sao bất kỳ thứ gì chúng ta in bằng phương thức <code>print</code> hoặc <code>println</code> của nó đều hiển thị trên console.</p>
+
+      <p>Một <code>PrintStream</code> là một <code>FilterOutputStream</code> và được sử dụng để &ldquo;in&rdquo; biểu diễn của các giá trị dữ liệu khác nhau một cách thuận tiện. Ngoài các phương thức <code>write</code> nạp chồng chấp nhận một <code>byte[]</code>, nó có nhiều phương thức <code>print</code> và <code>println</code> nạp chồng chấp nhận các kiểu dữ liệu nguyên thủy khác nhau cũng như <code>String</code> và <code>Object</code>. Phương thức <code>printf</code> của nó đặc biệt hữu ích cho việc xuất văn bản được định dạng. Bạn nên xem mô tả JavaDoc của lớp này để biết thêm chi tiết, nhưng dù sao tôi cũng xin đề cập đến một vài điểm quan trọng về lớp này ở đây.</p>
+
+      <p class="no-indent"><strong class="run-in">Đầu tiên,</strong> ngay cả khi một <code>PrintStream</code> có thể in tất cả các loại đối tượng bao gồm cả chuỗi, về mặt kỹ thuật nó vẫn là một luồng nhị phân (binary stream), có nghĩa là nó ghi dữ liệu nhị phân đến đích của nó (là console trong trường hợp của <code>System.out</code>). Vì vậy, mỗi khi bạn sử dụng các phương thức printXXX của nó, nó sẽ chuyển đổi đầu vào thành các byte bằng cách sử dụng mã hóa hoặc charset được cung cấp, hoặc charset mặc định nếu không được chỉ định.</p>
+
+      <p class="no-indent"><strong class="run-in">Thứ hai,</strong> không giống như các lớp luồng Vào/Ra (I/O) khác, các phương thức của <code>PrintStream</code> không ném ra bất kỳ ngoại lệ checked (Checked Exception) nào, đó là lý do tại sao chương trình &ldquo;Hello World&rdquo; của người mới bắt đầu học Java có thể được viết mà không cần lo lắng về việc xử lý ngoại lệ. Để kiểm tra xem có bất kỳ lỗi nào xảy ra trong khi ghi dữ liệu vào luồng bên dưới hay không, phương thức <code>checkError()</code> của nó có thể được gọi.</p>
+
+      <p>Bên cạnh <code>System.out</code>, còn có cả <code>System.err</code> nữa, cũng có kiểu là <code>PrintStream</code>. Luồng này là &ldquo;luồng lỗi tiêu chuẩn&rdquo; (standard error stream) và được JVM sử dụng để in vết ngăn xếp ngoại lệ (exception stack traces).</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • CHỨNG CHỈ JAVA SE 17 &amp; 21</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

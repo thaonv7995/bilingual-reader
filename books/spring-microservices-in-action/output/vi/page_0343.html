@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Listing 10.3 Các bước cài đặt trước khi build</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 22%) minmax(0, 48%) minmax(0, 30%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 2;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-left {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 5mm;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-annotated--103 .listing-callouts-left .listing-callout:nth-child(2) {
+      margin-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-annotated--103 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0342.html">← Trước</a>
+    <a href="page_0344.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">318</span>
+        <span class="rh-center">CHƯƠNG 10 <em>Triển khai microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">10.6.2 Cài đặt công cụ trước khi build</h4>
+
+      <p class="no-indent">Ồ, phần cấu hình trước khi build khá dài, nhưng mục tiếp theo thì ngắn. Các engine build thường là nguồn phát sinh một lượng lớn script &ldquo;glue code&rdquo; để kết nối các công cụ khác nhau được dùng trong quy trình build. Với script Travis của bạn, bạn cần cài đặt hai công cụ dòng lệnh:</p>
+
+      <ul class="manning-bullets" aria-label="Các công cụ dòng lệnh cài đặt trước khi build">
+        <li><strong class="run-in">Travis&mdash;</strong>Công cụ dòng lệnh này dùng để tương tác với build Travis. Bạn sẽ dùng nó ở phần sau trong chương để lấy token GitHub nhằm kích hoạt theo cách lập trình một build Travis khác.</li>
+        <li><strong class="run-in">ecs-cli&mdash;</strong>Đây là công cụ dòng lệnh dùng để tương tác với dịch vụ Amazon Elastic Container.</li>
+      </ul>
+
+      <p>Mỗi mục được liệt kê trong phần <code>before_install</code> của tệp <code>.travis.yml</code> là một lệnh UNIX sẽ được thực thi trước khi build bắt đầu. Listing sau đây trình bày thuộc tính <code>before_install</code> cùng các lệnh cần chạy.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 10.3</strong><br>Các bước cài đặt trước khi build</figcaption>
+        <div class="listing-annotated listing-annotated--103" aria-label="Listing 10.3 chú thích các bước before_install">
+          <div class="listing-callouts-left" aria-label="Chú thích trái Listing 10.3">
+            <p class="listing-callout">Cài đặt công cụ dòng lệnh Travis</p>
+            <p class="listing-callout">Cài đặt client Amazon ECS</p>
+          </div>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>before_install:
+  - gem install travis -v 1.8.5 --no-rdoc --no-ri
+  - sudo curl -o /usr/local/bin/ecs-cli
+    ➥ https://s3.amazonaws.com/amazon-ecs-cli/
+    ➥ ecs-cli-linux-amd64-latest
+  - sudo chmod +x /usr/local/bin/ecs-cli
+  - export BUILD_NAME=chapter10-$TRAVIS_BRANCH-
+    ➥ $(date -u "+%Y%m%d%H%M%S")-$TRAVIS_BUILD_NUMBER
+  - export CONTAINER_IP=52.53.169.60
+  - export PLATFORM_TEST_NAME="chapter10-platform-tests"</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích phải Listing 10.3">
+            <p class="listing-callout">Thay đổi quyền trên client Amazon ECS để có thể thực thi</p>
+            <p class="listing-callout">Thiết lập các biến môi trường dùng xuyên suốt quy trình của bạn</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Việc đầu tiên cần làm trong quy trình build là cài đặt công cụ dòng lệnh travis trên máy chủ build từ xa:</p>
+
+      <figure class="code-snippet" aria-label="Lệnh cài đặt gem Travis CLI">
+        <pre class="code-block"><code>gem install travis -v 1.8.5 --no-rdoc --no-ri</code></pre>
+      </figure>
+
+      <p>Sau đó trong build, bạn sẽ khởi chạy một job Travis khác qua Travis REST API. Bạn cần công cụ dòng lệnh travis để lấy token dùng cho lời gọi REST này.</p>
+
+      <p>Sau khi cài đặt công cụ travis, bạn sẽ cài đặt công cụ Amazon ecs-cli. Đây là công cụ dòng lệnh dùng để triển khai, khởi động và dừng các container Docker chạy trên Amazon. Bạn cài đặt ecs-cli bằng cách trước tiên tải xuống tệp nhị phân rồi thay đổi quyền trên tệp nhị phân vừa tải để có thể thực thi:</p>
+
+      <figure class="code-snippet" aria-label="Lệnh tải xuống và chmod ecs-cli">
+        <pre class="code-block"><code>- sudo curl -o /usr/local/bin/ecs-cli https://s3.amazonaws.com/amazon-ecs-
+cli/ecs-cli-linux-amd64-latest
+- sudo chmod +x /usr/local/bin/ecs-cli</code></pre>
+      </figure>
+
+      <p>Việc cuối cùng bạn thực hiện trong phần <code>before_install</code> của <code>.travis.yml</code> là thiết lập ba biến môi trường trong build của bạn. Ba biến môi trường này sẽ giúp điều khiển hành vi của các build. Các biến môi trường này là</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

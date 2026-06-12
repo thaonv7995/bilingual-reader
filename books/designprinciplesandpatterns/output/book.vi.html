@@ -1,0 +1,1331 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Designprinciplesandpatterns</title>
+  <link rel="stylesheet" href="assets/book.css">
+  <link rel="stylesheet" href="assets/page-tokens.css">
+  <link rel="stylesheet" href="assets/prose-page.css">
+  <link rel="stylesheet" href="assets/code-page.css">
+  <link rel="stylesheet" href="assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+  </style>
+</head>
+<body class="book-standalone book-full">
+  <main class="book-full__main">
+<section class="book-sheet" id="page-0001" data-page="1">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">1</span>
+      </header>
+      <h1 class="chapter-opener">Nguyên tắc thiết kế và</h1>
+      <h2 class="chapter-title">Mẫu thiết kế</h2>
+      <p class="lead no-indent">Robert C. Martin</p>
+      <p class="lead no-indent">www.objectmentor.com</p>
+      <p class="lead">Kiến trúc phần mềm là gì? Câu trả lời có nhiều tầng. Ở tầng cao nhất là các mẫu kiến trúc xác định hình dạng và cấu trúc tổng thể của ứng dụng phần mềm<sup>1</sup>. Xuống một tầng là kiến trúc gắn trực tiếp với mục đích của ứng dụng phần mềm. Tầng thấp hơn nữa là kiến trúc của các module và các kết nối giữa chúng. Đây là lãnh địa của mẫu thiết kế (design patterns)<sup>2</sup>, các gói, thành phần và lớp. Chương này sẽ tập trung vào tầng này.</p>
+      <p>Phạm vi của chúng ta trong chương này khá hạn chế. Còn rất nhiều điều cần nói về các nguyên tắc và mẫu được trình bày ở đây. Độc giả quan tâm có thể tham khảo [Martin99].</p>
+      <h3 class="section-title">Kiến trúc và Phụ thuộc</h3>
+      <p>Điều gì xảy ra với phần mềm? Thiết kế của nhiều ứng dụng phần mềm bắt đầu như một hình ảnh sống động trong tâm trí người thiết kế. Ở giai đoạn này nó sạch sẽ, thanh lịch và hấp dẫn. Nó có vẻ đẹp giản dị khiến người thiết kế và người triển khai nôn nao muốn thấy nó hoạt động. Một số ứng dụng này giữ được sự tinh khiết của thiết kế suốt quá trình phát triển ban đầu và đến bản phát hành đầu tiên.</p>
+      <p>Nhưng rồi điều gì đó bắt đầu xảy ra. Phần mềm bắt đầu thối rữa. Ban đầu chưa quá tệ. Một chỗ xấu xí ở đây, một chỗ vá víu vụng về ở kia, nhưng vẻ đẹp của thiết kế vẫn lộ ra. Tuy nhiên, theo thời gian khi quá trình thối rữa tiếp diễn, những vết loét và mụn nhọt xấu xí tích tụ cho đến khi chúng chiếm ưu thế trong thiết kế của ứng dụng. Chương trình trở thành một khối mã thối rữa mà các nhà phát triển ngày càng khó bảo trì. Cuối cùng</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Shaw96]</p>
+        <p><sup>2</sup> [GOF96]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0002" data-page="2">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">2</span>
+      </header>
+      <p class="lead">nỗ lực khổng lồ cần thiết để thực hiện ngay cả những thay đổi đơn giản nhất đối với ứng dụng trở nên quá cao đến mức các kỹ sư và quản lý tuyến đầu kêu gào đòi một dự án thiết kế lại. Những lần thiết kế lại như vậy hiếm khi thành công. Dù người thiết kế bắt đầu với ý định tốt, họ nhận ra rằng mình đang bắn vào một mục tiêu di chuyển. Hệ thống cũ tiếp tục phát triển và thay đổi, và thiết kế mới phải theo kịp. Những vết loét và mụn nhọt tích tụ trong thiết kế mới trước khi nó kịp ra bản phát hành đầu tiên. Vào ngày định mệnh đó, thường muộn hơn nhiều so với kế hoạch, đống vấn đề trong thiết kế mới có thể tồi tệ đến mức người thiết kế đã kêu gào đòi một lần thiết kế lại nữa.</p>
+      <h3 class="section-title">Triệu chứng của Thiết kế Thối rữa</h3>
+      <p>Có bốn triệu chứng chính cho biết thiết kế của chúng ta đang thối rữa. Chúng không trực giao, nhưng có liên quan đến nhau theo những cách sẽ trở nên rõ ràng. Đó là: cứng nhắc, mong manh, ít tái sử dụng được và nhớt.</p>
+      <p class="no-indent"><strong class="run-in">Cứng nhắc.</strong> Cứng nhắc là xu hướng phần mềm khó thay đổi, ngay cả theo những cách đơn giản. Mỗi thay đổi gây ra một chuỗi thay đổi tiếp theo trong các module phụ thuộc. Điều bắt đầu như một thay đổi đơn giản hai ngày ở một module phát triển thành cuộc chạy đua nhiều tuần qua từng module khi các kỹ sư đuổi theo mạch thay đổi xuyên suốt ứng dụng.</p>
+      <p>Khi phần mềm hoạt động như vậy, các quản lý sợ cho phép kỹ sư sửa các vấn đề không quan trọng. Sự do dự này xuất phát từ việc họ không biết, một cách đáng tin cậy, khi nào các kỹ sư sẽ hoàn thành. Nếu các quản lý thả các kỹ sư xử lý những vấn đề như vậy, họ có thể biến mất trong thời gian dài. Thiết kế phần mềm bắt đầu mang một số đặc điểm của khách sạn gián — kỹ sư check in, nhưng không check out.</p>
+      <p>Khi nỗi sợ của quản lý trở nên gay gắt đến mức họ từ chối cho phép thay đổi phần mềm, sự cứng nhắc chính thức được thiết lập. Vì vậy, điều bắt đầu như một thiếu sót thiết kế cuối cùng trở thành chính sách quản lý bất lợi.</p>
+      <p class="no-indent"><strong class="run-in">Mong manh.</strong> Gắn liền với cứng nhắc là mong manh. Mong manh là xu hướng phần mềm bị hỏng ở nhiều chỗ mỗi khi bị thay đổi. Thường thì lỗi xảy ra ở những vùng không có quan hệ khái niệm với vùng đã bị thay đổi. Những lỗi như vậy khiến lòng các quản lý đầy lo âu. Mỗi lần họ cho phép sửa, họ sợ phần mềm sẽ hỏng theo cách không ngờ tới.</p>
+      <p>Khi độ mong manh trở nên tồi tệ hơn, xác suất hỏng tăng theo thời gian, tiệm cận 1. Phần mềm như vậy không thể bảo trì. Mỗi lần sửa làm nó tệ hơn, tạo ra nhiều vấn đề hơn số vấn đề được giải quyết.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0003" data-page="3">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">3</span>
+      </header>
+      <p class="lead">Phần mềm như vậy khiến quản lý và khách hàng nghi ngờ rằng các nhà phát triển đã mất kiểm soát phần mềm của mình. Sự không tin chi phối, và uy tín bị mất.</p>
+      <p class="no-indent"><strong class="run-in">Ít tái sử dụng được.</strong> Ít tái sử dụng được là sự không thể tái sử dụng phần mềm từ các dự án khác hoặc từ các phần của cùng một dự án. Thường xảy ra một kỹ sư phát hiện cần một module tương tự module mà kỹ sư khác đã viết. Tuy nhiên, cũng thường xảy ra module đó mang theo quá nhiều hành lý mà nó phụ thuộc. Sau nhiều công sức, các kỹ sư nhận ra công việc và rủi ro cần thiết để tách phần mong muốn của phần mềm khỏi phần không mong muốn quá lớn để chấp nhận. Và vì vậy phần mềm được viết lại thay vì tái sử dụng.</p>
+      <p class="no-indent"><strong class="run-in">Nhớt.</strong> Nhớt có hai dạng: nhớt của thiết kế và nhớt của môi trường. Khi đối mặt với một thay đổi, kỹ sư thường tìm thấy nhiều hơn một cách để thực hiện thay đổi đó. Một số cách bảo toàn thiết kế, những cách khác thì không (tức là chúng là các chỗ vá víu). Khi các phương pháp bảo toàn thiết kế khó áp dụng hơn các chỗ vá víu, thì độ nhớt của thiết kế cao. Dễ làm sai, khó làm đúng.</p>
+      <p>Nhớt của môi trường xảy ra khi môi trường phát triển chậm và kém hiệu quả. Ví dụ, nếu thời gian biên dịch rất lâu, kỹ sư sẽ bị cám dỗ thực hiện các thay đổi không buộc biên dịch lại quy mô lớn, dù những thay đổi đó không tối ưu từ góc độ thiết kế. Nếu hệ thống kiểm soát mã nguồn mất hàng giờ để check in chỉ vài tệp, kỹ sư sẽ bị cám dỗ thực hiện các thay đổi cần ít lần check in nhất, bất kể thiết kế có được bảo toàn hay không.</p>
+      <p>Bốn triệu chứng này là dấu hiệu rõ ràng của kiến trúc kém. Bất kỳ ứng dụng nào thể hiện chúng đều đang chịu một thiết kế thối rữa từ bên trong. Nhưng điều gì gây ra quá trình thối rữa đó?</p>
+      <h3 class="section-title">Yêu cầu Thay đổi</h3>
+      <p>Nguyên nhân trực tiếp của sự suy thoái thiết kế đã được hiểu rõ. Yêu cầu đã thay đổi theo những cách mà thiết kế ban đầu không lường trước. Thường những thay đổi này cần được thực hiện nhanh chóng, và có thể do các kỹ sư không quen với triết lý thiết kế ban đầu thực hiện. Vì vậy, dù thay đổi đối với thiết kế hoạt động, nó bằng cách nào đó vi phạm thiết kế ban đầu. Từng chút một, khi các thay đổi tiếp tục đổ vào, những vi phạm này tích tụ cho đến khi tính ác tính xuất hiện.</p>
+      <p>Tuy nhiên, chúng ta không thể đổ lỗi cho sự trôi dạt của yêu cầu về sự suy thoái thiết kế. Là kỹ sư phần mềm, chúng ta biết rõ yêu cầu thay đổi. Thật vậy, hầu hết chúng ta nhận ra rằng tài liệu yêu cầu là tài liệu biến động nhất trong</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0004" data-page="4">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">4</span>
+      </header>
+      <p class="lead">dự án. Nếu thiết kế của chúng ta thất bại do cơn mưa yêu cầu thay đổi liên tục, thì chính thiết kế của chúng ta là lỗi. Chúng ta phải tìm cách nào đó để làm thiết kế có khả năng chống chịu trước những thay đổi như vậy và bảo vệ chúng khỏi thối rữa.</p>
+      <h3 class="section-title">Quản lý Phụ thuộc</h3>
+      <p>Loại thay đổi nào khiến thiết kế thối rữa? Những thay đổi đưa vào các phụ thuộc mới và không được lên kế hoạch trước. Mỗi trong bốn triệu chứng nêu trên đều trực tiếp hoặc gián tiếp do các phụ thuộc không đúng giữa các module của phần mềm. Chính kiến trúc phụ thuộc đang suy thoái, và cùng với đó là khả năng bảo trì phần mềm.</p>
+      <p>Để ngăn sự suy thoái của kiến trúc phụ thuộc, các phụ thuộc giữa các module trong một ứng dụng phải được quản lý. Việc quản lý này bao gồm việc tạo các tường lửa phụ thuộc. Qua những tường lửa như vậy, phụ thuộc không lan truyền.</p>
+      <p>Thiết kế Hướng đối tượng có đầy đủ nguyên tắc và kỹ thuật để xây dựng các tường lửa như vậy, và để quản lý phụ thuộc giữa các module. Chính những nguyên tắc và kỹ thuật này sẽ được thảo luận trong phần còn lại của chương. Trước tiên chúng ta sẽ xem xét các nguyên tắc, sau đó là các kỹ thuật, hay mẫu thiết kế, giúp duy trì kiến trúc phụ thuộc của một ứng dụng.</p>
+      <h3 class="section-title">Nguyên tắc Thiết kế Lớp Hướng đối tượng</h3>
+      <h3 class="section-title">Nguyên tắc Đóng/Mở (OCP)<sup>1</sup></h3>
+      <p class="no-indent">Một module phải mở để mở rộng nhưng đóng để sửa đổi.</p>
+      <p>Trong tất cả các nguyên tắc thiết kế hướng đối tượng, đây là nguyên tắc quan trọng nhất. Nó xuất phát từ công trình của Bertrand Meyer<sup>2</sup>. Nó có nghĩa đơn giản như sau: Chúng ta nên viết các module sao cho có thể mở rộng mà không cần sửa đổi chúng. Nói cách khác, chúng ta muốn thay đổi những gì các module làm mà không thay đổi mã nguồn của các module đó.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [OCP97]</p>
+        <p><sup>2</sup> [OOSC98]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0005" data-page="5">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">5</span>
+      </header>
+      <p class="lead">Điều này có thể nghe mâu thuẫn, nhưng có nhiều kỹ thuật để đạt OCP ở quy mô lớn. Tất cả các kỹ thuật này đều dựa trên trừu tượng hóa. Thật vậy, trừu tượng hóa là chìa khóa của OCP. Một số kỹ thuật này được mô tả dưới đây.</p>
+      <p class="no-indent"><strong class="run-in">Đa hình Động.</strong> Xem Đoạn mã 2-1. Hàm LogOn phải được thay đổi mỗi khi một loại modem mới được thêm vào phần mềm. Tệ hơn, vì mỗi loại modem khác nhau phụ thuộc vào kiểu liệt kê Modem::Type, mỗi modem phải được biên dịch lại mỗi khi một loại modem mới được thêm vào.</p>
+      <figure class="listing"><figcaption><strong>Đoạn mã 2-1</strong><br>LogOn phải được sửa đổi để có thể mở rộng.</figcaption><pre class="code-block"><code>struct Modem
+{
+enum Type {hayes, courrier, ernie) type;
+};
+struct Hayes
+{
+Modem::Type type;
+// Hayes related stuff
+};
+struct Courrier
+{
+Modem::Type type;
+// Courrier related stuff
+};
+struct Ernie
+{
+Modem::Type type;
+// Ernie related stuff
+};
+void LogOn(Modem&amp; m,
+string&amp; pno, string&amp; user, string&amp; pw)
+{
+if (m.type == Modem::hayes)
+DialHayes((Hayes&amp;)m, pno);
+else if (m.type == Modem::courrier)
+DialCourrier((Courrier&amp;)m, pno);
+else if (m.type == Modem::ernie)
+DialErnie((Ernie&amp;)m, pno)
+// ...you get the idea
+}</code></pre>
+      </figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0006" data-page="6">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">6</span>
+      </header>
+      <p class="lead">Tất nhiên đây không phải đặc tính tồi tệ nhất của kiểu thiết kế này. Các chương trình được thiết kế theo cách này thường rải rác các câu lệnh if/else hoặc switch tương tự. Mỗi khi cần làm gì đó với modem, một chuỗi switch hoặc if/else sẽ cần chọn các hàm thích hợp để dùng. Khi modem mới được thêm vào, hoặc chính sách modem thay đổi, mã phải được quét tìm tất cả các câu lệnh lựa chọn này, và mỗi cái phải được sửa đổi cho phù hợp.</p>
+      <p>Tệ hơn, lập trình viên có thể dùng các tối ưu cục bộ che giấu cấu trúc của các câu lệnh lựa chọn. Ví dụ, có thể hàm hoàn toàn giống nhau đối với modem Hayes và Courrier. Vì vậy chúng ta có thể thấy mã như sau:</p>
+      <pre class="code-block"><code>if (modem.type == Modem::ernie)
+SendErnie((Ernie&amp;)modem, c);
+else
+SendHayes((Hayes&amp;)modem, c);</code></pre>
+      <p>Rõ ràng, các cấu trúc như vậy khiến hệ thống khó bảo trì hơn nhiều, và rất dễ mắc lỗi.</p>
+      <p>Làm ví dụ về OCP, xem Hình 2-13. Ở đây hàm LogOn chỉ phụ thuộc vào giao diện Modem. Các modem bổ sung sẽ không khiến hàm LogOn thay đổi. Vì vậy, chúng ta đã tạo một module có thể mở rộng với modem mới mà không cần sửa đổi. Xem Đoạn mã 2-2.</p>
+      <figure class="diagram">
+        <img src="assets/images/page_0006_fig_2_13.png" width="1546" height="509" alt="Hình 2-13">
+  <figcaption>Hình 2-13</figcaption>
+</figure>
+      <figure class="listing"><figcaption><strong>Đoạn mã 2-2</strong><br>LogOn đã được đóng để sửa đổi</figcaption><pre class="code-block"><code>class Modem
+{
+public:
++ Dial(pno)
++ Send(char)
++ Recv() : char
++ Hangup()
+};</code></pre>
+      </figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0007" data-page="7">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">7</span>
+      </header>
+      <p class="no-indent"><strong class="run-in">Đa hình Tĩnh.</strong> Một kỹ thuật khác để tuân thủ OCP là dùng template hoặc generic. Đoạn mã 2-3 cho thấy cách thực hiện. Hàm LogOn có thể được mở rộng với nhiều loại modem khác nhau mà không cần sửa đổi.</p>
+      <p class="no-indent"><strong class="run-in">Mục tiêu Kiến trúc của OCP.</strong> Bằng cách dùng các kỹ thuật này để tuân thủ OCP, chúng ta có thể tạo các module có thể mở rộng mà không bị thay đổi. Điều này có nghĩa là, với chút suy nghĩ trước, chúng ta có thể thêm tính năng mới vào mã hiện có mà không thay đổi mã hiện có và chỉ bằng cách thêm mã mới. Đây là lý tưởng khó đạt được, nhưng bạn sẽ thấy nó được đạt được nhiều lần trong các nghiên cứu tình huống ở phần sau của cuốn sách.</p>
+      <p>Dù OCP không thể đạt được hoàn toàn, ngay cả việc tuân thủ OCP một phần cũng có thể cải thiện đáng kể cấu trúc của một ứng dụng. Luôn tốt hơn nếu các thay đổi không lan truyền vào mã hiện có đã hoạt động. Nếu bạn không phải thay đổi mã đang hoạt động, bạn khó có thể làm hỏng nó.</p>
+      <pre class="code-block"><code>virtual void Dial(const string&amp; pno) = 0;
+virtual void Send(char) = 0;
+virtual char Recv() = 0;
+virtual void Hangup() = 0;
+};
+void LogOn(Modem&amp; m,
+string&amp; pno, string&amp; user, string&amp; pw)
+{
+m.Dial(pno);
+// you get the idea.
+}</code></pre>
+      <figure class="listing"><figcaption><strong>Đoạn mã 2-3</strong><br>LogOn được đóng để sửa đổi thông qua đa hình tĩnh</figcaption><pre class="code-block"><code>template &lt;typename MODEM&gt;
+void LogOn(MODEM&amp; m,
+string&amp; pno, string&amp; user, string&amp; pw)
+{
+m.Dial(pno);
+// you get the idea.
+}</code></pre>
+      </figure>
+      <figure class="diagram">
+        <figcaption>Đoạn mã 2-2<br>LogOn đã được đóng để sửa đổi</figcaption>
+      </figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0008" data-page="8">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">8</span>
+      </header>
+      <h3 class="section-title">Nguyên tắc Thay thế Liskov (LSP)<sup>1</sup></h3>
+      <p class="no-indent principle-statement">Lớp con phải có thể thay thế được cho lớp cơ sở của chúng.</p>
+      <p>Nguyên tắc này được Barbara Liskov<sup>2</sup> đặt ra trong công trình về trừu tượng hóa dữ liệu và lý thuyết kiểu. Nó cũng xuất phát từ khái niệm Thiết kế theo Hợp đồng (DBC) của Bertrand Meyer<sup>3</sup>.</p>
+      <p>Khái niệm, như đã nêu ở trên, được minh họa trong Hình 2-14. Các lớp dẫn xuất phải có thể thay thế được cho lớp cơ sở của chúng. Nghĩa là, người dùng một lớp cơ sở phải tiếp tục hoạt động đúng nếu một lớp dẫn xuất của lớp cơ sở đó được truyền vào.</p>
+      <figure class="diagram">
+        <img src="assets/images/page_0008_fig_2_14.png" width="1546" height="389" alt="Hình 2-14">
+        <figcaption><strong>Hình 2-14</strong><br>Sơ đồ LSP.</figcaption>
+      </figure>
+      <p>Nói cách khác, nếu một hàm <code>User</code> nhận đối số kiểu <code>Base</code>, thì như thể hiện trong Đoạn mã 2-4, việc truyền vào một thể hiện của <code>Derived</code> cho hàm đó phải hợp lệ.</p>
+      <figure class="listing">
+        <figcaption><strong>Đoạn mã 2-4</strong><br>Ví dụ User, Base, Derived.</figcaption>
+        <pre class="code-block"><code>void User(Base&amp; b);
+
+Derived d;
+User(d);</code></pre>
+      </figure>
+      <p>Điều này có thể có vẻ hiển nhiên, nhưng có những tinh tế cần xem xét. Ví dụ kinh điển là tình huống Circle/Ellipse.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [LSP97]</p>
+        <p><sup>2</sup> [Liksov88]</p>
+        <p><sup>3</sup> [OOSC98]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0009" data-page="9">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">9</span>
+      </header>
+      <p class="no-indent"><strong class="run-in">Tình huống Circle/Ellipse.</strong> Hầu hết chúng ta học ở toán trung học rằng hình tròn chỉ là dạng suy biến của hình elip. Mọi hình tròn đều là elip với hai tiêu điểm trùng nhau. Quan hệ is-a này cám dỗ chúng ta mô hình hóa hình tròn và hình elip bằng kế thừa như thể hiện trong Hình 2-15.</p>
+      <p>Dù điều này thỏa mãn mô hình khái niệm của chúng ta, có những khó khăn nhất định. Xem kỹ hơn khai báo của Ellipse trong Hình 2-16 bắt đầu bộc lộ chúng. Lưu ý Ellipse có ba phần tử dữ liệu. Hai phần tử đầu là các tiêu điểm, và phần tử cuối là độ dài trục lớn. Nếu Circle kế thừa từ Ellipse, nó sẽ kế thừa các biến dữ liệu này. Điều này đáng tiếc vì Circle thực sự chỉ cần hai phần tử dữ liệu: một điểm tâm và một bán kính.</p>
+      <figure class="diagram">
+  <img src="assets/images/page_0009_fig_2_15.png" width="1546" height="389" alt="Hình 2-15">
+  <figcaption>Hình 2-15<br>Tình huống Circle / Ellipse</figcaption>
+</figure>
+      <figure class="diagram">
+  <img src="assets/images/page_0009_fig_2_16.png" width="1546" height="500" alt="Hình 2-16">
+  <figcaption>Hình 2-16<br>Khai báo Ellipse</figcaption>
+</figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0010" data-page="10">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">10</span>
+      </header>
+
+      <p class="lead no-indent">Dù vậy, nếu bỏ qua chi phí không gian nhỏ, ta có thể khiến Circle hoạt động đúng bằng cách ghi đè phương thức SetFoci để đảm bảo cả hai tiêu điểm luôn có cùng giá trị. Xem Đoạn mã 2-5. Như vậy, bất kỳ tiêu điểm nào cũng đóng vai trò tâm của hình tròn, và trục lớn sẽ là đường kính của nó.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Đoạn mã 2-5</strong><br>Giữ hai tiêu điểm của Circle trùng nhau.</figcaption>
+        <pre class="code-block"><code>void Circle::SetFoci(const Point&amp; a, const Point&amp; b)
+{
+  itsFocusA = a;
+  itsFocusB = a;
+}</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong class="run-in">Client phá hỏng mọi thứ.</strong> Chắc chắn mô hình ta đã tạo là tự nhất quán. Một thể hiện của Circle sẽ tuân thủ mọi quy tắc của hình tròn. Không có gì bạn có thể làm với nó để khiến nó vi phạm những quy tắc đó. Ellipse cũng vậy. Hai lớp tạo thành một mô hình nhất quán đẹp đẽ, dù Circle có một phần tử dữ liệu thừa.</p>
+      <p>Tuy nhiên, Circle và Ellipse không sống một mình trong vũ trụ. Chúng cùng chung sống với nhiều thực thể khác, và cung cấp giao diện công khai của mình cho những thực thể đó. Những giao diện đó ngụ ý một hợp đồng. Hợp đồng có thể không được nêu rõ ràng, nhưng nó vẫn tồn tại. Ví dụ, người dùng Ellipse có quyền mong đợi đoạn mã sau thành công:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>void f(Ellipse&amp; e)
+{
+  Point a(-1,0);
+  Point b(1,0);
+  e.SetFoci(a,b);
+  e.SetMajorAxis(3);
+  assert(e.GetFocusA() == a);
+  assert(e.GetFocusB() == b);
+  assert(e.GetMajorAxis() == 3);
+}</code></pre>
+      </figure>
+
+      <p>Trong trường hợp này hàm mong đợi làm việc với một Ellipse. Do đó, nó mong đợi có thể đặt tiêu điểm và trục lớn, rồi xác minh chúng đã được đặt đúng. Nếu ta truyền một thể hiện Ellipse vào hàm này, nó sẽ hoạt động tốt. Tuy nhiên, nếu ta truyền một thể hiện Circle vào hàm, nó sẽ thất bại khá tệ.</p>
+      <p>Nếu ta làm hợp đồng của Ellipse rõ ràng, ta sẽ thấy một hậu điều kiện trên SetFoci đảm bảo các giá trị đầu vào được sao chép vào biến thành viên, và biến trục lớn không bị thay đổi. Rõ ràng Circle vi phạm đảm bảo này vì nó bỏ qua biến đầu vào thứ hai của SetFoci.</p>
+      <p class="no-indent"><strong class="run-in">Thiết kế theo Hợp đồng.</strong> Phát biểu lại LSP, ta có thể nói rằng, để có thể thay thế được, hợp đồng của lớp cơ sở phải được lớp dẫn xuất tôn trọng. Vì</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0011" data-page="11">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">11</span>
+      </header>
+      <p class="lead">Circle không tôn trọng hợp đồng ngầm định của Ellipse, do đó nó không thay thế được và vi phạm LSP.</p>
+      <p>Làm hợp đồng rõ ràng là hướng nghiên cứu mà Bertrand Meyer theo đuổi. Ông đã phát minh ngôn ngữ tên Eiffel, trong đó hợp đồng được nêu rõ ràng cho từng phương thức, và được kiểm tra rõ ràng ở mỗi lần gọi. Những ai không dùng Eiffel phải chấp nhận dùng assertion và comment đơn giản.</p>
+      <p>Để phát biểu hợp đồng của một phương thức, ta khai báo điều gì phải đúng trước khi phương thức được gọi. Đây gọi là tiền điều kiện. Nếu tiền điều kiện thất bại, kết quả của phương thức là không xác định, và phương thức không nên được gọi. Ta cũng khai báo điều gì phương thức đảm bảo sẽ đúng sau khi hoàn thành. Đây gọi là hậu điều kiện. Một phương thức thất bại hậu điều kiện thì không nên trả về.</p>
+      <p>Phát biểu lại LSP một lần nữa, lần này theo thuật ngữ hợp đồng, một lớp dẫn xuất có thể thay thế lớp cơ sở nếu:</p>
+      <ol class="numbered">
+        <li>Tiền điều kiện của nó không mạnh hơn phương thức lớp cơ sở.</li>
+        <li>Hậu điều kiện của nó không yếu hơn phương thức lớp cơ sở.</li>
+      </ol>
+      <p>Nói cách khác, phương thức dẫn xuất không nên mong đợi nhiều hơn và không nên cung cấp ít hơn.</p>
+      <p class="no-indent"><strong class="run-in">Hệ quả của vi phạm LSP.</strong> Thật không may, vi phạm LSP khó phát hiện cho đến khi quá muộn. Trong trường hợp Circle/Ellipse, mọi thứ hoạt động tốt cho đến khi một client xuất hiện và phát hiện hợp đồng ngầm định đã bị vi phạm.</p>
+      <p>Nếu thiết kế được dùng rộng rãi, chi phí sửa vi phạm LSP có thể quá lớn để gánh nổi. Có thể không kinh tế khi quay lại thay đổi thiết kế, rồi build lại và kiểm thử lại toàn bộ client hiện có. Do đó giải pháp có thể là thêm câu lệnh if/else vào client đã phát hiện vi phạm. Câu lệnh if/else này kiểm tra chắc chắn Ellipse thực sự là Ellipse chứ không phải Circle. Xem Đoạn mã 2-6.</p>
+      <figure class="listing"><figcaption><strong>Đoạn mã 2-6</strong><br>Cách sửa xấu xí cho vi phạm LSP</figcaption><pre class="code-block"><code>void f(Ellipse&amp; e)
+{
+  if (typeid(e) == typeid(Ellipse))
+  {
+    Point a(-1,0);
+    Point b(1,0);
+    e.SetFoci(a,b);
+    e.SetMajorAxis(3);
+    assert(e.GetFocusA() == a);
+    assert(e.GetFocusB() == b);</code></pre>
+      </figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0012" data-page="12">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">12</span>
+      </header>
+      <p class="lead">Xem xét kỹ Đoạn mã 2-6 sẽ cho thấy đó là vi phạm OCP. Giờ đây, mỗi khi một lớp dẫn xuất mới của Ellipse được tạo, hàm này phải được kiểm tra xem có nên cho phép nó hoạt động trên lớp đó không. Do đó, vi phạm LSP là vi phạm OCP tiềm ẩn.</p>
+      <h3 class="section-title">Nguyên tắc Đảo ngược Phụ thuộc (DIP)<sup>1</sup></h3>
+      <p class="no-indent">Phụ thuộc vào trừu tượng. Không phụ thuộc vào cụ thể.</p>
+      <p>Nếu OCP nêu mục tiêu của kiến trúc hướng đối tượng, thì DIP nêu cơ chế chính. Đảo ngược phụ thuộc là chiến lược phụ thuộc vào giao diện hoặc hàm và lớp trừu tượng, thay vì phụ thuộc vào hàm và lớp cụ thể. Nguyên tắc này là lực kích hoạt đằng sau thiết kế component, COM, CORBA, EJB, v.v.</p>
+      <p>Thiết kế thủ tục thể hiện một loại cấu trúc phụ thuộc đặc biệt. Như Hình 2-17 cho thấy, cấu trúc này bắt đầu từ trên và hướng xuống các chi tiết. Các module cấp cao phụ thuộc vào module cấp thấp hơn, vốn lại phụ thuộc vào các module cấp thấp hơn nữa, v.v.</p>
+      <p>Suy nghĩ một chút sẽ cho thấy cấu trúc phụ thuộc này vốn dĩ yếu. Các module cấp cao xử lý các chính sách cấp cao của ứng dụng. Những chính sách này thường ít quan tâm đến các chi tiết triển khai chúng. Vậy tại sao các module cấp cao này lại phải trực tiếp phụ thuộc vào các module triển khai đó?</p>
+      <p>Kiến trúc hướng đối tượng cho thấy cấu trúc phụ thuộc rất khác, trong đó phần lớn các phụ thuộc hướng về trừu tượng. Hơn nữa, các module chứa triển khai chi tiết không còn bị phụ thuộc vào, mà chính chúng phụ thuộc vào trừu tượng. Do đó phụ thuộc vào chúng đã bị đảo ngược. Xem Hình 2-18.</p>
+      <p class="no-indent"><strong class="run-in">Phụ thuộc vào trừu tượng.</strong> Hàm ý của nguyên tắc này khá đơn giản. Mọi phụ thuộc trong thiết kế nên nhắm vào giao diện hoặc lớp trừu tượng. Không phụ thuộc nào nên nhắm vào lớp cụ thể.</p>
+      <figure class="listing"><figcaption><strong>Đoạn mã 2-6</strong><br>Cách sửa xấu xí cho vi phạm LSP</figcaption><pre class="code-block"><code>    assert(e.GetMajorAxis() == 3);
+  }
+  else
+    throw NotAnEllipse(e);
+}</code></pre>
+      </figure>
+      <div class="footnotes">
+        <p><sup>1</sup> [DIP97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0013" data-page="13">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">13</span>
+      </header>
+      <p class="lead">Rõ ràng hạn chế như vậy là khắt khe, và có những hoàn cảnh giảm nhẹ mà ta sẽ khám phá ngay sau đây. Nhưng, trong phạm vi khả thi nhất, nguyên tắc nên được tuân theo. Lý do rất đơn giản: thứ cụ thể thay đổi nhiều, thứ trừu tượng thay đổi ít hơn nhiều. Hơn nữa, trừu tượng là các “điểm bản lề”, chúng đại diện những chỗ thiết kế có thể uốn cong hoặc mở rộng mà bản thân chúng không cần sửa đổi (OCP).</p>
+      <figure class="diagram">
+  <img src="assets/images/page_0013_fig_2_17.png" width="1546" height="570" alt="Hình 2-17">
+  <figcaption>Hình 2-17<br>Cấu trúc phụ thuộc của kiến trúc thủ tục</figcaption>
+</figure>
+      <figure class="diagram">
+  <img src="assets/images/page_0013_fig_2_18.png" width="1546" height="570" alt="Hình 2-18">
+  <figcaption>Hình 2-18<br>Cấu trúc phụ thuộc của kiến trúc hướng đối tượng</figcaption>
+</figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0014" data-page="14">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">14</span>
+      </header>
+      <p class="lead">Các nền tảng như COM thực thi nguyên tắc này, ít nhất giữa các component. Phần duy nhất nhìn thấy được của component COM là giao diện trừu tượng của nó. Do đó, trong COM, gần như không thể trốn khỏi DIP.</p>
+      <p class="no-indent"><strong class="run-in">Các lực giảm nhẹ.</strong> Một động lực đằng sau DIP là ngăn bạn phụ thuộc vào các module dễ biến động. DIP giả định mọi thứ cụ thể đều dễ biến động. Dù điều này thường đúng, đặc biệt ở giai đoạn phát triển sớm, vẫn có ngoại lệ. Ví dụ, thư viện C chuẩn <code>string.h</code> rất cụ thể nhưng không hề dễ biến động. Phụ thuộc vào nó trong môi trường chuỗi ANSI không gây hại. Tương tự, nếu bạn có các module đã được kiểm chứng, cụ thể nhưng không dễ biến động, phụ thuộc vào chúng cũng không quá tệ. Vì chúng khó thay đổi, chúng khó gây biến động vào thiết kế của bạn.</p>
+      <p>Tuy nhiên hãy cẩn thận. Phụ thuộc vào <code>string.h</code> có thể trở nên rất tệ khi yêu cầu dự án buộc bạn chuyển sang ký tự UNICODE. Không dễ biến động không thay thế được khả năng thay thế của giao diện trừu tượng.</p>
+      <p class="no-indent"><strong class="run-in">Tạo đối tượng.</strong> Một trong những chỗ phổ biến nhất mà thiết kế phụ thuộc vào lớp cụ thể là khi thiết kế đó tạo thể hiện. Theo định nghĩa, bạn không thể tạo thể hiện của lớp trừu tượng. Do đó, để tạo thể hiện, bạn phải phụ thuộc vào lớp cụ thể.</p>
+      <p>Việc tạo thể hiện có thể xảy ra khắp kiến trúc của thiết kế. Do đó, có vẻ như không thoát được và toàn bộ kiến trúc sẽ rải rác phụ thuộc vào lớp cụ thể. Tuy nhiên, có một giải pháp thanh lịch cho vấn đề này tên ABSTRACTFACTORY<sup>1</sup> — một mẫu thiết kế mà ta sẽ xem xét kỹ hơn về cuối chương này.</p>
+      <h3 class="section-title">Nguyên tắc Tách giao diện (ISP)<sup>2</sup></h3>
+      <p class="no-indent">Nhiều giao diện riêng cho từng client hơn là một giao diện đa dụng</p>
+      <p>ISP là một trong những công nghệ kích hoạt hỗ trợ nền tảng component như COM. Không có nó, component và lớp sẽ kém hữu ích và khó di chuyển hơn nhiều.</p>
+      <p>Bản chất nguyên tắc khá đơn giản. Nếu bạn có lớp với nhiều client, thay vì nhồi lớp với mọi phương thức mà các client cần, hãy tạo giao diện riêng cho từng client và kế thừa đa tầng chúng vào lớp.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [GOF96] p??</p>
+        <p><sup>2</sup> [ISP97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0015" data-page="15">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">15</span>
+      </header>
+      <p class="lead">Hình 2-19 cho thấy một lớp với nhiều client, và một giao diện lớn phục vụ tất cả. Lưu ý rằng mỗi khi thay đổi một trong các phương thức mà ClientA gọi, ClientB và ClientC có thể bị ảnh hưởng. Có thể phải biên dịch lại và triển khai lại chúng. Điều này đáng tiếc.</p>
+      <p>Một kỹ thuật tốt hơn được minh họa ở Hình 2-20. Các phương thức mà mỗi client cần được đặt trong giao diện riêng dành cho client đó. Những giao diện đó được kế thừa đa tầng bởi lớp Service, và được triển khai tại đó.</p>
+      <p>Nếu giao diện cho ClientA cần thay đổi, ClientB và ClientC sẽ không bị ảnh hưởng. Chúng sẽ không phải biên dịch lại hay triển khai lại.</p>
+      <figure class="diagram">
+  <img src="assets/images/page_0015_fig_2_19.png" width="1546" height="489" alt="Hình 2-19">
+  <figcaption>Hình 2-19<br>Service phình to với giao diện tích hợp</figcaption>
+</figure>
+      <h3 class="section-title">Client Specific nghĩa là gì?</h3>
+      <p>ISP không khuyên mọi lớp dùng dịch vụ đều có lớp giao diện riêng mà dịch vụ phải kế thừa. Nếu vậy, dịch vụ sẽ phụ thuộc vào từng client theo cách kỳ quái và không lành mạnh. Thay vào đó, client nên được phân loại theo kiểu, và giao diện cho từng kiểu client nên được tạo.</p>
+      <p>Nếu hai hoặc nhiều kiểu client khác nhau cần cùng phương thức, phương thức đó nên được thêm vào cả hai giao diện của chúng. Điều này không gây hại hay gây nhầm lẫn cho client.</p>
+      <p class="no-indent"><strong class="run-in">Thay đổi giao diện.</strong> Khi ứng dụng hướng đối tượng được bảo trì, giao diện tới các lớp và component hiện có thường thay đổi. Có lúc những thay đổi này tác động rất lớn và buộc biên dịch lại và triển khai lại phần lớn thiết kế. Tác động này có thể giảm nhẹ bằng cách thêm giao diện mới vào đối tượng hiện có, thay vì thay đổi giao diện hiện tại. Client của giao diện cũ</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0016" data-page="16">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">16</span>
+      </header>
+      <p class="lead">muốn truy cập phương thức của giao diện mới có thể truy vấn đối tượng để lấy giao diện đó, như minh họa trong đoạn mã sau.</p>
+      <figure class="code-snippet"><pre class="code-block"><code>void Client(Service* s)
+{
+  if (NewService* ns = dynamic_cast&lt;NewService*&gt;(s))
+  {
+    // use the new service interface
+  }
+}</code></pre>
+      </figure>
+      <p>Như mọi nguyên tắc, cần cẩn thận không làm quá. Hình ảnh một lớp với hàng trăm giao diện khác nhau, một số tách theo client và số khác tách theo phiên bản, thật đáng sợ.</p>
+      <h3 class="section-title">Các nguyên tắc kiến trúc package</h3>
+      <p>Lớp là phương tiện cần thiết nhưng chưa đủ để tổ chức thiết kế. Cần độ chi tiết lớn hơn của package để giúp tạo trật tự. Nhưng làm sao chọn lớp nào thuộc package nào. Dưới đây là ba nguyên tắc gọi là các Nguyên tắc Gắn kết Package, nhằm hỗ trợ kiến trúc sư phần mềm.</p>
+      <figure class="diagram">
+  <img src="assets/images/page_0016_fig_2_20.png" width="1546" height="630" alt="Hình 2-20">
+  <figcaption>Hình 2-20<br>Giao diện được tách riêng</figcaption>
+</figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0017" data-page="17">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">17</span>
+      </header>
+      <h3 class="section-title">Nguyên tắc Tương đương Phát hành–Tái sử dụng (REP)<sup>1</sup></h3>
+      <p class="no-indent">Đơn vị tái sử dụng chính là đơn vị phát hành.</p>
+      <p>Một phần tử có thể tái sử dụng, dù là component, lớp hay cụm lớp, không thể được tái sử dụng trừ khi được quản lý bởi hệ thống phát hành nào đó. Người dùng sẽ không muốn dùng phần tử nếu bị buộc nâng cấp mỗi khi tác giả thay đổi nó. Do đó, dù tác giả đã phát hành phiên bản mới của phần tử tái sử dụng, ông phải sẵn sàng hỗ trợ và duy trì phiên bản cũ trong khi khách hàng tiến hành chậm rãi việc chuẩn bị nâng cấp. Do đó, client sẽ từ chối tái sử dụng phần tử trừ khi tác giả cam kết theo dõi số phiên bản và duy trì phiên bản cũ một thời gian.</p>
+      <p>Do đó, một tiêu chí để gom lớp vào package là tái sử dụng. Vì package là đơn vị phát hành, chúng cũng là đơn vị tái sử dụng. Do đó kiến trúc sư nên gom các lớp có thể tái sử dụng vào cùng package.</p>
+      <h3 class="section-title">Nguyên tắc Đóng chung (CCP)<sup>2</sup></h3>
+      <p class="no-indent">Các lớp thay đổi cùng nhau thì nên ở cùng nhau.</p>
+      <p>Một dự án phát triển lớn được chia thành mạng lưới package liên quan lớn. Công việc quản lý, kiểm thử và phát hành các package đó không đơn giản. Càng nhiều package thay đổi trong một lần phát hành, công việc build lại, kiểm thử và triển khai càng lớn. Do đó ta muốn giảm thiểu số package thay đổi trong mỗi chu kỳ phát hành sản phẩm.</p>
+      <p>Để đạt được điều này, ta gom các lớp mà ta nghĩ sẽ thay đổi cùng nhau. Điều này đòi hỏi một mức tiên đoán vì ta phải dự đoán các loại thay đổi có thể xảy ra. Dù vậy, khi ta gom các lớp thay đổi cùng nhau vào cùng package, tác động package từ lần phát hành này sang lần khác sẽ được giảm thiểu.</p>
+      <h3 class="section-title">Nguyên tắc Tái sử dụng chung (CRP)<sup>3</sup></h3>
+      <p class="no-indent">Các lớp không được tái sử dụng cùng nhau thì không nên gom chung.</p>
+      <p>Phụ thuộc vào package là phụ thuộc vào mọi thứ bên trong package. Khi package thay đổi và số phát hành của nó được tăng, mọi client của package đó</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Granularity97]</p>
+        <p><sup>2</sup> [Granularity97]</p>
+        <p><sup>3</sup> [Granularity97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0018" data-page="18">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">18</span>
+      </header>
+
+      <p class="no-indent">Tất cả các client của package đó phải xác minh rằng chúng hoạt động với package mới — ngay cả khi không có gì mà họ đã dùng trong package thực sự thay đổi.</p>
+      <p>Chúng ta thường gặp điều này khi nhà cung cấp hệ điều hành phát hành hệ điều hành mới. Chúng ta phải nâng cấp sớm hay muộn, vì nhà cung cấp sẽ không hỗ trợ phiên bản cũ mãi mãi. Vì vậy, dù không có gì liên quan đến chúng ta thay đổi trong bản phát hành mới, chúng ta vẫn phải trải qua công sức nâng cấp và xác thực lại.</p>
+      <p>Điều tương tự có thể xảy ra với các package nếu các class không được dùng cùng nhau lại được nhóm chung. Thay đổi ở một class mà tôi không quan tâm vẫn buộc phải phát hành package mới, và vẫn khiến tôi phải trải qua công sức nâng cấp và xác thực lại.</p>
+      <h3 class="section-title">Căng thẳng giữa các Nguyên tắc Gắn kết Package</h3>
+      <p>Ba nguyên tắc này loại trừ lẫn nhau. Chúng không thể được thỏa mãn đồng thời. Đó là vì mỗi nguyên tắc mang lại lợi ích cho một nhóm người khác nhau. REP và CRP giúp cuộc sống của người tái sử dụng dễ dàng hơn, trong khi CCP giúp cuộc sống của người bảo trì dễ dàng hơn. CCP cố gắng làm các package càng lớn càng tốt (sau tất cả, nếu tất cả các class nằm trong chỉ một package, thì chỉ một package duy nhất sẽ thay đổi). Tuy nhiên, CRP lại cố gắng làm các package rất nhỏ.</p>
+      <p>May mắn là, các package không phải là cố định vĩnh viễn. Thực tế, bản chất của package là dịch chuyển và rung lắc trong suốt quá trình phát triển. Đầu dự án, các kiến trúc sư có thể thiết lập cấu trúc package sao cho CCP chi phối và hỗ trợ phát triển cũng như bảo trì. Sau đó, khi kiến trúc ổn định, các kiến trúc sư có thể tái cấu trúc cấu trúc package để tối đa hóa REP và CRP cho những người tái sử dụng bên ngoài.</p>
+      <p class="no-indent"><strong class="run-in">Các Nguyên tắc Ghép nối Package.</strong> Ba nguyên tắc tiếp theo chi phối quan hệ giữa các package. Các ứng dụng có xu hướng là mạng lớn gồm các package liên quan với nhau. Các quy tắc chi phối các quan hệ này là một trong những quy tắc quan trọng nhất trong kiến trúc hướng đối tượng.</p>
+      <h3 class="section-title">Nguyên tắc Phụ thuộc Không có Chu trình (ADP)<sup>1</sup></h3>
+      <p class="principle-statement">Các phụ thuộc giữa các package không được tạo thành chu trình.</p>
+      <p>Vì package là đơn vị phát hành, chúng cũng có xu hướng tập trung nhân lực. Các kỹ sư thường làm việc trong một package duy nhất thay vì làm việc trên hàng chục package. Xu hướng này được khuếch đại bởi các nguyên tắc gắn kết package, vì chúng có xu hướng nhóm</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Granularity97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0019" data-page="19">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">19</span>
+      </header>
+
+      <p class="no-indent">các class có liên quan với nhau. Do đó, các kỹ sư sẽ thấy rằng các thay đổi của họ được hướng vào chỉ vài package. Khi những thay đổi đó hoàn tất, họ có thể phát hành các package đó cho phần còn lại của dự án.</p>
+      <p>Tuy nhiên, trước khi phát hành, họ phải kiểm tra rằng package hoạt động. Để làm điều đó, họ phải biên dịch và build nó cùng với tất cả các package mà nó phụ thuộc. May mắn là số lượng này nhỏ.</p>
+      <p>Hãy xem Hình 2-21. Độc giả tinh ý sẽ nhận ra có nhiều khiếm khuyết trong kiến trúc. DIP dường như đã bị bỏ rơi, và cùng với đó là OCP. GUI phụ thuộc trực tiếp vào package truyền thông, và dường như chịu trách nhiệm vận chuyển dữ liệu đến package phân tích. Thật tệ.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0019_fig.png" width="789" height="588" alt="Hình 2-21 Mạng Package không có Chu trình">
+  <figcaption><strong>Hình 2-21</strong><br>Mạng Package không có Chu trình</figcaption>
+</figure>
+      <p>Dù vậy, hãy dùng cấu trúc khá xấu xí này cho vài ví dụ. Hãy xem cần gì để phát hành package Protocol. Các kỹ sư sẽ phải build nó với bản phát hành mới nhất của package CommError, và chạy các bài kiểm tra. Protocol không có phụ thuộc nào khác, nên không cần package nào khác. Điều này tốt. Chúng ta có thể kiểm tra và phát hành với lượng công việc tối thiểu.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0020" data-page="20">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">20</span>
+      </header>
+
+      <p class="no-indent"><strong>Một Chu trình Lẩn vào.</strong>&emsp;Nhưng giờ giả sử tôi là kỹ sư đang làm việc trên package CommError. Tôi quyết định cần hiển thị thông báo trên màn hình. Vì màn hình do GUI điều khiển, tôi gửi thông điệp đến một trong các đối tượng GUI để đưa thông báo lên màn hình. Điều này có nghĩa là tôi đã khiến CommError phụ thuộc vào GUI. Xem Hình 2-22.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0020_fig.png" width="789" height="588" alt="Hình 2-22 Một chu trình đã được thêm vào.">
+  <figcaption><strong>Hình 2-22</strong><br>Một chu trình đã được thêm vào.</figcaption>
+</figure>
+      <p>Bây giờ điều gì xảy ra khi những người đang làm việc trên Protocol muốn phát hành package của họ. Họ phải build bộ kiểm tra cùng CommError, GUI, Comm, ModemControl, Analysis và Database! Điều này rõ ràng là thảm họa. Khối lượng công việc của các kỹ sư đã tăng lên một lượng đáng kinh ngạc, chỉ vì một phụ thuộc nhỏ bé vượt khỏi tầm kiểm soát.</p>
+      <p>Điều này có nghĩa là ai đó cần theo dõi cấu trúc phụ thuộc package thường xuyên, và phá vỡ chu trình ở bất cứ đâu chúng xuất hiện. Nếu không, các phụ thuộc bắc cầu giữa các module sẽ khiến mọi module phụ thuộc vào mọi module khác.</p>
+      <p class="no-indent"><strong>Phá vỡ một Chu trình.</strong>&emsp;Chu trình có thể được phá vỡ theo hai cách. Cách thứ nhất là tạo package mới, và cách thứ hai sử dụng DIP và ISP.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0021" data-page="21">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">21</span>
+      </header>
+
+      <p class="no-indent">Hình 2-23 cho thấy cách phá vỡ chu trình bằng cách thêm package mới. Các class mà CommError cần được rút ra khỏi GUI và đặt vào package mới tên MessageManager. Cả GUI và CommError đều được buộc phụ thuộc vào package mới này.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0021_fig_2_23.png" width="1546" height="840" alt="Hình 2-23">
+  <figcaption><strong>Hình 2-23</strong></figcaption>
+</figure>
+      <p>Đây là ví dụ về cách cấu trúc package có xu hướng rung lắc và dịch chuyển trong quá trình phát triển. Các package mới xuất hiện, và các class chuyển từ package cũ sang package mới, để giúp phá vỡ chu trình.</p>
+      <p>Hình 2-24 cho thấy hình ảnh trước và sau của kỹ thuật kia để phá vỡ chu trình. Ở đây ta thấy hai package bị ràng buộc bởi một chu trình. Class A phụ thuộc vào class X, và class Y phụ thuộc vào class B. Ta phá vỡ chu trình bằng cách đảo ngược phụ thuộc giữa Y và B. Việc này được thực hiện bằng cách thêm interface mới, BY, vào B. Interface này có tất cả các method mà Y cần. Y sử dụng interface này và B triển khai nó.</p>
+      <p>Chú ý vị trí của BY. Nó được đặt trong package cùng với class sử dụng nó. Đây là một mẫu mà bạn sẽ thấy lặp lại xuyên suốt các case study về pack-</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0022" data-page="22">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">22</span>
+      </header>
+
+      <p class="no-indent">age. Các interface thường được đặt trong package sử dụng chúng, thay vì trong package triển khai chúng.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0022_fig_2_24.png" width="1546" height="860" alt="Hình 2-24">
+  <figcaption><strong>Hình 2-24</strong></figcaption>
+</figure>
+      <h3 class="section-title">Nguyên tắc Phụ thuộc Ổn định (SDP)<sup>1</sup></h3>
+      <p class="principle-statement">Phụ thuộc theo hướng ổn định.</p>
+      <p>Dù đây dường như là nguyên tắc hiển nhiên, vẫn có khá nhiều điều ta có thể nói về nó. Ổn định không phải lúc nào cũng được hiểu đúng.</p>
+      <p class="no-indent"><strong>Ổn định.</strong>&emsp;Ổn định có nghĩa là gì? Đặt một đồng xu đứng trên cạnh. Nó có ổn định ở vị trí đó không? Có lẽ bạn sẽ nói là không. Tuy nhiên, trừ khi bị làm đảo lộn, nó sẽ giữ nguyên ở vị-</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Stability97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0023" data-page="23">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">23</span>
+      </header>
+
+      <p class="no-indent">trí đó trong thời gian rất rất dài. Vì vậy ổn định không liên quan trực tiếp đến tần suất thay đổi. Đồng xu không thay đổi, nhưng khó coi nó là ổn định.</p>
+      <p>Ổn định liên quan đến lượng công việc cần thiết để thực hiện một thay đổi. Đồng xu không ổn định vì chỉ cần rất ít công sức để làm nó đổ. Ngược lại, một cái bàn rất ổn định vì cần một lượng công sức đáng kể để lật nó.</p>
+      <p>Điều này liên quan đến phần mềm như thế nào? Có nhiều yếu tố khiến một package phần mềm khó thay đổi: kích thước, độ phức tạp, độ rõ ràng, v.v. Chúng ta sẽ bỏ qua tất cả các yếu tố đó và tập trung vào điều khác. Một cách chắc chắn để khiến package phần mềm khó thay đổi là buộc nhiều package phần mềm khác phụ thuộc vào nó. Một package có nhiều phụ thuộc đi vào rất ổn định vì cần rất nhiều công việc để hòa giải mọi thay đổi với tất cả các package phụ thuộc.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0023_fig.png" width="549" height="268" alt="Hình 2-25 X là một package ổn định">
+  <figcaption><strong>Hình 2-25</strong><br>X là một package ổn định</figcaption>
+</figure>
+      <p>Hình 2-25 cho thấy X: một package ổn định. Package này có ba package phụ thuộc vào nó, và do đó có ba lý do chính đáng để không thay đổi. Ta nói rằng nó chịu trách nhiệm với ba package đó. Mặt khác, X không phụ thuộc vào gì cả, nên không có ảnh hưởng bên ngoài nào buộc nó thay đổi. Ta nói nó độc lập.</p>
+      <p>Hình 2-26, ngược lại, cho thấy một package rất bất ổn. Y không có package nào khác phụ thuộc vào nó; ta nói rằng nó vô trách nhiệm. Y cũng có ba package mà nó phụ thuộc, nên các thay đổi có thể đến từ ba nguồn bên ngoài. Ta nói rằng Y phụ thuộc.</p>
+      <p class="no-indent"><strong>Các Chỉ số Ổn định.</strong>&emsp;Ta có thể tính độ ổn định của một package bằng bộ ba chỉ số đơn giản.</p>
+      <p class="metric-block"><span class="metric-name">Ca</span> — Afferent Coupling. Số lượng class bên ngoài package phụ thuộc vào các class bên trong package. (tức là phụ thuộc đi vào)</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0024" data-page="24">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">24</span>
+      </header>
+
+<figure class="diagram">
+  <img src="assets/images/page_0024_fig.png" width="549" height="308" alt="Hình 2-26 Y bất ổn.">
+  <figcaption><strong>Hình 2-26</strong><br>Y bất ổn.</figcaption>
+</figure>
+      <p class="metric-block"><span class="metric-name">Ce</span> — Efferent Coupling. Số lượng class bên ngoài package mà các class bên trong package phụ thuộc vào. (tức là phụ thuộc đi ra)</p>
+      <p class="metric-block"><span class="metric-name">I</span> — Instability. <span class="formula">I = Ce / (Ca + Ce)</span> Đây là chỉ số có miền giá trị: [0,1].</p>
+      <p>Nếu không có phụ thuộc đi ra, thì I sẽ bằng không và package ổn định. Nếu không có phụ thuộc đi vào thì I sẽ bằng một và package bất ổn.</p>
+      <p>Bây giờ ta có thể diễn đạt lại SDP như sau: “Phụ thuộc vào các package có chỉ số I thấp hơn của bạn.”</p>
+      <p class="no-indent"><strong>Lý do.</strong> Có phải mọi phần mềm đều nên ổn định? Một trong những thuộc tính quan trọng nhất của phần mềm được thiết kế tốt là dễ thay đổi. Phần mềm linh hoạt trước các yêu cầu thay đổi được đánh giá cao. Tuy nhiên, phần mềm đó bất ổn theo định nghĩa của chúng ta. Thực tế, chúng ta rất mong muốn một phần phần mềm bất ổn. Chúng ta muốn một số module dễ thay đổi để khi yêu cầu dịch chuyển, thiết kế có thể đáp ứng dễ dàng.</p>
+      <p>Hình 2-27 cho thấy cách SDP có thể bị vi phạm. Flexible là package mà ta dự định dễ thay đổi. Ta muốn Flexible bất ổn. Tuy nhiên, một kỹ sư đang làm việc trong package tên Stable đã tạo phụ thuộc vào Flexible. Điều này vi phạm SDP vì chỉ số I của Stable thấp hơn nhiều so với chỉ số I của Flexible. Kết quả là Flexible sẽ không còn dễ thay đổi. Một thay đổi ở Flexible sẽ buộc ta phải xử lý Stable và tất cả các package phụ thuộc của nó.</p>
+      <h3 class="section-title">Nguyên tắc Trừu tượng Ổn định (SAP)<sup>1</sup></h3>
+      <p class="principle-statement">Các package ổn định nên là các package trừu tượng.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0025" data-page="25">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">25</span>
+      </header>
+
+<figure class="diagram">
+  <img src="assets/images/page_0025_fig.png" width="549" height="408" alt="Hình 2-27 Vi phạm SDP.">
+  <figcaption><strong>Hình 2-27</strong><br>Vi phạm SDP.</figcaption>
+</figure>
+      <p>Ta có thể hình dung cấu trúc package của ứng dụng như một tập hợp các package liên kết với nhau, với các package bất ổn ở trên và các package ổn định ở dưới. Trong quan điểm này, mọi phụ thuộc đều hướng xuống dưới.</p>
+      <p>Các package ở trên bất ổn và linh hoạt. Nhưng các package ở dưới rất khó thay đổi. Và điều này dẫn ta đến một tình thế khó xử: Ta có muốn các package trong thiết kế khó thay đổi không?</p>
+      <p>Rõ ràng, càng nhiều package khó thay đổi, thiết kế tổng thể càng kém linh hoạt. Tuy nhiên, có một lối thoát mà ta có thể lợi dụng. Các package rất ổn định ở đáy mạng phụ thuộc có thể rất khó thay đổi, nhưng theo OCP chúng không nhất thiết phải khó mở rộng!</p>
+      <p>Nếu các package ổn định ở đáy cũng rất trừu tượng, thì chúng có thể được mở rộng dễ dàng. Điều này có nghĩa là có thể lắp ráp ứng dụng từ các package bất ổn dễ thay đổi, và các package ổn định dễ mở rộng. Đây là điều tốt.</p>
+      <p>Vì vậy, SAP chỉ là cách diễn đạt lại DIP. Nó phát biểu rằng các package được phụ thuộc nhiều nhất (tức là ổn định) cũng nên trừu tượng nhất. Nhưng làm sao để đo độ trừu tượng?</p>
+      <p class="no-indent"><strong>Các Chỉ số Trừu tượng.</strong> Ta có thể suy ra bộ ba chỉ số khác để giúp tính độ trừu tượng.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Stability97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0026" data-page="26">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">26</span>
+      </header>
+
+      <p class="metric-block"><span class="metric-name">Nc</span> — Số lớp trong package.</p>
+      <p class="metric-block"><span class="metric-name">Na</span> — Số lớp trừu tượng trong package. Hãy nhớ rằng một lớp trừu tượng là lớp có ít nhất một giao diện thuần túy và không thể được khởi tạo.</p>
+      <p class="metric-block"><span class="metric-name">A</span> — Độ trừu tượng (Abstractness). <span class="math formula">A = <span class="frac"><span class="top">N<sub>a</sub></span><span class="bottom">N<sub>c</sub></span></span></span></p>
+      <p>Chỉ số A có phạm vi [0,1], giống như chỉ số I. Giá trị bằng không nghĩa là package không chứa lớp trừu tượng nào. Giá trị bằng một nghĩa là package chỉ chứa các lớp trừu tượng.</p>
+      <p class="no-indent"><strong>Đồ thị I và A.</strong>&emsp;SAP giờ có thể được diễn đạt lại theo các chỉ số I và A: I nên tăng khi A giảm. Nghĩa là các package cụ thể nên không ổn định, còn các package trừu tượng nên ổn định. Ta có thể vẽ điều này trên đồ thị A và I. Xem Hình 2-28.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 420 300" width="420" height="300" role="img" aria-label="Hình 2-28 Đồ thị A và I">
+          <defs>
+            <marker id="arrow-open" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- axes -->
+          <line x1="60" y1="240" x2="360" y2="240" stroke="#000" stroke-width="1.2"/>
+          <line x1="60" y1="240" x2="60" y2="40" stroke="#000" stroke-width="1.2"/>
+          <text x="210" y="275" text-anchor="middle" font-family="Times, serif" font-size="14" font-style="italic">I</text>
+          <text x="30" y="140" text-anchor="middle" font-family="Times, serif" font-size="14" font-style="italic" transform="rotate(-90 30 140)">A</text>
+          <text x="52" y="248" text-anchor="end" font-family="Times, serif" font-size="12">0</text>
+          <text x="365" y="248" font-family="Times, serif" font-size="12">1</text>
+          <text x="52" y="245" text-anchor="end" font-family="Times, serif" font-size="12">0</text>
+          <text x="52" y="48" text-anchor="end" font-family="Times, serif" font-size="12">1</text>
+          <!-- dashed bounding box -->
+          <line x1="60" y1="40" x2="360" y2="40" stroke="#000" stroke-width="1" stroke-dasharray="6,4"/>
+          <line x1="360" y1="40" x2="360" y2="240" stroke="#000" stroke-width="1" stroke-dasharray="6,4"/>
+          <!-- main sequence -->
+          <line x1="60" y1="40" x2="360" y2="240" stroke="#000" stroke-width="1.5"/>
+          <text x="200" y="115" font-family="Times, serif" font-size="11" transform="rotate(-35 200 115)">The Main Sequence</text>
+          <!-- endpoints -->
+          <circle cx="60" cy="40" r="6" fill="#000"/>
+          <circle cx="360" cy="240" r="6" fill="#000"/>
+          <!-- zone labels -->
+          <text x="95" y="215" font-family="Times, serif" font-size="11" transform="rotate(35 95 215)">The Zone of</text>
+          <text x="105" y="228" font-family="Times, serif" font-size="11" transform="rotate(35 105 228)">Pain</text>
+          <text x="285" y="95" font-family="Times, serif" font-size="11" transform="rotate(-35 285 95)">The</text>
+          <text x="275" y="108" font-family="Times, serif" font-size="11" transform="rotate(-35 275 108)">Zone of</text>
+          <text x="265" y="121" font-family="Times, serif" font-size="11" transform="rotate(-35 265 121)">Uselessness</text>
+        </svg>
+        <figcaption><strong>Hình 2-28</strong><br>Đồ thị A và I.</figcaption>
+      </figure>
+      <p>Có vẻ rõ ràng rằng các package nên nằm ở một trong hai chấm đen trên Hình 2-28. Những package ở góc trên bên trái hoàn toàn trừu tượng và rất ổn định. Những package ở góc dưới bên phải hoàn toàn cụ thể và rất không ổn định. Đó chính là điều ta mong muốn. Tuy nhiên, package X trong Hình 2-29 thì sao? Nó nên đặt ở đâu?</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0027" data-page="27">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">27</span>
+      </header>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 360 220" width="360" height="220" role="img" aria-label="Hình 2-29 Ta đặt X ở đâu trên đồ thị A và I?">
+          <defs>
+            <marker id="pkg-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Package C -->
+          <rect x="30" y="20" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <path d="M30,20 L55,20 L55,32 L30,32 Z" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="75" y="52" text-anchor="middle" font-family="Times, serif" font-size="13">C</text>
+          <!-- Package X -->
+          <rect x="130" y="85" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <path d="M130,85 L155,85 L155,97 L130,97 Z" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="175" y="117" text-anchor="middle" font-family="Times, serif" font-size="13">X</text>
+          <!-- Package A -->
+          <rect x="230" y="150" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <path d="M230,150 L255,150 L255,162 L230,162 Z" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="275" y="182" text-anchor="middle" font-family="Times, serif" font-size="13">A</text>
+          <!-- dependencies -->
+          <line x1="175" y1="75" x2="175" y2="85" stroke="#000" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#pkg-arrow)"/>
+          <line x1="220" y1="140" x2="230" y2="150" stroke="#000" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#pkg-arrow)"/>
+        </svg>
+        <figcaption><strong>Hình 2-29</strong><br>Ta đặt X ở đâu trên đồ thị A và I?</figcaption>
+      </figure>
+      <p>Ta có thể xác định vị trí mong muốn của Package X bằng cách xem xét nơi ta không muốn nó đến. Góc trên bên phải của đồ thị AI đại diện cho các package rất trừu tượng mà không ai phụ thuộc vào. Đó là vùng vô dụng (zone of uselessness). Chắc chắn ta không muốn X nằm ở đó. Mặt khác, điểm dưới bên trái của đồ thị AI đại diện cho các package cụ thể và có nhiều phụ thuộc đi vào. Điểm này biểu thị trường hợp tồi tệ nhất cho một package. Vì các phần tử ở đó là cụ thể, chúng không thể được mở rộng như các thực thể trừu tượng; và vì chúng có nhiều phụ thuộc đi vào, việc thay đổi sẽ rất đau đớn. Đó là vùng đau (zone of pain), và ta chắc chắn không muốn package của mình nằm ở đó.</p>
+      <p>Tối đa hóa khoảng cách giữa hai vùng này cho ta một đường gọi là chuỗi chính (main sequence). Ta muốn các package nằm trên đường này nếu có thể. Một vị trí trên đường này nghĩa là package trừu tượng tương ứng với các phụ thuộc đi vào và cụ thể tương ứng với các phụ thuộc đi ra. Nói cách khác, các lớp trong package như vậy tuân thủ DIP.</p>
+      <p class="no-indent"><strong>Các chỉ số khoảng cách.</strong>&emsp;Điều này còn lại cho ta một bộ chỉ số nữa cần xem xét. Cho các giá trị A và I của bất kỳ package nào, ta muốn biết package đó cách chuỗi chính bao xa.</p>
+      <p class="metric-block"><span class="metric-name">D</span> — Khoảng cách (Distance). <span class="math formula">D = |A + I − 1| / √2</span> Phạm vi từ [0,~0.707].</p>
+      <p class="metric-block"><span class="metric-name">D′</span> — Khoảng cách chuẩn hóa (Normalized Distance). <span class="math formula">D′ = |A + I − 1|</span> Chỉ số này tiện hơn nhiều so với D vì phạm vi từ [0,1]. Giá trị không biểu thị package nằm trực tiếp trên chuỗi chính. Giá trị một biểu thị package cách chuỗi chính xa nhất có thể.</p>
+      <p>Các chỉ số này đo lường kiến trúc hướng đối tượng. Chúng không hoàn hảo, và việc chỉ dựa vào chúng như chỉ báo duy nhất của một kiến trúc vững chắc sẽ là liều lĩnh. Tuy nhiên, chúng có thể — và đã được — dùng để giúp đo lường cấu trúc phụ thuộc của một ứng dụng.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0028" data-page="28">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">28</span>
+      </header>
+
+      <h3 class="section-title">Các mẫu kiến trúc hướng đối tượng</h3>
+      <p class="lead">Khi tuân theo các nguyên tắc mô tả ở trên để tạo kiến trúc hướng đối tượng, người ta thấy mình lặp đi lặp lại cùng một cấu trúc. Những cấu trúc thiết kế và kiến trúc lặp lại này được gọi là mẫu thiết kế (design patterns)<sup>1</sup>.</p>
+      <p>Định nghĩa cốt lõi của một mẫu thiết kế là một giải pháp đã được thử thách và được biết là tốt cho một vấn đề phổ biến. Mẫu thiết kế chắc chắn không phải là mới. Thay vào đó, chúng là các kỹ thuật cũ đã chứng tỏ tính hữu ích qua nhiều năm.</p>
+      <p>Một số mẫu thiết kế phổ biến được mô tả dưới đây. Đây là những mẫu bạn sẽ gặp khi đọc các case study ở phần sau của sách.</p>
+      <p>Cần lưu ý rằng chủ đề Mẫu thiết kế không thể được trình bày đầy đủ trong một chương duy nhất của một cuốn sách. Độc giả quan tâm được khuyến khích mạnh mẽ đọc [GOF96].</p>
+      <p class="no-indent"><strong>Abstract Server</strong></p>
+      <p class="no-indent">Khi client phụ thuộc trực tiếp vào server, DIP bị vi phạm. Thay đổi đối với server sẽ lan truyền đến client, và client sẽ không thể dễ dàng dùng các server tương tự. Điều này có thể được khắc phục bằng cách chèn một giao diện trừu tượng giữa client và server như Hình 2-30 minh họa.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 400 200" width="400" height="200" role="img" aria-label="Hình 2-30 Abstract Server">
+          <defs>
+            <marker id="assoc-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Consumer -->
+          <rect x="20" y="70" width="100" height="50" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="70" y="100" text-anchor="middle" font-family="Times, serif" font-size="13">Consumer</text>
+          <!-- Interface -->
+          <rect x="220" y="20" width="150" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="295" y="42" text-anchor="middle" font-family="Times, serif" font-size="11">«interface»</text>
+          <text x="295" y="60" text-anchor="middle" font-family="Times, serif" font-size="13">Resource</text>
+          <text x="295" y="72" text-anchor="middle" font-family="Times, serif" font-size="13">Manager</text>
+          <!-- Implementation -->
+          <rect x="240" y="120" width="110" height="50" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="295" y="150" text-anchor="middle" font-family="Times, serif" font-size="13">Resource</text>
+          <text x="295" y="162" text-anchor="middle" font-family="Times, serif" font-size="13">Manager_I</text>
+          <!-- association -->
+          <line x1="120" y1="95" x2="220" y2="48" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+          <!-- realization -->
+          <line x1="295" y1="120" x2="295" y2="75" stroke="#000" stroke-width="1.2"/>
+          <polygon points="295,75 288,88 302,88" fill="none" stroke="#000" stroke-width="1.2"/>
+        </svg>
+        <figcaption><strong>Hình 2-30</strong><br>Abstract Server</figcaption>
+      </figure>
+      <p>Giao diện trừu tượng trở thành một “điểm bản lề” mà thiết kế có thể uốn cong theo. Các triển khai khác nhau của server có thể được gắn vào client mà client không hề hay biết.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [GOF96]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0029" data-page="29">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">29</span>
+      </header>
+
+      <p class="no-indent"><strong>Bộ điều hợp (Adapter)</strong></p>
+      <p class="no-indent">Khi việc chèn giao diện trừu tượng không khả thi vì server là phần mềm bên thứ ba, hoặc được phụ thuộc quá nhiều nên không thể dễ dàng thay đổi, có thể dùng ADAPTER để gắn giao diện trừu tượng vào server. Xem Hình 2-31.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 420 220" width="420" height="220" role="img" aria-label="Hình 2-31 Adapter">
+          <defs>
+            <marker id="assoc-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Consumer -->
+          <rect x="20" y="80" width="100" height="50" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="70" y="110" text-anchor="middle" font-family="Times, serif" font-size="13">Consumer</text>
+          <!-- Interface -->
+          <rect x="160" y="20" width="150" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="235" y="42" text-anchor="middle" font-family="Times, serif" font-size="11">«interface»</text>
+          <text x="235" y="60" text-anchor="middle" font-family="Times, serif" font-size="13">Resource</text>
+          <text x="235" y="72" text-anchor="middle" font-family="Times, serif" font-size="13">Manager</text>
+          <!-- Adapter -->
+          <rect x="175" y="110" width="120" height="45" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="235" y="128" text-anchor="middle" font-family="Times, serif" font-size="11">Resource</text>
+          <text x="235" y="142" text-anchor="middle" font-family="Times, serif" font-size="11">Manager</text>
+          <text x="235" y="152" text-anchor="middle" font-family="Times, serif" font-size="11">Adapter</text>
+          <!-- Server -->
+          <rect x="320" y="105" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="365" y="130" text-anchor="middle" font-family="Times, serif" font-size="12">Resource</text>
+          <text x="365" y="145" text-anchor="middle" font-family="Times, serif" font-size="12">Manager_I</text>
+          <!-- Consumer -> interface -->
+          <line x1="120" y1="100" x2="160" y2="48" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+          <!-- Adapter -> interface -->
+          <line x1="235" y1="110" x2="235" y2="75" stroke="#000" stroke-width="1.2"/>
+          <polygon points="235,75 228,88 242,88" fill="none" stroke="#000" stroke-width="1.2"/>
+          <!-- Adapter -> server -->
+          <line x1="295" y1="132" x2="320" y2="132" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+        </svg>
+        <figcaption><strong>Hình 2-31</strong><br>Adapter</figcaption>
+      </figure>
+      <p>Adapter là một đối tượng triển khai giao diện trừu tượng để ủy quyền cho server. Mỗi phương thức của adapter đơn giản dịch chuyển rồi ủy quyền.</p>
+      <p class="no-indent"><strong>Quan sát (Observer)</strong></p>
+      <p class="no-indent">Thường xảy ra rằng một phần tử trong thiết kế cần thực hiện một hành động nào đó khi phần tử khác trong thiết kế phát hiện một sự kiện đã xảy ra. Tuy nhiên, ta thường không muốn bộ phát hiện biết về tác nhân.</p>
+      <p>Hãy xét trường hợp một đồng hồ đo hiển thị trạng thái của cảm biến. Mỗi khi cảm biến thay đổi giá trị đọc, ta muốn đồng hồ đo hiển thị giá trị mới. Tuy nhiên, ta không muốn cảm biến biết gì về đồng hồ đo.</p>
+      <p>Ta có thể giải quyết tình huống này bằng OBSERVER, xem Hình 2-32. <code>Sensor</code> kế thừa từ lớp tên <code>Subject</code>, và <code>Meter</code> kế thừa từ giao diện tên <code>Observer</code>. <code>Subject</code> chứa danh sách các <code>Observer</code>. Danh sách này được nạp bởi phương thức <code>Register</code> của <code>Subject</code>. Để được thông báo về sự kiện, <code>Meter</code> của ta phải đăng ký với lớp cơ sở <code>Subject</code> của <code>Sensor</code>.</p>
+      <p>Hình 2-33 mô tả động thái của sự cộng tác. Một thực thể nào đó chuyển quyền điều khiển cho <code>Sensor</code>, thực thể này xác định rằng giá trị đọc đã thay đổi. <code>Sensor</code> gọi <code>Notify</code> trên <code>Subject</code> của nó. <code>Subject</code> sau đó lần lượt qua tất cả các <code>Observer</code></p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0030" data-page="30">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">30</span>
+      </header>
+
+      <p class="no-indent">đã được đăng ký, gọi <code>Update</code> trên từng observer. Thông điệp <code>Update</code> được <code>Meter</code> bắt, dùng nó để đọc giá trị mới của <code>Sensor</code> và hiển thị.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 440 260" width="440" height="260" role="img" aria-label="Hình 2-32 Cấu trúc Observer">
+          <defs>
+            <marker id="gen-arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+            <marker id="assoc-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Observer interface -->
+          <rect x="20" y="20" width="150" height="70" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="20" y1="42" x2="170" y2="42" stroke="#000" stroke-width="1"/>
+          <line x1="20" y1="58" x2="170" y2="58" stroke="#000" stroke-width="1"/>
+          <text x="95" y="36" text-anchor="middle" font-family="Times, serif" font-size="11">«interface» Observer</text>
+          <text x="30" y="78" font-family="Times, serif" font-size="11">+ Update</text>
+          <!-- Subject -->
+          <rect x="250" y="20" width="170" height="85" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="250" y1="42" x2="420" y2="42" stroke="#000" stroke-width="1"/>
+          <line x1="250" y1="58" x2="420" y2="58" stroke="#000" stroke-width="1"/>
+          <text x="335" y="36" text-anchor="middle" font-family="Times, serif" font-size="13">Subject</text>
+          <text x="260" y="74" font-family="Times, serif" font-size="10">+ Register(Observer*)</text>
+          <text x="260" y="88" font-family="Times, serif" font-size="10">+ Notify</text>
+          <!-- Meter -->
+          <rect x="20" y="160" width="120" height="70" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="20" y1="182" x2="140" y2="182" stroke="#000" stroke-width="1"/>
+          <line x1="20" y1="198" x2="140" y2="198" stroke="#000" stroke-width="1"/>
+          <text x="80" y="176" text-anchor="middle" font-family="Times, serif" font-size="13">Meter</text>
+          <text x="30" y="218" font-family="Times, serif" font-size="11">+ Update()</text>
+          <!-- Sensor -->
+          <rect x="250" y="160" width="150" height="85" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="250" y1="182" x2="400" y2="182" stroke="#000" stroke-width="1"/>
+          <line x1="250" y1="198" x2="400" y2="198" stroke="#000" stroke-width="1"/>
+          <text x="325" y="176" text-anchor="middle" font-family="Times, serif" font-size="13">Sensor</text>
+          <text x="260" y="218" font-family="Times, serif" font-size="10">+ Check()</text>
+          <text x="260" y="232" font-family="Times, serif" font-size="10">+ GetValue() : double</text>
+          <!-- generalizations -->
+          <line x1="80" y1="160" x2="95" y2="90" stroke="#000" stroke-width="1.2" marker-end="url(#gen-arrow)"/>
+          <line x1="325" y1="160" x2="335" y2="105" stroke="#000" stroke-width="1.2" marker-end="url(#gen-arrow)"/>
+          <!-- associations -->
+          <line x1="250" y1="70" x2="170" y2="55" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+          <text x="200" y="55" font-family="Times, serif" font-size="12">*</text>
+          <line x1="140" y1="195" x2="250" y2="195" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+        </svg>
+        <figcaption><strong>Hình 2-32</strong><br>Cấu trúc Observer</figcaption>
+      </figure>
+      <figure class="diagram">
+        <svg viewBox="0 0 440 200" width="440" height="200" role="img" aria-label="Hình 2-33 Sơ đồ tuần tự Observer">
+          <defs>
+            <marker id="msg-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+            <marker id="ret-arrow" markerWidth="8" markerHeight="8" refX="1" refY="4" orient="auto">
+              <path d="M8,0 L0,4 L8,8 Z" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2,2"/>
+            </marker>
+          </defs>
+          <!-- lifeline headers -->
+          <circle cx="40" cy="14" r="8" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="40" y1="22" x2="40" y2="38" stroke="#000" stroke-width="1.2"/>
+          <line x1="28" y1="30" x2="52" y2="30" stroke="#000" stroke-width="1.2"/>
+          <line x1="40" y1="38" x2="40" y2="55" stroke="#000" stroke-width="1.2"/>
+          <rect x="110" y="10" width="60" height="28" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="140" y="28" text-anchor="middle" font-family="Times, serif" font-size="12">Sensor</text>
+          <rect x="210" y="10" width="60" height="28" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="240" y="28" text-anchor="middle" font-family="Times, serif" font-size="12">Subject</text>
+          <rect x="320" y="10" width="60" height="28" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="350" y="28" text-anchor="middle" font-family="Times, serif" font-size="12">Meter</text>
+          <!-- lifelines -->
+          <line x1="40" y1="55" x2="40" y2="185" stroke="#000" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="140" y1="38" x2="140" y2="185" stroke="#000" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="240" y1="38" x2="240" y2="185" stroke="#000" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="350" y1="38" x2="350" y2="185" stroke="#000" stroke-width="1" stroke-dasharray="4,4"/>
+          <!-- activation bars -->
+          <rect x="133" y="65" width="14" height="100" fill="none" stroke="#000" stroke-width="1"/>
+          <rect x="233" y="85" width="14" height="60" fill="none" stroke="#000" stroke-width="1"/>
+          <rect x="343" y="105" width="14" height="50" fill="none" stroke="#000" stroke-width="1"/>
+          <!-- messages -->
+          <line x1="40" y1="65" x2="133" y2="65" stroke="#000" stroke-width="1" marker-end="url(#msg-arrow)"/>
+          <text x="75" y="60" text-anchor="middle" font-family="Times, serif" font-size="11">Check</text>
+          <line x1="147" y1="85" x2="233" y2="85" stroke="#000" stroke-width="1" marker-end="url(#msg-arrow)"/>
+          <text x="190" y="80" text-anchor="middle" font-family="Times, serif" font-size="11">Notify</text>
+          <line x1="247" y1="105" x2="343" y2="105" stroke="#000" stroke-width="1" marker-end="url(#msg-arrow)"/>
+          <text x="295" y="100" text-anchor="middle" font-family="Times, serif" font-size="11">Update</text>
+          <text x="380" y="115" font-family="Times, serif" font-size="11">Observer</text>
+          <line x1="350" y1="125" x2="147" y2="125" stroke="#000" stroke-width="1" marker-end="url(#msg-arrow)"/>
+          <text x="248" y="120" text-anchor="middle" font-family="Times, serif" font-size="11">GetValue</text>
+          <line x1="147" y1="145" x2="350" y2="145" stroke="#000" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ret-arrow)"/>
+          <text x="248" y="140" text-anchor="middle" font-family="Times, serif" font-size="11">Value</text>
+        </svg>
+        <figcaption><strong>Hình 2-33</strong></figcaption>
+      </figure>
+      <p class="no-indent"><strong>Cầu (Bridge)</strong></p>
+      <p class="no-indent">Một trong các vấn đề khi triển khai lớp trừu tượng bằng kế thừa là lớp dẫn xuất bị ghép chặt với lớp cơ sở. Điều này có thể dẫn đến vấn đề khi các client khác muốn dùng các hàm của lớp dẫn xuất mà không kéo theo gánh nặng của hệ phân cấp cơ sở.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0031" data-page="31">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">31</span>
+      </header>
+
+      <p class="no-indent">Ví dụ, hãy xét lớp bộ tổng hợp âm thanh (music synthesizer). Lớp cơ sở dịch đầu vào MIDI thành tập các lệnh gọi EmitVoice nguyên thủy do lớp dẫn xuất triển khai. Lưu ý rằng hàm EmitVoice của lớp dẫn xuất sẽ hữu ích tự nó. Thật không may, nó bị gắn chặt không thể tách rời với lớp MusicSynthesizer và hàm PlayMidi. Không có cách nào truy cập phương thức PlayVoice mà không kéo theo lớp cơ sở. Ngoài ra, không có cách nào tạo các triển khai khác nhau của hàm PlayMidi dùng cùng hàm EmitVoice. Nói ngắn gọn, hệ phân cấp bị ghép chặt quá mức.</p>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hình 2-34 Hệ phân cấp ghép chặt kém">
+          <defs>
+            <marker id="fig234-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <rect x="65" y="8" width="90" height="62" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="65" y1="28" x2="155" y2="28" stroke="black" stroke-width="1"/>
+          <line x1="65" y1="42" x2="155" y2="42" stroke="black" stroke-width="1"/>
+          <text x="110" y="20" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="110" y="30" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer</text>
+          <text x="110" y="38" text-anchor="middle" font-size="8">{abstract}</text>
+          <text x="72" y="54" font-size="8">+ PlayMidi</text>
+          <text x="72" y="64" font-size="8" font-style="italic">- EmitVoice</text>
+          <line x1="110" y1="70" x2="110" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig234-inherit)"/>
+          <rect x="58" y="118" width="104" height="38" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="58" y1="136" x2="162" y2="136" stroke="black" stroke-width="1"/>
+          <text x="110" y="130" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="110" y="140" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer_I</text>
+          <text x="66" y="152" font-size="8">+ EmitVoice</text>
+        </svg>
+        <figcaption><strong>Hình 2-34</strong><br>Hệ phân cấp ghép chặt kém</figcaption>
+      </figure>
+
+      <p>Mẫu BRIDGE giải quyết vấn đề này bằng cách tạo sự tách biệt mạnh giữa giao diện và triển khai. Hình 2-35 cho thấy cách hoạt động. Lớp MusicSynthesizer chứa hàm PlayMidi trừu tượng được MusicSynthesizer_I triển khai. Nó gọi hàm EmitVoice được triển khai trong MusicSynthesizer để ủy quyền cho giao diện VoiceEmitter. Giao diện này được VoiceEmitter_I triển khai và phát ra các âm thanh cần thiết.</p>
+      <p>Giờ có thể triển khai cả EmitVoice và PlayMidi độc lập với nhau. Hai hàm đã được tách rời. Có thể gọi EmitVoice mà không kéo theo toàn bộ gánh nặng MusicSynthesizer, và PlayMidi có thể được triển khai theo nhiều cách khác nhau trong khi vẫn dùng cùng hàm EmitVoice.</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0032" data-page="32">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">32</span>
+      </header>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hình 2-35 Hệ phân cấp tách rời bằng Bridge">
+          <defs>
+            <marker id="fig235-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+            <marker id="fig235-assoc" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Music Synthesizer -->
+          <rect x="20" y="8" width="110" height="62" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="20" y1="28" x2="130" y2="28" stroke="black" stroke-width="1"/>
+          <line x1="20" y1="42" x2="130" y2="42" stroke="black" stroke-width="1"/>
+          <text x="75" y="20" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="75" y="30" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer</text>
+          <text x="75" y="38" text-anchor="middle" font-size="8">{abstract}</text>
+          <text x="28" y="54" font-size="8" font-style="italic">+ PlayMidi</text>
+          <text x="28" y="64" font-size="8">- EmitVoice</text>
+          <!-- Voice Emitter interface -->
+          <rect x="210" y="8" width="110" height="48" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="210" y1="28" x2="320" y2="28" stroke="black" stroke-width="1"/>
+          <text x="265" y="18" text-anchor="middle" font-size="8">«interface»</text>
+          <text x="265" y="26" text-anchor="middle" font-size="9" font-weight="bold">Voice Emitter</text>
+          <text x="218" y="40" font-size="8">+ EmitVoice</text>
+          <!-- Association -->
+          <line x1="130" y1="36" x2="210" y2="36" stroke="black" stroke-width="1" marker-end="url(#fig235-assoc)"/>
+          <!-- Music Synthesizer_I -->
+          <line x1="75" y1="70" x2="75" y2="108" stroke="black" stroke-width="1" marker-end="url(#fig235-inherit)"/>
+          <rect x="18" y="108" width="114" height="38" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="18" y1="126" x2="132" y2="126" stroke="black" stroke-width="1"/>
+          <text x="75" y="120" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="75" y="130" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer_I</text>
+          <text x="26" y="142" font-size="8">- PlayMidi</text>
+          <!-- Voice Emitter_I -->
+          <line x1="265" y1="56" x2="265" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig235-inherit)"/>
+          <rect x="218" y="118" width="94" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="265" y="130" text-anchor="middle" font-size="9" font-weight="bold">Voice</text>
+          <text x="265" y="140" text-anchor="middle" font-size="9" font-weight="bold">Emitter_I</text>
+        </svg>
+        <figcaption><strong>Hình 2-35</strong><br>Hệ phân cấp tách rời bằng Bridge</figcaption>
+      </figure>
+
+      <h3 class="section-title">Nhà máy trừu tượng (Abstract Factory)</h3>
+      <p class="no-indent">DIP khuyến nghị mạnh mẽ rằng các module không nên phụ thuộc vào lớp cụ thể. Tuy nhiên, để tạo một thể hiện của lớp, bạn phải phụ thuộc vào lớp cụ thể đó. ABSTRACT FACTORY là mẫu cho phép phụ thuộc vào lớp cụ thể chỉ tồn tại ở một — và chỉ một — nơi.</p>
+      <p>Hình 2-36 cho thấy cách thực hiện điều này cho ví dụ Modem. Tất cả người dùng muốn tạo modem dùng giao diện tên ModemFactory. Con trỏ tới giao diện này được giữ trong biến toàn cục tên GtheFactory. Người dùng gọi hàm Make, truyền vào một chuỗi định danh duy nhất lớp con Modem cụ thể mà họ muốn. Hàm Make trả về con trỏ tới giao diện Modem.</p>
+      <p>Giao diện ModemFactory được ModemFactory_I triển khai. Lớp này được main tạo, và con trỏ tới nó được nạp vào GtheFactory toàn cục. Do đó, không module nào trong hệ thống biết về các lớp modem cụ thể ngoại trừ ModemFactory_I, và không module nào biết về ModemFactory_I ngoại trừ main.</p>
+
+      <h3 class="section-title">Kết luận</h3>
+      <p class="no-indent">Chương này đã giới thiệu khái niệm kiến trúc hướng đối tượng và định nghĩa nó là cấu trúc các lớp và package giữ cho ứng dụng phần mềm linh hoạt, vững chắc, tái sử dụng được và dễ phát triển. Các nguyên tắc và mẫu trình bày ở đây hỗ trợ</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0033" data-page="33">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">33</span>
+      </header>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 420 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hình 2-36 Abstract Factory">
+          <defs>
+            <marker id="fig236-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+            <marker id="fig236-open" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Users -->
+          <rect x="8" y="52" width="36" height="18" fill="white" stroke="black" stroke-width="1"/>
+          <rect x="12" y="48" width="36" height="18" fill="white" stroke="black" stroke-width="1"/>
+          <text x="30" y="61" text-anchor="middle" font-size="8" font-weight="bold">Users</text>
+          <!-- Modem Factory interface -->
+          <rect x="168" y="8" width="96" height="52" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="168" y1="28" x2="264" y2="28" stroke="black" stroke-width="1"/>
+          <text x="216" y="18" text-anchor="middle" font-size="8">«interface»</text>
+          <text x="216" y="26" text-anchor="middle" font-size="9" font-weight="bold">Modem</text>
+          <text x="216" y="34" text-anchor="middle" font-size="9" font-weight="bold">Factory</text>
+          <text x="176" y="48" font-size="7">+ Make(string) : Modem*</text>
+          <!-- GtheFactory link -->
+          <text x="118" y="44" text-anchor="middle" font-size="7">«global»</text>
+          <text x="118" y="54" text-anchor="middle" font-size="7">GtheFactory</text>
+          <line x1="48" y1="56" x2="168" y2="34" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+          <!-- Modem interface -->
+          <rect x="8" y="118" width="72" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="44" y="128" text-anchor="middle" font-size="7">«interface»</text>
+          <text x="44" y="138" text-anchor="middle" font-size="9" font-weight="bold">Modem</text>
+          <!-- Concrete modems -->
+          <rect x="8" y="168" width="56" height="22" fill="white" stroke="black" stroke-width="1"/>
+          <text x="36" y="183" text-anchor="middle" font-size="8" font-weight="bold">Hayes</text>
+          <rect x="8" y="196" width="56" height="22" fill="white" stroke="black" stroke-width="1"/>
+          <text x="36" y="211" text-anchor="middle" font-size="8" font-weight="bold">Courrier</text>
+          <rect x="8" y="224" width="56" height="22" fill="white" stroke="black" stroke-width="1"/>
+          <text x="36" y="239" text-anchor="middle" font-size="8" font-weight="bold">Ernie</text>
+          <!-- Inheritance tree -->
+          <line x1="36" y1="168" x2="36" y2="158" stroke="black" stroke-width="1"/>
+          <line x1="36" y1="196" x2="36" y2="190" stroke="black" stroke-width="1"/>
+          <line x1="36" y1="224" x2="36" y2="218" stroke="black" stroke-width="1"/>
+          <line x1="36" y1="158" x2="20" y2="158" stroke="black" stroke-width="1"/>
+          <line x1="20" y1="158" x2="20" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig236-inherit)"/>
+          <!-- Modem Factory_I -->
+          <rect x="168" y="118" width="96" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="216" y="128" text-anchor="middle" font-size="9" font-weight="bold">Modem</text>
+          <text x="216" y="138" text-anchor="middle" font-size="9" font-weight="bold">Factory_I</text>
+          <line x1="216" y1="60" x2="216" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig236-inherit)"/>
+          <!-- Dashed dependency to Modem -->
+          <line x1="168" y1="132" x2="80" y2="132" stroke="black" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#fig236-open)"/>
+          <!-- main -->
+          <rect x="318" y="118" width="88" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="362" y="128" text-anchor="middle" font-size="7">«main program»</text>
+          <text x="362" y="138" text-anchor="middle" font-size="9" font-weight="bold">main</text>
+          <text x="290" y="112" text-anchor="middle" font-size="7">«creates»</text>
+          <line x1="318" y1="132" x2="264" y2="132" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+          <!-- creates modems -->
+          <text x="118" y="152" text-anchor="middle" font-size="7">«creates»</text>
+          <line x1="168" y1="145" x2="120" y2="145" stroke="black" stroke-width="1"/>
+          <line x1="120" y1="145" x2="120" y2="235" stroke="black" stroke-width="1"/>
+          <line x1="120" y1="179" x2="64" y2="179" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+          <line x1="120" y1="207" x2="64" y2="207" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+          <line x1="120" y1="235" x2="64" y2="235" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+        </svg>
+        <figcaption><strong>Hình 2-36</strong><br>Abstract Factory</figcaption>
+      </figure>
+
+      <p class="no-indent">những kiến trúc như vậy, và đã được chứng minh qua thời gian là công cụ hỗ trợ mạnh mẽ trong kiến trúc phần mềm.</p>
+      <p>Đây là một cái nhìn tổng quan. Còn rất nhiều điều cần nói về chủ đề kiến trúc hướng đối tượng hơn là có thể trình bày trong vài trang của chương này; thậm chí bằng cách rút gọn chủ đề nhiều như vậy, ta đã có nguy cơ làm độc giả thiệt thòi. Người ta nói rằng một chút kiến thức là điều nguy hiểm, và chương này đã cung cấp một chút kiến thức. Ta khuyến khích mạnh mẽ bạn tìm đọc các sách và bài báo trong phần trích dẫn của chương này để học thêm.</p>
+
+      <h3 class="section-title">Tài liệu tham khảo</h3>
+      <p class="bib-entry"><span class="bib-key">[Shaw96]:</span> Các mẫu kiến trúc phần mềm (Patterns of Software Architecture) (???), Garlan và Shaw, ...</p>
+      <p class="bib-entry"><span class="bib-key">[GOF96]:</span> Mẫu thiết kế (Design Patterns)...</p>
+      <p class="bib-entry"><span class="bib-key">[OOSC98]:</span> Xây dựng phần mềm hướng đối tượng (OOSC)...</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0034" data-page="34">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">34</span>
+      </header>
+
+      <p class="bib-entry no-indent"><span class="bib-key">[OCP97]:</span> Nguyên tắc Đóng/Mở (The Open Closed Principle), Robert C. Martin...</p>
+      <p class="bib-entry"><span class="bib-key">[LSP97]:</span> Nguyên tắc Thay thế Liskov (The Liskov Substitution Principle), Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[DIP97]:</span> Nguyên tắc Đảo ngược Phụ thuộc (The Dependency Inversion Principle), Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[ISP97]:</span> Nguyên tắc Tách giao diện (The Interface Segregation Principle), Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[Granularity97]:</span> Mức độ chi tiết (Granularity), Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[Stability97]:</span> Độ ổn định (Stability), Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[Liksov88]:</span> Trừu tượng hóa dữ liệu và phân cấp (Data Abstraction and Hierarchy)...</p>
+      <p class="bib-entry"><span class="bib-key">[Martin99]:</span> Thiết kế ứng dụng hướng đối tượng bằng UML (Designing Object Oriented Applications using UML), ấn bản 2, Robert C. Martin, Prentice Hall, 1999.</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+  </main>
+</body>
+</html>

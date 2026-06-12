@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page ol.listing-annotations {
+      margin: 0 0 3mm 6mm;
+      padding: 0;
+      list-style: none;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page ol.listing-annotations li {
+      margin: 0 0 1.5mm;
+      padding: 0 0 0 6mm;
+      text-indent: -6mm;
+      text-align: left;
+    }
+    .prose-page.chapter-page ol.listing-annotations .marker {
+      display: inline-block;
+      width: 5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      text-align: center;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0099.html">← Prev</a>
+    <a href="page_0101.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">100</span>
+      </header>
+
+      <p class="no-indent">demonstrate an example in <span class="accent-word">Using MS Access with PostgreSQL</span>, where we show how to
+      make <code>varchar</code> behave without case sensitivity and still be able to use an index.</p>
+
+      <h3 class="section-title">String Functions</h3>
+      <p class="no-indent">Common string manipulations are padding (<code>lpad</code>, <code>rpad</code>), trimming whitespace (<code>rtrim</code>,
+      <code>ltrim</code>, <code>trim</code>, <code>btrim</code>), extracting substrings (<code>substring</code>), and concatenating (<code>||</code>).
+      <span class="accent-word">Example 5-2</span> demonstrates padding, and <span class="accent-word">Example 5-3</span> demonstrates trimming.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-2.</strong> Using lpad and rpad</figcaption>
+        <pre class="code-block"><code>SELECT lpad('ab', 4, '0') As ab_lpad, rpad('ab', 4, '0') As ab_rpad, lpad('abcde',
+4, '0') As ab_lpad_trunc;
+ab_lpad | ab_rpad | ab_lpad_trunc
+--------+---------+---------------
+00ab    | ab00    | abcd</code></pre>
+      </figure>
+
+      <ol class="listing-annotations" aria-label="Example 5-2 annotations">
+        <li><span class="marker" aria-hidden="true">❶</span> <code>lpad</code> truncates instead of padding if string is too long.</li>
+      </ol>
+
+      <p class="no-indent">By default, trim functions remove spaces, but you can pass in an optional argument
+      indicating other characters to trim.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-3.</strong> Trimming spaces and characters</figcaption>
+        <pre class="code-block"><code>SELECT
+a As a_before, trim(a) As a_trim, rtrim(a) As a_rt,
+i As i_before, ltrim(i, '0') As i_lt_0,
+rtrim(i, '0') As i_rt_0, trim(i, '0') As i_t_0
+FROM ( SELECT repeat(' ', 4) || i || repeat(' ', 4) As a, '0' || i As i FROM gener
+ate_series(0, 200, 50) As i
+) As x;
+a_before     | a_trim |  a_rt   | i_before | i_lt_0 | i_rt_0 | i_t_0
+-------------+--------+---------+----------+--------+--------+-------
+     0       | 0      |     0   | 00       |        |        |
+     50      | 50     |     50  | 050      | 50     | 05     | 5
+     100     | 100    |     100 | 0100     | 100    | 01     | 1
+     150     | 150    |     150 | 0150     | 150    | 015    | 15
+     200     | 200    |     200 | 0200     | 200    | 02     | 2</code></pre>
+      </figure>
+
+      <p class="no-indent">Version 9.0 introduced a helpful string aggregate function called <code>string_agg</code>, which we
+      demonstrate in <span class="accent-word">Example 3-11</span> and <span class="accent-word">Example 5-21</span>. <code>string_agg</code> is equivalent in concept
+      to the <code>group_concat</code> function in MySQL.</p>
+
+      <h3 class="section-title">Splitting Strings into Arrays, Tables, or Substrings</h3>
+      <p class="no-indent">There are a couple of useful functions in PostgreSQL for tearing strings apart.</p>
+
+      <p>The <code>split_part</code> function is useful for getting an element of a delimited string, as shown
+      in <span class="accent-word">Example 5-4</span>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">82<span class="sep">|</span>Chapter 5: Data Types</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Listing 3.1 (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 6mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0 0 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(1) {
+      margin-bottom: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(2) {
+      margin-bottom: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(3) {
+      margin-bottom: 14mm;
+    }
+    .prose-page.chapter-page .listing-annotated + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0095.html">← Trước</a>
+    <a href="page_0097.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">71</span>
+        <span class="rh-center">Xây dựng Spring Cloud configuration server của chúng ta</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="listing-annotated">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>&lt;parent&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-parent&lt;/artifactId&gt;
+    &lt;version&gt;1.4.4.RELEASE&lt;/version&gt;
+  &lt;/parent&gt;
+  &lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+      &lt;dependency&gt;
+        &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+        &lt;artifactId&gt;spring-cloud-dependencies&lt;/artifactId&gt;
+        &lt;version&gt;Camden.SR5&lt;/version&gt;
+        &lt;type&gt;pom&lt;/type&gt;
+        &lt;scope&gt;import&lt;/scope&gt;
+      &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+  &lt;/dependencyManagement&gt;
+  &lt;properties&gt;
+    &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+    &lt;start-class&gt;com.thoughtmechanix.confsvr.
+    &#x27A5;ConfigServerApplication &lt;/start-class&gt;
+    &lt;java.version&gt;1.8&lt;/java.version&gt;
+    &lt;docker.image.name&gt;johncarnell/tmx-confsvr&lt;/docker.image.name&gt;
+    &lt;docker.image.tag&gt;chapter3&lt;/docker.image.tag&gt;
+  &lt;/properties&gt;
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+      &lt;artifactId&gt;spring-cloud-starter-config&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+      &lt;artifactId&gt;spring-cloud-config-server&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+&lt;!--Docker build Config  Not Displayed --&gt;
+&lt;/project&gt;</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Chú thích cho Listing 3.1">
+          <p class="listing-callout">Phiên bản Spring Boot bạn sẽ dùng</p>
+          <p class="listing-callout">Phiên bản Spring Cloud sẽ được dùng</p>
+          <p class="listing-callout">Lớp bootstrap sẽ dùng cho configuration server</p>
+          <p class="listing-callout">Các dự án Spring Cloud bạn sẽ dùng trong dịch vụ cụ thể này</p>
+        </div>
+      </div>
+
+      <p class="no-indent">Trong tệp Maven trong listing trước, bạn bắt đầu bằng cách khai báo phiên bản Spring Boot sẽ dùng cho microservice của mình (phiên bản 1.4.4). Phần quan trọng tiếp theo trong định nghĩa Maven là BOM (Bill of Materials) cha của Spring Cloud Configuration mà bạn sẽ dùng. Spring Cloud là tập hợp lớn gồm nhiều dự án độc lập, mỗi dự án phát hành theo lịch riêng. BOM cha này chứa mọi thư viện bên thứ ba và dependency được dùng trong dự án cloud, cùng số phiên bản của từng dự án con tạo nên phiên bản đó. Trong ví dụ này, bạn dùng Spring Cloud phiên bản Camden.SR5. Nhờ định nghĩa BOM, bạn có thể đảm bảo dùng các phiên bản tương thích của các dự án con trong Spring Cloud. Điều đó cũng có nghĩa bạn không cần khai báo số phiên bản cho</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

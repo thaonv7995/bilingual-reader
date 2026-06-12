@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 9: Listing 9.1 Spring Cloud Sleuth in Zuul</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--91 .listing-callouts-right {
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0296.html">← Prev</a>
+    <a href="page_0298.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">272</span>
+        <span class="rh-center">CHAPTER 9 <em>Distributed tracing with Spring Cloud Sleuth and Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">9.2.5 Adding the correlation ID to the HTTP response with Zuul</h4>
+
+      <p class="no-indent">If you inspect the HTTP response back from any service call made with Spring Cloud Sleuth, you&rsquo;ll see that the trace ID used in the call is never returned in the HTTP response headers. If you inspect the documentation for Spring Cloud Sleuth, you&rsquo;ll see that the Spring Cloud Sleuth team believes that returning any of the tracing data can be a potential security issue (though they don&rsquo;t explicitly list their reasons why they believe this.)</p>
+
+      <p>However, I&rsquo;ve found that the returning of a correlation or tracing ID in the HTTP response is invaluable when debugging a problem. Spring Cloud Sleuth does allow you to &ldquo;decorate&rdquo; the HTTP response information with its tracing and span IDs. However, the process to do this involves writing three classes and injecting two custom Spring beans. If you&rsquo;d like to take this approach, you can see it in the Spring Cloud Sleuth documentation (<a href="http://cloud.spring.io/spring-cloud-static/spring-cloud-sleuth/1.0.12.RELEASE/">http://cloud.spring.io/spring-cloud-static/spring-cloud-sleuth/1.0.12.RELEASE/</a>). A much simpler solution is to write a Zuul &ldquo;POST&rdquo; filter that will inject the trace ID in the HTTP response.</p>
+
+      <p>In chapter 6 when we introduced the Zuul API gateway, we saw how to build a Zuul &ldquo;POST&rdquo; response filter to add the correlation ID you generated for use in your services to the HTTP response returned by the caller. You&rsquo;re now going to modify that filter to add the Spring Cloud Sleuth header.</p>
+
+      <p>To set up your Zuul response filter, you need to add a single JAR dependencies to your Zuul server&rsquo;s <code>pom.xml</code> file: <code>spring-cloud-starter-sleuth</code>. The <code>spring-cloud-starter-sleuth</code> dependency will be used to tell Spring Cloud Sleuth that you want Zuul to participate in a Spring Cloud trace. Later in the chapter, when we introduce Zipkin, you&rsquo;ll see that the Zuul service will be the first call in any service invocation.</p>
+
+      <p>For chapter 9, this file can be found in <code>zuulsvr/pom.xml</code>. The following listing shows these dependencies.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 9.1</strong><br>Adding Spring Cloud Sleuth to Zuul</figcaption>
+        <div class="listing-annotated listing-annotated--91" aria-label="Listing 9.1 annotated Maven dependency">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>&lt;dependency&gt;
+   &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+   &lt;artifactId&gt;spring-cloud-starter-sleuth&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 9.1 annotation callout">
+            <p class="listing-callout">Adding <code>spring-cloud-starter-sleuth</code> to Zuul will cause a trace ID to be generated for every service being called in Zuul</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Once this new dependency is in place, the actual Zuul &ldquo;post&rdquo; filter is trivial to implement. The following listing shows the source code used to build the Zuul filter. The file is located in <code>zuulsvr/src/main/java/com/thoughtmechanix/zuulsvr/filters/ResponseFilter.java</code>.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

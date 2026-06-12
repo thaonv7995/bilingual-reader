@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0055.html">← Prev</a>
+    <a href="page_0057.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">56</span>
+      </header>
+
+      <p class="no-indent">contains functions that didn’t make it into the core. In particular, you need this
+      extension if you relied on the xlst_process function for processing XSL templates.
+      There are also a couple of old XPath functions only found in xml2.</p>
+
+      <h3 class="section-title">Backup and Restore</h3>
+      <p class="no-indent">PostgreSQL ships with two utilities for backup: <code>pg_dump</code> and <code>pg_dumpall</code>. You’ll find
+      both in the bin folder. Use <code>pg_dump</code> to back up specific databases and <code>pg_dumpall</code> to
+      back up all databases and server globals. <code>pg_dumpall</code> needs to run under a superuser
+      account so that it has access to back up all databases. Most of the command-line options
+      for these tools exist both in GNU style (two hyphens plus word) and the traditional
+      single-letter style (one hyphen plus alphabetic character). You can use them inter‐
+      changeably, even in the same command. We’ll be covering just the basics here; for a
+      more in-depth discussion, see the PostgreSQL documentation <span class="accent-word">Backup and Restore</span>.</p>
+
+      <p>As you wade through this section, you’ll find that we often specify the port and host in
+      our examples. This is because we often run them via scheduled jobs (<code>pg_agent</code>) on a
+      different machine or we have several instances of PostgreSQL running on the same
+      machine, each running on a different port. Sometimes specifying the <code>-h</code> (<code>--host</code>) option
+      can cause problems if your service is set to listen only on local. You can safely leave
+      out the host if you are running the examples directly on the server.</p>
+
+      <p>You may also want to create a <code>~/.pgpass</code> file to store all passwords. <code>pg_dump</code> and <code>pg_dumpall</code>
+      don’t have password options. Alternatively, you can set a password in the <code>PGPASSWORD</code>
+      environment variable.</p>
+
+      <h3 class="section-title">Selective Backup Using pg_dump</h3>
+      <p class="no-indent">For day-to-day backup, <code>pg_dump</code> is more expeditious than <code>pg_dumpall</code> because it can
+      selectively back up tables, schemas, and databases. <code>pg_dump</code> backs up to plain SQL, but
+      also compressed and TAR formats. Compressed and TAR backups can take advantage
+      of the parallel restore feature introduced in version 8.4. Because we believe you’ll be
+      using <code>pg_dump</code> as part of your daily regimen, we have included a full dump of the help
+      in <span class="accent-word">“Database Backup Using pg_dump” on page 195</span> so you can see the myriad of switches
+      in a single glance.</p>
+
+      <p>The next example shows a few common backup scenarios and corresponding <code>pg_dump</code>
+      options. They should work for any version of PostgreSQL.</p>
+
+      <p class="no-indent">To create a compressed, single database backup:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F c -b -v -f mydb.backup mydb</code></pre>
+      </figure>
+
+      <p class="no-indent">To create a plain-text single database backup, including a CREATE DATABASE statement:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -C -F p -b -v -f mydb.backup mydb</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">38<span class="sep">|</span>Chapter 2: Database Administration</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: OAuth2 grants and section 7.2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0219.html">← Prev</a>
+    <a href="page_0221.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Starting small: using Spring and OAuth2 to protect a single endpoint</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">195</span>
+      </header>
+
+      <p class="no-indent">token that can be presented every time a service being used by the user&rsquo;s application tries to access a protected resource (the microservice).</p>
+
+      <p>The protected resource can then contact the OAuth2 server to determine the validity of the token and retrieve what roles a user has assigned to them. Roles are used to group related users together and to define what resources that group of users can access. For the purposes of this chapter, you&rsquo;re going to use OAuth2 and roles to define what service endpoints and what HTTP verbs a user can call on an endpoint.</p>
+
+      <p>Web service security is an extremely complicated subject. You have to understand who&rsquo;s going to call your services (internal users to your corporate network, external users), how they&rsquo;re going to call your service (internal web-based client, mobile device, web application outside your corporate network), and what actions they&rsquo;re going to take with your code. OAuth2 allows you to protect your REST-based services across these different scenarios through different authentication schemes called grants. The OAuth2 specification has four types of grants:</p>
+
+      <ul class="manning-bullets" aria-label="OAuth2 grant types">
+        <li>Password</li>
+        <li>Client credential</li>
+        <li>Authorization code</li>
+        <li>Implicit</li>
+      </ul>
+
+      <p>We aren&rsquo;t going to walk through each of these grant types or provide code examples for each grant type. That&rsquo;s simply too much material to cover in one chapter. Instead, I&rsquo;ll do the following:</p>
+
+      <ul class="manning-bullets" aria-label="Chapter 7 security topics">
+        <li>Discuss how your microservices service can use OAuth2 through one of the simpler OAuth2 grant types (the password grant type).</li>
+        <li>Use JavaScript web tokens to provide a more robust OAuth2 solution and establish a standard for encoding information in a OAuth2 token.</li>
+        <li>Walk through other security considerations that need to be taken into account when building microservices.</li>
+      </ul>
+
+      <p>I do provide overview material on the other OAuth2 grant types in appendix B, &ldquo;OAuth2 grant types.&rdquo; If you&rsquo;re interested in diving into more detail on the OAuth2 spec and how to implement all the grant types, I highly recommend Justin Richer and Antonio Sanso&rsquo;s book, <em>OAuth2 in Action</em> (Manning, 2017), which is a comprehensive explanation of OAuth2.</p>
+
+      <h4 class="subsection-title">7.2 Starting small: using Spring and OAuth2 to protect a single endpoint</h4>
+
+      <p>To understand how to set up the authentication and authorization pieces of OAuth2, you&rsquo;re going to implement the OAuth2 password grant type. To implement this grant, you&rsquo;ll do the following:</p>
+
+      <ul class="manning-bullets" aria-label="OAuth2 password grant implementation steps">
+        <li>Set up a Spring-Cloud-based OAuth2 authentication service.</li>
+        <li>Register a faux EagleEye UI application as an authorized application that can authenticate and authorize user identities with your OAuth2 service.</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

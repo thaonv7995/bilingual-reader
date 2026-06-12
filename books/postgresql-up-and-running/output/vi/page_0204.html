@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài — Truy vấn một Tệp phẳng dưới dạng Mảng không đều</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word,
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0203.html">← Trước</a>
+    <a href="page_0205.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">204</span>
+      </header>
+
+      <h3 class="section-title">Truy vấn một Tệp phẳng dưới dạng Mảng không đều</h3>
+
+      <p class="no-indent">Thường thì, các nguồn dữ liệu tệp phẳng có số lượng cột khác nhau ở mỗi dòng và chứa
+      nhiều hàng tiêu đề và hàng chân. Những loại tệp này thường phổ biến khi
+      các tệp phẳng xuất phát từ bảng tính. FDW tệp phẳng yêu thích của chúng tôi để xử lý những
+      tệp phẳng không cấu trúc này là <code>file_textarray_fdw</code>. Wrapper này có thể xử lý bất kỳ loại
+      tệp phẳng phân cách nào, ngay cả khi số lượng phần tử trong mỗi hàng không nhất quán. Nó đưa
+      vào mỗi hàng dưới dạng một mảng văn bản (<code>text[]</code>).</p>
+
+      <p>Thật không may, <code>file_textarray_fdw</code> không phải là một phần của bộ công cụ PostgreSQL cốt lõi, vì vậy
+      bạn sẽ cần phải biên dịch nó tự mình. Đầu tiên, cài đặt PostgreSQL với các tiêu đề phát triển PostgreSQL. Sau đó tải xuống mã nguồn <code>file_textarray_fdw</code> từ trang <a href="https://github.com/adunstan/file_text_array_fdw" class="accent-word">GitHub của Adunstan</a>. Có một nhánh khác nhau cho mỗi phiên bản của PostgreSQL, vì vậy hãy
+      chắc chắn chọn nhánh đúng. Khi bạn đã biên dịch mã, hãy cài đặt nó như một phần mở rộng,
+      như bạn làm với bất kỳ FDW nào khác.</p>
+
+      <p>Nếu bạn đang sử dụng Linux/Unix, việc biên dịch rất dễ dàng nếu bạn đã cài đặt gói <code>postgresql-dev</code>.
+      Chúng tôi đã thực hiện công việc biên dịch cho Windows; bạn có thể tải xuống các tệp nhị phân của chúng tôi
+      từ <a href="http://bit.ly/1FUkLPQ" class="accent-word">Windows-32 9.1 FDWs</a>, <a href="http://bit.ly/1yn35Z6" class="accent-word">Windows-32 9.2 FDWs</a>, <a href="http://bit.ly/1u0c0NF" class="accent-word">Windows-64 9.2 FDWs</a>,
+      <a href="http://bit.ly/1rX3aG7" class="accent-word">Windows-32 9.3 FDWs</a>, và <a href="http://bit.ly/1yn3cne" class="accent-word">Windows-64 9.3 FDWs</a>.</p>
+
+      <p>Bước đầu tiên để thực hiện sau khi bạn đã cài đặt một FDW là tạo một phần mở rộng trong
+      cơ sở dữ liệu của bạn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE EXTENSION file_textarray_fdw;</code></pre>
+      </figure>
+
+      <p>Sau đó tạo một máy chủ ngoại như bạn làm với bất kỳ FDW nào:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE SERVER file_taserver FOREIGN DATA WRAPPER file_textarray_fdw;</code></pre>
+      </figure>
+
+      <p>Kế tiếp, đăng ký các bảng. Bạn có thể đặt các bảng ngoại trong bất kỳ lược đồ nào bạn muốn. Trong
+      <span class="accent-word">Ví dụ 10-2</span>, chúng tôi lại sử dụng lược đồ staging của mình.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 10-2.</strong> Tạo một bảng ngoại mảng văn bản từ tệp phân cách</figcaption>
+        <pre class="code-block"><code>CREATE FOREIGN TABLE staging.factfinder_array (x text[])
+SERVER file_taserver
+OPTIONS (format 'csv', filename '/postgresql_book/ch10/
+DEC_10_SF1_QTH1_with_ann.csv',
+header 'false', delimiter ',', quote '"', encoding 'latin1', null ''
+);</code></pre>
+      </figure>
+
+      <p>CSV ví dụ của chúng tôi bắt đầu với tám hàng tiêu đề và có nhiều cột hơn số chúng tôi muốn
+      đếm. Khi thiết lập hoàn tất, bạn có thể cuối cùng truy vấn tệp phân cách của chúng tôi trực tiếp.
+      Truy vấn sau đây sẽ cho chúng tôi tên của các hàng tiêu đề nơi tiêu đề cột đầu tiên
+      là <code>GEO.id</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT unnest(x) FROM staging.factfinder_array WHERE x[1] = 'GEO.id'</code></pre>
+      </figure>
+
+      <p>Truy vấn tiếp theo sẽ cho chúng tôi hai cột đầu tiên của dữ liệu:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">186<span class="sep">|</span>Chương 10: Sao chép và Dữ liệu bên ngoài</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

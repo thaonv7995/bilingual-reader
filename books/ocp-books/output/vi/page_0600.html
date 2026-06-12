@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="2"] {
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0599.html">← Trước</a>
+    <a href="page_0601.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">600</span>
+      </header>
+
+      <ol class="numbered" start="1">
+        <li>các phần tử đầu vào.</li>
+      </ol>
+
+      <p>Lưu ý rằng không có phương thức nào trong <code>Stream</code>&nbsp;để kiểm tra xem nó có thứ tự hay không vì thứ tự thực sự phụ thuộc vào nguồn. Do đó, để xác định xem một stream có thứ tự hay không, bạn phải kiểm tra xem nguồn của stream đó có thứ tự hay không. Ví dụ, để kiểm tra xem một collection cho trước có thứ tự hay không, bạn có thể thực hiện:
+      <code>collection.spliterator().hasCharacteristics(Spliterator.ORDERED)</code>&nbsp;. Điều này sẽ
+      trả về <code>true</code>&nbsp;cho <code>ArrayList</code>&nbsp;và <code>TreeSet</code>&nbsp;nhưng trả về <code>false</code>&nbsp;cho <code>HashSet</code>&nbsp;. Vì vậy, một
+      stream được tạo từ một <code>ArrayList</code>&nbsp;là có thứ tự nhưng từ một <code>HashSet</code>&nbsp;thì không.</p>
+
+      <ol class="numbered" start="2">
+        <li>Một stream được tạo bằng cách sử dụng một hàm tạo (generator function) (tức là sử dụng phương thức <code>Stream.generate(Supplier
+        s)</code>&nbsp;) luôn không có thứ tự. Điều này được quy định bởi đặc tả của phương thức
+        <code>generate</code>&nbsp;của <code>Stream</code>&nbsp;.</li>
+
+        <li>Một thao tác trên stream có thể áp đặt thứ tự riêng của nó lên các phần tử, trong trường hợp đó, thứ tự ban đầu (nếu có) sẽ bị mất. Ví dụ, thao tác <code>sort</code>&nbsp;sắp xếp các phần tử đầu vào. Do đó, stream đầu ra từ thao tác <code>sort</code>&nbsp;sẽ có một thứ tự phần tử mới.</li>
+
+        <li>Kể từ Java 21, hai trong số các thao tác trên stream được định nghĩa rõ ràng là &ldquo;không xác định&rdquo; (non-deterministic).
+        Nghĩa là, chúng không quan tâm đến thứ tự của các phần tử đầu vào và có thể xử lý các
+        phần tử theo bất kỳ thứ tự nào. Đó là <code>forEach(Consumer c)</code>&nbsp;và <code>findAny()</code>&nbsp;. Do đó, không
+        có gì đảm bảo rằng <code>Stream.of(1, 2, 3).forEach(System.out::println);</code>&nbsp;sẽ
+        in các số <code>1</code>&nbsp;, <code>2</code>&nbsp;, và <code>3</code>&nbsp;theo thứ tự đó hoặc <code>Stream.of(1, 2,
+        3).findAny()</code>&nbsp;sẽ luôn trả về một giá trị cụ thể. Tuy nhiên, có một thao tác <code>forEachOrdered</code>
+        trong <code>Stream</code>&nbsp;có thể được sử dụng để xử lý các phần tử theo cùng một thứ tự.
+        Vì vậy, <code>Stream.of(1, 2, 3).forEachOrdered(System.out::println);</code>&nbsp;được đảm bảo sẽ
+        in các số <code>1</code>&nbsp;, <code>2</code>&nbsp;, và <code>3</code>&nbsp;theo đúng thứ tự đó.</li>
+
+        <li>Nếu bạn yêu cầu stream bỏ qua thứ tự bằng cách thêm thao tác <code>unordered()</code>&nbsp;vào đường ống (pipeline), đường ống của stream (stream pipeline) được tự do bỏ qua thứ tự. Thao tác này không chủ động làm xáo trộn thứ tự của các phần tử mà chỉ cho phép đường ống của stream bỏ qua thứ tự nếu nó muốn. Bạn không thể khôi phục lại thứ tự của stream một khi nó đã không có thứ tự.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

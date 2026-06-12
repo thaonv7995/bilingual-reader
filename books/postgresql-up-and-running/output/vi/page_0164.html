@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 8: Viết Hàm — Tập Hợp</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0163.html">← Trước</a>
+    <a href="page_0165.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">164</span>
+      </header>
+
+      <p class="no-indent">Một hàm kích hoạt luôn xuất ra một kiểu dữ liệu gọi là <code>trigger</code>. Bởi vì các hàm kích hoạt của PostgreSQL không khác gì so với bất kỳ hàm nào khác, bạn có thể tái sử dụng cùng một hàm kích hoạt cho nhiều kích hoạt khác nhau. Điều này thường không xảy ra với các cơ sở dữ liệu khác, trong đó mỗi kích hoạt có mã xử lý không thể tái sử dụng riêng.</p>
+
+      <p>Trong PostgreSQL, mỗi kích hoạt phải có chính xác một hàm kích hoạt liên kết để xử lý việc kích hoạt. Để áp dụng nhiều hàm kích hoạt, bạn phải tạo nhiều kích hoạt cho cùng một sự kiện. Thứ tự của tên kích hoạt xác định thứ tự kích hoạt. Mỗi kích hoạt sẽ có quyền truy cập vào dữ liệu đã được sửa đổi từ kích hoạt trước đó. Các kích hoạt tự chúng không cấu thành các giao dịch riêng biệt. Nếu bất kỳ kích hoạt nào phát hành một lệnh hoàn tác, tất cả dữ liệu đã được sửa đổi bởi các kích hoạt trước đó được kích hoạt bởi cùng một sự kiện sẽ bị hoàn tác.</p>
+
+      <p>Bạn có thể sử dụng hầu như bất kỳ ngôn ngữ nào để tạo ra các hàm kích hoạt, với SQL là ngoại lệ đáng chú ý. PL/pgSQL là ngôn ngữ phổ biến nhất. Chúng tôi minh họa việc viết các hàm kích hoạt bằng PL/pgSQL trong <span class="accent-word">&ldquo;Viết Hàm Kích Hoạt trong PL/pgSQL&rdquo; trên trang 152</span>.</p>
+
+      <h3 class="subsection-title">Tập Hợp</h3>
+      <p class="no-indent">Hầu hết các cơ sở dữ liệu khác giới hạn bạn chỉ sử dụng các hàm tập hợp tích hợp sẵn của ANSI SQL như <code>MIN</code>, <code>MAX</code>, <code>AVG</code>, <code>SUM</code>, và <code>COUNT</code>. Trong PostgreSQL, bạn không có giới hạn này. Nếu bạn cần một hàm tập hợp kỳ lạ hơn, bạn có thể tự viết hàm của riêng mình. Bởi vì bạn có thể sử dụng bất kỳ hàm tập hợp nào trong PostgreSQL như một hàm cửa sổ (xem <span class="accent-word">&ldquo;Hàm Cửa Sổ&rdquo; trên trang 132</span>), bạn có thể tận dụng gấp đôi bất kỳ hàm tập hợp nào mà bạn viết.</p>
+
+      <p>Bạn có thể viết các hàm tập hợp bằng hầu như bất kỳ ngôn ngữ nào, bao gồm cả SQL. Một hàm tập hợp thường được cấu thành từ một hoặc nhiều hàm. Nó phải có ít nhất một hàm chuyển trạng thái để thực hiện phép tính; thường thì hàm này chạy lặp đi lặp lại để tạo ra một đầu ra duy nhất từ hai hàng đầu vào. Bạn cũng có thể chỉ định các hàm tùy chọn để quản lý trạng thái ban đầu và trạng thái cuối. Bạn cũng có thể sử dụng một ngôn ngữ khác cho mỗi hàm con. Chúng tôi có nhiều ví dụ về việc xây dựng các hàm tập hợp bằng PL/pgSQL, PL/Python và SQL trong bài viết <span class="accent-word">Tập Hợp PostgreSQL</span>.</p>
+
+      <p>Bất kể ngôn ngữ nào bạn sử dụng để lập trình các hàm, chất kết dính kết nối tất cả chúng lại với nhau là lệnh <code>CREATE AGGREGATE</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE AGGREGATE my_agg (input data type) (
+SFUNC=state function name,
+STYPE=state type,
+FINALFUNC=final function name,
+INITCOND=initial state value, SORTOP=sort_operator
+);</code></pre>
+      </figure>
+
+      <p>Hàm cuối là tùy chọn, nhưng nếu được chỉ định, nó phải nhận đầu vào là kết quả của hàm trạng thái. Hàm trạng thái luôn nhận một kiểu dữ liệu làm đầu vào cùng với kết quả của lần gọi cuối cùng đến hàm trạng thái. Đôi khi kết quả này là những gì bạn muốn như kết quả của hàm tập hợp, và đôi khi bạn muốn chạy một hàm cuối để xử lý</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">146<span class="sep">|</span>Chương 8: Viết Hàm</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

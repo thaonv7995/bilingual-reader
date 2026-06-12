@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 11</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0010.html">← Prev</a>
+      <span>Page 11 / 30</span>
+      <a href="page_0012.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<h3 class="section-title">Chapter 2 - The Data Structures</h3><p class="lead">It's time to look at Redis' five data structures. We'll explain what each data structure is, what methods are available and what type of feature/data you'd use it for.</p><p>The only Redis constructs we've seen so far are commands, keys and values. So far, nothing about data structures has been concrete. When we used the <code>set</code> command, how did Redis know what data structure to use? It turns out that every command is specific to a data structure. For example when you use <code>set</code> you are storing the value in a string data structure. When you use <code>hset</code> you are storing it in a hash. Given the small size of Redis' vocabulary, it's quite manageable.</p><p><strong>Redis' website has great reference documentation.</strong> There's no point in repeating the work they've already done. We'll only cover the most important commands needed to understand the purpose of a data structure.</p><p>There's nothing more important than having fun and trying things out. You can always erase all the values in your database by entering <code>flushdb</code>, so don't be shy and try doing crazy things!</p><h3 class="section-title">Strings</h3><p>Strings are the most basic data structures available in Redis. When you think of a key-value pair, you are thinking of strings. Don't get mixed up by the name, as always, your value can be anything. I prefer to call them "scalars", but maybe that's just me.</p><p>We already saw a common use-case for strings, storing instances of objects by key. This is something that you'll make heavy use of:</p><figure class="code-snippet"><pre class="code-block"><code>set users:leto <span class="cli-string">"{name: leto, planet: dune, likes: [spice]}"</span></code></pre></figure><p>Additionally, Redis lets you do some common operations. For example <code>strlen &lt;key&gt;</code> can be used to get the length of a key's value; <code>getrange &lt;key&gt; &lt;start&gt; &lt;end&gt;</code> returns the specified range of a value; <code>append &lt;key&gt; &lt;value&gt;</code> appends the value to the existing value (or creates it if it doesn't exist already). Go ahead and try those out. This is what I get:</p><figure class="code-snippet"><pre class="code-block"><code><span class="cli-prompt">&gt;</span> strlen users:leto
+(integer) 42
+<span class="cli-prompt">&gt;</span> getrange users:leto 27 40
+"likes: [spice]"
+<span class="cli-prompt">&gt;</span> append users:leto " OVER 9000!!"
+(integer) 54</code></pre></figure><p>Now, you might be thinking, that's great, but it doesn't make sense. You can't meaningfully pull a range out of JSON or append a value. You are right, the lesson here is that some of the commands, especially with the string data structure, only make sense given specific type of data.</p><p>Earlier we learnt that Redis doesn't care about your values. Most of the time that's true. However, a few string commands are specific to some types or structure of values. As a vague example, I could see the above append and</p>
+      <p class="page-folio">10</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0507.html">← Prev</a>
+    <a href="page_0509.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">508</span>
+      </header>
+
+      <p class="no-indent">any thread can read or modify its <code>result</code>&nbsp;field while the factorial is still being computed. Note
+      that whether an outcome is deemed desirable or not is determined by the business process that
+      is being modelled and implemented.</p>
+
+      <p>Thread safety is a major concern in non-trivial applications and while anticipating every
+      possible execution scenario is not always possible, there are several coding techniques that
+      reduce the possibility of multithreading related bugs from creeping into the code. I am listing a
+      few of the important ones here.</p>
+
+      <h3 class="section-title section-title--sub">20.4.1 Use immutable objects<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>If an object&rsquo;s state never changes after it is constructed, it can be read from multiple threads
+      without any possibility of reading incorrect or inconsistent values. Thus, immutable classes are
+      inherently thread safe.</p>
+
+      <p>Creating immutable classes, however, is easier said than done. If you think that making the
+      instance fields of a class final should be enough to make a class immutable,&nbsp;consider the
+      following <code>Student</code>&nbsp;record:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public record Student(String name, java.util.Date dob){ };</code></pre>
+      </figure>
+
+      <p>The <code>Student</code>&nbsp;record itself doesn&rsquo;t allow any of its fields to be changed but what about the
+      <code>Date</code>&nbsp;object pointed to by its <code>dob</code>&nbsp;field? Since the <code>Date</code>&nbsp;class has several setter methods, it
+      is mutable.&nbsp;Thus, a&nbsp;<code>Student</code>&nbsp;object cannot really be considered immutable. This means that
+      just making the fields of a class final or omitting setter methods for its fields may not be enough
+      to make the class immutable. You need to check whether the types of its fields are also
+      immutable or not.&nbsp;</p>
+
+      <p>Furthermore, since it is possible for multiple threads to access the <code>dob</code>&nbsp;field and modify the
+      same <code>Date</code>&nbsp;object simultaneously, the thread safety of the <code>Student</code>&nbsp;object depends on the
+      thread safety of the <code>Date</code>&nbsp;object. Since the <code>Date</code>&nbsp;class is not thread safe (because its
+      documentation doesn&rsquo;t say that it is thread safe), the <code>Student</code>&nbsp;record cannot be considered
+      thread safe either.</p>
+
+      <p>The above is just one example where a seemingly immutable class turns out be</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

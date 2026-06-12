@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Phần tiếp theo Listing 8.11 và log bộ nhớ đệm Redis</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--811-cont .listing-callouts-right {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0279.html">← Prev</a>
+    <a href="page_0281.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Một trường hợp sử dụng Spring Cloud Stream: bộ nhớ đệm phân tán</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">255</span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--811-cont" aria-label="Code có chú thích phần tiếp theo Listing 8.11">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>           Organization.class,
+           organizationId);
+  /*Save the record from cache*/
+  org = restExchange.getBody();
+  if (org!=null) {
+    cacheOrganizationObject(org);
+  }
+  return org;
+}
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Chú thích phần tiếp theo Listing 8.11">
+          <p class="listing-callout">Lưu đối tượng vừa truy xuất vào bộ nhớ đệm</p>
+        </div>
+      </div>
+
+      <p class="no-indent">Phương thức <code>getOrganization()</code> là nơi lời gọi tới organization service diễn ra. Trước khi thực hiện lời gọi REST thực tế, bạn cố gắng truy xuất đối tượng Organization liên quan đến lời gọi từ Redis bằng phương thức <code>checkRedisCache()</code>. Nếu đối tượng organization cần tìm không có trong Redis, code sẽ trả về giá trị null. Nếu giá trị null được trả về từ phương thức <code>checkRedisCache()</code>, code sẽ gọi REST endpoint của organization service để truy xuất bản ghi organization mong muốn. Nếu organization service trả về một organization, đối tượng organization được trả về sẽ được lưu vào bộ nhớ đệm bằng phương thức <code>cacheOrganizationObject()</code>.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Hãy chú ý kỹ tới xử lý ngoại lệ khi tương tác với bộ nhớ đệm. Để tăng khả năng phục hồi, chúng tôi không bao giờ để toàn bộ lời gọi thất bại nếu không thể giao tiếp với máy chủ Redis. Thay vào đó, chúng tôi ghi log ngoại lệ và để lời gọi tiếp tục tới organization service. Trong use case cụ thể này, caching nhằm giúp cải thiện hiệu năng và việc thiếu máy chủ caching không nên ảnh hưởng tới thành công của lời gọi.</p>
+      </aside>
+
+      <p>Với code caching Redis đã sẵn sàng, bạn nên gọi licensing service (đúng vậy, bạn chỉ có hai service, nhưng có rất nhiều hạ tầng) và xem các thông điệp log trong listing 8.10. Nếu bạn thực hiện hai yêu cầu GET liên tiếp tới endpoint licensing service sau, <code>http://localhost:5555/api/licensing/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/licenses/f3831f8c-c338-4ebe-a82a-e2fc1d1ff78a</code>, bạn sẽ thấy hai dòng output sau trong log:</p>
+
+      <figure class="code-snippet" aria-label="Output log bộ nhớ đệm Redis của licensing service">
+        <pre class="code-block"><code>licensingservice_1     | 2016-10-26 09:10:18.455 DEBUG 28 --- [nio-8080-exec-
+1] c.t.l.c.OrganizationRestTemplateClient   : Unable to locate
+organization from the redis cache: e254f8c-c442-4ebe-a82a-e2fc1d1ff78a.
+licensingservice_1     | 2016-10-26 09:10:31.602 DEBUG 28 --- [nio-8080-exec-
+2] c.t.l.c.OrganizationRestTemplateClient   : I have successfully
+retrieved an organization e254f8c-c442-4ebe-a82a-e2fc1d1ff78a from the
+redis cache: com.thoughtmechanix.licenses.model.Organization@6d20d301</code></pre>
+      </figure>
+
+      <p class="no-indent">Dòng đầu tiên từ console cho thấy lần đầu tiên bạn cố gắng gọi endpoint licensing service cho organization <code>e254f8c-c442-4ebe-a82a-e2fc1d1ff78a</code>. Licensing service trước tiên kiểm tra bộ nhớ đệm Redis và không tìm thấy bản ghi organization mà nó đang tìm. Code sau đó gọi organization service để truy xuất</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-animal {
+      position: absolute;
+      top: 8mm;
+      left: var(--book-margin-x);
+      width: 13mm;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 1.5mm 0 2mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0042.html">← Trước</a>
+    <a href="page_0044.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <img class="chapter-animal" src="../assets/images/page_0043_icon.png" width="50" height="48" alt="">
+
+      <p class="no-indent">Các phiên bản gần đây của PostgreSQL không còn sử dụng các thuật ngữ người dùng và
+      nhóm. Bạn vẫn sẽ thấy những thuật ngữ này được sử dụng trên các diễn đàn thảo luận; chỉ cần biết rằng chúng có nghĩa là vai trò đăng nhập và vai trò nhóm tương ứng. Để tương thích ngược, <code>CREATE USER</code> và <code>CREATE
+      GROUP</code> vẫn hoạt động trong phiên bản hiện tại, nhưng hãy tránh chúng và sử dụng <code>CREATE
+      ROLE</code> thay vào đó.</p>
+
+      <h3 class="tool-title">Tạo vai trò đăng nhập</h3>
+      <p>Khi bạn khởi tạo cụm dữ liệu trong quá trình thiết lập, PostgreSQL tạo một vai trò duy nhất cho
+      bạn với tên <code>postgres</code>. (PostgreSQL cũng tạo một cơ sở dữ liệu mang tên
+      <code>postgres</code>.) Bạn có thể bỏ qua việc thiết lập mật khẩu bằng cách ánh xạ một người dùng gốc của hệ điều hành với vai trò mới. Sau khi bạn đã cài đặt PostgreSQL, trước khi làm bất cứ điều gì khác, bạn nên đăng nhập
+      với tư cách <code>postgres</code> bằng cách sử dụng <code>psql</code> hoặc <code>pgAdmin</code> và tạo các vai trò khác. pgAdmin có một phần đồ họa
+      để tạo vai trò người dùng, nhưng nếu bạn muốn tạo một vai trò bằng SQL, hãy thực hiện một lệnh SQL như trong Ví dụ 2-4.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 2-4</strong><br>Tạo vai trò đăng nhập</figcaption>
+        <pre class="code-block"><code>CREATE ROLE leo LOGIN PASSWORD 'king' CREATEDB VALID UNTIL 'infinity';</code></pre>
+      </figure>
+
+      <p>Dòng <code>VALID</code> là tùy chọn và chỉ định khi nào vai trò sẽ hết hạn và mất quyền; mặc định là <code>infinity</code>, có nghĩa là vai trò không bao giờ hết hạn. Bộ sửa đổi <code>CREATEDB</code> cấp quyền tạo cơ sở dữ liệu cho vai trò mới.</p>
+
+      <p>Để tạo một người dùng với quyền siêu người dùng, hãy làm như trong Ví dụ 2-5. Tất nhiên, bạn
+      chỉ có thể tạo một siêu người dùng nếu bạn cũng là một siêu người dùng.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 2-5</strong><br>Tạo vai trò siêu người dùng</figcaption>
+        <pre class="code-block"><code>CREATE ROLE regina LOGIN PASSWORD 'queen' SUPERUSER VALID UNTIL '2020-1-1 00:00';</code></pre>
+      </figure>
+
+      <p>Chúng tôi thực sự không muốn nữ hoàng của mình trị vì mãi mãi, vì vậy chúng tôi đã thêm một ngày thoái vị.</p>
+
+      <h3 class="tool-title">Tạo vai trò nhóm</h3>
+      <p>Các vai trò nhóm thường không có quyền đăng nhập nhưng phục vụ như là các container cho các vai trò khác. Đây chỉ là một gợi ý về thực hành tốt nhất. Không có gì ngăn cản bạn tạo một vai trò có thể
+      vừa đăng nhập vừa chứa các vai trò khác.</p>
+
+      <p>Tạo một vai trò nhóm thông qua SQL sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE ROLE royalty INHERIT;</code></pre>
+      </figure>
+
+      <p>Lưu ý việc sử dụng thuật ngữ <code>INHERIT</code>. Điều này có nghĩa là bất kỳ thành viên nào của royalty sẽ tự động có quyền được cấp cho vai trò royalty, ngoại trừ quyền siêu người dùng. Vì lý do bảo mật,
+      PostgreSQL không bao giờ chuyển giao quyền siêu người dùng.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Vai trò<span class="sep">|</span>25</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

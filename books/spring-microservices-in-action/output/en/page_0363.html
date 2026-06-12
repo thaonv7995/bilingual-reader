@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Appendix B: Figure B.1 OAuth2 password grant</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 1;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page figure.diagram + figure.diagram.fig-caption-only,
+    .prose-page.chapter-page figure.diagram.fig-caption-only + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0362.html">← Prev</a>
+    <a href="page_0364.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">APPENDIX B <em>OAuth2 grant types</em></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">338</span>
+      </header>
+
+      <figure class="diagram" aria-label="Figure B.1 OAuth2 password grant flow">
+        <img src="../assets/images/page_0363_fig_B_1.png" width="1313" height="630" alt="Figure B.1 — OAuth2 password grant flow between EagleEye application, OAuth2 service, and protected services">
+      </figure>
+
+      <figure class="diagram fig-caption-only" aria-label="Figure B.1 caption">
+        <figcaption><strong>Figure B.1</strong><br>The OAuth2 service determines if the user accessing the service is an authenticated user.</figcaption>
+      </figure>
+
+      <ol class="manning-numbered continued" aria-label="Figure B.1 password grant flow steps (continued)">
+        <li>The user logs into EagleEye and provides their login credentials to the EagleEye application. EagleEye passes the user credentials, along with the application name/application secret key, directly to the EagleEye OAuth2 service.</li>
+        <li>The EagleEye OAuth2 service authenticates the application and the user and then provides an OAuth2 access token back to the user.</li>
+        <li>Every time the EagleEye application calls a service on behalf of the user, it passes along the access token provided by the OAuth2 server.</li>
+        <li>When a protected service is called (in this case, the licensing and organization service), the service calls back into the EagleEye OAuth2 service to validate the token. If the token is good, the service being invoked allows the user to proceed. If the token is invalid, the OAuth2 service returns back an HTTP status code of 403, indicating that the token is invalid.</li>
+      </ol>
+
+      <h4 class="subsection-title">B.2 Client credential grants</h4>
+
+      <p class="no-indent">The client credentials grant is typically used when an application needs to access an OAuth2 protected resource, but no human being is involved in the transaction. With the client credentials grant type, the OAuth2 server only authenticates based on application name and the secret key provided by the owner of the resource. Again, the client credential task is usually used when both applications are owned by the same company. The difference between the password grant and the client credential grant is that a client credential grant authenticates by only using the registered application name and the secret key.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Hình 9.9 truy vấn trace ID</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .diagram-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+      gap: 0 2mm;
+      margin: 0 0 1.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page .diagram-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + .diagram-annotated,
+    .prose-page.chapter-page .diagram-annotated + figure.diagram {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0295.html">← Prev</a>
+    <a href="page_0297.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Tổng hợp nhật ký và Spring Cloud Sleuth</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">271</span>
+      </header>
+
+      <p class="no-indent">Chúng tôi chỉ phát hiện vấn đề sau khi dành 1,5 tuần truy vấn nhật ký và xem xét đầu ra trace của hàng chục kịch bản riêng biệt. Chúng tôi sẽ không tìm ra vấn đề nếu không có nền tảng ghi log tổng hợp đã được triển khai. Trải nghiệm này khẳng định lại một số điều:</p>
+
+      <ol class="manning-numbered" aria-label="Bài học rút ra từ ghi log tổng hợp">
+        <li><strong class="run-in">Hãy chắc chắn xác định và triển khai chiến lược ghi log sớm trong quá trình phát triển dịch vụ</strong>&mdash;Triển khai hạ tầng ghi log rất tẻ nhạt, đôi khi khó khăn và tốn thời gian khi dự án đã đi được khá xa.</li>
+        <li><strong class="run-in">Ghi log là một phần quan trọng của hạ tầng microservice</strong>&mdash;Hãy suy nghĩ thật kỹ trước khi tự triển khai giải pháp ghi log hoặc thậm chí cố triển khai giải pháp ghi log on-premise. Các nền tảng ghi log trên cloud đáng với số tiền bỏ ra.</li>
+        <li><strong class="run-in">Hãy học công cụ ghi log của bạn</strong>&mdash;Hầu hết nền tảng ghi log đều có ngôn ngữ truy vấn để truy vấn các nhật ký đã tổng hợp. Nhật ký là nguồn thông tin và số liệu đáng kinh ngạc. Về bản chất, chúng là một loại cơ sở dữ liệu khác, và thời gian bạn dành để học truy vấn sẽ mang lại lợi ích to lớn.</li>
+      </ol>
+
+      <div class="diagram-annotated" aria-label="Hình 9.9 ảnh chụp màn hình có chú thích">
+        <figure class="diagram">
+          <img src="../assets/images/page_0296_fig_9_9.png" width="1313" height="1285" alt="Hình 9.9 — Màn hình sự kiện Papertrail được lọc theo Spring Cloud Sleuth trace ID a9e3e1786b74d302">
+        </figure>
+        <div class="diagram-callouts" aria-label="Chú thích Hình 9.9">
+          <p class="listing-callout">Nhật ký cho thấy dịch vụ licensing và sau đó là dịch vụ organization đã được gọi như một phần của giao dịch đơn này.</p>
+          <p class="listing-callout">Đây là Spring Cloud Sleuth trace ID mà bạn sẽ truy vấn.</p>
+        </div>
+      </div>
+
+      <figure class="diagram fig-caption-only" aria-label="Chú thích Hình 9.9">
+        <figcaption><strong>Hình 9.9</strong><br>Trace ID cho phép bạn lọc tất cả mục nhật ký liên quan đến giao dịch đơn đó.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

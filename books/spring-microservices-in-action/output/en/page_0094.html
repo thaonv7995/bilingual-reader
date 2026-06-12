@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 3: Implementation choices</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.table-caption {
+      margin: 0 0 1.5mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page table.data-table.config-projects-table {
+      margin: 0 0 3mm;
+      font-size: 9pt;
+      line-height: 1.22;
+    }
+    .prose-page.chapter-page table.config-projects-table th {
+      background: #d9d9d9;
+      font-weight: 700;
+      padding: 1mm 1.5mm;
+    }
+    .prose-page.chapter-page table.config-projects-table td {
+      padding: 1mm 1.5mm;
+      vertical-align: top;
+    }
+    .prose-page.chapter-page table.config-projects-table .project-name {
+      font-weight: 700;
+      width: 16%;
+    }
+    .prose-page.chapter-page table.config-projects-table .description {
+      width: 32%;
+    }
+    .prose-page.chapter-page table.config-projects-table .characteristics {
+      width: 52%;
+    }
+    .prose-page.chapter-page table.config-projects-table + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0093.html">← Prev</a>
+    <a href="page_0095.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">On managing configuration (and complexity)</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">69</span>
+      </header>
+
+      <p class="no-indent">together. We&rsquo;re now going to move on to look at the different solutions for the pattern and then see a concrete implementation.</p>
+
+      <h4 class="subsection-title">3.1.2 Implementation choices</h4>
+
+      <p>Fortunately, you can choose among a large number of battle-tested open source projects to implement a configuration management solution. Let&rsquo;s look at several of the different choices available and compare them. Table 3.1 lays out these choices.</p>
+
+      <p class="table-caption no-indent"><strong>Table 3.1</strong><br>Open source projects for implementing a configuration management system</p>
+
+      <table class="data-table config-projects-table">
+        <thead>
+          <tr>
+            <th scope="col">Project Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Characteristics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="project-name">Etcd</td>
+            <td class="description">Open source project written in Go. Used for service discovery and key-value management. Uses the raft (<a href="https://raft.github.io/">https://raft.github.io/</a>) protocol for its distributed computing model.</td>
+            <td class="characteristics">Very fast and scalable<br>Distributable<br>Command-line driven<br>Easy to use and setup</td>
+          </tr>
+          <tr>
+            <td class="project-name">Eureka</td>
+            <td class="description">Written by Netflix. Extremely battle-tested. Used for both service discovery and key-value management.</td>
+            <td class="characteristics">Distribute key-value store.<br>Flexible; takes effort to set up<br>Offers dynamic client refresh out of the box</td>
+          </tr>
+          <tr>
+            <td class="project-name">Consul</td>
+            <td class="description">Written by Hashicorp. Similar to Etcd and Eureka in features, but uses a different algorithm for its distributed computing model (SWIM protocol; <a href="https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf">https://www.cs.cornell.edu/~asdas/research/dsn02-swim.pdf</a>).</td>
+            <td class="characteristics">Fast<br>Offers native service discovery with the option to integrate directly with DNS<br>Doesn&rsquo;t offer client dynamic refresh right out of the box</td>
+          </tr>
+          <tr>
+            <td class="project-name">ZooKeeper</td>
+            <td class="description">An Apache project that offers distributed locking capabilities. Often used as a configuration management solution for accessing key-value data.</td>
+            <td class="characteristics">Oldest, most battle-tested of the solutions<br>The most complex to use<br>Can be used for configuration management, but should be considered only if you&rsquo;re already using ZooKeeper in other pieces of your architecture</td>
+          </tr>
+          <tr>
+            <td class="project-name">Spring Cloud configuration server</td>
+            <td class="description">An open source project that offers a general configuration management solution with different back ends. It can integrate with Git, Eureka, and Consul as a back end.</td>
+            <td class="characteristics">Non-distributed key/value store<br>Offers tight integration for Spring and non-Spring services<br>Can use multiple back ends for storying configuration data including a shared filesystem, Eureka, Consul, and Git</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>All the solutions in table 3.1 can easily be used to build a configuration management solution. For the examples in this chapter and throughout the rest of the book, you&rsquo;ll use Spring Cloud configuration server. I chose this solution for several reasons, including the following:</p>
+
+      <ol class="manning-numbered" aria-label="Reasons for choosing Spring Cloud configuration server">
+        <li>Spring Cloud configuration server is easy to set up and use.</li>
+        <li>Spring Cloud configuration integrates tightly with Spring Boot. You can literally read all your application&rsquo;s configuration data with a few simple-to-use annotations.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

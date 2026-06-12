@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.extension-name {
+      margin: 2mm 0 0.5mm;
+      text-indent: 0;
+      font-style: italic;
+    }
+    .prose-page.chapter-page p.extension-name + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0054.html">← Trước</a>
+    <a href="page_0056.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent extension-name">fuzzystrmatch</p>
+      <p class="no-indent">Một tiện ích mở rộng nhẹ với các hàm như <code>soundex</code>, <code>levenshtein</code>, và <code>meta‐
+      phone</code> cho việc so khớp chuỗi mờ. Chúng tôi thảo luận về việc sử dụng nó trong <span class="accent-word">Where is Soundex and Other
+      Warm and Fuzzy Things</span>.</p>
+
+      <p class="no-indent extension-name">hstore</p>
+      <p class="no-indent">Một tiện ích mở rộng thêm khả năng lưu trữ cặp khóa-giá trị và hỗ trợ chỉ mục, rất phù hợp cho
+      việc lưu trữ dữ liệu giả chuẩn hóa. Nếu bạn đang tìm kiếm một phương tiện thoải mái giữa cơ sở dữ liệu quan hệ và NoSQL, hãy kiểm tra <code>hstore</code>.</p>
+
+      <p class="no-indent extension-name">pg_trgm (trigram)</p>
+      <p class="no-indent">Một thư viện tìm kiếm chuỗi mờ khác, được sử dụng kết hợp với <code>fuzzystrmatch</code>. Trong
+      phiên bản 9.1, nó thêm một lớp toán tử mới, làm cho việc tìm kiếm sử dụng toán tử <code>ILIKE</code>
+      có thể lập chỉ mục. <code>trigram</code> cũng có thể lập chỉ mục các tìm kiếm ký tự đại diện dưới dạng <code>LIKE '%some‐
+      thing%'</code>. Xem <span class="accent-word">Teaching ILIKE and LIKE New Tricks</span> để thảo luận thêm.</p>
+
+      <p class="no-indent extension-name">dblink</p>
+      <p class="no-indent">Cho phép bạn truy vấn một cơ sở dữ liệu PostgreSQL trên một máy chủ khác. Trước khi giới thiệu
+      các bộ dữ liệu ngoại trong phiên bản 9.3, đây là cơ chế duy nhất được hỗ trợ cho các tương tác giữa các cơ sở dữ liệu. Nó vẫn hữu ích cho các kết nối một lần
+      hoặc các truy vấn ad hoc. Khi chúng tôi phải khôi phục một bản sao lưu cơ sở dữ liệu cũ để lấy lại dữ liệu bị xóa nhầm, chúng tôi sử dụng <code>dblink</code> để kết nối từ cơ sở dữ liệu hiện tại đến bản sao lưu đã khôi phục của nó.</p>
+
+      <p class="no-indent extension-name">pgcrypto</p>
+      <p class="no-indent">Cung cấp các công cụ mã hóa, bao gồm PGP phổ biến. Nó rất tiện lợi cho việc mã hóa
+      số thẻ tín dụng và các thông tin bí mật khác được lưu trữ trong cơ sở dữ liệu. Chúng tôi đã đặt một hướng dẫn nhanh về nó tại <span class="accent-word">Encrypting Data with pgcrypto</span>.</p>
+
+      <h3 class="subsection-title">Các tiện ích mở rộng cổ điển</h3>
+      <p class="no-indent">Ở đây chúng tôi đề cập đến một vài tiện ích mở rộng đã thu hút đủ sự quan tâm để có mặt
+      trong các bản phát hành chính thức của PostgreSQL. Chúng tôi gọi tên chúng ở đây vì bạn vẫn có thể
+      gặp chúng như các tiện ích mở rộng riêng biệt trên các máy chủ cũ:</p>
+
+      <p class="no-indent extension-name">tsearch</p>
+      <p class="no-indent">Một bộ chỉ mục, toán tử, từ điển tùy chỉnh và các hàm nâng cao tìm kiếm toàn văn. Nó hiện đã trở thành một phần của PostgreSQL chính thức. Nếu bạn vẫn dựa vào hành vi
+      từ tiện ích mở rộng cũ, bạn có thể cài đặt <code>tsearch2</code>. Một chiến thuật tốt hơn sẽ là chỉ cần
+      cập nhật các máy chủ mà bạn đang sử dụng các hàm cũ, vì tính tương thích có thể
+      kết thúc bất cứ lúc nào.</p>
+
+      <p class="no-indent extension-name">xml</p>
+      <p class="no-indent">Một tiện ích mở rộng đã thêm một kiểu dữ liệu XML, các hàm và toán tử liên quan. Kiểu dữ liệu
+      XML hiện là một phần không thể thiếu của PostgreSQL, một phần để đáp ứng tiêu chuẩn ANSI SQL
+      XML. Tiện ích mở rộng cũ, hiện được gọi là <code>xml2</code>, vẫn có thể được cài đặt và</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Tiện ích mở rộng<span class="sep">|</span>37</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

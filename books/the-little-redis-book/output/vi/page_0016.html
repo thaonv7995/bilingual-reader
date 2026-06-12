@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Cuốn sách Redis nhỏ — Trang 16</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Điều hướng trang">
+      <a href="page_0015.html">← Trước</a>
+      <span>Trang 16 / 30</span>
+      <a href="page_0017.html">Tiếp →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<h3 class="section-title">Truy vấn đa key giả</h3><p class="lead">Cần truy cùng value bằng key khác nhau — email lúc đăng nhập, id sau đăng nhập. Cách tệ: nhân đôi object:</p><figure class="code-snippet"><pre class="code-block"><code>set users:leto@dune.gov <span class="cli-string">"{id: 9001, email: 'leto@dune.gov', ...}"</span>
+set users:9001 <span class="cli-string">"{id: 9001, email: 'leto@dune.gov', ...}"</span></code></pre></figure><p>Khó quản lý và tốn gấp đôi RAM.</p><p>Redis không link key với key — triết lý API gọn. Giải pháp: hash.</p><p>Dùng hash bỏ nhân đôi:</p><figure class="code-snippet"><pre class="code-block"><code>set users:9001 <span class="cli-string">"{id: 9001, email: leto@dune.gov, ...}"</span>
+hset users:lookup:email leto@dune.gov 9001</code></pre></figure><p>Field làm chỉ mục phụ, trỏ một user object. Lấy theo id:</p><figure class="code-snippet"><pre class="code-block"><code>get users:9001</code></pre></figure><p>Theo email: hget rồi get (Ruby):</p><figure class="code-snippet"><pre class="code-block"><code>id = redis.hget('users:lookup:email', 'leto@dune.gov')
+user = redis.get("users:#{id}")</code></pre></figure><p>Pattern hay dùng — hash tỏa sáng ở đây.</p><h3 class="section-title">Tham chiếu và chỉ mục</h3><p>Phải tự quản lý index/tham chiếu — hơi phiền khi update/delete.</p><p>Set thường làm index thủ công:</p><figure class="code-snippet"><pre class="code-block"><code>sadd friends:leto ghanima paul chani jessica</code></pre></figure><p>Mỗi member trỏ string user. Nếu chani đổi tên/xóa tài khoản — có thể theo quan hệ ngược:</p>
+      <p class="page-folio">15</p>
+    </article>
+  </main>
+</body>
+</html>

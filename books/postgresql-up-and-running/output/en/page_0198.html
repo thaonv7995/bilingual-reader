@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 10: Replication and External Data — Replication Jargon</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p .run-in {
+      font-style: italic;
+      font-weight: normal;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0197.html">← Prev</a>
+    <a href="page_0199.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">198</span>
+      </header>
+
+      <p class="no-indent"><em class="run-in">Master</em> The master server is the database server sourcing the data being replicated and
+      where all updates happen. You&rsquo;re allowed only one master when using the built-in
+      replication features of PostgreSQL. Plans are in place to support multimaster rep&shy;lication
+      scenarios. Watch for it in future releases.</p>
+
+      <p class="no-indent"><em class="run-in">Slave</em> A slave server consumes the replicated data and provides a replica of the master.
+      More aesthetically pleasing terms such as subscriber and agent have been bandied
+      about, but slave is still the most apropos. PostgreSQL built-in replication supports
+      only read-only slaves at this time.</p>
+
+      <p class="no-indent"><em class="run-in">Write-ahead log (WAL)</em> WAL is the log that keeps track of all transactions, often referred to as the transaction
+      log in other database products. To stage replication, PostgreSQL simply makes the
+      logs available to the slaves. Once slaves have pulled the logs, they just need to execute
+      the transactions therein.</p>
+
+      <p class="no-indent"><em class="run-in">Synchronous</em> A transaction on the master will not be considered complete until at least one slave
+      is updated. If you have multiple synchronous slaves, they do not all need to respond
+      for success.</p>
+
+      <p class="no-indent"><em class="run-in">Asynchronous</em> A transaction on the master will commit even if slaves haven&rsquo;t been updated. This
+      is useful in the case of distant servers where you don&rsquo;t want transactions to wait
+      because of network latency, but the downside is that your dataset on the slave might
+      lag behind, and the slave might miss some transactions in the event of transmission
+      failure.</p>
+
+      <p class="no-indent"><em class="run-in">Streaming</em> The streaming replication model was introduced in PostgreSQL 9.0. Unlike prior
+      versions, it does not require direct file access between master and slaves. Instead,
+      it relies on the PostgreSQL connection protocol to transmit the WALs.</p>
+
+      <p class="no-indent"><em class="run-in">Cascading replication</em> Starting with version 9.2, slaves can receive logs from nearby slaves instead of di&shy;rectly
+      from the master. This allows a slave to also behave like a master for replication
+      purposes. The slave remains read-only. When a slave acts as both a receiver and a
+      sender, it is called a cascading standby.</p>
+
+      <p class="no-indent"><em class="run-in">Remastering</em> Remastering is the process whereby you promote a slave to be the master. Up to
+      and including version 9.2, this was a process that required using WAL file archiving
+      instead of streaming replication. It also required all slaves to be recloned. Version
+      9.3 introduced streaming-only remastering, which means remastering no longer</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">180<span class="sep">|</span>Chapter 10: Replication and External Data</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

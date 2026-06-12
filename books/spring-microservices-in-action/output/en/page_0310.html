@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 9: Listing 9.6 continued and Listing 9.7</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 24%) minmax(0, 46%) minmax(0, 30%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 2;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-left {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--96cont .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--96cont .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callouts-below {
+      margin: 1.5mm auto 2.5mm;
+      max-width: 72%;
+    }
+    .prose-page.chapter-page .listing-callouts-below .listing-callout {
+      text-align: center;
+    }
+    .prose-page.chapter-page .listing-annotated + .listing-callouts-below + p,
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0309.html">← Prev</a>
+    <a href="page_0311.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Distributed tracing with Open Zipkin</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">285</span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--96cont" aria-label="Listing 9.6 (continued)">
+        <div class="listing-callouts-left" aria-label="Listing 9.6 left callout">
+          <p class="listing-callout">Close the span out with a finally block.</p>
+        </div>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>  private static final Logger logger =
+    ➥ LoggerFactory
+      .getLogger(OrganizationRestTemplateClient.class);
+
+  private Organization checkRedisCache(String organizationId) {
+    Span newSpan = tracer.createSpan("readLicensingDataFromRedis");
+    try {
+      return orgRedisRepo.findOrganization(organizationId);
+    }
+    catch (Exception ex){
+      logger.error("Error encountered while
+          ➥ trying to retrieve organization
+          ➥ {} check Redis Cache. Exception {}",
+          ➥ organizationId, ex);
+      return null;
+    }
+    finally {
+      newSpan.tag("peer.service", "redis");
+      newSpan.logEvent(
+         org.springframework.cloud.sleuth.Span.CLIENT_RECV);
+      tracer.close(newSpan);
+    }
+  }
+  //Rest of class removed for conciseness
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Listing 9.6 right callouts">
+          <p class="listing-callout">For your custom span, create a new span called &ldquo;readLicensingDataFromRedis&rdquo;.</p>
+          <p class="listing-callout">You can add tag information to the span. In this class you provide the name of the service that&rsquo;s going to be captured by Zipkin</p>
+          <p class="listing-callout">Log an event to tell Spring Cloud Sleuth that it should capture the time when the call is complete.</p>
+        </div>
+      </div>
+
+      <div class="listing-callouts-below" aria-label="Listing 9.6 bottom callout">
+        <p class="listing-callout">Close out the trace. If you don&rsquo;t call the close() method, you&rsquo;ll get error messages in the logs indicating that a span has been left open</p>
+      </div>
+
+      <p class="no-indent">The code in listing 9.6 creates a custom span called <code>readLicensingDataFromRedis</code>. Now you&rsquo;ll also add a custom span, called <code>getOrgDbCall</code>, to the organization service to monitor how long it takes to retrieve organization data from the Postgres database. The trace for organization service database calls can be seen in the <code>organization-service/src/main/java/com/thoughtmechanix/organization/services/OrganizationService.java</code> class. The method containing the custom trace is the <code>getOrg()</code> method call.</p>
+
+      <p>The following listing shows the source code from the organization service&rsquo;s <code>getOrg()</code> method.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 9.7</strong><br>The instrumented <code>getOrg()</code> method</figcaption>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>package com.thoughtmechanix.organization.services;
+
+//Removed the imports for conciseness
+@Service
+public class OrganizationService {
+  @Autowired
+  private OrganizationRepository orgRepository;
+
+  @Autowired
+  private Tracer tracer;</code></pre>
+        </figure>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

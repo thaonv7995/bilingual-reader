@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Các mẫu khả năng phục hồi phía client</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-left em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page ol.manning-numbered--patterns {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered--patterns li {
+      margin-bottom: 0.8mm;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0144.html">← Trước</a>
+    <a href="page_0146.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">CHƯƠNG 5 <em>Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</em></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">120</span>
+      </header>
+
+      <p class="no-indent">Mặc dù các cách tiếp cận này đã tính đến việc mất hoàn toàn (và thường là đột ngột) một thành phần hệ thống, chúng chỉ giải quyết một phần nhỏ trong việc xây dựng hệ thống có khả năng phục hồi. Khi một dịch vụ gặp sự cố, việc phát hiện nó không còn hoạt động là khá dễ dàng, và ứng dụng có thể định tuyến vòng qua nó. Tuy nhiên, khi một dịch vụ chạy chậm, việc phát hiện hiệu năng kém đó và định tuyến vòng qua nó cực kỳ khó khăn vì</p>
+
+      <ol class="manning-numbered" aria-label="Vì sao phát hiện dịch vụ chậm là khó">
+        <li><strong class="run-in">Sự suy giảm của một dịch vụ có thể bắt đầu theo kiểu gián đoạn rồi leo thang dần</strong>&mdash;Sự suy giảm có thể chỉ xảy ra trong các đợt ngắn. Dấu hiệu đầu tiên của lỗi có thể là một nhóm nhỏ người dùng phàn nàn về vấn đề, cho đến khi đột nhiên container ứng dụng cạn kiệt thread pool và sụp đổ hoàn toàn.</li>
+        <li><strong class="run-in">Các cuộc gọi tới dịch vụ từ xa thường là đồng bộ và không cắt ngắn một cuộc gọi chạy lâu</strong>&mdash;Bên gọi dịch vụ không có khái niệm timeout để ngăn cuộc gọi treo mãi mãi. Nhà phát triển ứng dụng gọi dịch vụ để thực hiện một hành động và chờ dịch vụ trả về kết quả.</li>
+        <li><strong class="run-in">Ứng dụng thường được thiết kế để xử lý lỗi hoàn toàn của tài nguyên từ xa, chứ không phải suy giảm một phần.</strong> Thường thì miễn là dịch vụ chưa hoàn toàn hỏng, ứng dụng vẫn tiếp tục gọi dịch vụ và sẽ không fail fast. Ứng dụng sẽ tiếp tục gọi dịch vụ đang hoạt động kém. Ứng dụng hoặc dịch vụ gọi có thể suy giảm một cách an toàn hoặc, có khả năng cao hơn, gặp sự cố vì cạn kiệt tài nguyên. Cạn kiệt tài nguyên là khi một tài nguyên giới hạn như thread pool hoặc kết nối cơ sở dữ liệu đạt tới giới hạn và client gọi phải chờ tài nguyên đó sẵn sàng.</li>
+      </ol>
+
+      <p>Điều nguy hiểm tiềm ẩn về các vấn đề do dịch vụ từ xa hoạt động kém gây ra là chúng không chỉ khó phát hiện, mà còn có thể kích hoạt hiệu ứng lan truyền lan khắp toàn bộ hệ sinh thái ứng dụng. Nếu không có các biện pháp bảo vệ, một dịch vụ hoạt động kém duy nhất có thể nhanh chóng làm sập nhiều ứng dụng. Các ứng dụng dựa trên cloud, dựa trên microservice đặc biệt dễ bị tổn thương trước các loại sự cố này vì các ứng dụng này được ghép từ rất nhiều dịch vụ phân tán, chi tiết hóa mức cao với nhiều phần hạ tầng khác nhau tham gia hoàn tất giao dịch của người dùng.</p>
+
+      <h4 class="subsection-title">5.1 Các mẫu khả năng phục hồi phía client là gì?</h4>
+
+      <p>Các mẫu phần mềm khả năng phục hồi phía client tập trung vào bảo vệ client của một tài nguyên từ xa (một cuộc gọi microservice khác hoặc tra cứu cơ sở dữ liệu) khỏi bị sự cố khi tài nguyên từ xa đó đang lỗi vì dịch vụ từ xa ném lỗi hoặc hoạt động kém. Mục tiêu của các mẫu này là cho phép client &ldquo;fail fast,&rdquo; không tiêu tốn các tài nguyên quý giá như kết nối cơ sở dữ liệu và thread pool, và ngăn vấn đề của dịch vụ từ xa lan truyền &ldquo;ngược dòng&rdquo; tới các consumer của client.</p>
+
+      <p class="no-indent">Có bốn mẫu khả năng phục hồi phía client:</p>
+
+      <ol class="manning-numbered manning-numbered--patterns" aria-label="Bốn mẫu khả năng phục hồi phía client">
+        <li>Cân bằng tải phía client</li>
+        <li>Circuit breaker</li>
+        <li>Fallback</li>
+        <li>Bulkhead</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

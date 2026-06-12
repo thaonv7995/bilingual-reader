@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 17: Biểu thức Lambda và Tham chiếu Phương thức</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .ocp-chapter-title {
+      margin: 0 0 8mm;
+      font-size: 24pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-indent: 0;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives {
+      margin: 0 0 10mm;
+    }
+
+    .ocp-exam-objectives__label {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives__rule {
+      flex: 1;
+      height: 0;
+      border-top: 0.35mm solid #ea580c;
+    }
+
+    .ocp-exam-objectives__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ocp-exam-objectives__list li {
+      position: relative;
+      margin: 0;
+      padding-left: 5mm;
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+      text-align: justify;
+    }
+
+    .ocp-exam-objectives__list li::before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #ea580c;
+      font-size: 11pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0309.html">← Trước</a>
+    <a href="page_0311.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">310</span>
+      </header>
+
+      <p class="ocp-chapter-title no-indent">Chương 17 Biểu thức Lambda và Tham chiếu Phương thức</p>
+
+      <section class="ocp-exam-objectives" aria-labelledby="exam-objectives-label">
+        <h2 class="ocp-exam-objectives__label" id="exam-objectives-label">
+          <span>Mục tiêu Kỳ thi</span>
+          <span class="ocp-exam-objectives__rule" aria-hidden="true"></span>
+        </h2>
+        <ul class="ocp-exam-objectives__list">
+          <li>Sử dụng biểu thức Lambda (Lambda expression) triển khai các Functional Interface</li>
+        </ul>
+      </section>
+
+      <h3 class="section-title">17.1 Tìm hiểu về Biểu thức Lambda</h3>
+
+      <h3 class="section-title section-title--sub">17.1.1 Biểu thức Lambda<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Trong quá trình giảng dạy các khóa học, tôi nhận thấy nhiều người mới học Java cảm thấy e ngại trước biểu thức Lambda (Lambda expression). Hầu hết các trường hợp, nỗi sợ này bắt nguồn từ chính cái tên &ldquo;lambda&rdquo;. Bản thân từ lambda không gợi lên bất kỳ hình ảnh thực tế hay liên tưởng hữu ích nào, khiến người học cảm thấy khó liên hệ thực tế. Thêm vào đó, hầu hết sách và tài liệu hướng dẫn lại bắt đầu giải thích biểu thức Lambda (Lambda expression) như một cách thức để lập trình &ldquo;hàm&rdquo; (functional programming) – một từ ngữ thời thượng khác cũng khó liên hệ đối với một người chỉ vừa mới bắt đầu học lập trình &ldquo;thông thường&rdquo;!</p>
+
+      <p>Nhưng tôi có thể khẳng định với bạn rằng không có gì phải lo sợ cả. Biểu thức Lambda (Lambda expression) thực chất rất đơn giản. Khi viết các chương trình thử nghiệm, có bao giờ bạn cảm thấy chán nản khi phải gõ đi gõ lại cụm từ &ldquo;public static void main(String[] args)&rdquo; chưa? Tôi tin chắc là rồi. Nếu bạn đang sử dụng một IDE như NetBeans hoặc Eclipse, có lẽ bạn đã biết đến các phím tắt như <code>psvm</code>. Bạn chỉ cần gõ <code>psvm</code>, nhấn phím Tab và IDE sẽ ngay lập tức thay thế <code>psvm</code> bằng đoạn văn bản &ldquo;public static void main(String[] args)&rdquo;. Một biểu thức Lambda (Lambda expression) cũng tương tự như vậy, nhưng là dành cho trình biên dịch (compiler). Mặc dù cơ chế thực tế bên dưới có sự khác biệt, bạn có thể coi biểu thức Lambda (Lambda expression) như một phím tắt để trình biên dịch thực hiện hai việc – định nghĩa một Lớp (Class) có một phương thức (method) và khởi tạo đối tượng cho Lớp (Class) đó. <strong>Về mặt khái niệm</strong>, ngay khi trình biên dịch nhìn thấy một biểu thức Lambda (Lambda expression), nó sẽ triển khai biểu thức đó thành một định nghĩa Lớp (Class) và một câu lệnh khởi tạo đối tượng cho Lớp (Class) đó. Nếu</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

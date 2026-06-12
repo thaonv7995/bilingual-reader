@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0046.html">← Prev</a>
+    <a href="page_0048.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">server. If they all swarm into the public schema, it gets cluttered. For example, the entire
+      PostGIS suite of extensions will together add more than a thousand functions. If you’ve
+      already created a few tables and functions of your own in the public schema, imagine
+      how frustrating it would be to scan a list of tables and functions trying to find your own
+      among the thousands.</p>
+
+      <p class="no-indent">To create some useful structure, before you install any extensions, create a new schema:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE SCHEMA</strong> my_extensions;</code></pre>
+      </figure>
+
+      <p class="no-indent">Then add your new schema to the search path:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>ALTER DATABASE</strong> mydb <strong>SET</strong> search_path='"$user", public, my_extensions';</code></pre>
+      </figure>
+
+      <p>When you install extensions, be sure to indicate your new schema as their new home.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0047_icon_warning.png" width="92" height="87" alt="Warning">
+        </figure>
+        <p class="callout-text">The <code>SET search_path</code> change will not take effect for existing con‐
+        nections. You’ll need to reconnect to experience the change.</p>
+      </div>
+
+      <h3 class="section-title">Privileges</h3>
+      <p class="no-indent">Privileges (often called permissions) can be tricky to administer in PostgreSQL because
+      of the fine granular control at your disposal. Security can bore down to the object level.
+      You could assign different privileges to each column of your table, if that ever becomes
+      necessary. Teaching you all there’s to know about privileges could take a few chapters.
+      What we’ll aim for in this section instead is to give you enough information to get up
+      and running and to guide you around some of the more nonintuitive land mines that
+      could either lock you out completely or expose your server inappropriately.</p>
+
+      <p class="no-indent">See <span class="accent-word">Privileges</span> for an overview of privileges.</p>
+
+      <p>Privilege management in PostgreSQL is no cakewalk. The pgAdmin graphical admin‐
+      istration tool can ease some of the tasks or, at the very least, paint you a picture of your
+      privilege settings. You can accomplish most, if not all, of your privilege assignment tasks
+      in pgAdmin. If you’re saddled with the task of administering privileges and are new to
+      PostgreSQL, start with pgAdmin. Jump to <span class="accent-word">“Creating Database Assets and Setting Priv‐
+      ileges” on page 62</span> if you can’t wait.</p>
+
+      <h3 class="section-title">Types of Privileges</h3>
+      <p class="no-indent">Some of the object-level privileges you find in PostgreSQL are SELECT, INSERT, UP
+      DATE, ALTER, EXECUTE, TRUNCATE, and a qualifier to those called WITH GRANT. You can
+      infer the privilege from the name alone with the exception of GRANT, which we cover in
+      <span class="accent-word">“GRANT” on page 30</span>. Note that privileges are relevant only with respect to a particular</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Privileges<span class="sep">|</span>29</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

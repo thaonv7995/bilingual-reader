@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 24: Triển khai Bản địa hóa (Localization)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 12pt;
+      margin: 6mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p.method-item {
+      padding-left: 1.25em;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0741.html">← Trước</a>
+    <a href="page_0743.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">742</span>
+      </header>
+
+      <h3 class="section-title">24.3.4 Tra cứu một key trong ResourceBundle<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Nếu bạn đã đọc kỹ hai phần trước, phần này sẽ vô cùng dễ dàng.</p>
+
+      <p>Để tra cứu một key trong một <code>ResourceBundle</code>, trước tiên bạn cần có được một <code>ResourceBundle</code> mà bạn muốn sử dụng bằng cách dùng một trong các phương thức <code>getBundle</code>, sau đó gọi một trong ba phương thức getXXX sau đây trên resource bundle đó:</p>
+
+      <p class="no-indent method-item"><code>String getString(String key)</code>: Lấy một chuỗi cho key được cung cấp từ resource bundle này hoặc từ một trong các cha của nó.</p>
+
+      <p class="no-indent method-item"><code>String[] getStringArray(String key)</code>: Lấy một mảng chuỗi cho key được cung cấp từ resource bundle này hoặc từ một trong các cha của nó.</p>
+
+      <p class="no-indent method-item"><code>Object getObject(String key)</code>: Lấy một đối tượng (Object) cho key được cung cấp từ resource bundle này hoặc từ một trong các cha của nó.</p>
+
+      <p>Chỉ có phương thức đầu tiên là quan trọng cho kỳ thi và bạn đã thấy ví dụ sử dụng phương thức này trước đó. Như bạn chắc hẳn đã quan sát thấy trong các mô tả ngắn của các phương thức trên, chúng trả về một giá trị từ bundle này hoặc từ một trong các cha của nó.</p>
+
+      <p>Kỳ thi kiểm tra xem bạn có khả năng tìm ra giá trị của một key cho một locale không mặc định (non-default locale) khi key đó không tồn tại trong file properties của locale không mặc định nhưng lại tồn tại trong file properties của locale mặc định. Bạn cần nhớ rằng việc nạp một resource bundle và việc tra cứu key trong một resource bundle là hai bước riêng biệt và độc lập. Nếu một file properties cho locale không mặc định có sẵn, thì một resource bundle sẽ được tạo bằng cách sử dụng file đó như đã giải thích ở phần trước. Việc tra cứu key trong bundle không mặc định sẽ chỉ xảy ra trong cấu trúc phân cấp bundle không mặc định này, và nếu không tìm thấy key trong đó, một <code>MissingResourceException</code> sẽ bị ném ra. Key sẽ KHÔNG được tra cứu trong cấu trúc phân cấp resource bundle của locale mặc định. Cấu trúc phân cấp resource bundle của locale mặc định chỉ được sử dụng khi không tìm thấy bất kỳ resource bundle cụ thể nào cho locale.</p>
+
+      <p>Lý tưởng nhất là mã ứng dụng không cần phải truyền vào một Locale để lấy bundle. Nó chỉ nên truyền vào tên cơ sở (base name) của</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

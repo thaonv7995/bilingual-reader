@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 12: Controlling Program Flow</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0012.html">← Prev</a>
+    <a href="page_0014.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">13</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//assuming getRateFromDB() method returns a double.
+double rate = hardcoded ? 10.0 : getRateFromDB(); //invokes method getRateFromDB
+String value = sweetflag ? "Sweetened" : "Unsweetened";
+Object obj = sweetflag ? "Sweetened" : new Object();</code></pre>
+      </figure>
+
+      <p>The ternary conditional operator is often thought of a short form for the if/else statement but
+      it is similar to the if/else statement only up to conditional evaluation of its other two operands
+      part. Their fundamental difference lies in the fact that the ternary expression is just an
+      expression while an if/else statement is a statement. As discussed earlier, every expression
+      must have a value and so, must the ternary expression. Since the value of a ternary expression is
+      the value returned by the second or the third operand, the second and third operands of the
+      ternary operator can comprise any expression. As the example given above shows, they can also
+      include non-void method invocations. There is no such restriction with the if/else
+      statement. The following example highlights this difference:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>boolean flag = true;
+if(flag) System.out.println("true");
+else System.out.println("false");</code></pre>
+      </figure>
+
+      <p>The above if/else statement compiles fine and prints true  but a similar code with ternary
+      expression does not compile.</p>
+
+      <figure class="code-snippet code-snippet--warn">
+        <pre class="code-block"><code>flag ? System.out.println("true") : System.out.println("false");</code></pre>
+      </figure>
+
+      <p>The reason for non-compilation of the above code is two fold. The first is that a ternary
+      expression is not a valid statement on its own, which means, you cannot just have a free
+      standing ternary expression. It can only be a part of a valid statement such as an assignment.
+      For example,</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>int x = flag ? System.out.println("true")</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

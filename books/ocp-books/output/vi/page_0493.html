@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0492.html">← Trước</a>
+    <a href="page_0494.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">493</span>
+      </header>
+
+      <p class="no-indent">và phương thức <code>sleep</code>&nbsp;.</p>
+
+      <p>Có một vài biến thể của vấn đề này nhưng chúng đều có cùng một nguyên nhân gốc rễ - logic nghiệp vụ kỳ vọng một tập hợp các chỉ thị được thực thi như một chỉ thị duy nhất nhưng trên thực tế, các chỉ thị này được thực thi độc lập và một thread (luồng) có thể can thiệp hoặc có thể quan sát thấy các giá trị trung gian trong khi một thread (luồng) khác đang ở giữa quá trình thực thi tập hợp các chỉ thị đó.</p>
+
+      <p>Tập hợp các chỉ thị mà trong suốt quá trình đó chương trình có nguy cơ tạo ra các kết quả không mong muốn được gọi là <strong>critical section</strong>.</p>
+
+      <p>Giải pháp cho vấn đề này là tránh để nhiều thread (luồng) thực thi critical section&nbsp;đồng thời. Nếu một thread (luồng) đã ở giữa critical section, các thread (luồng) khác nên đợi cho đến khi thread (luồng) này rời khỏi critical section. Trong Java, điều này đạt được bằng cách sử dụng một &ldquo;monitor&rdquo;.</p>
+
+      <h3 class="section-title section-title--sub">Bảo vệ critical section bằng monitor<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Như tôi đã đề cập trước đó, mỗi đối tượng (Object) đều liên kết với một monitor mà một thread (luồng) có thể khóa và mở khóa. Nếu một thread (luồng) đã khóa một monitor, các thread (luồng) khác phải đợi nếu chúng cố khóa monitor đó lần nữa cho đến khi thread (luồng) đang giữ khóa mở khóa nó. Do đó, điều này là lý tưởng để bảo vệ critical section khỏi bị thực thi bởi nhiều thread (luồng) đồng thời.</p>
+
+      <p>Việc khóa và mở khóa monitor diễn ra tự động khi một thread (luồng) đi vào và đi ra khỏi một khối code <code>synchronized</code>&nbsp;. Nếu bạn không có nền tảng về Khoa học Máy tính, bạn có thể hình dung một monitor như một then chốt cửa vật lý ở bên trong cánh cửa của căn phòng chứa đoạn code nằm trong critical section.</p>
+
+      <p>Nếu một thread (luồng) muốn có quyền truy cập độc quyền vào đoạn code, nó phải khóa chốt sau khi vào phòng để các thread (luồng) khác không thể vào. Các thread (luồng) khác phải chờ ở cửa nếu thấy cửa đã khóa. Khi thread (luồng) hoàn tất với đoạn code, nó sẽ mở chốt và rời phòng, nhường cơ hội cho một thread (luồng) khác đi vào. Dưới đây là cách sử dụng một monitor để khắc phục ví dụ trước:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class Student{
+volatile int id;
+volatile String name;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

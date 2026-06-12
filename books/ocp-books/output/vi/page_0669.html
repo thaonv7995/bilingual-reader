@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0668.html">← Trước</a>
+    <a href="page_0670.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">669</span>
+      </header>
+
+      <p class="no-indent">bản thân nó như một file jar. Bạn sẽ sớm thấy rằng một ứng dụng được tạo ra bằng cách chỉ định các
+      module cần thiết từ các nhóm, tổ chức hoặc công ty khác nhau trên dòng lệnh khi chạy (runtime).</p>
+
+      <p>Không phải là các nhóm phát triển ứng dụng chuyên nghiệp trước đây đã không gom nhóm các phần độc lập của
+      ứng dụng vào các file jar riêng biệt. Trên thực tế, ngay cả trước khi các module xuất hiện, các ứng dụng Java
+      đã được cấu thành từ các file jar được thu thập từ nhiều nhóm khác nhau. Tuy nhiên, quy trình gom nhóm các lớp (class) và,
+      quan trọng hơn, việc tài liệu hóa những gì một file jar yêu cầu và cung cấp, lại khác nhau giữa các nhóm
+      và giữa các công cụ build. Java 9 đã tiếp thu những thực tiễn tốt nhất phổ biến trong ngành
+      và chính thức hóa chúng thành Hệ thống Module (Module System).</p>
+
+      <p>Bên cạnh việc định nghĩa chính thức một thiết kế cấu trúc cho các ứng dụng, Java 9 cũng bao gồm các công cụ mới
+      và cải tiến các công cụ hiện có để giúp các nhà phát triển đóng gói mã nguồn của họ dưới dạng các module.&nbsp;</p>
+
+      <h3 class="section-title">Package và Module<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Đến đây, bạn có thể tự hỏi các package nằm ở vị trí nào trong bức tranh này. Sau cùng thì chúng ta đã
+      sử dụng các package để tổ chức mã nguồn Java từ rất lâu rồi. Thực tế, các package vẫn đóng vai trò tương tự.
+      Chúng vẫn được sử dụng để tổ chức mã nguồn của chúng ta nhưng ở một cấp độ chi tiết hơn.</p>
+
+      <p>Về mặt khái niệm, một package tạo ra một không gian tên (namespace) chứa toàn bộ mã nguồn cần thiết để triển khai một
+      chức năng cụ thể. Đó là một phương tiện để giảm kích thước của mã nguồn chứa trong một file lớp (class),
+      bằng cách tách logic thành nhiều lớp (class) có liên quan chặt chẽ với nhau. Điều này giúp cho việc đọc,
+      hiểu và điều hướng mã nguồn trở nên dễ dàng hơn. Nhưng đây là từ góc nhìn của nhà phát triển chức năng đó chứ không phải
+      từ góc nhìn của người dùng chức năng đó. Người dùng chức năng đó không quan tâm đến việc mã nguồn được tổ chức như thế nào.
+      Họ chỉ quan tâm đến việc cần những gì để sử dụng chức năng đó. Người dùng chỉ đơn giản muốn sử dụng chức năng như một
+      chiếc hộp đen (black box). Đáng tiếc là các package không cung cấp thông tin này. Các nhà phát triển đã và đang phải
+      dựa vào các phương pháp không chính thức như đặt tên file jar theo quy ước riêng của họ và thêm tài liệu phát hành (release notes)
+      để truyền tải thông tin này.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

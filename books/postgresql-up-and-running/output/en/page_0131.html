@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — PostgreSQL Stock Indexes</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 2mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.index-method-label {
+      margin: 0 0 1mm;
+      text-indent: 0;
+      font-style: italic;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 0 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0130.html">← Prev</a>
+    <a href="page_0132.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">131</span>
+      </header>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0131_icon_tip.png" width="92" height="87" alt="Tip">
+        </figure>
+        <p class="callout-text">Index names must be unique within a given schema.</p>
+      </div>
+
+      <h3 class="subsection-title">PostgreSQL Stock Indexes</h3>
+      <p class="no-indent">To take full advantage of all that PostgreSQL has to offer, you&rsquo;ll want to understand the
+      various types of indexes and situations where they will aid or harm. The index methods
+      are:</p>
+
+      <p class="index-method-label no-indent"><em>B-Tree</em></p>
+      <p class="no-indent">B-Tree is a general-purpose index common in relational databases. You can usually
+      get by with B-Tree alone if you don&rsquo;t want to experiment with additional types. If
+      PostgreSQL automatically creates an index for you or you don&rsquo;t bother specifying
+      the index method, B-Tree will be chosen. It is currently the only index method for
+      primary keys and unique keys.</p>
+
+      <p class="index-method-label no-indent"><em>GiST</em></p>
+      <p class="no-indent">Generalized Search Tree (GiST) is an index optimized for full-text search, spatial
+      data, scientific data, unstructured data, and hierarchical data. Although you can&rsquo;t
+      use it to enforce uniqueness, you can create the same effect by using it in an exclusion
+      constraint.</p>
+
+      <p>GiST is a lossy index, in the sense that the index itself will not store the value of
+      what it&rsquo;s indexing, but merely a caricature of the value such as a box for a polygon.
+      This creates the need for an extra look-up step if you need to retrieve the value or
+      do a more fine-tuned check.</p>
+
+      <p class="index-method-label no-indent"><em>GIN</em></p>
+      <p class="no-indent">Generalized Inverted Index (GIN) is geared toward the built-in full text search and
+      <code>jsonb</code> data type of PostgreSQL. Many other extensions, such as <code>hstore</code> and <code>pg_trgm</code>
+      also utilize it. GIN is a descendent of GiST without lossiness. GIN will make a copy
+      of the values in the columns that are part of the index. If you ever need to pull data
+      limited to covered columns, GIN is faster than GiST. However, the extra copying
+      required by GIN index means updating the index is slower than a comparable GiST
+      index. Also, because each index row is limited to a certain size, you can&rsquo;t use GIN
+      to index large objects such as large hstore documents or text. If there is a possibility
+      you&rsquo;ll be inserting a 600-page manual into a field of a table, don&rsquo;t use GIN to index
+      that column.</p>
+
+      <p>You can find a wonderful example of GIN in <span class="accent-word">Waiting for Faster LIKE/ILIKE</span>. In
+      version 9.3, you can index regular expressions that leverage the GIN-based <code>pg_trgm</code>
+      extension.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Indexes<span class="sep">|</span>113</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

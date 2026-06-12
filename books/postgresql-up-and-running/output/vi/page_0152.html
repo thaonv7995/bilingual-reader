@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 7: SQL: Cách PostgreSQL — ORDER BY</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0151.html">← Trước</a>
+    <a href="page_0153.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">152</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code> 25003900300 | 1211.000 | 1438.2307692307692308
+ :</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">ORDER BY</h3>
+      <p class="no-indent">Các hàm cửa sổ cũng cho phép một <code>ORDER BY</code> trong mệnh đề <code>OVER</code>. Không cần phải quá phức tạp,
+      cách tốt nhất để nghĩ về điều này là tất cả các hàng trong cửa sổ sẽ được sắp xếp
+      như được chỉ định bởi <code>ORDER BY</code>, và hàm cửa sổ sẽ chỉ xem xét các hàng nằm
+      từ hàng đầu tiên trong cửa sổ cho đến và bao gồm hàng hiện tại trong cửa sổ hoặc
+      phân vùng. Ví dụ cổ điển sử dụng hàm <code>ROW_NUMBER</code> để đánh số tuần tự
+      các hàng. Trong <span class="accent-word">Ví dụ 7-25</span>, chúng tôi minh họa cách đánh số các khu vực điều tra dân số của chúng tôi theo thứ tự chữ cái.
+      Để có được số hàng, <code>ROW_NUMBER</code> đếm tất cả các hàng cho đến và bao gồm
+      hàng hiện tại dựa trên thứ tự được quy định bởi <code>ORDER BY</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-25.</strong> Đánh số bằng hàm cửa sổ ROW_NUMBER</figcaption>
+        <pre class="code-block"><code>SELECT ROW_NUMBER() OVER (ORDER BY tract_name) As rnum, tract_name
+FROM census.lu_tracts
+ORDER BY rnum LIMIT 4;
+
+rnum |                    tract_name
+-----+--------------------------------------------------
+1    | Khu vực điều tra dân số 1, Hạt Suffolk, Massachusetts
+2    | Khu vực điều tra dân số 1001, Hạt Suffolk, Massachusetts
+3    | Khu vực điều tra dân số 1002, Hạt Suffolk, Massachusetts
+4    | Khu vực điều tra dân số 1003, Hạt Suffolk, Massachusetts</code></pre>
+      </figure>
+
+      <p>Trong <span class="accent-word">Ví dụ 7-25</span>, chúng tôi cũng có một <code>ORDER BY</code> cho toàn bộ truy vấn. Đừng nhầm lẫn
+      giữa điều này và <code>ORDER BY</code> cụ thể cho hàm cửa sổ.</p>
+
+      <p>Bạn có thể kết hợp <code>ORDER BY</code> với <code>PARTITION BY</code>, khởi động lại việc sắp xếp cho mỗi phân vùng.
+      <span class="accent-word">Ví dụ 7-26</span> quay trở lại ví dụ của chúng tôi về mã hạt.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-26.</strong> Kết hợp PARTITION BY và ORDER BY</figcaption>
+        <pre class="code-block"><code>SELECT tract_id, val,
+    SUM(val) OVER (PARTITION BY left(tract_id,5) ORDER BY val) As sum_county_ordered
+FROM census.facts
+WHERE fact_type_id = 2
+ORDER BY left(tract_id,5), val;
+
+  tract_id   |   val    | sum_county_ordered
+-------------+----------+--------------------
+ 25001014100 |  226.000 |            226.000
+ 25001011700 |  971.000 |           1197.000
+ 25001010208 |  984.000 |           2181.000
+ :
+ 25003933200 |  564.000 |            564.000
+ 25003934200 |  593.000 |           1157.000
+ 25003931300 |  606.000 |           1763.000
+ :</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">134<span class="sep">|</span>Chương 7: SQL: Cách PostgreSQL</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

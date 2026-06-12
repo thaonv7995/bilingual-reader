@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--output pre.code-block {
+      background: #e2e8f0;
+      border-left: none;
+      font-size: 9.75pt;
+      line-height: 1.4;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0570.html">← Prev</a>
+    <a href="page_0572.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">571</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>R collect(Supplier&lt;R&gt; supplier, BiConsumer&lt;R, ? super T&gt; accumulator,
+BiConsumer&lt;R, R&gt; combiner)</code></pre>
+      </figure>
+
+      <p class="no-indent">The supplier function is used by the stream pipeline to create the mutable result object of type
+      <code>R</code>&nbsp;. The mutable result object returned by the supplier function will be updated every time a
+      stream element is processed. The accumulator and the combiner&nbsp;functions play the same
+      role as they do in the reduce methods.&nbsp;The accumulator function applies a stream element of
+      type <code>T</code>&nbsp;to the result object and the combiner function joins the result objects produced by
+      different fragments of a stream if the stream is split while being processed in parallel.&nbsp;</p>
+
+      <p class="no-indent">Let&rsquo;s see how this works step by step if we want to join a stream of characters into a
+      <code>StringBuilder</code>&nbsp;.</p>
+
+      <p class="no-indent">1. Since the final result will be of type <code>StringBuilder</code>&nbsp;, we need a <code>Supplier</code>&nbsp;function that
+      will return an empty <code>StringBuilder</code>&nbsp;. This can be done easily with a constructor
+      reference&nbsp;&nbsp;<code>Supplier&lt;StringBuilder&gt; supplier = StringBuilder::new;</code>&nbsp;But let&rsquo;s
+      use a lambda with a body so that we can include a print statement in it:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Supplier&lt;StringBuilder&gt; supplier = () -&gt; {
+System.out.println("Creating a new StringBuilder");
+return new StringBuilder();
+};</code></pre>
+      </figure>
+
+      <p class="no-indent">2. The accumulator function should be a <code>BiConsumer</code>&nbsp;that knows how to take an element of
+      the stream (i.e. a <code>Character</code>&nbsp;) and add it into the existing result object (i.e. a
+      <code>StringBuilder</code>&nbsp;). This can also be done using the method reference
+      <code>StringBuilder::append</code>&nbsp;but let&rsquo;s go with the following instead:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>BiConsumer&lt;StringBuilder, Character&gt; accumulator = (sb, ch) -&gt; {</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

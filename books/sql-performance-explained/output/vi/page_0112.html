@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 4: The Join Operation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 4: Phép nối</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+| Id | Operation          | Name      | Rows  | Bytes | Cost |
+--------------------------------------------------------------
+|  0 | SELECT STATEMENT   |           | 49244 |    59M| 12049|
+|* 1 |  HASH JOIN         |           | 49244 |    59M| 12049|
+|  2 |   TABLE ACCESS FULL| EMPLOYEES | 10000 |     9M|   478|
+|* 3 |   TABLE ACCESS FULL| SALES     | 49244 |    10M| 10521|
+--------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - access("S"."SUBSIDIARY_ID"="E"."SUBSIDIARY_ID"
+          AND "S"."EMPLOYEE_ID"  ="E"."EMPLOYEE_ID")
+   3 - filter("S"."SALE_DATE">TRUNC(SYSDATE@!)
+                           -INTERVAL'+00-06' YEAR(2) TO MONTH)</code></pre>
+      </figure>
+
+      <p>Bước thực thi đầu tiên là quét bảng đầy đủ để tải tất cả nhân viên vào một bảng băm (kế hoạch id 2). Bảng băm sử dụng các điều kiện nối làm khóa. Trong bước tiếp theo, cơ sở dữ liệu thực hiện một quét bảng đầy đủ khác trên bảng SALES và loại bỏ tất cả các giao dịch không thỏa mãn điều kiện trên SALE_DATE (kế hoạch id 3). Đối với các bản ghi SALES còn lại, cơ sở dữ liệu truy cập bảng băm để tải thông tin chi tiết của nhân viên tương ứng.</p>
+
+      <p>Mục đích duy nhất của bảng băm là hoạt động như một cấu trúc tạm thời trong bộ nhớ để tránh truy cập bảng EMPLOYEE nhiều lần. Bảng băm được tải ban đầu trong một lần để không cần chỉ mục để lấy các bản ghi đơn lẻ một cách hiệu quả. Thông tin điều kiện xác nhận rằng không có bộ lọc nào được áp dụng trên bảng EMPLOYEES (kế hoạch id 2). Truy vấn không có bất kỳ điều kiện độc lập nào trên bảng này.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Chỉ mục các điều kiện nối không cải thiện hiệu suất của phép nối băm.</p>
+      </aside>
+
+      <p>Điều đó không có nghĩa là không thể chỉ mục một phép nối băm. Các điều kiện độc lập có thể được chỉ mục. Đây là các điều kiện được áp dụng trong một trong hai hoạt động truy cập bảng. Trong ví dụ trên, đó là bộ lọc trên SALE_DATE.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX sales_date ON sales (sale_date);</code></pre>
+      </figure>
+
+      <p>Kế hoạch thực thi tiếp theo sử dụng chỉ mục này. Tuy nhiên, nó sử dụng một quét bảng đầy đủ cho bảng EMPLOYEES vì truy vấn không có điều kiện where độc lập nào trên EMPLOYEES.</p>
+
+      <p class="page-folio page-folio--left">102</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

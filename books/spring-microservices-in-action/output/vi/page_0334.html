@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Mục 10.4 Pipeline build và triển khai trong thực hành</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0333.html">← Trước</a>
+    <a href="page_0335.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Pipeline build và triển khai của bạn trong thực hành</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">309</span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="Về tính bất biến và sự trỗi dậy của máy chủ Phoenix (tiếp theo)">
+        <p class="no-indent">(<a href="http://martinfowler.com/bliki/PhoenixServer.html">http://martinfowler.com/bliki/PhoenixServer.html</a>) vì khi máy chủ cũ bị dừng, máy chủ mới sẽ trỗi dậy từ tro tàn. Mẫu máy chủ Phoenix có hai lợi ích chính.</p>
+
+        <p class="no-indent"><strong class="run-in">Thứ nhất,</strong> nó phơi bày và đẩy configuration drift ra khỏi môi trường của bạn. Nếu bạn liên tục tháo dỡ và thiết lập máy chủ mới, bạn càng có khả năng phát hiện configuration drift sớm. Điều này giúp đảm bảo tính nhất quán rất nhiều. Tôi đã dành quá nhiều thời gian và cuộc sống xa gia đình cho các cuộc gọi &ldquo;tình huống khẩn cấp&rdquo; vì configuration drift.</p>
+
+        <p class="no-indent"><strong class="run-in">Thứ hai,</strong> mẫu máy chủ Phoenix giúp cải thiện khả năng phục hồi bằng cách giúp phát hiện những tình huống mà máy chủ hoặc dịch vụ không thể phục hồi sạch sẽ sau khi bị dừng và khởi động lại. Hãy nhớ rằng, trong kiến trúc microservice, các dịch vụ của bạn phải không trạng thái và việc một máy chủ chết chỉ là một sự cố nhỏ. Việc ngẫu nhiên dừng và khởi động lại máy chủ nhanh chóng phơi bày những tình huống bạn còn trạng thái trong dịch vụ hoặc hạ tầng. Tốt hơn là phát hiện những tình huống và phụ thuộc này sớm trong pipeline triển khai của bạn, thay vì khi bạn đang nghe điện thoại với một công ty đang tức giận.</p>
+
+        <p class="no-indent">Tổ chức nơi tôi làm việc dùng Chaos Monkey của Netflix (<a href="https://github.com/Netflix/SimianArmy/wiki/Chaos-Monkey">https://github.com/Netflix/SimianArmy/wiki/Chaos-Monkey</a>) để ngẫu nhiên chọn và dừng các máy chủ. Chaos Monkey là công cụ vô giá để kiểm thử tính bất biến và khả năng phục hồi của môi trường microservice của bạn. Chaos Monkey ngẫu nhiên chọn các instance máy chủ trong môi trường của bạn và dừng chúng. Ý tưởng khi dùng Chaos Monkey là bạn đang tìm các dịch vụ không thể phục hồi sau khi mất một máy chủ, và khi máy chủ mới được khởi động, nó sẽ hoạt động giống hệt máy chủ đã bị dừng.</p>
+      </aside>
+
+      <h4 class="subsection-title">10.4 Pipeline build và triển khai của bạn trong thực hành</h4>
+
+      <p class="no-indent">Từ kiến trúc tổng quát được trình bày ở mục 10.3, bạn có thể thấy có rất nhiều thành phần chuyển động đằng sau một pipeline build/triển khai. Vì mục đích của cuốn sách này là cho bạn thấy mọi thứ &ldquo;trong thực hành,&rdquo; chúng ta sẽ đi qua các chi tiết cụ thể để triển khai pipeline build/triển khai cho các dịch vụ EagleEye. Hình 10.16 trình bày các công nghệ khác nhau mà bạn sẽ dùng để triển khai pipeline của mình:</p>
+
+      <ol class="manning-numbered" aria-label="Các công nghệ cho pipeline build/triển khai EagleEye">
+        <li><strong>GitHub</strong> (<a href="http://github.com">http://github.com</a>)&mdash;GitHub là kho lưu trữ kiểm soát mã nguồn của chúng ta. Toàn bộ mã ứng dụng cho cuốn sách này nằm trên GitHub. Có hai lý do GitHub được chọn làm kho kiểm soát mã nguồn. Thứ nhất, tôi không muốn quản lý và duy trì máy chủ Git kiểm soát mã nguồn riêng. Thứ hai, GitHub cung cấp nhiều web-hook và API REST mạnh để tích hợp GitHub vào quy trình build của bạn.</li>
+        <li><strong>Travis CI</strong> (<a href="http://travis-ci.org">http://travis-ci.org</a>)&mdash;Travis CI là engine tích hợp liên tục tôi đã dùng để build và triển khai các microservice EagleEye, đồng thời cấp phát image Docker sẽ được triển khai. Travis CI là engine CI dựa trên đám mây, dựa trên tệp, dễ thiết lập và tích hợp mạnh với GitHub và Docker. Mặc dù Travis CI không đầy đủ tính năng như engine CI như Jenkins (<a href="https://jenkins.io">https://jenkins.io</a>), nó vẫn đủ tốt cho nhu cầu của chúng ta. Tôi mô tả cách dùng GitHub và Travis CI ở mục 10.5 và 10.6.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

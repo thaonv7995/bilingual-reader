@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Các thành phần Spring Cloud Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.topic-heading {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 7.56pt;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-indent: 0;
+      color: #333;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + p.topic-heading,
+    .prose-page.chapter-page p.topic-heading + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0262.html">← Trước</a>
+    <a href="page_0264.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">238</span>
+        <span class="rh-center">CHƯƠNG 8 <em>Kiến trúc hướng sự kiện với Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Khi xuất bản và tiêu thụ message trong Spring Cloud, có bốn thành phần tham gia vào việc xuất bản và tiêu thụ message:</p>
+
+      <ul class="manning-bullets" aria-label="Các thành phần Spring Cloud Stream">
+        <li>Source</li>
+        <li>Channel</li>
+        <li>Binder</li>
+        <li>Sink</li>
+      </ul>
+
+      <p class="topic-heading">Source</p>
+
+      <p class="no-indent">Khi một dịch vụ sẵn sàng xuất bản message, nó sẽ xuất bản message đó bằng source. Source là một interface có annotation Spring nhận một Plain Old Java Object (POJO) đại diện cho message cần xuất bản. Source nhận message, serialize message đó (serialization mặc định là JSON), rồi xuất bản message vào một channel.</p>
+
+      <p class="topic-heading">Channel</p>
+
+      <p class="no-indent">Channel là một abstraction bao bọc queue sẽ chứa message sau khi message được xuất bản bởi message producer hoặc được tiêu thụ bởi message consumer. Tên channel luôn được gắn với tên queue đích. Tuy nhiên, tên queue đó không bao giờ được expose trực tiếp ra code. Thay vào đó, tên channel được dùng trong code, nghĩa là bạn có thể chuyển các queue mà channel đọc hoặc ghi bằng cách thay đổi cấu hình ứng dụng, chứ không phải code ứng dụng.</p>
+
+      <p class="topic-heading">Binder</p>
+
+      <p class="no-indent">Binder là một phần của framework Spring Cloud Stream. Đây là code Spring giao tiếp với một nền tảng message cụ thể. Phần binder trong framework Spring Cloud Stream cho phép bạn làm việc với message mà không phải tiếp xúc với các thư viện và API đặc thù nền tảng dùng để xuất bản và tiêu thụ message.</p>
+
+      <p class="topic-heading">Sink</p>
+
+      <p class="no-indent">Trong Spring Cloud Stream, khi một dịch vụ nhận message từ queue, nó làm điều đó thông qua sink. Sink lắng nghe một channel để nhận message đến và deserialize message trở lại thành plain old Java object. Từ đó, message có thể được xử lý bởi logic nghiệp vụ của dịch vụ Spring.</p>
+
+      <h4 class="subsection-title">8.3 Viết message producer và consumer đơn giản</h4>
+
+      <p class="no-indent">Giờ chúng ta đã đi qua các thành phần cơ bản trong Spring Cloud Stream, hãy xem một ví dụ Spring Cloud Stream đơn giản. Trong ví dụ đầu tiên, bạn sẽ truyền một message từ organization service tới licensing service. Việc duy nhất bạn sẽ làm với message trong licensing service là in một log message ra console.</p>
+
+      <p>Ngoài ra, vì trong ví dụ này bạn chỉ có một Spring Cloud Stream source (message producer) và sink (message consumer), bạn sẽ bắt đầu ví dụ với một vài shortcut đơn giản của Spring Cloud giúp việc thiết lập source trong organization service và sink trong licensing service trở nên cực kỳ đơn giản.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

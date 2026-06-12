@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Indexing Order By</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Indexing Order By</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Phép sắp xếp <code>SORT ORDER BY</code> đã biến mất khỏi <code>kế hoạch thực thi</code> mặc dù truy vấn vẫn có một <code><strong>order by</strong></code> clause. Cơ sở dữ liệu khai thác thứ tự chỉ mục và bỏ qua phép sắp xếp rõ ràng.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Nếu thứ tự chỉ mục tương ứng với <code><strong>order by</strong></code> clause, cơ sở dữ liệu có thể bỏ qua phép sắp xếp rõ ràng.</p>
+      </aside>
+
+      <p>Mặc dù <code>kế hoạch thực thi</code> mới có ít phép toán hơn, giá trị chi phí đã tăng lên đáng kể vì yếu tố phân cụm của chỉ mục mới tệ hơn (xem &ldquo>Automatically Optimized Clustering Factor&rdquo; trên trang 133).</p>
+
+      <p>Vào thời điểm này, chỉ cần lưu ý rằng giá trị chi phí không phải lúc nào cũng là chỉ số tốt cho nỗ lực thực thi.</p>
+
+      <p>Đối với tối ưu hóa này, chỉ cần chỉ mục quét được sắp xếp theo <code><strong>order by</strong></code> clause. Do đó, tối ưu hóa cũng hoạt động cho ví dụ cụ thể này khi chỉ sắp xếp theo <code>PRODUCT_ID</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT sale_date, product_id, quantity
+  FROM sales
+ WHERE sale_date = TRUNC(sysdate) - INTERVAL '1' DAY
+ <strong>ORDER BY</strong> product_id;</code></pre>
+      </figure>
+
+      <p>Trong Hình&nbsp;6.1, chúng ta có thể thấy rằng <code>PRODUCT_ID</code> là tiêu chí sắp xếp duy nhất có liên quan trong phạm vi chỉ mục đã quét. Do đó, thứ tự chỉ mục tương ứng với <code><strong>order by</strong></code> clause trong phạm vi chỉ mục này để cơ sở dữ liệu có thể bỏ qua phép sắp xếp.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;6.1.&nbsp;Thứ Tự Sắp Xếp Trong Phạm Vi Chỉ Mục Liên Quan</figcaption>
+        <img src="../assets/images/page_0141_fig_6_1.png" width="909" height="492" alt="Hình 6.1. Thứ Tự Sắp Xếp Trong Phạm Vi Chỉ Mục Liên Quan">
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">131</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

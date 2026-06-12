@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 1: Anatomy of an Index</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--chapter {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--chapter .rh-left,
+    .prose-page .running-head--chapter .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--chapter .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 700;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--chapter">
+        <span class="rh-left"></span>
+        <span class="rh-center">Chapter 1: Anatomy of an Index</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>A database index is, however, more complex than a printed directory because it undergoes constant change. Updating a printed directory for every change is impossible for the simple reason that there is no space between existing entries to add new ones. A printed directory bypasses this problem by only handling the accumulated updates with the next printing. An SQL database cannot wait that long. It must process <code>insert</code>, <code>delete</code> and <code>update</code> statements immediately, keeping the index order without moving large amounts of data.</p>
+
+      <p>The database combines two data structures to meet the challenge: a doubly linked list and a search tree. These two structures explain most of the database’s performance characteristics.</p>
+
+      <h3 class="section-title">The Index Leaf Nodes</h3>
+
+      <p>The primary purpose of an index is to provide an ordered representation of the indexed data. It is, however, not possible to store the data sequentially because an <code>insert</code> statement would need to move the following entries to make room for the new one. Moving large amounts of data is very time-consuming so the <code>insert</code> statement would be very slow. The solution to the problem is to establish a logical order that is independent of physical order in memory.</p>
+
+      <p>The logical order is established via a doubly linked list. Every node has links to two neighboring entries, very much like a chain. New nodes are inserted between two existing nodes by updating their links to refer to the new node. The physical location of the new node doesn’t matter because the doubly linked list maintains the logical order.</p>
+
+      <p>The data structure is called a doubly linked list because each node refers to the preceding and the following node. It enables the database to read the index forwards or backwards as needed. It is thus possible to insert new entries without moving large amounts of data—it just needs to change some pointers.</p>
+
+      <p>Doubly linked lists are also used for collections (containers) in many programming languages.</p>
+
+      <p class="page-folio">2</p>
+    </article>
+  </main>
+</body>
+</html>

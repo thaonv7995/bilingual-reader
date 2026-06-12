@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Xây dựng máy chủ cấu hình Spring Cloud</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 2;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0094.html">← Trước</a>
+    <a href="page_0096.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">70</span>
+        <span class="rh-center">CHƯƠNG 3 <em>Kiểm soát cấu hình với Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Lý do chọn Spring Cloud configuration server (tiếp theo)">
+        <li>Spring Cloud configuration server cung cấp nhiều back end để lưu trữ dữ liệu cấu hình. Nếu bạn đã dùng các công cụ như Eureka và Consul, bạn có thể tích hợp chúng trực tiếp vào Spring Cloud configuration server.</li>
+        <li>Trong tất cả các giải pháp ở bảng 3.1, Spring Cloud configuration server có thể tích hợp trực tiếp với nền tảng quản lý mã nguồn Git. Việc tích hợp Git của Spring Cloud configuration loại bỏ một phụ thuộc phụ trong giải pháp của bạn và giúp quản lý phiên bản dữ liệu cấu hình ứng dụng trở nên dễ dàng.</li>
+      </ol>
+
+      <p>Các công cụ khác (Etcd, Consul, Eureka) không cung cấp tính năng quản lý phiên bản gốc, và nếu bạn muốn có điều đó, bạn sẽ phải tự xây dựng. Nếu công ty bạn dùng Git, việc sử dụng Spring Cloud configuration server là một lựa chọn hấp dẫn.</p>
+
+      <p class="no-indent"><strong>Trong phần còn lại của chương này, bạn sẽ</strong></p>
+
+      <ol class="manning-numbered" aria-label="Mục tiêu chương">
+        <li>Thiết lập Spring Cloud configuration server và trình bày hai cơ chế khác nhau để phục vụ dữ liệu cấu hình ứng dụng&mdash;một dùng hệ thống tệp và một dùng kho Git</li>
+        <li>Tiếp tục mở rộng licensing service để truy xuất dữ liệu từ cơ sở dữ liệu</li>
+        <li>Tích hợp dịch vụ Spring Cloud configuration vào licensing service để cung cấp dữ liệu cấu hình ứng dụng</li>
+      </ol>
+
+      <h4 class="subsection-title">3.2 Xây dựng máy chủ cấu hình Spring Cloud</h4>
+
+      <p>Spring Cloud configuration server là ứng dụng dựa trên REST được xây dựng trên Spring Boot. Nó không đi kèm dưới dạng máy chủ độc lập. Thay vào đó, bạn có thể nhúng nó vào một ứng dụng Spring Boot hiện có hoặc khởi tạo một dự án Spring Boot mới với máy chủ được nhúng sẵn.</p>
+
+      <p>Việc đầu tiên bạn cần làm là tạo một thư mục dự án mới có tên <code>confsvr</code>. Trong thư mục consvr, bạn sẽ tạo một tệp Maven mới dùng để tải xuống các JAR cần thiết để khởi động Spring Cloud configuration server. Thay vì đi qua toàn bộ tệp Maven, tôi sẽ liệt kê các phần chính trong bảng liệt kê sau.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 3.1</strong><br>Thiết lập pom.xml cho Spring Cloud configuration server</figcaption>
+        <pre class="code-block"><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://
+     www.w3.org/2001/XMLSchema-instance&quot;
+         xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://
+     maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;
+&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+&lt;groupId&gt;com.thoughtmechanix&lt;/groupId&gt;
+&lt;artifactId&gt;configurationserver&lt;/artifactId&gt;
+&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;
+&lt;packaging&gt;jar&lt;/packaging&gt;
+
+&lt;name&gt;Config Server&lt;/name&gt;
+&lt;description&gt;Config Server demo project&lt;/description&gt;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

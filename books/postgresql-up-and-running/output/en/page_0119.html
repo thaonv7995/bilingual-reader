@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types — JSONB / XML</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0118.html">← Prev</a>
+    <a href="page_0120.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">119</span>
+      </header>
+
+      <p class="no-indent">you will find that <span class="accent-word">Example 5-25</span> and <span class="accent-word">Example 5-26</span> work largely without change for the
+      <code>jsonb</code> type—just replace the table name and change the <code>json_array_length</code> function
+      to the equivalent <code>jsonb_array_length</code> function.</p>
+
+      <p>In addition to the operators supported by <code>json</code>, <code>jsonb</code> has additional comparator oper‐
+      ators for equality (<code>=</code>), contains (<code>@&gt;</code>), contained (<code>&lt;@</code>), key exists (<code>?</code>), any of array of keys
+      exists (<code>?|</code>), and all of array of keys exists (<code>?&amp;</code>).</p>
+
+      <p>So, for example, to list all families that have a member named Alex, use the contains
+      operator as demonstrated in <span class="accent-word">Example 5-29</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-29.</strong> jsonb contains operator</figcaption>
+        <pre class="code-block"><code>SELECT profile-&gt;&gt;'name' As family
+FROM families_b
+WHERE profile @&gt; '{"members":[{"member":{"name":"Alex"} }]}';
+
+family
+-----
+Gomez</code></pre>
+      </figure>
+
+      <p>These additional operators provide very fast checks when you complement them with
+      a GIN index on the <code>jsonb</code> column:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx_familes_jb_profile_gin ON families_b USING gin (profile);</code></pre>
+      </figure>
+
+      <p>We don’t have enough records in our puny table for the index to kick in, but for more
+      rows, you’d see that <span class="accent-word">Example 5-29</span> utilizes the index.</p>
+
+      <h3 class="section-title">XML</h3>
+      <p class="no-indent">The XML data type, similar to JSON, is “controversial” in a relational database because
+      it violates principles of normalization. Nonetheless, all of the high-end relational data‐
+      bases products (IBM DB2, Oracle, SQL Server) support XML. PostgreSQL also jumped
+      on the bandwagon and offers plenty of functions to boot. We’ve authored many articles
+      on working with XML in PostgreSQL. (You can find these articles at <span class="accent-word">PostgreSQL XML
+      Examples</span>.) PostgreSQL comes packaged with functions for generating, manipulating,
+      and parsing XML data. These are outlined in <span class="accent-word">XML Functions</span>. Unlike the <code>jsonb</code> type,
+      there is currently no direct index support for it. So you need to use functional indexes
+      to index subparts, similarly to what you can do with the plain <code>json</code> type.</p>
+
+      <h3 class="subsection-title">Inserting XML Data</h3>
+      <p class="no-indent">When you create a column of the <code>xml</code> data type, PostgreSQL automatically ensures that
+      only valid XML values populate the rows. This is what distinguishes an XML column
+      from just any <code>text</code> column. However, the XML is not validated against any Document
+      Type Definition (DTD) or XML Schema Definition (XSD), even if it is specified in the
+      XML document. To freshen up on what constitutes valid XML, <span class="accent-word">Example 5-30</span> shows</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">XML<span class="sep">|</span>101</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

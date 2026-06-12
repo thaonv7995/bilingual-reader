@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Messaging cho thay đổi trạng thái</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p.no-indent strong.run-in + *,
+    .prose-page.chapter-page p.no-indent:has(strong.run-in) {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0257.html">← Trước</a>
+    <a href="page_0259.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Lý do cho messaging, EDA và microservice</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">233</span>
+      </header>
+
+      <h4 class="subsection-title">8.1.2 Dùng messaging để truyền đạt thay đổi trạng thái giữa các dịch vụ</h4>
+
+      <p class="no-indent">Với cách tiếp cận messaging, bạn sẽ chèn một queue vào giữa licensing service và organization service. Queue này sẽ không được dùng để đọc dữ liệu từ organization service, mà thay vào đó sẽ được organization service dùng để publish mỗi khi có bất kỳ thay đổi trạng thái nào trong dữ liệu tổ chức do organization service quản lý. Hình 8.2 minh họa cách tiếp cận này.</p>
+
+      <figure class="diagram" aria-label="Hình 8.2">
+        <img src="../assets/images/page_0258_fig_8_2.png" width="1313" height="651" alt="Hình 8.2 — Khi trạng thái tổ chức thay đổi, các message sẽ được ghi vào message queue nằm giữa hai dịch vụ">
+        <figcaption><strong>Hình 8.2</strong><br>Khi trạng thái tổ chức thay đổi, các message sẽ được ghi vào message queue nằm giữa hai dịch vụ.</figcaption>
+      </figure>
+
+      <p class="no-indent">Trong mô hình ở hình 8.2, mỗi khi dữ liệu tổ chức thay đổi, organization service sẽ publish một message ra queue. Licensing service theo dõi queue để nhận message và khi có message đến, nó xóa bản ghi tổ chức tương ứng khỏi bộ nhớ đệm Redis. Khi nói về việc truyền đạt trạng thái, message queue đóng vai trò trung gian giữa licensing service và organization service. Cách tiếp cận này mang lại bốn lợi ích:</p>
+
+      <ul class="manning-bullets" aria-label="Lợi ích của messaging cho thay đổi trạng thái">
+        <li>Ghép chặt lỏng</li>
+        <li>Độ bền</li>
+        <li>Khả năng mở rộng</li>
+        <li>Linh hoạt</li>
+      </ul>
+
+      <p class="no-indent"><strong class="run-in">Ghép chặt lỏng</strong> Một ứng dụng microservice có thể gồm hàng chục dịch vụ nhỏ và phân tán phải tương tác với nhau và quan tâm đến dữ liệu do</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

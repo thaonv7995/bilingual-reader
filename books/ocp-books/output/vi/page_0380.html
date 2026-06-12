@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 12pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option {
+      margin: 0 0 2mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page .quiz-option code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0379.html">← Trước</a>
+    <a href="page_0381.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">380</span>
+      </header>
+
+      <p>các đối tượng của một Lớp (Class) bằng cách giữ cho chức năng nằm cùng một nơi trong Lớp (Class) có các đối tượng cần so sánh, và đó là lý do tại sao <code>Comparator</code>&nbsp;được chú thích bằng <code>@FunctionalInterface</code>&nbsp;trong khi <code>Comparable</code>&nbsp;thì không.</p>
+
+      <h3 class="section-title section-title--sub">18.5.4 Trắc nghiệm<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Q. Trong các cách triển khai <code>Comparator</code>&nbsp;sau đây, cách nào sắp xếp chính xác hai chuỗi theo thứ tự tăng dần của độ dài?</p>
+
+      <p class="no-indent">Chọn <strong>1</strong> đáp án đúng.</p>
+
+      <div class="quiz-option">
+        <p class="no-indent"><strong>A.</strong> <code>Comparator&lt;String&gt; c = (a, b)-&gt;{ return a.length()-b.length(); };</code></p>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent"><strong>B.</strong> <code>Comparator&lt;String&gt; c = (a, b)-&gt;b.length()-a.length();</code></p>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent"><strong>C.</strong> <code>Comparator&lt;String, String&gt; c = (a, b)-&gt;b.length()-a.length();</code></p>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent"><strong>D.</strong> <code>Comparator&lt;String, String&gt; c = (a, b)-&gt;a.length()-b.length();</code></p>
+      </div>
+
+      <p class="no-indent">Đáp án đúng là <strong>A</strong>.</p>
+
+      <p>Về mặt khái niệm, khi so sánh hai đối tượng (Object) <code>a</code>&nbsp;và <code>b</code>, một bộ so sánh (comparator) coi <code>a</code>&nbsp;(tức là đối số đầu tiên) là &ldquo;nhỏ hơn&rdquo; trong hai đối tượng nếu &ldquo;a trừ b&rdquo; là một số âm. Trong trường hợp này, chúng ta muốn so sánh hai chuỗi <code>a</code>&nbsp;và <code>b</code>&nbsp;dựa trên độ dài của chúng sao cho <code>a</code>&nbsp;nhỏ hơn <code>b</code>&nbsp;nếu độ dài của <code>a</code>&nbsp;nhỏ hơn độ dài của <code>b</code>. Do đó, chúng ta phải thực hiện <code>a.length() - b.length()</code>&nbsp;chứ không phải <code>b.length()-a.length()</code>. Vì vậy, A là đáp án đúng và B thì không. B đúng về mặt cú pháp nhưng nó sẽ sắp xếp các chuỗi theo thứ tự độ dài giảm dần.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

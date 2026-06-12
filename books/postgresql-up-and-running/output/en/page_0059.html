@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0058.html">← Prev</a>
+    <a href="page_0060.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h3 class="section-title">Using pg_restore</h3>
+      <p class="no-indent">If you backed up using <code>pg_dump</code> and chose a format such as <code>tar</code>, <code>custom</code>, or <code>directo‐
+      ry</code>, you can use the versatile <code>pg_restore</code> utility to restore. <code>pg_restore</code> provides you
+      with a dizzying array of options and far surpasses any restore utility found in other
+      database products we’ve used. Some of its outstanding features are:</p>
+
+      <ul class="bullets">
+        <li>You can perform parallel restores using the <code>-j</code> option to control the number of
+        threads to use. This allows each thread to be restoring a separate table simultane‐
+        ously, thereby significantly picking up the pace of what could otherwise be a lengthy
+        process.</li>
+        <li>You can use it to generate a table of contents file from your backup file to confirm
+        what has been backed up. You can also edit this table of contents and use the revised
+        file to control which objects to restore.</li>
+        <li>Just as <code>pg_dump</code> allows you to do selective backups of objects to save time, <code>pg_re‐
+        store</code> allows you to do selective restores, even from within a backup of a full da‐
+        tabase.</li>
+        <li><code>pg_restore</code> is backward-compatible, for the most part. You can back up a database
+        on an older version of PostgreSQL and restore to a newer version.</li>
+      </ul>
+
+      <p>See <span class="accent-word">“Database Restore: pg_restore” on page 198</span> for a listing of <code>pg_restore</code> command
+      options.</p>
+
+      <p>To perform a restore using <code>pg_restore</code>, first create the database using SQL:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE</strong> <strong>DATABASE</strong> mydb;</code></pre>
+      </figure>
+
+      <p>Then restore:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_restore --dbname=mydb --jobs=4 --verbose mydb.backup</code></pre>
+      </figure>
+
+      <p>If the database is the same as the one you backed up, you can create and restore the
+      database in one step:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_restore --dbname=postgres --create --jobs=4 --verbose mydb.backup</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0059_icon_tip.png" width="43" height="57" alt="Tip">
+        </figure>
+        <p class="callout-text">When you use the <code>--create</code> option, the database name is always the
+        name of the one you backed up. You can’t rename it. If you’re also
+        using the <code>--dbname</code> option, that database name must be different from
+        the name of the database being restored. We usually just specify the
+        <code>postgres</code> database.</p>
+      </div>
+
+      <p>If you are running version 9.2 or later, you can take advantage of the <code>--section</code> option
+      to restore just the structure without the data. This is useful if you want to use an existing
+      database as a template for a new one. To do so, first create the target database:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE</strong> <strong>DATABASE</strong> mydb2;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Backup and Restore<span class="sep">|</span>41</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

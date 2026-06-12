@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0295.html">← Trước</a>
+    <a href="page_0297.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">296</span>
+      </header>
+
+      <p>Hãy quan sát cách sử dụng <code>&lt;? super Number&gt;</code>&nbsp;làm đối số kiểu (type argument) cho <code>List</code>. Mẫu &ldquo;? super
+      Number&rdquo; khớp với <code>Number</code>&nbsp;hoặc bất kỳ kiểu cha (super type) nào của nó. Vì kiểu con (subtype) thấp nhất
+      khớp với mẫu này là <code>Number</code>, chúng ta gọi <code>Number</code>&nbsp;là &ldquo;lower bound&rdquo; (giới hạn dưới) của đối số kiểu này.
+      Do đó, <code>List&lt;? super Number&gt; targetList</code>&nbsp;có nghĩa là <code>targetList</code>&nbsp;trỏ đến một <code>List</code>&nbsp;thuộc
+      kiểu <code>Number</code>&nbsp;hoặc bất kỳ kiểu cha nào của <code>Number</code>. Vì <code>Number</code>&nbsp;kế thừa (extends) <code>Object</code>, danh sách này có thể
+      chứa các đối tượng kiểu <code>Number</code>&nbsp;hoặc kiểu <code>Object</code>. Điều này cũng rõ ràng từ thực tế là bên trong phương thức
+      <code>loadAllNumbers()</code>, chúng ta có thể gọi <code>loadValuesFromDB()</code>&nbsp;và
+      <code>loadValuesFromFile()</code>&nbsp;với <code>ArrayList&lt;Number&gt;</code>&nbsp;cũng như <code>ArrayList&lt;Object&gt;</code>&nbsp;làm
+      đối số.</p>
+
+      <p>Bây giờ chúng ta hãy xem điều này diễn ra như thế nào khi đưa các đối tượng vào và lấy các đối tượng ra khỏi danh sách
+      được trỏ tới bởi biến <code>targetList</code>.</p>
+
+      <p>Nếu <code>targetList</code>&nbsp;trỏ đến một danh sách các <code>Object</code>, chúng ta có thể đưa bất kỳ đối tượng nào vào đó. Giả sử chúng ta cố gắng đưa
+      một String vào đó. Nhưng nếu danh sách đó hóa ra lại chứa các <code>Number</code> thì sao? Việc đưa một String vào một danh sách các
+      <code>Number</code> chính xác là tình huống mà chúng ta muốn tránh! Nó sẽ gây ra một
+      <code>ClassCastException</code>&nbsp;khi vòng lặp <code>for</code> được viết ở phía dưới trong đoạn mã trên được
+      thực thi. Tuy nhiên, một <code>Number</code> sẽ không gây ra bất kỳ vấn đề nào trong cả hai trường hợp. Một <code>Number</code>&nbsp;có thể được thêm vào
+      một danh sách các <code>Object</code> một cách an toàn (vì một <code>Number</code>&nbsp;là một <code>Object</code>) cũng như vào một danh sách các <code>Number</code>
+      (vì một <code>Number</code>&nbsp;là một <code>Number</code>). Điều này ngụ ý rằng chúng ta không thể viết mã với giả định rằng
+      <code>targetList</code>&nbsp;sẽ luôn trỏ đến một danh sách các <code>Object</code> nhưng chúng ta có thể viết mã với giả định rằng
+      <code>targetList</code>&nbsp;sẽ luôn có thể chứa các <code>Number</code>. Vì lý do này, loại đối tượng duy nhất
+      mà trình biên dịch (compiler) cho phép chúng ta đưa vào danh sách được trỏ tới bởi <code>targetList</code>&nbsp;là <code>Number</code>&nbsp;và đó
+      chính xác là lý do tại sao, trong đoạn mã trên, chúng ta có thể gọi <code>targetList.add(1)</code>&nbsp;và
+      <code>targetList.add(1.0)</code>. Vì cả <code>Integer</code>&nbsp;và <code>Double</code>&nbsp;đều là các <code>Number</code>, trình biên dịch
+      hoàn toàn yên tâm rằng các lệnh gọi phương thức này sẽ không bao giờ gây ra vi phạm an toàn kiểu (type safety) bất kể
+      loại danh sách nào mà <code>targetList</code>&nbsp;trỏ tới khi chạy (run time).</p>
+
+      <p>Khi chúng ta lấy một đối tượng ra khỏi danh sách được trỏ tới bởi <code>targetList</code>, chúng ta biết rằng nó thuộc
+      kiểu <code>Object</code>&nbsp;hoặc kiểu <code>Number</code>&nbsp;nhưng chúng ta không biết chính xác là kiểu nào. Do đó, chúng ta không thể gán nó
+      cho một biến kiểu <code>Number</code>. Điều gì xảy ra nếu chúng ta cố gắng gán nó cho một biến <code>Number</code>&nbsp;nhưng nó lại hóa ra
+      có kiểu <code>Object</code>? Trên thực tế, loại biến duy nhất mà chúng ta có thể gán đối tượng này cho
+      là <code>Object</code>&nbsp;(vì mọi đối tượng đều là một <code>Object</code>). Đó là lý do tại sao</p>
+
+      <footer class="book-footer">
+        <span>CHỨNG CHỈ ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

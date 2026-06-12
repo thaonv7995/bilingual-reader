@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu — Toán Tử Khoảng</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0113.html">← Trước</a>
+    <a href="page_0115.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">114</span>
+      </header>
+
+      <h3 class="section-title">Toán Tử Khoảng</h3>
+      <p class="no-indent">Hai toán tử khoảng có xu hướng được sử dụng thường xuyên hơn tất cả các toán tử khác: overlap (<code>&amp;&amp;</code>) và contains (<code>@&gt;</code>). Để xem danh sách đầy đủ các toán tử khoảng, hãy truy cập <span class="accent-word">Toán Tử Khoảng</span>.</p>
+
+      <h3 class="subsection-title">Toán tử Overlap</h3>
+      <p class="no-indent">Như tên gọi gợi ý, toán tử overlap <code>&amp;&amp;</code> trả về true nếu hai khoảng có bất kỳ giá trị nào chung. <span class="accent-word">Ví dụ 5-21</span> minh họa toán tử này cũng như việc sử dụng hàm <code>string_agg</code> để tổng hợp danh sách nhân viên thành một trường văn bản duy nhất.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-21.</strong> Ai đã làm việc với ai?</figcaption>
+        <pre class="code-block"><code>SELECT e1.employee, string_agg(DISTINCT e2.employee, ', ' ORDER BY e2.employee) As
+colleagues
+FROM employment As e1 INNER JOIN employment As e2
+ON e1.period &amp;&amp; e2.period
+WHERE e1.employee &lt;&gt; e2.employee
+GROUP BY e1.employee;
+ employee | colleagues
+----------+------------------
+ Alex     | Leo, Regina, Sonia
+ Leo      | Alex, Regina
+ Regina   | Alex, Leo
+ Sonia    | Alex</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Toán tử Contains và Contained In</h3>
+      <p class="no-indent">Trong toán tử contains (<code>@&gt;</code>), tham số đầu tiên là một khoảng và tham số thứ hai là một giá trị. Nếu tham số thứ hai nằm trong tham số đầu tiên, toán tử contains trả về true. <span class="accent-word">Ví dụ 5-22</span> minh họa việc sử dụng của nó.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-22.</strong> Ai hiện đang làm việc?</figcaption>
+        <pre class="code-block"><code>SELECT employee FROM employment WHERE period @&gt; CURRENT_DATE GROUP BY employee;
+employee
+----
+Alex</code></pre>
+      </figure>
+
+      <p>Phép đảo của toán tử contains là toán tử contained (<code>&lt;@</code>), trong đó tham số đầu tiên là giá trị và tham số thứ hai là khoảng.</p>
+
+      <h3 class="section-title">JSON</h3>
+      <p class="no-indent">Kiểu dữ liệu JSON và các hàm hỗ trợ đã xuất hiện từ phiên bản 9.2. JSON là một kiểu dữ liệu phổ biến cho các ứng dụng web, vì nó phục vụ như một ngôn ngữ chung cho dữ liệu trong JavaScript. Phiên bản 9.3 đã tăng cường hỗ trợ JSON với các hàm mới để trích xuất, chỉnh sửa và chuyển đổi sang các kiểu dữ liệu khác. Phiên bản 9.4 đã giới thiệu jsonb</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">96<span class="sep">|</span>Chương 5: Kiểu Dữ Liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

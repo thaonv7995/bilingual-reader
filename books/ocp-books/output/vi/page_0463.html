@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="4"] {
+      counter-reset: init-step 3;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0462.html">← Trước</a>
+    <a href="page_0464.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">463</span>
+      </header>
+
+      <ol class="numbered" start="4">
+        <li>
+          <p><strong>Thread (Luồng).</strong> Cách tiếp cận này hoạt động tốt nhưng nó có một hạn chế nghiêm trọng. Mặc dù việc tạo một Thread (Luồng) mới bởi OS ít tốn kém hơn nhiều so với việc khởi chạy một tiến trình đầy đủ (nhân tiện, đó là lý do tại sao một Thread (Luồng) được gọi là tiến trình &ldquo;<strong>hạng nhẹ</strong>&rdquo;), nó vẫn đòi hỏi một lượng bộ nhớ đáng kể (cho không gian stack của Thread (Luồng)) cũng như các chu kỳ xung nhịp CPU. Do đó, các Thread (Luồng) của OS là một tài nguyên khan hiếm. Hơn nữa, vì OS là dùng chung cho tất cả các loại ứng dụng, nó phải đối xử bình đẳng với mọi ứng dụng, điều này về cơ bản có nghĩa là OS cố gắng phân bổ thời gian CPU cho tất cả các Thread (Luồng) một cách bình đẳng. Điều này có nghĩa là, việc tạo ra một số lượng lớn các Thread (Luồng) của OS sẽ khiến OS mất nhiều thời gian cho việc chuyển đổi ngữ cảnh (context switching), làm giảm hiệu suất tổng thể của hệ thống. Do đó, nếu một ứng dụng tạo một Thread (Luồng) mới cho mỗi tác vụ (còn gọi là mô hình lập trình <strong>thread-per-task</strong>), ứng dụng sẽ không hoạt động khi số lượng tác vụ đồng thời vượt quá vài nghìn. Nó sẽ đơn giản là hết bộ nhớ hệ thống sau khi tạo ra vài nghìn Thread (Luồng). Kinh nghiệm đã dạy các nhà thiết kế ngôn ngữ Java rằng hầu hết các chương trình đa luồng dành nhiều thời gian để đợi Vào/Ra (I/O), cho dù đó là các truy vấn cơ sở dữ liệu, tệp tin hay mạng. Mặc dù mô hình lập trình thread-per-task rất tuyệt vời để lập trình các ứng dụng như vậy, nhưng nó không khả thi khi mở rộng quy mô vì nó khiến máy tính hết bộ nhớ hệ thống từ lâu trước khi CPU đạt đến mức sử dụng tối đa. Vì lý do này, nhiều chương trình Java, đặc biệt là các chương trình máy chủ như Tomcat cần xử lý hàng triệu yêu cầu mỗi giây, tạo ra một pool chứa các Thread (Luồng) (thread pool) và tái sử dụng chúng để thực thi các tác vụ thay vì tạo một Thread (Luồng) mới cho mỗi yêu cầu. Chiến lược tạo pool cho Thread (Luồng) (thread pooling) được sử dụng phổ biến trong các ứng dụng Java đến mức JDK cũng cung cấp các thread pool sẵn có để thực thi các tác vụ do người dùng xác định nhằm quản lý chi phí tạo các Thread (Luồng) mới.</p>
+          <p>Với <strong>Java 21</strong>, một chương trình Java giờ đây có thể tạo <strong>virtual Thread (Thread ảo)</strong>. Những Thread (Luồng) này là ảo vì OS không hề biết về sự tồn tại của chúng. Chúng được tạo và quản lý hoàn toàn bởi JVM. Khác với platform Thread (Thread nền tảng), việc tạo virtual Thread (Thread ảo) không yêu cầu phân bổ các Thread (Luồng) của OS và do đó, chúng không tốn nhiều bộ nhớ hay chu kỳ CPU để khởi tạo. Một virtual Thread (Thread ảo) cũng có thể được dọn dẹp bởi Bộ thu dọn rác (Garbage Collection) ngay khi nó nằm ngoài phạm vi hoạt động (out of scope) mà không yêu cầu bất kỳ sự dọn dẹp nào từ phía OS. Do đó, một virtual Thread (Thread ảo) là một phiên bản nhẹ hơn nhiều của một platform Thread (Thread nền tảng). Giống như việc một platform Thread (Thread nền tảng) thực thi trên một CPU logic mỗi khi nó được lập lịch để thực thi bởi bộ lập lịch Thread (Luồng) của OS, một virtual Thread (Thread ảo) thực thi trên</p>
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

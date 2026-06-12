@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .ocp-chapter-title {
+      margin: 0 0 8mm;
+      font-size: 24pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-indent: 0;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives {
+      margin: 0 0 10mm;
+    }
+
+    .ocp-exam-objectives__label {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives__rule {
+      flex: 1;
+      height: 0;
+      border-top: 0.35mm solid #ea580c;
+    }
+
+    .ocp-exam-objectives__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ocp-exam-objectives__list li {
+      position: relative;
+      margin: 0;
+      padding-left: 5mm;
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+      text-align: justify;
+    }
+
+    .ocp-exam-objectives__list li::before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #ea580c;
+      font-size: 11pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0170.html">← Trước</a>
+    <a href="page_0172.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">171</span>
+      </header>
+
+      <p class="ocp-chapter-title no-indent">Chương 15 Xử lý Exception (Ngoại lệ)</p>
+
+      <section class="ocp-exam-objectives" aria-labelledby="exam-objectives-label">
+        <h2 class="ocp-exam-objectives__label" id="exam-objectives-label">
+          <span>Mục tiêu kỳ thi</span>
+          <span class="ocp-exam-objectives__rule" aria-hidden="true"></span>
+        </h2>
+        <ul class="ocp-exam-objectives__list">
+          <li>Xử lý các Exception (Ngoại lệ) bằng cách sử dụng các khối try/catch/finally, try-with-resources, và các khối multi-catch, bao gồm cả các Exception (Ngoại lệ) tự định nghĩa</li>
+        </ul>
+      </section>
+
+      <h3 class="section-title">15.1 Tìm hiểu về xử lý Exception (Ngoại lệ)</h3>
+
+      <h3 class="section-title section-title--sub">15.1.1 Xử lý Exception (Ngoại lệ) trong Java<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Các Exception (Ngoại lệ) là để quản lý các tình huống bất thường. Đối với một chương trình sao chép tệp, tiến trình bình thường có thể là - mở tệp A, đọc nội dung của tệp A, tạo tệp B, và ghi nội dung vào tệp B. Nhưng điều gì sẽ xảy ra nếu chương trình không thể mở tệp A? Điều gì sẽ xảy ra nếu chương trình không thể tạo hoặc ghi vào tệp B? Có thể có nhiều nguyên nhân dẫn đến thất bại như vậy, chẳng hạn như lỗi chính tả trong tên tệp, thiếu quyền truy cập, không đủ dung lượng đĩa, hoặc thậm chí là lỗi đĩa. Bạn không mong đợi những vấn đề này xảy ra mọi lúc, nhưng việc chúng xảy ra đôi khi là điều hoàn toàn hợp lý. Vì chúng ta không mong đợi những vấn đề này xảy ra thường xuyên trong tiến trình hoạt động bình thường, chúng ta gọi chúng là &ldquo;bất thường&rdquo;.</p>
+
+      <p>Trong các tình huống bất thường, bạn có thể muốn cung cấp cho người dùng phản hồi về lỗi hoặc thậm chí thực hiện một hướng xử lý thay thế. Ví dụ, bạn có thể muốn cho phép người dùng nhập một tên tệp nguồn khác nếu không tìm thấy tệp đầu vào, hoặc một vị trí đích khác nếu vị trí đã chỉ định bị hết dung lượng. Ngay cả khi bạn không muốn thực hiện bất kỳ hành động đặc biệt nào trong những tình huống như vậy, ít nhất bạn cũng muốn chương trình của mình kết thúc một cách êm đẹp thay vì bị dừng đột ngột (crash) ngoài ý muốn tại thời điểm runtime. Điều này có nghĩa là bạn nên cung cấp một lối đi cho chương trình trong các tình huống đó. Một cách tiếp cận là kiểm tra từng tình huống trước khi tiến hành sao chép. Kiểu như thế này:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>if(checkFileAccess(file1)){</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 12: Controlling Program Flow</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0034.html">← Prev</a>
+    <a href="page_0036.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">35</span>
+      </header>
+
+      <p class="no-indent">Observe that when selector is 0, the switch returns 0.1, which is double value, when
+      selector is 1, the switch returns 2, which is an int value, and when selector is neither 0
+      nor 1, the switch returns &lsquo;x&rsquo;, which is a char value. So, now, the conundrum is how
+      should the variable value be defined. If you define value as an int, obviously, a double or
+      a char value cannot be assigned to it and the same argument holds if you define it as char.
+      The only acceptable type is double, because a variable of type double can be assigned all
+      three types of values.</p>
+
+      <p>Furthermore, since everything is an object in Java, you may also define value as Object.
+      However, by defining value as Object, you lose all of the type information that you will have if
+      you define it as a double. A double is more specific than Object.</p>
+
+      <p>For this reason, the type of switch expression is always determined by the compiler to be the
+      most specific type that is compatible with all of the types of the values that the given switch
+      expression can possibly return. It tries to keep as much of type information associated with the
+      return value as possible. The following example illustrates the same point with objects instead of
+      primitives:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>XXX pet = switch(personType){
+case 1 -&gt; new Cat();
+default -&gt; new Dog();
+};</code></pre>
+      </figure>
+
+      <p>Assuming that Cat and Dog classes extend Animal, the type of the switch expression will
+      be Animal because it is the most specific type that is compatible with Cat as well as Dog.
+      Of course, since an Animal is also an Object, you may define the variable pet as
+      Object as well. In strictly technical terms, the type of a switch expression is the most specific
+      upper bound of all the possible types returned by the switch expression. Don&rsquo;t worry too much
+      about it right now. It will be clear to you after you go through the chapter on Inheritance.</p>
+
+      <p>To apply the correct set of rules to a switch statement/expression, you need to first determine
+      whether you are looking at a switch expression or a switch</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

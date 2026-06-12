@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="2"] {
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0110.html">← Prev</a>
+    <a href="page_0112.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">111</span>
+      </header>
+
+      <ol class="numbered">
+        <li><code>CompoundInterestCalculator</code> private, the JVM will be facing two contradictory
+        directions. The call to <code>ic.computeInterest(...)</code> in <code>Account</code> expects the JVM to
+        invoke the method on the actual object referred to by <code>ic</code>. But the type of the actual object
+        is <code>CompoundInterestCalculator</code> and <code>CompoundInterestCalculator</code> expects the
+        JVM to reject any attempt to invoke this method from outside the
+        <code>CompoundInterestCalculator</code> class. There is no way to obey both the directions.
+        Therefore, the compiler rejects the restriction on making this method private.
+        Making the method public in <code>CompoundInterestCalculator</code> is ok because the
+        <code>Account</code> class doesn&rsquo;t care if classes from other packages are able to access
+        <code>CompoundInterestCalculator</code>&rsquo;s <code>computeInterest</code>.</li>
+        <li><strong>Return type</strong> - When <code>Account</code>&rsquo;s <code>getInterest</code> calls <code>ic.computeInterest</code>, it expects
+        to get back a <code>Number</code>. So, when <code>CompoundInterestCalculator</code>&rsquo;s <code>computeInterest</code>
+        returns a <code>Double</code>, <code>Account</code> has no problem because a <code>Double</code> is-a <code>Number</code>. But if
+        you change the return type of <code>CompoundInterestCalculator</code>&rsquo;s <code>computeInterest</code> to,
+        say, <code>Object</code>, code in <code>Account</code>&rsquo;s <code>getInterest</code> will fail because an <code>Object</code> is not
+        necessarily a <code>Number</code> and it won&rsquo;t be able to call <code>doubleValue</code> on an <code>Object</code>.</li>
+        <li><strong>Parameter types</strong> - This is kind of obvious. If you change the parameter types, the
+        compiler will consider this a completely different method and not a replacement for the
+        method in <code>InterestCalculator</code>. The JVM will never invoke this new method and
+        <code>Account</code> will still be computing simple interest instead of compound interest.</li>
+        <li><strong>Throws clause</strong> - Since the <code>computeInterest</code> method of <code>InterestCalculator</code> says
+        that it may throw an <code>Exception</code>, the caller of this method, i.e., <code>Account</code>&rsquo;s
+        <code>getInterest</code> is prepared to deal with this exception. It has a catch block that is meant to
+        catch an <code>Exception</code>. The code in <code>getInterest</code> will work even if the <code>getInterest</code>
+        method throws <code>IllegalArgumentException</code> because <code>IllegalArgumentException</code> is
+        an <code>Exception</code> and it will be caught by <code>catch(Exception )</code> clause. It doesn&rsquo;t</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Shorthand Casting</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0143.html">← Trước</a>
+    <a href="page_0145.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">144</span>
+      </header>
+
+      <h3 class="subsection-title">Chuyển đổi ngắn gọn</h3>
+      <p class="no-indent">ANSI SQL định nghĩa một cấu trúc gọi là CAST cho phép bạn biến đổi một kiểu dữ liệu thành
+      kiểu khác. Ví dụ, CAST('2011-1-11' AS date) chuyển đổi văn bản 2011-1-1 thành một ngày.
+      PostgreSQL có một cách viết ngắn gọn để thực hiện điều này bằng cách sử dụng một cặp dấu hai chấm, như trong
+      '2011-1-1'::date. Cú pháp này ngắn hơn và dễ áp dụng hơn cho các trường hợp mà bạn
+      không thể trực tiếp chuyển đổi từ một kiểu sang kiểu khác và phải can thiệp với một hoặc nhiều
+      kiểu trung gian, chẳng hạn như someXML::text::integer.</p>
+
+      <h3 class="subsection-title">Chèn nhiều hàng</h3>
+      <p class="no-indent">PostgreSQL hỗ trợ bộ tạo nhiều hàng để chèn nhiều bản ghi cùng một lúc.
+      <span class="accent-word">Ví dụ 7-11</span> minh họa cách sử dụng bộ tạo nhiều hàng để chèn dữ liệu vào bảng mà
+      chúng tôi đã tạo trong <span class="accent-word">Ví dụ 6-2</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-11.</strong> Sử dụng bộ tạo nhiều hàng để chèn dữ liệu</figcaption>
+        <pre class="code-block"><code>INSERT INTO logs_2011 (user_name, description, log_ts)
+VALUES
+    ('robe', 'đăng nhập', '2011-01-10 10:15 AM EST'),
+    ('lhsu', 'đăng xuất', '2011-01-11 10:20 AM EST');</code></pre>
+      </figure>
+
+      <p>Phần sau của bộ tạo nhiều hàng bắt đầu bằng từ khóa VALUES thường được
+      gọi là danh sách giá trị. Một danh sách giá trị có thể đứng độc lập và tạo ra một bảng ngay lập tức, như trong
+      <span class="accent-word">Ví dụ 7-12</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-12.</strong> Sử dụng bộ tạo nhiều hàng như một bảng ảo</figcaption>
+        <pre class="code-block"><code>SELECT *
+FROM (
+    VALUES
+        ('robe', 'đăng nhập', '2011-01-10 10:15 AM EST'::timestamptz),
+        ('lhsu', 'đăng xuất', '2011-01-11 10:20 AM EST'::timestamptz)
+    ) AS l (user_name, description, log_ts);</code></pre>
+      </figure>
+
+      <p>Khi bạn sử dụng VALUES như một đại diện cho một bảng ảo, bạn cần chỉ định tên cho
+      các cột và rõ ràng chuyển đổi các giá trị sang các kiểu dữ liệu trong bảng, nếu trình phân tích không thể
+      suy ra kiểu dữ liệu từ dữ liệu.</p>
+
+      <h3 class="subsection-title">ILIKE cho tìm kiếm không phân biệt chữ hoa chữ thường</h3>
+      <p class="no-indent">PostgreSQL phân biệt chữ hoa chữ thường. Tuy nhiên, nó có các cơ chế để thực hiện tìm kiếm không phân biệt chữ hoa chữ thường. Bạn có thể áp dụng hàm upper cho cả hai bên của toán tử ANSI LIKE
+      hoặc bạn có thể đơn giản sử dụng toán tử ILIKE (~) chỉ có trong PostgreSQL:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT tract_name FROM census.lu_tracts WHERE tract_name ILIKE '%duke%';
+
+tract_name
+------------------------------------------------
+Census Tract 2001, Dukes County, Massachusetts</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">126<span class="sep">|</span>Chương 7: SQL: The PostgreSQL Way</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

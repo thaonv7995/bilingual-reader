@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 24: Implementing Localization</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: 14pt;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      font-size: 10pt;
+      line-height: 1.35;
+      background: #e2e9f0;
+      border-left: none;
+      white-space: pre-wrap;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0736.html">← Prev</a>
+    <a href="page_0738.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">737</span>
+      </header>
+
+      <p class="no-indent">2. The logic to determine the properties files needed to create a resource bundle is important
+      and I will explain it shortly, but in this example, since we don't have any locale specific
+      properties file, the <code>getBundle</code> method just loads a properties file with the same name as
+      that of the resource bundle (but with extension <code>.properties</code>), i.e.,
+      <code>helloapp.properties</code>.</p>
+
+      <p class="no-indent">3. The name of the resource bundle and the corresponding properties file follows the same
+      convention as the one followed by classes. Therefore, while locating a bundle named
+      <code>helloapp</code>, the <code>getBundle</code> method expects <code>helloapp.properties</code> to be located
+      directly on the classpath. If the name of the bundle were <code>test.helloapp</code>, then
+      <code>helloapp.properties</code> would have to be present in the test folder and the test
+      folder would have to be on the classpath.</p>
+
+      <p class="no-indent">4. The name of the keys in the properties file can be anything but the code must use the same
+      key to loop up the value. Therefore, it is a common practice to use strings containing text
+      that makes sense in the language that the dev team understands as keys. Using keys such
+      as <code>key1</code>, <code>key2</code>, makes it hard to tie a key to the text that is meant to be shown to the
+      user for that key.</p>
+
+      <p class="no-indent">5. The backslashes (<code>\</code>) in the properties files are required to escape the space character.</p>
+
+      <h3 class="section-title">24.3.2 Understanding Resource Bundles<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Resource bundles are hierarchical, meaning, a resource bundle always has a parent bundle
+      unless the bundle is at the top of the hierarchy, in which case, it is called the "base bundle". The
+      hierarchy of resource bundles is established using a set of resource bundles whose names start
+      with a common base name, such as <code>helloapp</code> used in the previous example. The remaining
+      part of the name of a resource bundle is created using various attributes of a locale such as the
+      language and the country separated by underscores. These attributes must always be in the
+      following order:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>baseName + "_" + language + "_" + script + "_" + country + "_" + variant</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

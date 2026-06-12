@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table {
+      width: 100%;
+      margin: 0 0 4mm;
+      border-collapse: collapse;
+      font-size: 12pt;
+      line-height: 1.35;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table th,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td {
+      border: 0.25mm solid #888;
+      padding: 1.5mm 2mm;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table th {
+      font-weight: 700;
+      background: transparent;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td p:last-child {
+      margin-bottom: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--interface th.nio-file-ref-table__type,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--interface td.nio-file-ref-table__type {
+      width: 18%;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--interface th.nio-file-ref-table__methods,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--interface td.nio-file-ref-table__methods {
+      width: 82%;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class th.nio-file-ref-table__type,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class td.nio-file-ref-table__type {
+      width: 52%;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class th.nio-file-ref-table__methods,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class td.nio-file-ref-table__methods {
+      width: 48%;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table .method-label {
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table .class-note {
+      font-style: normal;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0420.html">← Trước</a>
+    <a href="page_0422.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">421</span>
+      </header>
+
+      <p class="no-indent">Dưới đây là danh sách các interface và class từ package <code>java.nio.file</code>&nbsp;mà bạn cần lưu ý cho kỳ thi OCP.</p>
+
+      <table class="data-table nio-file-ref-table nio-file-ref-table--interface">
+        <thead>
+          <tr>
+            <th class="nio-file-ref-table__type">Interface (Giao diện)</th>
+            <th class="nio-file-ref-table__methods">Các phương thức quan trọng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p><code>Path</code></p>
+            </td>
+            <td class="nio-file-ref-table__methods">
+              <p class="method-label">Các phương thức instance:</p>
+              <p><code>getName(int&nbsp;index)</code>, <code>getParent()</code>, <code>getRoot()</code>, <code>subpath(int
+              beginIndex,&nbsp;int&nbsp;endIndex)</code>, <code>toAbsolutePath()</code>,</p>
+              <p><code>toRealPath(LinkOption... options)</code>, <code>toFile()</code></p>
+              <p><code>normalize()</code>, <code>relativize(Path other)</code>, <code>resolve(Path other)</code></p>
+              <p class="method-label">Phương thức static:</p>
+              <p><code>of(String first, String... more)</code></p>
+            </td>
+          </tr>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p><code>OpenOption</code></p>
+            </td>
+            <td class="nio-file-ref-table__methods"></td>
+          </tr>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p><code>CopyOption</code></p>
+            </td>
+            <td class="nio-file-ref-table__methods"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="data-table nio-file-ref-table nio-file-ref-table--class">
+        <thead>
+          <tr>
+            <th class="nio-file-ref-table__type">Lớp (Class)</th>
+            <th class="nio-file-ref-table__methods">Các phương thức quan trọng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p><code>FileSystems</code></p>
+              <p>Chỉ chứa các phương thức factory static cho các file system.</p>
+            </td>
+            <td class="nio-file-ref-table__methods">
+              <p class="method-label">Các phương thức static:</p>
+              <p><code>getDefault()</code>, <code>getFileSystem(URI uri)</code></p>
+            </td>
+          </tr>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p><code>FileSystem</code></p>
+              <p>Cung cấp một interface đến một file system và là factory cho các đối tượng (Object) để truy cập các file và các đối tượng (Object) khác trong file system.</p>
+            </td>
+            <td class="nio-file-ref-table__methods">
+              <p class="method-label">Các phương thức instance:</p>
+              <p><code>getPath(String&nbsp;first,&nbsp;String...&nbsp;more)</code>,</p>
+              <p><code>getRootDirectories()</code>, <code>getSeparator()</code></p>
+            </td>
+          </tr>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p><code>Paths</code> <span class="class-note">(Không còn được khuyến nghị sử dụng nữa)</span></p>
+              <p>Chỉ chứa các phương thức static trả về một Path bằng cách chuyển đổi một chuỗi đường dẫn hoặc một URI.</p>
+            </td>
+            <td class="nio-file-ref-table__methods">
+              <p class="method-label">Các phương thức static:</p>
+              <p><code>get(String&nbsp;first,&nbsp;String... more)</code>, <code>get(URI uri)</code></p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

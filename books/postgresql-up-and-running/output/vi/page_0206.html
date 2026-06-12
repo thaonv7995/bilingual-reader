@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài — Truy vấn Nguồn dữ liệu phi truyền thống</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0205.html">← Trước</a>
+    <a href="page_0207.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">206</span>
+      </header>
+
+      <p class="no-indent">Ví dụ này chỉ bao gồm các tùy chọn cơ bản nhất cho bảng ngoại. Theo mặc định, tất cả
+      các bảng ngoại của PostgreSQL đều có thể chỉnh sửa/cập nhật, trừ khi tài khoản từ xa
+      mà bạn đã sử dụng không có quyền truy cập cập nhật vào bảng đó. Cài đặt <code>updatable</code> là một cài đặt Boolean
+      có thể được thay đổi tại bảng ngoại hoặc định nghĩa máy chủ ngoại. Ví dụ, để làm cho bảng của bạn chỉ đọc, hãy thực hiện:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER FOREIGN TABLE ft_facts OPTIONS (ADD updatable 'false');</code></pre>
+      </figure>
+
+      <p class="no-indent">Bạn có thể đặt lại bảng thành <code>updatable</code> bằng cách chạy:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER FOREIGN TABLE ft_facts OPTIONS (SET updatable 'true');</code></pre>
+      </figure>
+
+      <p class="no-indent">Thuộc tính <code>updatable</code> ở cấp bảng ghi đè cài đặt máy chủ ngoại.</p>
+
+      <p>Ngoài việc thay đổi <code>OPTIONS</code>, bạn cũng có thể thêm và xóa cột bằng câu lệnh <code>ALTER
+      FOREIGN TABLE</code>. Câu lệnh này được đề cập trong <a href="http://bit.ly/1yUdsGw" class="accent-word">Tài liệu PostgreSQL ALTER
+      FOREIGN TABLE</a>.</p>
+
+      <h3 class="section-title">Truy vấn Nguồn dữ liệu phi truyền thống</h3>
+
+      <p class="no-indent">Thế giới cơ sở dữ liệu dường như không trở nên đồng nhất hơn. Các cơ sở dữ liệu kỳ lạ
+      đang xuất hiện nhanh hơn chúng ta có thể theo dõi. Một số là mốt và nhanh chóng chìm trong
+      sự tự mãn của chính chúng. Một số mong muốn lật đổ hoàn toàn các cơ sở dữ liệu quan hệ. Một số có thể
+      khó được coi là cơ sở dữ liệu. Việc giới thiệu FDWs một phần là phản ứng với
+      sự đa dạng ngày càng tăng. FDW tiếp nhận mà không làm tổn hại đến lõi PosgreSQL.</p>
+
+      <p>Trong ví dụ tiếp theo này, chúng tôi sẽ trình bày cách sử dụng FDW <code>www_fdw</code> để truy vấn các
+      dịch vụ web. Chúng tôi đã mượn ví dụ từ <a href="http://bit.ly/12sggyN" class="accent-word">Ví dụ www_fdw</a>.</p>
+
+      <p>FDW <code>www_fdw</code> không thường được đóng gói cùng với PostgreSQL. Nếu bạn đang sử dụng Linux/
+      Unix, việc biên dịch rất dễ dàng nếu bạn đã cài đặt gói <code>postgresql-dev</code> và có thể
+      <a href="https://github.com/cyga/www_fdw" class="accent-word">tải xuống mã nguồn mới nhất</a>. Chúng tôi đã thực hiện việc biên dịch cho một số nền tảng Windows;
+      bạn có thể tải xuống các tệp nhị phân của chúng tôi từ <a href="http://bit.ly/1FUkLPQ" class="accent-word">Windows-32 9.1 FDWs</a> và <a href="http://bit.ly/1yn3cne" class="accent-word">Windows-64 9.3
+      FDWs</a>.</p>
+
+      <p>Bây giờ hãy tạo một tiện ích mở rộng để chứa FDW:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE EXTENSION www_fdw;</code></pre>
+      </figure>
+
+      <p>Sau đó, tạo máy chủ dữ liệu ngoại Google của bạn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE SERVER www_fdw_server_google_search
+FOREIGN DATA WRAPPER www_fdw
+OPTIONS (uri 'http://ajax.googleapis.com/ajax/services/search/web?v=1.0');</code></pre>
+      </figure>
+
+      <p>Định dạng mặc định được hỗ trợ bởi <code>www_fdw</code> là JSON, vì vậy chúng tôi không cần phải bao gồm nó trong
+      bộ điều chỉnh <code>OPTIONS</code>. Định dạng hỗ trợ khác là XML. Để biết chi tiết về các tham số bổ sung
+      mà bạn có thể thiết lập, hãy tham khảo <code>www_fdw</code> <a href="https://github.com/cyga/www_fdw/wiki/Documentation" class="accent-word">tài liệu</a>. Mỗi FDW là khác nhau
+      và đi kèm với các cài đặt API riêng.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">188<span class="sep">|</span>Chương 10: Sao chép và Dữ liệu bên ngoài</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

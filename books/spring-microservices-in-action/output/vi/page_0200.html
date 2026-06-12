@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Tiếp theo Listing 6.6 và Listing 6.7 FilterUtils</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0199.html">← Trước</a>
+    <a href="page_0201.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Xây dựng bộ lọc pre-filter Zuul đầu tiên tạo ID tương quan</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">175</span>
+      </header>
+
+      <figure class="code-snippet" aria-label="Tiếp theo Listing 6.6">
+        <pre class="code-block"><code>          filterUtils.getCorrelationId());
+    }
+    else{
+      filterUtils
+         .setCorrelationId(generateCorrelationId());
+   logger.debug("tmx-correlation-id generated
+   ➥ in tracking filter: {}.",
+   ➥ filterUtils.getCorrelationId());
+}
+  RequestContext ctx =
+    RequestContext.getCurrentContext();
+  logger.debug("Processing incoming request for {}.",
+     ctx.getRequest().getRequestURI());
+  return null;
+}
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Để triển khai một filter trong Zuul, bạn phải mở rộng class ZuulFilter rồi ghi đè bốn phương thức: <code>filterType()</code>, <code>filterOrder()</code>, <code>shouldFilter()</code> và <code>run()</code>. Ba phương thức đầu trong danh sách này mô tả cho Zuul loại filter bạn đang xây dựng, thứ tự chạy so với các filter cùng loại khác, và liệu nó có nên được kích hoạt hay không. Phương thức cuối cùng, <code>run()</code>, chứa logic nghiệp vụ mà filter sẽ thực hiện.</p>
+
+      <p>Bạn đã triển khai một class tên là <code>FilterUtils</code>. Class này dùng để đóng gói chức năng chung được tất cả các filter của bạn sử dụng. Class <code>FilterUtils</code> nằm tại <code>zuulsvr/src/main/java/com/thoughtmechanix/zuulsvr/FilterUtils.java</code>. Chúng ta sẽ không đi qua toàn bộ class <code>FilterUtils</code>, nhưng các phương thức chính sẽ thảo luận ở đây là các hàm <code>getCorrelationId()</code> và <code>setCorrelationId()</code>. Listing sau đây cho thấy mã của phương thức <code>getCorrelationId()</code> trong <code>FilterUtils</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.7</strong><br>Lấy tmx-correlation-id từ các HTTP header</figcaption>
+        <pre class="code-block"><code>public String getCorrelationId(){
+  RequestContext ctx = RequestContext.getCurrentContext();
+
+  if (ctx.getRequest()
+        .getHeader(CORRELATION_ID) !=null) {
+ return ctx.getRequest()
+           .getHeader(CORRELATION_ID);
+  }
+  else{
+ return ctx.getZuulRequestHeaders()
+           .get(CORRELATION_ID);
+  }
+}</code></pre>
+      </figure>
+
+      <p>Điều quan trọng cần chú ý trong listing 6.7 là bạn trước tiên kiểm tra xem tmx-correlation-ID đã được đặt trên HTTP Headers của yêu cầu đến chưa. Bạn thực hiện việc này bằng lời gọi <code>ctx.getRequest().getHeader(CORRELATION_ID)</code>.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0516.html">← Trước</a>
+    <a href="page_0518.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">517</span>
+      </header>
+
+      <p class="no-indent">nút trên GUI và nó khiến đoạn mã sau được thực thi ở backend:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>synchronized(ticket){
+ ticket.setPrice(fetchPriceFromWebsite(ticket.getId()));
+}</code></pre>
+      </figure>
+
+      <p>Vì thao tác này khóa ticket, không Thread (Luồng) nào khác sẽ có thể đặt nó. Điều này có thể chấp nhận được nếu đó là điều mà trường hợp sử dụng nghiệp vụ yêu cầu. Nhưng nếu lệnh gọi fetch mất nhiều thời gian hoặc nếu người dùng liên tục nhấp vào nút Refresh Price thì sao? Một Thread (Luồng) cố gắng đặt ticket này sẽ gặp khó khăn trong việc khóa đối tượng (Object) ticket.</p>
+
+      <p>Không có biện pháp vạn năng nào để khắc phục các lỗi liên quan đến starvation (đói tài nguyên), nhưng việc giữ các đối tượng (Object) bị khóa trong thời gian ngắn sẽ giảm thiểu khả năng xảy ra của chúng.&nbsp;</p>
+
+      <h3 class="section-title section-title--sub">Deadlock (Bế tắc)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Deadlock (Bế tắc) xảy ra khi hai hoặc nhiều Thread (Luồng) đang chờ đợi hành động lẫn nhau. Ví dụ, nếu Thread (Luồng) T<sub>1</sub>&nbsp;đã khóa đối tượng (Object) O<sub>1</sub>&nbsp;và đang chờ đối tượng (Object) O<sub>2</sub>&nbsp;trở nên khả dụng, trong khi Thread (Luồng) T<sub>2</sub>&nbsp;đã khóa đối tượng (Object) O<sub>2</sub>&nbsp;và đang chờ đối tượng (Object) O<sub>1</sub>&nbsp;trở nên khả dụng, cả hai Thread (Luồng) đều không thể tiếp tục. Tình huống như vậy có thể xảy ra khi nhiều Thread (Luồng) cố gắng chiếm giữ nhiều khóa theo thứ tự khác nhau như được minh họa bởi đoạn mã sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>void bookTicket(Ticket t, User u){
+ synchronize(t){ //lock the Ticket object
+  synchronize(u){  //lock the user object
+   ticket.setPassengerId(userId);
+   u.addTicket(t);
+  }
+ }
+}
+
+void cancelTicket(Ticket t, User u){</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

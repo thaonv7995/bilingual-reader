@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="2"] {
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0461.html">← Prev</a>
+    <a href="page_0463.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">462</span>
+      </header>
+
+      <ol class="numbered" start="2">
+        <li>
+          <p>we start watching from there. Similarly, a thread knows where it was when it got access to
+          the CPU and it starts executing instructions from that point.</p>
+          <p>The thread that the CPU is currently executing is said to be in the <strong>running</strong> state while the
+          thread that is ready to run but is waiting its turn is said to be in the <strong>ready</strong> state. The
+          scheduler is smart enough to know which thread is waiting for some resource to be
+          available and puts that thread in the <strong>waiting</strong> state until that resource becomes available.</p>
+          <p>Of course, if the underlying system has multiple CPUs as shown in the above figure, the
+          scheduler can schedule multiple threads to run at the same time on different CPUs.</p>
+        </li>
+        <li>
+          <p>Zooming into the JVM process, observe the similarity between the components of the
+          whole figure and the components inside the JVM. This is not accidental but by design. A
+          JVM does, in fact, simulate a complete computer including the operating system. So,
+          whatever concepts I explained in the above two points apply equally well to a JVM.</p>
+          <p>Components of a JVM serve the same purpose as the corresponding components in the
+          actual PC conceptually. For example, the program memory of a JVM is like the RAM of
+          system. Virtual threads inside a JVM are like the threads created by the OS. <strong>Platform
+          threads</strong> (aka <strong>native threads</strong>) are like logical CPUs of the JVM. The JVM thread
+          scheduler schedules virtual threads to run on platform threads just like the OS thread
+          scheduler schedules OS threads to run on logical CPUs.</p>
+          <p>Thus, when you launch a JVM (using the <code>java.exe</code> on Windows or the <code>java</code>
+          executable on Linux), you are basically starting up a virtual machine. Just as an OS creates
+          a user thread to launch a process, the JVM too creates a platform thread to execute the
+          instructions present in your main class. This thread is called the <strong>main thread</strong>.</p>
+        </li>
+        <li>
+          <p>Prior to <strong>Java 21</strong>, whenever the JVM needed to create a thread, it called upon the OS to
+          create it. The OS would then create a thread and assign it to the JVM. Thus, all threads in
+          the JVM were actually just wrappers over OS threads and they would get a chance to
+          execute as and when the OS scheduled the associated thread to execute. Such JVM threads
+          are now officially called <strong>platform</strong></p>
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Hướng dẫn SpecialRoutesFilter và Listing 6.14</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered + h4.subsection-title {
+      margin-top: 1mm;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0210.html">← Trước</a>
+    <a href="page_0212.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">186</span>
+        <span class="rh-center">CHƯƠNG 6 <em>Định tuyến dịch vụ với Spring Cloud và Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Trong hình 6.15, sau khi client dịch vụ đã gọi một dịch vụ được Zuul &ldquo;đứng phía trước&rdquo;, <code>SpecialRoutesFilter</code> sẽ thực hiện các hành động sau:</p>
+
+      <ol class="manning-numbered" aria-label="Các hành động của SpecialRoutesFilter trong hình 6.15">
+        <li><code>SpecialRoutesFilter</code> truy xuất service ID của dịch vụ đang được gọi.</li>
+        <li><code>SpecialRoutesFilter</code> gọi dịch vụ <code>SpecialRoutes</code>. Dịch vụ <code>SpecialRoutes</code> kiểm tra xem có endpoint thay thế nào được định nghĩa cho endpoint được nhắm tới hay không. Nếu tìm thấy bản ghi, bản ghi đó sẽ chứa trọng số cho Zuul biết phần trăm lời gọi dịch vụ nào nên được gửi tới dịch vụ cũ và dịch vụ mới.</li>
+        <li><code>SpecialRoutesFilter</code> sau đó tạo một số ngẫu nhiên và so sánh với trọng số do dịch vụ <code>SpecialRoutes</code> trả về. Nếu số được tạo ngẫu nhiên nhỏ hơn giá trị trọng số của endpoint thay thế, <code>SpecialRoutesFilter</code> sẽ gửi yêu cầu tới phiên bản mới của dịch vụ.</li>
+        <li>Nếu <code>SpecialRoutesFilter</code> gửi yêu cầu tới phiên bản mới của dịch vụ, Zuul vẫn duy trì các pipeline được định nghĩa sẵn ban đầu và gửi phản hồi từ endpoint dịch vụ thay thế trở lại qua mọi post filter đã được định nghĩa.</li>
+      </ol>
+
+      <h4 class="subsection-title">6.7.1 Xây dựng khung skeleton của bộ lọc route</h4>
+
+      <p>Chúng ta sẽ bắt đầu đi qua mã nguồn mà bạn dùng để xây dựng <code>SpecialRoutesFilter</code>. Trong số tất cả các filter mà chúng ta đã xem xét cho đến nay, việc triển khai bộ lọc route Zuul đòi hỏi nỗ lực lập trình nhiều nhất, vì với bộ lọc route bạn đang tiếp quản một phần cốt lõi của chức năng Zuul — định tuyến — và thay thế bằng chức năng của riêng bạn. Chúng ta sẽ không đi qua toàn bộ class ở đây theo chi tiết, mà chỉ xem xét các chi tiết liên quan.</p>
+
+      <p><code>SpecialRoutesFilter</code> tuân theo cùng mẫu cơ bản như các filter Zuul khác. Nó mở rộng class <code>ZuulFilter</code> và đặt phương thức <code>filterType()</code> trả về giá trị &ldquo;route&rdquo;. Tôi sẽ không giải thích thêm về các phương thức <code>filterOrder()</code> và <code>shouldFilter()</code> vì chúng không khác gì so với các filter trước đó đã thảo luận ở đầu chương. Listing sau đây trình bày khung skeleton của bộ lọc route.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.14</strong><br>Khung skeleton của bộ lọc route</figcaption>
+        <pre class="code-block"><code>package com.thoughtmechanix.zuulsvr.filters;
+
+@Component
+public class SpecialRoutesFilter extends ZuulFilter {
+  @Override
+  public String filterType() {
+    return filterUtils.ROUTE_FILTER_TYPE;
+  }
+
+  @Override
+  public int filterOrder() {}</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

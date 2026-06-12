@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Truyền mã thông báo truy cập OAuth2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm 3mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0234.html">← Trước</a>
+    <a href="page_0236.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">210</span>
+        <span class="rh-center">CHƯƠNG 7 <em>Bảo mật microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Phần cuối của định nghĩa quy tắc phân quyền vẫn quy định rằng mọi endpoint khác trong dịch vụ của bạn phải được truy cập bởi người dùng đã xác thực:</p>
+
+      <figure class="code-snippet" aria-label="Quy tắc phân quyền catch-all">
+        <pre class="code-block"><code>.anyRequest()
+.authenticated();</code></pre>
+      </figure>
+
+      <p>Giờ, nếu bạn lấy token OAuth2 cho người dùng <code>john.carnell</code> (mật khẩu: password1) và thử gọi endpoint DELETE của organization service (<code>http://localhost:8085/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a</code>), bạn sẽ nhận mã trạng thái HTTP 401 trong lời gọi cùng thông báo lỗi cho biết quyền truy cập bị từ chối. Văn bản JavaScript trả về từ lời gọi của bạn sẽ là</p>
+
+      <figure class="code-snippet" aria-label="Phản hồi lỗi OAuth2 access denied">
+        <pre class="code-block"><code>{
+ "error": "access_denied",
+ "error_description": "Access is denied"
+}</code></pre>
+      </figure>
+
+      <p>Nếu bạn thử cùng một lời gọi với tài khoản người dùng <code>william.woodward</code> (mật khẩu: password2) và token OAuth2 của nó, bạn sẽ thấy lời gọi thành công được trả về (mã trạng thái HTTP 204 &ndash; No Content), và tổ chức đó sẽ bị xóa bởi organization service.</p>
+
+      <p class="block-indent">Đến đây chúng ta đã xem hai ví dụ đơn giản về gọi và bảo vệ một dịch vụ duy nhất (organization service) bằng OAuth2. Tuy nhiên, trong môi trường microservice, bạn thường sẽ có nhiều lời gọi dịch vụ được dùng để thực hiện một giao dịch duy nhất. Trong các tình huống như vậy, bạn cần đảm bảo mã thông báo truy cập OAuth2 được truyền từ lời gọi dịch vụ này sang lời gọi dịch vụ khác.</p>
+
+      <h4 class="subsection-title">7.3.4 Truyền mã thông báo truy cập OAuth2</h4>
+
+      <p>Để minh họa việc truyền token OAuth2 giữa các dịch vụ, giờ chúng ta sẽ xem cách bảo vệ licensing service bằng OAuth2. Hãy nhớ, licensing service gọi organization service để tra cứu thông tin. Vấn đề đặt ra là: làm thế nào để truyền token OAuth2 từ dịch vụ này sang dịch vụ khác?</p>
+
+      <p class="block-indent">Bạn sẽ thiết lập một ví dụ đơn giản trong đó licensing service gọi organization service. Dựa trên các ví dụ từ chương 6, cả hai dịch vụ đều chạy phía sau Zuul gateway.</p>
+
+      <p class="block-indent">Hình 7.8 cho thấy luồng cơ bản của cách mã thông báo truy cập OAuth2 của người dùng đã xác thực sẽ đi qua Zuul gateway, tới licensing service, rồi xuống organization service.</p>
+
+      <p class="block-indent">Hoạt động sau diễn ra trong hình 7.8:</p>
+
+      <ol class="manning-numbered" aria-label="Hình 7.8 Luồng truyền token OAuth2">
+        <li>Người dùng đã xác thực với máy chủ OAuth2 và thực hiện lời gọi tới ứng dụng web EagleEye. Mã thông báo truy cập OAuth2 của người dùng được lưu trong session của người dùng. Ứng dụng web EagleEye cần lấy một số dữ liệu licensing và sẽ gọi REST endpoint của licensing service. Trong lời gọi tới REST endpoint licensing, ứng dụng web EagleEye sẽ thêm mã thông báo truy cập OAuth2 qua HTTP Header &ldquo;Authorization&rdquo;. Licensing service chỉ có thể truy cập phía sau Zuul services gateway.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

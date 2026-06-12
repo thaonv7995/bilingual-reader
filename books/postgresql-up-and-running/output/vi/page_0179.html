@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tinh chỉnh Hiệu suất Truy vấn</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0178.html">← Trước</a>
+    <a href="page_0180.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">179</span>
+      </header>
+
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHƯƠNG 9</p>
+        <h1 class="chapter-title no-indent">Tinh chỉnh Hiệu suất Truy vấn</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="no-indent">Sớm hay muộn, tất cả chúng ta sẽ phải đối mặt với một truy vấn mất một chút thời gian hơn để thực thi so với sự kiên nhẫn của chúng ta. Cách sửa chữa tốt nhất và dễ nhất là hoàn thiện SQL cơ bản, tiếp theo là thêm chỉ mục và cập nhật thống kê của trình lập kế hoạch. Để hướng dẫn bạn trong những nỗ lực này, PostgreSQL đi kèm với một công cụ giải thích tích hợp cho biết cách mà trình lập kế hoạch truy vấn sẽ thực thi SQL của bạn. Với khả năng viết SQL hoàn hảo, trực giác để phát hiện các chỉ mục hữu ích và cái nhìn của công cụ giải thích, bạn sẽ không gặp khó khăn trong việc làm cho các truy vấn của bạn chạy nhanh như ngân sách phần cứng của bạn cho phép.</p>
+
+      <h3 class="section-title">EXPLAIN</h3>
+      <p class="no-indent">Công cụ dễ nhất để nhắm mục tiêu các vấn đề hiệu suất truy vấn là sử dụng các lệnh <code>EXPLAIN</code> và <code>EXPLAIN (ANALYZE)</code>. Những lệnh này đã có từ những năm đầu của PostgreSQL. Kể từ đó, nó đã phát triển thành một công cụ hoàn chỉnh có khả năng báo cáo thông tin chi tiết về việc thực thi truy vấn. Trong quá trình đó, nó đã thêm nhiều định dạng đầu ra hơn. Kể từ phiên bản 9.0, bạn thậm chí có thể xuất đầu ra sang XML, JSON hoặc YAML.</p>
+
+      <p>Có lẽ sự cải tiến thú vị nhất cho người dùng thông thường đã đến cách đây vài năm khi pgAdmin giới thiệu EXPLAIN đồ họa. Với một cái nhìn chăm chú, bạn có thể xác định nơi các nút thắt cổ chai trong truy vấn của bạn, các bảng nào thiếu chỉ mục và liệu con đường thực thi có đi theo một hướng bất ngờ hay không.</p>
+
+      <h3 class="subsection-title">Tùy chọn EXPLAIN</h3>
+      <p class="no-indent">Để sử dụng phiên bản không đồ họa của EXPLAIN, chỉ cần thêm trước SQL của bạn các từ <code>EXPLAIN</code> hoặc <code>EXPLAIN (ANALYZE)</code>.</p>
+
+      <p><code>EXPLAIN</code> tự nó sẽ chỉ cho bạn một ý tưởng về cách mà trình lập kế hoạch dự định thực thi truy vấn mà không chạy nó. Thêm tham số ANALYZE, như trong <code>EXPLAIN (ANALYZE)</code>, sẽ thực thi truy vấn và cung cấp cho bạn một phân tích so sánh giữa dự kiến và thực tế.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">161</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

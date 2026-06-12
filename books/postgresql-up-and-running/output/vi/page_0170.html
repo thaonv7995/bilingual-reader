@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 8: Viết Hàm — Viết Hàm PL/pgSQL</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 8.5pt;
+      line-height: 1.18;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 8.5pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0169.html">← Trước</a>
+    <a href="page_0171.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">170</span>
+      </header>
+
+      <h3 class="section-title">Viết Hàm PL/pgSQL</h3>
+
+      <p class="no-indent">Khi nhu cầu chức năng của bạn vượt quá SQL, việc chuyển sang PL/pgSQL là một thực hành phổ biến.
+      PL/pgSQL vượt trội hơn SQL ở chỗ bạn có thể khai báo các biến cục bộ bằng cách sử dụng <code>DECLARE</code> và bạn
+      có thể kết hợp điều khiển luồng.</p>
+
+      <h3 class="subsection-title">Hàm PL/pgSQL Cơ Bản</h3>
+
+      <p class="no-indent">Để minh họa sự khác biệt về cú pháp so với SQL, trong <span class="accent-word">Ví dụ 8-10</span> chúng ta viết lại <span class="accent-word">Ví dụ 8-4</span>
+      dưới dạng một hàm PL/pgSQL.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 8-10.</strong> Hàm để trả về một bảng sử dụng PL/pgSQL</figcaption>
+        <pre class="code-block"><code>CREATE FUNCTION select_logs_rt(param_user_name varchar)
+RETURNS TABLE (log_id int, user_name varchar(50), description text, log_ts timestamptz) AS
+$$
+BEGIN RETURN QUERY
+    SELECT log_id, user_name, description, log_ts FROM logs
+     WHERE user_name = param_user_name;
+END;
+$$
+LANGUAGE 'plpgsql' STABLE;</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Viết Hàm Kích Hoạt Trong PL/pgSQL</h3>
+
+      <p class="no-indent">Bởi vì bạn không thể viết các hàm kích hoạt trong SQL, PL/pgSQL là lựa chọn tốt nhất tiếp theo của bạn. Trong
+      phần này, chúng ta sẽ minh họa cách viết một hàm kích hoạt cơ bản trong PL/pgSQL.</p>
+
+      <p>Chúng ta tiến hành theo hai bước. Đầu tiên, chúng ta viết hàm kích hoạt. Thứ hai, chúng ta gán rõ ràng
+      hàm kích hoạt cho kích hoạt thích hợp. Bước thứ hai là một tính năng mạnh mẽ của
+      PostgreSQL tách rời hàm xử lý kích hoạt khỏi chính kích hoạt. Bạn
+      có thể gán cùng một hàm kích hoạt cho nhiều kích hoạt, thêm một cấp độ tái sử dụng
+      không có trong các cơ sở dữ liệu khác. Bởi vì mỗi hàm kích hoạt có thể đứng độc lập, bạn
+      có sự lựa chọn về ngôn ngữ, và việc kết hợp là hoàn toàn ổn. Đối với một sự kiện kích hoạt
+      đơn lẻ, bạn có thể thiết lập nhiều kích hoạt, mỗi kích hoạt với các hàm được viết bằng một ngôn ngữ khác nhau.
+      Ví dụ, bạn có thể có một kích hoạt gửi email cho một khách hàng được viết bằng PL/PythonU hoặc PL/
+      PerlU và một kích hoạt khác ghi vào một tệp nhật ký với plPgSQL.</p>
+
+      <p>Một hàm kích hoạt cơ bản và kích hoạt đi kèm được minh họa trong <span class="accent-word">Ví dụ 8-11</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 8-11.</strong> Hàm kích hoạt để đánh dấu thời gian cho các bản ghi mới và đã thay đổi</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION trig_time_stamper() RETURNS trigger AS ❶
+$$
+BEGIN
+    NEW.upd_ts := CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">152<span class="sep">|</span>Chương 8: Viết Hàm</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.type-name {
+      margin: 0 0 1mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.type-desc {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0102.html">← Prev</a>
+    <a href="page_0104.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">103</span>
+      </header>
+
+      <p class="no-indent">ative infinity, relieving us from having to create conventions that we’ll surely forget.
+      Finally, version 9.2 unveiled range types that provide support for temporal ranges with
+      a whole slew of companion operators, functions, and indexes. We cover range types in
+      <span class="accent-word">“Range Types” on page 93</span>.</p>
+
+      <p>At last count, PostgreSQL has nine temporal data types. Understanding their distinc‐
+      tions is important to ensuring that you choose the right data type for the job. All of the
+      types except range abide by ANSI SQL standards. Other leading database products
+      support some, but not all, of these data types. Oracle has the most varieties of temporal
+      types; SQL Server ranks second; and MySQL comes in last, with no support for time
+      zones in any version.</p>
+
+      <p>Because PostgreSQL temporal types could be unique, we’ll describe each in finer detail:</p>
+
+      <p class="type-name no-indent"><code>date</code></p>
+      <p class="type-desc">Just stores the month, day, and year, with no time zone awareness and no concept
+      of hours, minutes, or seconds.</p>
+
+      <p class="type-name no-indent"><code>time</code> (aka <code>time without time zone</code>)</p>
+      <p class="type-desc">Records hours, minutes, and seconds with no awareness of time zone or calendar
+      dates.</p>
+
+      <p class="type-name no-indent"><code>timestamp</code> (aka <code>timestamp without time zone</code>)</p>
+      <p class="type-desc">Records both calendar dates and time (hours, minutes, seconds) but does not care
+      about the time zone. As such, the displayed value of this data won’t change when
+      you change your server’s time zone.</p>
+
+      <p class="type-name no-indent"><code>timestamptz</code> (aka <code>timestamp with time zone</code>)</p>
+      <p class="type-desc">A time zone−aware date and time data type. Internally, <code>timestamptz</code> is stored in
+      Coordinated Universal Time (UTC), but its display defaults to the time zone of the
+      server (or database/user/session if you observe differing time zones at those levels).
+      If you input a timestamp with no time zone and cast it to one with the time zone,
+      PostgreSQL assumes the server’s time zone. If you change your server’s time zone,
+      you’ll see all the displayed times change.</p>
+
+      <p class="type-name no-indent"><code>timetz</code> (aka <code>time with time zone</code>)</p>
+      <p class="type-desc">The lesser-used sister of <code>timestamptz</code>. It is time zone−aware but does not store the
+      date. It always assumes DST of the current time. For some programming languages
+      with no concept of time without date, it might map <code>timetz</code> to a timestamp with a
+      time zone at the beginning of time (for example, Unix Epoch 1970, thus resulting
+      in DST of year 1970 being used).</p>
+
+      <p class="type-name no-indent"><code>interval</code></p>
+      <p class="type-desc">A duration of time in hours, days, months, minutes, and others. It comes in handy
+      for doing date-time arithmetic. For example, if the world is supposed to end in
+      exactly 666 days from now, all you have to do is add an interval of 666 days to the
+      current time to get the exact moment when it will happen (and plan accordingly).</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Temporals<span class="sep">|</span>85</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

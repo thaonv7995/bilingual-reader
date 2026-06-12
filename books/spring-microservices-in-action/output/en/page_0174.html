@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 5: Listing 5.11 DelegatingUserContextCallable</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.action-step-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.action-step-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 24%) minmax(0, 46%) minmax(0, 30%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 2;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts-left {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding-bottom: 18mm;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 5mm;
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-annotated--511 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 4mm;
+    }
+    .prose-page.chapter-page .listing-annotated--511 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0173.html">← Prev</a>
+    <a href="page_0175.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Thread context and Hystrix</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">149</span>
+      </header>
+
+      <p class="no-indent">Note a couple of things in the class implementation in listing 5.10. First, because Spring Cloud already defines a <code>HystrixConcurrencyStrategy</code>, every method that could be overridden needs to check whether an existing concurrency strategy is present and then either call the existing concurrency strategy&rsquo;s method or the base Hystrix concurrency strategy method. You have to do this as a convention to ensure that you properly invoke the already-existing Spring Cloud&rsquo;s <code>HystrixConcurrencyStrategy</code> that deals with security. Otherwise, you can have nasty behavior when trying to use Spring security context in your Hystrix protected code.</p>
+
+      <p>The second thing to note is the <code>wrapCallable()</code> method in listing 5.11. In this method, you pass in <code>Callable</code> implementation, <code>DelegatingUserContextCallable</code>, that will be used to set the <code>UserContext</code> from the parent thread executing the user&rsquo;s REST service call to the Hystrix command thread protecting the method that&rsquo;s doing the work within.</p>
+
+      <h4 class="action-step-title">Define a Java Callable class to inject the UserContext into the Hystrix command</h4>
+
+      <p>The next step in propagating the thread context of the parent thread to your Hystrix command is to implement the <code>Callable</code> class that will do the propagation. For this example, this call is in the hystrix package and is called <code>DelegatingUserContextCallable.java</code>. The following listing shows the code from this class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.11</strong><br>Propagating the UserContext with DelegatingUserContextCallable.java</figcaption>
+        <div class="listing-annotated listing-annotated--511" aria-label="Listing 5.11 annotated code">
+          <div class="listing-callouts-left" aria-label="Listing 5.11 left callout">
+            <p class="listing-callout">The <code>call()</code> function is invoked before the method protected by the <code>@HystrixCommand</code> annotation.</p>
+          </div>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.hystrix;
+
+//imports removed for conciseness
+public final class DelegatingUserContextCallable&lt;V&gt;
+    implements Callable&lt;V&gt; {
+    private final Callable&lt;V&gt; delegate;
+    private UserContext originalUserContext;
+
+    public DelegatingUserContextCallable(
+        Callable&lt;V&gt; delegate,
+        UserContext userContext) {
+        this.delegate = delegate;
+        this.originalUserContext = userContext;
+    }
+
+    public V call() throws Exception {
+        UserContextHolder.setContext( originalUserContext );
+
+        try {
+            return delegate.call();
+        }
+        finally {
+            this.originalUserContext = null;
+        }
+    }
+
+    public static &lt;V&gt; Callable&lt;V&gt; create(Callable&lt;V&gt; delegate,
+                                         UserContext userContext) {
+        return new DelegatingUserContextCallable&lt;V&gt;(delegate, userContext);
+    }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 5.11 right callouts">
+            <p class="listing-callout">Custom Callable class will be passed the original Callable class that will invoke your Hystrix protected code and UserContext coming in from the parent thread</p>
+            <p class="listing-callout">The UserContext is set. The ThreadLocal variable that stores the UserContext is associated with the thread running the Hystrix protected method.</p>
+            <p class="listing-callout">Once the UserContext is set invoke the <code>call()</code> method on the Hystrix protected method; for instance, your <code>LicenseServer.getLicenseByOrg()</code> method.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

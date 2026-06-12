@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Propagating the OAuth2 access token</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm 3mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + .sidebar-note--gray,
+    .prose-page.chapter-page .sidebar-note--gray + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0236.html">← Prev</a>
+    <a href="page_0238.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">212</span>
+        <span class="rh-center">CHAPTER 7 <em>Securing your microservices</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">This configuration is a blacklist of the sensitive headers that Zuul will keep from being propagated to a downstream service. The absence of the <code>Authorization</code> value in the previous list means Zuul will allow it through. If you don&rsquo;t set the <code>zuul.sensitive-Headers</code> property at all, Zuul will automatically block all three values from being propagated (<code>Cookie</code>, <code>Set-Cookie</code>, and <code>Authorization</code>).</p>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="What about Zuul's other OAuth2 capabilities?">
+        <h3>What about Zuul&rsquo;s other OAuth2 capabilities?</h3>
+        <p>Zuul can automatically propagate downstream OAuth2 access tokens and authorize incoming requests against the OAuth2 service by using the <code>@EnableOAuth2Sso</code> annotation. I purposely haven&rsquo;t used this approach because my goal in this chapter is to show the basics of how OAuth2 works without adding another level of complexity (or debugging). While the configuration of the Zuul service&rsquo;s gateway isn&rsquo;t overly complicated, it would have added significantly more content to an already large chapter. If you&rsquo;re interested in having a Zuul services gateway participate in Single Sign On (SSO), the Spring Cloud Security documentation has a short but comprehensive tutorial that covers the setup of the Spring server (<a href="http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html">http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html</a>).</p>
+      </aside>
+
+      <p>The next thing you need to do is configure your licensing service to be an OAuth2 resource service and set up any authorization rules you want for the service. We&rsquo;re not going to discuss in detail the licensing service configuration because we already discussed authorization rules in section 7.3.3, &ldquo;Defining who and what can access the service.&rdquo;</p>
+
+      <p>Finally, all you need to do is modify how the code in the licensing service calls the organization service. You need to ensure that the &ldquo;Authorization&rdquo; HTTP header is injected into the application call out to the Organization service. Without Spring Security, you&rsquo;d have to write a servlet filter to grab the HTTP header off the incoming licensing service call and then manually add it to every outbound service call in the licensing service. Spring OAuth2 provides a new Rest Template class that supports OAuth2 calls. The class is called <code>OAuth2RestTemplate</code>. To use the <code>OAuth2RestTemplate</code> class you first need to expose it as a bean that can be auto-wired into a service calling another OAuth2 protected services. You do this in the <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/Application.java</code> class:</p>
+
+      <figure class="code-snippet" aria-label="OAuth2RestTemplate bean definition">
+        <pre class="code-block"><code>@Bean
+ public OAuth2RestTemplate oauth2RestTemplate(
+        OAuth2ClientContext oauth2ClientContext,
+        OAuth2ProtectedResourceDetails details) {
+        return new OAuth2RestTemplate(details, oauth2ClientContext);
+    }</code></pre>
+      </figure>
+
+      <p>To see the <code>OAuth2RestTemplate</code> class in action you can look in the <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/clients/OrganizationRestTemplate.java</code> class. The following listing shows how <code>OAuth2RestTemplate</code> is auto-wired into this class.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

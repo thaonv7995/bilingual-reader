@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị Cơ sở dữ liệu</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.config-name {
+      margin: 2.5mm 0 0;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.config-name + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0034.html">← Trước</a>
+    <a href="page_0036.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHƯƠNG 2</p>
+        <h1 class="chapter-title no-indent">Quản trị Cơ sở dữ liệu</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="lead no-indent">Chương này đề cập đến những hoạt động mà chúng tôi cho là phổ biến nhất cho việc quản trị cơ bản của một máy chủ PostgreSQL: quản lý vai trò và quyền, tạo cơ sở dữ liệu, cài đặt tiện ích mở rộng, sao lưu và phục hồi. Chúng tôi giả định rằng bạn đã cài đặt PostgreSQL và có các công cụ quản trị trong tay.</p>
+
+      <h3 class="section-title">Tệp cấu hình</h3>
+      <p>Các tệp cấu hình chính điều khiển các hoạt động cơ bản của một phiên bản máy chủ PostgreSQL là:</p>
+
+      <p class="config-name no-indent">postgresql.conf</p>
+      <p>Điều khiển các cài đặt chung, chẳng hạn như phân bổ bộ nhớ, vị trí lưu trữ mặc định cho các cơ sở dữ liệu mới, các địa chỉ IP mà PostgreSQL lắng nghe, vị trí của các nhật ký, và nhiều hơn nữa. Phiên bản 9.4 đã giới thiệu một tệp bổ sung có tên <code>postgresql.auto.conf</code>, được tạo ra hoặc ghi lại mỗi khi bạn sử dụng lệnh SQL mới <code>ALTER SYSTEM</code>. Các cài đặt trong tệp đó ghi đè lên tệp <code>postgresql.conf</code>.</p>
+
+      <p class="config-name no-indent">pg_hba.conf</p>
+      <p>Điều khiển bảo mật. Nó quản lý quyền truy cập vào máy chủ, quy định người dùng nào có thể đăng nhập vào cơ sở dữ liệu nào, địa chỉ IP hoặc nhóm địa chỉ nào có thể kết nối, và phương thức xác thực nào sẽ được mong đợi.</p>
+
+      <p class="config-name no-indent">pg_ident.conf</p>
+      <p>Nếu có, ánh xạ một đăng nhập OS đã xác thực đến một người dùng PostgreSQL. Đôi khi mọi người ánh xạ tài khoản root của OS đến tài khoản siêu người dùng <code>postgres</code>. Mỗi dòng xác thực trong <code>pg_hba.conf</code> có thể quy định việc sử dụng một tệp <code>pg_ident.conf</code> khác nhau.</p>
+
+      <p>Nếu bạn đã chấp nhận các tùy chọn cài đặt mặc định, bạn sẽ tìm thấy các tệp này trong thư mục dữ liệu chính của PostgreSQL. Bạn có thể chỉnh sửa chúng bằng bất kỳ trình soạn thảo văn bản nào, hoặc sử dụng Admin Pack trong pgAdmin. Hướng dẫn tải xuống có trong <span class="accent-word">“Chỉnh sửa postgresql.conf và pg_hba.conf”</span></p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">17</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

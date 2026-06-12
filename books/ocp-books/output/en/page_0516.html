@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0515.html">← Prev</a>
+    <a href="page_0517.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">516</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//ignore the value returned by getAndIncrement
+t1.start(); t2.start(); t1.join(); t2.join();
+System.out.println("counter = "+counter.get());
+}
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Note that an <code>AtomicInteger</code>&nbsp;need not be used when it is required only locally within a
+      method such as for a for loop because local variables are never shared with other threads.</p>
+
+      <p>Besides <code>AtomicInteger</code>, the <code>java.util.concurrent.atomic</code>&nbsp;package has many other
+      classes including <code>AtomicLong</code>, <code>AtomicBoolean</code>, and <code>AtomicReference</code>&nbsp;that work
+      similarly. You don&rsquo;t need to know the details of all of those classes for the exam but just be
+      aware of them so that you won&rsquo;t be tempted to code one yourself when you need the desired
+      functionality.</p>
+
+      <h3 class="section-title section-title--sub">20.4.7 Watch out for liveness problems<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Synchronizing access to shared objects may sometimes cause a multithreaded program to either
+      appear as stuck or perform sluggishly. Such programs are not exactly thread unsafe in the sense
+      that they don&rsquo;t produce wrong outcomes but are not too useful either because they don&rsquo;t produce
+      any outcome. The culprit is usually irresponsible or uncoordinated acquisition of locks in the
+      application.</p>
+
+      <h3 class="section-title section-title--sub">Starvation<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>A thread is considered &ldquo;starved&rdquo; when it is unable to proceed with its work for a long time due to
+      lack of availability of a shared object on account of the shared object being locked by other
+      threads most of the time. This could happen due to bad scheduling by the thread scheduler or
+      due to one thread keeping the object locked for a long time. For example, let us say the user asks
+      to refresh the price of a ticket by clicking a</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

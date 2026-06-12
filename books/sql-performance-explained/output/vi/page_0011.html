@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 1: Anatomy of an Index</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-label {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .chapter-title {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 20.7pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .preface-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .preface-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-label">Chương 1</p>
+      <h1 class="chapter-title">Cấu trúc của một chỉ mục</h1>
+
+      <p class="no-indent"><i>“Một chỉ mục làm cho truy vấn nhanh hơn”</i> là lời giải thích cơ bản nhất về một chỉ mục mà tôi từng thấy. Mặc dù nó mô tả rất tốt khía cạnh quan trọng nhất của một chỉ mục, nhưng thật không may, nó không đủ cho cuốn sách này. Chương này mô tả cấu trúc chỉ mục theo cách ít hời hợt hơn nhưng không đi sâu vào chi tiết. Nó cung cấp đủ cái nhìn để người đọc hiểu các khía cạnh hiệu suất SQL được thảo luận trong suốt cuốn sách.</p>
+
+      <p>Một chỉ mục là một cấu trúc riêng biệt trong cơ sở dữ liệu được xây dựng bằng câu lệnh <code>create index</code>. Nó yêu cầu không gian đĩa riêng và giữ một bản sao của dữ liệu bảng đã được chỉ mục. Điều đó có nghĩa là một chỉ mục là sự dư thừa thuần túy. Việc tạo một chỉ mục không thay đổi dữ liệu bảng; nó chỉ tạo ra một cấu trúc dữ liệu mới tham chiếu đến bảng. Một chỉ mục cơ sở dữ liệu, sau tất cả, rất giống với chỉ mục ở cuối một cuốn sách: nó chiếm không gian riêng của nó, nó rất dư thừa, và nó tham chiếu đến thông tin thực tế được lưu trữ ở một nơi khác.</p>
+
+      <aside class="sidebar-note">
+        <h3>Chỉ mục phân cụm</h3>
+        <p>SQL Server và MySQL (sử dụng InnoDB) có cái nhìn rộng hơn về ý nghĩa của <i>“chỉ mục”</i>. Họ gọi các bảng chỉ bao gồm cấu trúc chỉ mục là <i>chỉ mục phân cụm</i>. Những bảng này được gọi là Bảng Tổ Chức Chỉ Mục (IOT) trong cơ sở dữ liệu Oracle.</p>
+        <p>Chương 5, <i>“Phân nhóm Dữ liệu”</i>, mô tả chúng chi tiết hơn và giải thích những ưu điểm và nhược điểm của chúng.</p>
+      </aside>
+
+      <p>Tìm kiếm trong một chỉ mục cơ sở dữ liệu giống như tìm kiếm trong một danh bạ điện thoại in. Khái niệm chính là tất cả các mục được sắp xếp theo một thứ tự rõ ràng. Việc tìm dữ liệu trong một tập dữ liệu đã được sắp xếp là nhanh chóng và dễ dàng vì thứ tự sắp xếp xác định vị trí của từng mục.</p>
+
+      <hr class="preface-rule preface-rule--foot" aria-hidden="true">
+      <p class="page-folio">1</p>
+    </article>
+  </main>
+</body>
+</html>

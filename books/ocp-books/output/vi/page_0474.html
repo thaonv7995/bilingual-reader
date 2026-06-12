@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p.method-group-title {
+      margin: 8mm 0 3.2mm;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0473.html">← Trước</a>
+    <a href="page_0475.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">474</span>
+      </header>
+
+      <ol class="numbered">
+        <li>thread (luồng) hiện đang thực thi đoạn mã đó.</li>
+        <li><code>boolean interrupted()</code>&nbsp;- Kiểm tra xem thread (luồng) hiện tại có bị ngắt (interrupted) hay không. Phương thức này <strong>xóa</strong> trạng thái bị ngắt của thread (luồng) hiện tại.</li>
+        <li><code>void sleep(long milliseconds)</code>&nbsp;- Khiến thread (luồng) hiện đang thực thi tạm dừng hoạt động (tạm thời ngừng thực thi) trong số mili giây được chỉ định. Ném ra <code>InterruptedException</code>. Có thêm hai phương thức sleep nạp chồng (overloaded) thực hiện cùng một chức năng: <code>sleep(long millis, int nanos)</code> và <code>sleep(Duration duration)</code>. Phương thức này <strong>không</strong> giải phóng các khóa (lock) đã được chiếm giữ bởi thread (luồng) hiện tại.</li>
+        <li><code>Thread.Builder.OfPlatform ofPlatform()</code>&nbsp;- Trả về một builder để tạo ra platform Thread (thread nền tảng) hoặc ThreadFactory tạo ra các platform thread (thread nền tảng).</li>
+        <li><code>Thread.Builder.OfVirtual ofVirtual()</code>&nbsp;- Trả về một builder để tạo ra virtual Thread (thread ảo) hoặc ThreadFactory tạo ra các virtual thread (thread ảo).</li>
+        <li><code>Thread startVirtualThread(Runnable task)</code>&nbsp;- Tạo một virtual thread (thread ảo) để thực thi một tác vụ (task) và lập lịch cho nó thực thi.</li>
+      </ol>
+
+      <p class="no-indent method-group-title">Các phương thức <strong>instance (thể hiện)</strong> của <code>java.lang.Thread</code></p>
+
+      <ol class="numbered">
+        <li><code>long threadId()</code>&nbsp;- Trả về mã định danh (identifier) của Thread (luồng) này. Thread ID là một số kiểu long dương được tạo ra khi thread (luồng) này được khởi tạo. Thread ID là duy nhất và <strong>không thay đổi</strong> trong suốt vòng đời của nó.</li>
+        <li><code>String getName()/void setName(String name)</code>&nbsp;- Trả về/thiết lập tên của thread (luồng) này.</li>
+        <li><code>boolean isDaemon()/void setDaemon(boolean on)</code>&nbsp;- Kiểm tra xem thread (luồng) này có phải là daemon thread (thread chạy ngầm) hay không. / Đánh dấu thread (luồng) này là daemon thread hoặc non-daemon thread. Hãy nhớ rằng các virtual thread (thread ảo) luôn luôn là daemon thread kể từ Java 21.</li>
+        <li><code>boolean isVirtual()</code>&nbsp;- Trả về <code>true</code> nếu thread (luồng) này là một virtual thread (thread ảo).</li>
+        <li><code>void start()</code>&nbsp;- Lập lịch cho thread (luồng) này bắt đầu thực thi.</li>
+        <li><code>void run()</code>&nbsp;- Phương thức này được thực thi bởi thread (luồng) khi nó chạy.</li>
+        <li><code>void join()</code>&nbsp;- Chờ thread (luồng) này kết thúc. Ném ra <code>InterruptedException</code>.</li>
+        <li><code>void join(long millis)</code>&nbsp;- Chờ tối đa millis mili giây cho thread (luồng) này</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

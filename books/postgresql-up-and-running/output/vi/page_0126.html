@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Basic Table Creation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0125.html">← Trước</a>
+    <a href="page_0127.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">126</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 6-1.</strong> Tạo bảng cơ bản</figcaption>
+        <pre class="code-block"><code>CREATE TABLE logs ( log_id serial PRIMARY KEY,
+ ① user_name varchar(50),
+ ② description text,
+ ③ log_ts timestamp with time zone NOT NULL DEFAULT current_timestamp);
+④ CREATE INDEX idx_logs_log_ts ON logs USING btree (log_ts);</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> <code>serial</code> là kiểu dữ liệu được sử dụng để đại diện cho một số tự động tăng. Việc thêm
+      một cột <code>serial</code> sẽ tự động thêm một đối tượng chuỗi đi kèm vào
+      sơ đồ cơ sở dữ liệu. Kiểu dữ liệu <code>serial</code> luôn là một số nguyên với giá trị mặc định
+      được đặt thành giá trị tiếp theo của đối tượng chuỗi. Mỗi bảng thường chỉ có một cột serial,
+      thường phục vụ như khóa chính.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> <code>varchar</code> là viết tắt của <code>character varying</code>, một chuỗi có độ dài biến đổi tương tự
+      như những gì bạn sẽ tìm thấy trong các cơ sở dữ liệu khác. Bạn không cần phải chỉ định một độ dài tối đa;
+      nếu không, <code>varchar</code> gần như giống hệt với kiểu dữ liệu <code>text</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> <code>text</code> là một chuỗi có độ dài không xác định. Nó không bao giờ được theo sau bởi một hạn chế về độ dài.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">④</span> <code>timestamp with time zone</code> (viết tắt <code>timestamptz</code>) là một kiểu dữ liệu ngày và giờ,
+      luôn được lưu trữ ở UTC. Nó luôn hiển thị ngày và giờ trong múi giờ của máy chủ trừ khi bạn yêu cầu khác. Xem <span class="accent-word">“Múi giờ: Chúng là gì và không phải là gì” trên trang 86</span> để có một thảo luận chi tiết hơn.</p>
+
+      <h3 class="subsection-title">Bảng kế thừa</h3>
+      <p class="no-indent">PostgreSQL là cơ sở dữ liệu duy nhất cung cấp bảng kế thừa. Khi bạn chỉ định rằng một bảng (bảng con) kế thừa từ một bảng khác (bảng cha), PostgreSQL
+      tạo bảng con với các cột riêng của nó cộng với tất cả các cột của bảng cha. PostgreSQL sẽ ghi nhớ mối quan hệ cha-con này
+      để bất kỳ thay đổi cấu trúc nào sau này được thực hiện trên bảng cha sẽ tự động lan truyền đến các bảng con của nó. Thiết kế bảng cha-con
+      rất hoàn hảo cho việc phân vùng dữ liệu của bạn. Khi bạn truy vấn bảng cha, PostgreSQL
+      tự động bao gồm tất cả các hàng trong các bảng con. Không phải mọi thuộc tính của bảng cha đều được truyền xuống
+      cho bảng con. Đặc biệt, các ràng buộc khóa chính, ràng buộc tính duy nhất và các chỉ mục không bao giờ được kế thừa. Các ràng buộc kiểm tra được kế thừa,
+      nhưng các bảng con có thể có các ràng buộc kiểm tra riêng của chúng bên cạnh những cái mà chúng kế thừa từ cha mẹ (xem
+      <span class="accent-word">Ví dụ 6-2</span>).</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 6-2.</strong> Tạo bảng kế thừa</figcaption>
+        <pre class="code-block"><code>CREATE TABLE logs_2011 (PRIMARY KEY(log_id)) INHERITS (logs);
+CREATE INDEX idx_logs_2011_log_ts ON logs USING btree(log_ts);
+ALTER TABLE logs_2011 ADD CONSTRAINT chk_y2011
+ CHECK (log_ts &gt;= '2011-1-1'::timestamptz
+   AND log_ts &lt; '2012-1-1'::timestamptz ); ①</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">108<span class="sep">|</span>Chương 6: Bảng, Ràng buộc và Chỉ mục</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

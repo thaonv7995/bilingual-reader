@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0436.html">← Prev</a>
+    <a href="page_0438.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">437</span>
+      </header>
+
+      <p>In other words, Java doesn't allow its serialization mechanism to be used to serialize any
+      random object unless the developer explicitly accepts the risks involved by implementing the
+      <code>Serializable</code> interface. This is not to say that a serializable class is always a security risk. You
+      may write additional custom code on top of Java's serialization mechanism to mitigate the risks
+      associated with serialized data. These are described in detail in "Secure Coding Guidelines for
+      Java SE" document published by Oracle. Although it is not required for the OCP exam, I
+      strongly encourage you to go through it.</p>
+
+      <h3 class="section-title section-title--minor">The ObjectOutputStream and ObjectInputStream classes<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The <code>java.io.ObjectOutputStream</code> and <code>java.io.ObjectInputStream</code> classes contain the
+      logic of serializing and deserializing objects respectively. <code>ObjectOutputStream</code>'s
+      <code>writeObject</code> method takes a serializable object and converts it into a stream of bytes. This
+      stream of bytes can be connected to any other output stream such as a <code>FileOutputStream</code>, as
+      done in the above program. Similarly, <code>ObjectInputStream</code>'s <code>readObject</code> method reads a
+      stream of bytes and creates the object back. This stream of bytes can be sourced from any other
+      input stream such as a <code>FileInputStream</code>, as done in the above code. Just like other stream
+      methods, these methods too throw <code>IOException</code>.</p>
+
+      <p>Observe in the above code that we are casting the object returned by <code>readObject</code> to
+      <code>AppPreferences</code>. This is because the return type of <code>readObject</code> is <code>Object</code>. Since we know
+      that the input file contains an <code>AppPreferences</code> object, we can safely cast the object returned
+      by <code>readObject</code> to <code>AppPreferences</code>. Of course, if the input stream contains some other type
+      of object that cannot be cast to <code>AppPreferences</code>, this cast will throw a
+      <code>java.lang.ClassCastException</code>, which is an unchecked exception.</p>
+
+      <p>Another important point to note here is that although the above code writes and reads just one
+      object to/from the output and input streams, there is no limitation to the number of objects you
+      can write and read. For example, the following code writes all elements present in a list to the
+      file and then reads them back:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

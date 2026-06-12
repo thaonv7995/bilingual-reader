@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Phụ lục A: Kế hoạch thực thi</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.subsection-title:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page strong.run-in {
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    .prose-page p.ops-entry {
+      margin: 0 0 4mm;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phụ lục A: Kế hoạch thực thi</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="subsection-title">Sắp xếp và Nhóm</h3>
+
+      <p class="no-indent ops-entry"><strong class="run-in">Sắp xếp / Khóa Sắp xếp</strong> Sắp xếp tập hợp trên các cột được đề cập trong <code>Sort Key</code>. Phép toán <code>Sort</code> cần một lượng lớn bộ nhớ để hiện thực hóa kết quả trung gian (không được pipelined). Xem thêm &ldquo;Chỉ mục theo thứ tự&rdquo; trên trang&nbsp;130.</p>
+
+      <p class="no-indent ops-entry"><strong class="run-in">GroupAggregate</strong> Tập hợp một tập đã được sắp xếp trước theo điều khoản <code>group by</code>. Phép toán này không đệm một lượng lớn dữ liệu (pipelined). Xem thêm &ldquo;Chỉ mục Nhóm theo&rdquo; trên trang&nbsp;139.</p>
+
+      <p class="no-indent ops-entry"><strong class="run-in">HashAggregate</strong> Sử dụng một bảng băm tạm thời để nhóm các bản ghi. Phép toán <code>HashAggregate</code> không yêu cầu một tập dữ liệu đã được sắp xếp trước, thay vào đó nó sử dụng một lượng lớn bộ nhớ để hiện thực hóa kết quả trung gian (không được pipelined). Đầu ra không được sắp xếp theo cách có ý nghĩa nào. Xem thêm &ldquo;Chỉ mục Nhóm theo&rdquo; trên trang&nbsp;139.</p>
+
+      <h3 class="subsection-title">Truy vấn Top-N</h3>
+
+      <p class="no-indent ops-entry"><strong class="run-in">Giới hạn</strong> Hủy bỏ các phép toán cơ sở khi số lượng hàng mong muốn đã được lấy. Xem thêm &ldquo;Truy vấn Top-N Hàng&rdquo; trên trang&nbsp;143.</p>
+
+      <p>Hiệu quả của truy vấn top-N phụ thuộc vào chế độ thực thi của các phép toán cơ sở. Nó rất không hiệu quả khi hủy bỏ các phép toán không được pipelined như <code>Sort</code>.</p>
+
+      <p class="no-indent ops-entry"><strong class="run-in">WindowAgg</strong> Chỉ ra việc sử dụng các hàm cửa sổ. Xem thêm &ldquo;Sử dụng Hàm Cửa sổ cho Phân trang&rdquo; trên trang&nbsp;156.</p>
+
+      <aside class="sidebar-note">
+        <h3>Cảnh báo</h3>
+        <p>PostgreSQL không thể thực thi các truy vấn top-N được pipelined khi sử dụng các hàm cửa sổ.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span class="page-folio">176</span>
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

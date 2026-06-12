@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Section 6.7.4 and Figure 6.16</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.diagram,
+    .prose-page.chapter-page p + h4.subsection-title {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0214.html">← Prev</a>
+    <a href="page_0216.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">190</span>
+        <span class="rh-center">CHAPTER 6 <em>Service routing with Spring Cloud and Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">6.7.4 Pulling it all together</h4>
+
+      <p>Now that you&rsquo;ve implemented the SpecialRoutesFilter you can see it an action by calling the licensing service. As you may remember from earlier chapters, the licensing service calls the organization service to retrieve the contact data for the organization.</p>
+
+      <p>In the code example, the specialroutesservice has a database record for the organization service that will route the requests for calls to the organization service 50% of the time to the existing organization service (the one mapped in Zuul) and 50% of the time to an alternative organization service. The alternative organization service route returned from the SpecialRoutes service will be <code>http://orgservice-new</code> and will not be accessible directly from Zuul. To differentiate between the two services, I&rsquo;ve modified the organization service(s) to pre-pend the text &ldquo;OLD::&rdquo; and &ldquo;NEW::&rdquo; to contact names returned by the organization service.</p>
+
+      <p class="no-indent">If you now hit the licensing service endpoint through Zuul</p>
+
+      <figure class="code-snippet" aria-label="Licensing service endpoint URL">
+        <pre class="code-block"><code>http://localhost:5555/api/licensing/v1/organizations/e254f8c-c442-4ebe-a82a-
+e2fc1d1ff78a/licenses/f3831f8c-c338-4ebe-a82a-e2fc1d1ff78a</code></pre>
+      </figure>
+
+      <p class="no-indent">you should see the contactName returned from the licensing service call flip between the OLD:: and NEW:: values. Figure 6.16 shows this.</p>
+
+      <p>A Zuul routes filter does take more effort to implement then a pre- or post filter, but it&rsquo;s also one of the most powerful parts of Zuul because you&rsquo;re able to easily add intelligence to the way your services are routed.</p>
+
+      <figure class="diagram" aria-label="Figure 6.16">
+        <img src="../assets/images/page_0215_fig_6_16.png" width="1313" height="695" alt="Figure 6.16 — When you hit the alternative organization service, you see NEW prepended to the contactName">
+        <figcaption><strong>Figure 6.16</strong><br>When you hit the alternative organization service, you see NEW prepended to the contactName.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

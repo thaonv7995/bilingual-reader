@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0105.html">← Trước</a>
+    <a href="page_0107.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">106</span>
+      </header>
+
+      <p>Trong Ví dụ 5-9, chúng ta đang nhận lại một dấu thời gian không có múi giờ. Vì vậy, câu trả lời bạn
+      nhận được khi chạy truy vấn này sẽ giống như của tôi, bất kể bạn ở đâu trên thế giới.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-9.</strong> Dấu thời gian với múi giờ thành dấu thời gian tại vị trí</figcaption>
+        <pre class="code-block"><code>SELECT '2012-02-28 10:00 PM America/Los_Angeles'::timestamptz AT TIME ZONE 'Europe/
+Paris';
+2012-02-29 07:00:00</code></pre>
+      </figure>
+
+      <p>Truy vấn đang hỏi: bây giờ là mấy giờ ở Paris nếu là 2012-02-28 10:00 tối ở Los Angeles?
+      Lưu ý sự vắng mặt của độ lệch UTC trong kết quả. Ngoài ra, hãy chú ý cách bạn có thể chỉ định một múi giờ
+      bằng tên chính thức của nó thay vì chỉ là một độ lệch. Hãy truy cập Wikipedia để có danh sách các tên
+      múi giờ chính thức.</p>
+
+      <h3 class="subsection-title">Toán Tử và Hàm Thời Gian</h3>
+      <p class="no-indent">Việc bao gồm một kiểu dữ liệu khoảng thời gian giúp dễ dàng hơn rất nhiều trong việc tính toán
+      ngày và giờ trong PostgreSQL. Nếu không có nó, chúng ta sẽ phải tạo ra một gia đình hàm khác hoặc sử dụng
+      một sự lồng ghép các hàm như nhiều cơ sở dữ liệu khác. Với các khoảng thời gian, chúng ta có thể cộng và
+      trừ dữ liệu dấu thời gian chỉ bằng cách sử dụng các toán tử số học mà chúng ta rất quen thuộc. Các ví dụ
+      sau đây minh họa các toán tử và hàm được sử dụng với các kiểu dữ liệu ngày và giờ.</p>
+
+      <p>Toán tử + cộng một khoảng thời gian vào một kiểu thời gian:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     SELECT '2012-02-10 11:00 PM'::timestamp + interval '1 hour';
+     2012-02-11 00:00:00</code></pre>
+      </figure>
+
+      <p>Bạn cũng có thể cộng các khoảng thời gian:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     SELECT '23 hours 20 minutes'::interval + '1 hour'::interval;
+     24:20:00</code></pre>
+      </figure>
+
+      <p>Toán tử - trừ một khoảng thời gian từ một kiểu thời gian:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     SELECT '2012-02-10 11:00 PM'::timestamptz - interval '1 hour';
+     2012-02-10 22:00:00-05</code></pre>
+      </figure>
+
+      <p>OVERLAPS, được minh họa trong <span class="accent-word">Ví dụ 5-10</span>, trả về true nếu hai khoảng thời gian
+      giao nhau. Đây là một toán tử ANSI SQL tương đương với hàm overlaps. OVERLAPS nhận bốn tham số, cặp đầu tiên
+      tạo thành một khoảng và cặp cuối cùng tạo thành khoảng còn lại. Một sự giao nhau coi các khoảng thời gian là
+      nửa mở, có nghĩa là thời gian bắt đầu được bao gồm nhưng thời gian kết thúc nằm ngoài khoảng. Hành vi này
+      hơi khác với toán tử BETWEEN thông thường, mà coi cả thời gian bắt đầu và kết thúc đều được bao gồm.
+      Sự khác biệt này sẽ không quan trọng trừ khi một trong các khoảng của bạn là một điểm cố định trong thời gian (một</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">88<span class="sep">|</span>Chương 5: Kiểu Dữ Liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

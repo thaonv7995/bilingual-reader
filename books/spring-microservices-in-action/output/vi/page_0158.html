@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Listing 5.5 fallback trong Hystrix</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--55 .listing-callouts {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--55 .listing-callout:nth-child(1) {
+      margin-bottom: 12mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--float {
+      float: right;
+      clear: right;
+      margin: 0 0 2.5mm 4mm;
+      max-width: 48%;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page .sidebar-note--float + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0157.html">← Prev</a>
+    <a href="page_0159.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Xử lý fallback</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">133</span>
+      </header>
+
+      <p class="no-indent">Giờ nếu bạn build lại và chạy lại ví dụ mã, bạn sẽ không bao giờ gặp lỗi timeout vì timeout nhân tạo trên lời gọi là 11 giây trong khi annotation <code>@HystrixCommand</code> của bạn hiện được cấu hình để chỉ timeout sau 12 giây.</p>
+
+      <aside class="sidebar-note sidebar-note--float" aria-label="Về timeout dịch vụ">
+        <h3>Về timeout dịch vụ</h3>
+        <p>Rõ ràng là tôi đang dùng timeout circuit breaker 12 giây như một ví dụ minh họa. Trong môi trường phân tán, tôi thường lo lắng nếu bắt đầu nghe các nhóm phát triển nói rằng timeout 1 giây cho các lời gọi dịch vụ từ xa quá thấp vì dịch vụ X của họ mất trung bình 5–6 giây.</p>
+        <p>Điều này thường cho tôi biết rằng vẫn còn các vấn đề hiệu năng chưa được giải quyết ở dịch vụ được gọi. Tránh cám dỗ tăng timeout mặc định trên các lời gọi Hystrix trừ khi bạn thực sự không thể giải quyết một lời gọi dịch vụ chạy chậm.</p>
+        <p>Nếu bạn gặp tình huống một phần các lời gọi dịch vụ sẽ mất nhiều thời gian hơn các lời gọi khác, hãy cân nhắc tách các lời gọi dịch vụ này vào các thread pool riêng biệt.</p>
+      </aside>
+
+      <h4 class="subsection-title">5.6 Xử lý fallback</h4>
+
+      <p>Một phần vẻ đẹp của pattern circuit breaker là vì có một &ldquo;người trung gian&rdquo; nằm giữa consumer của tài nguyên từ xa và chính tài nguyên đó, bạn có cơ hội để nhà phát triển chặn lỗi dịch vụ và chọn một hướng xử lý thay thế.</p>
+
+      <p>Trong Hystrix, điều này được gọi là chiến lược fallback và dễ dàng triển khai. Hãy xem cách xây dựng một chiến lược fallback đơn giản cho cơ sở dữ liệu licensing của bạn, chỉ cần trả về một đối tượng licensing cho biết hiện không có thông tin licensing nào. Listing sau đây minh họa điều này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.5</strong><br>Triển khai fallback trong Hystrix</figcaption>
+        <div class="listing-annotated listing-annotated--55" aria-label="Mã có chú thích của Listing 5.5">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>@HystrixCommand(fallbackMethod = "buildFallbackLicenseList")
+  public List&lt;License&gt; getLicensesByOrg(String organizationId){
+    randomlyRunLong();
+    return licenseRepository.findByOrganizationId(organizationId);
+  }
+private List&lt;License&gt; buildFallbackLicenseList(String organizationId){
+  List&lt;License&gt; fallbackList = new ArrayList&lt;&gt;();
+  License license = new License()
+    .withId("0000000-00-00000")
+    .withOrganizationId( organizationId )
+    .withProductName(
+    "Sorry no licensing information currently available");</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích annotation của Listing 5.5">
+            <p class="listing-callout">Thuộc tính <code>fallbackMethod</code> định nghĩa một hàm duy nhất trong lớp của bạn sẽ được gọi nếu lời gọi từ Hystrix thất bại.</p>
+            <p class="listing-callout">Trong phương thức fallback, bạn trả về một giá trị hard-code.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Returning Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0144.html">← Trước</a>
+    <a href="page_0146.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">145</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Khu vực điều tra 2002, Hạt Dukes, Massachusetts
+Khu vực điều tra 2003, Hạt Dukes, Massachusetts
+Khu vực điều tra 2004, Hạt Dukes, Massachusetts
+Khu vực điều tra 9900, Hạt Dukes, Massachusetts</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Các hàm trả về</h3>
+      <p class="no-indent">PostgreSQL cho phép các hàm trả về tập hợp xuất hiện trong câu lệnh <code>SELECT</code> của một
+      câu lệnh SQL. Điều này không đúng với nhiều cơ sở dữ liệu khác, trong đó chỉ có các hàm vô hướng mới có thể
+      xuất hiện trong <code>SELECT</code>.</p>
+
+      <p>Việc xen kẽ một số hàm trả về tập hợp bên trong một truy vấn đã phức tạp có thể
+      dễ dàng tạo ra kết quả vượt quá mong đợi của bạn, vì những hàm này thường
+      dẫn đến việc tạo ra các hàng mới trong kết quả. Bạn phải dự đoán điều này nếu bạn sẽ
+      sử dụng kết quả như một truy vấn con. Trong <span class="accent-word">Ví dụ 7-13</span>, chúng tôi minh họa điều này với một phiên bản tạm thời của <code>generate_series</code>. Ví dụ sử dụng một bảng mà chúng tôi xây dựng với:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE interval_periods (i_type interval);
+INSERT INTO interval_periods (i_type)
+VALUES ('5 months'), ('132 days'), ('4862 hours');</code></pre>
+      </figure>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-13.</strong> Hàm trả về tập hợp trong SELECT</figcaption>
+        <pre class="code-block"><code>SELECT i_type,
+    generate_series('2012-01-01'::date,'2012-12-31'::date,i_type) As dt
+FROM interval_periods;
+i_type     |           dt
+-----------+------------------------
+5 months   | 2012-01-01 00:00:00-05
+5 months   | 2012-06-01 00:00:00-04
+5 months   | 2012-11-01 00:00:00-04
+132 days   | 2012-01-01 00:00:00-05
+132 days   | 2012-05-12 00:00:00-04
+132 days   | 2012-09-21 00:00:00-04
+4862 hours | 2012-01-01 00:00:00-05
+4862 hours | 2012-07-21 15:00:00-04</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Hạn chế DELETE, UPDATE, SELECT từ các bảng kế thừa</h3>
+      <p class="no-indent">Khi bạn truy vấn từ một bảng có các bảng con, truy vấn sẽ đi sâu vào các con,
+      tạo ra một hợp nhất của tất cả các bản ghi con thỏa mãn điều kiện truy vấn. <code>DELETE</code>
+      và <code>UPDATE</code> hoạt động theo cách tương tự, đi sâu vào hệ thống phân cấp để tìm nạn nhân. Đôi khi điều này
+      không mong muốn và bạn muốn dữ liệu chỉ đến từ bảng mà bạn đã chỉ định, mà không có
+      các con đi theo.</p>
+
+      <p>Đây là lúc từ khóa <code>ONLY</code> trở nên hữu ích. Chúng tôi cho thấy một ví dụ về việc sử dụng nó trong
+      <span class="accent-word">Ví dụ 7-30</span>, nơi chúng tôi muốn chỉ xóa những bản ghi từ bảng sản xuất
+      mà chưa được chuyển đến bảng log. Nếu không có bộ sửa đổi <code>ONLY</code>, chúng tôi sẽ kết thúc việc xóa
+      các bản ghi từ bảng con mà có thể đã được chuyển đi trước đó.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các cấu trúc hữu ích<span class="sep">|</span>127</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

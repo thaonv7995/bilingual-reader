@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Listing 9.1 Spring Cloud Sleuth trong Zuul</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--91 .listing-callouts-right {
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0296.html">← Trước</a>
+    <a href="page_0298.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">272</span>
+        <span class="rh-center">CHƯƠNG 9 <em>Theo dõi phân tán với Spring Cloud Sleuth và Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">9.2.5 Thêm correlation ID vào HTTP response với Zuul</h4>
+
+      <p class="no-indent">Nếu bạn kiểm tra HTTP response trả về từ bất kỳ lời gọi dịch vụ nào thực hiện với Spring Cloud Sleuth, bạn sẽ thấy trace ID được dùng trong lời gọi không bao giờ được trả về trong HTTP response header. Nếu bạn xem tài liệu của Spring Cloud Sleuth, bạn sẽ thấy nhóm Spring Cloud Sleuth cho rằng việc trả về bất kỳ dữ liệu tracing nào cũng có thể là vấn đề bảo mật tiềm ẩn (mặc dù họ không nêu rõ lý do tại sao họ cho như vậy.)</p>
+
+      <p>Tuy nhiên, tôi thấy việc trả về correlation ID hoặc tracing ID trong HTTP response vô cùng hữu ích khi debug sự cố. Spring Cloud Sleuth cho phép bạn &ldquo;decorate&rdquo; thông tin HTTP response bằng tracing ID và span ID của nó. Tuy nhiên, quy trình làm việc này đòi hỏi viết ba class và inject hai Spring bean tùy chỉnh. Nếu bạn muốn dùng cách này, bạn có thể xem trong tài liệu Spring Cloud Sleuth (<a href="http://cloud.spring.io/spring-cloud-static/spring-cloud-sleuth/1.0.12.RELEASE/">http://cloud.spring.io/spring-cloud-static/spring-cloud-sleuth/1.0.12.RELEASE/</a>). Một giải pháp đơn giản hơn nhiều là viết một Zuul &ldquo;POST&rdquo; filter để inject trace ID vào HTTP response.</p>
+
+      <p>Ở chương 6 khi giới thiệu Zuul API gateway, chúng ta đã xem cách xây dựng Zuul &ldquo;POST&rdquo; response filter để thêm correlation ID mà bạn tạo ra để dùng trong các dịch vụ vào HTTP response mà caller nhận được. Giờ bạn sẽ sửa filter đó để thêm Spring Cloud Sleuth header.</p>
+
+      <p>Để thiết lập Zuul response filter, bạn cần thêm một dependency JAR vào file <code>pom.xml</code> của Zuul server: <code>spring-cloud-starter-sleuth</code>. Dependency <code>spring-cloud-starter-sleuth</code> sẽ được dùng để báo cho Spring Cloud Sleuth rằng bạn muốn Zuul tham gia vào Spring Cloud trace. Về sau trong chương, khi giới thiệu Zipkin, bạn sẽ thấy dịch vụ Zuul sẽ là lời gọi đầu tiên trong mọi service invocation.</p>
+
+      <p>Cho chương 9, file này có thể tìm thấy tại <code>zuulsvr/pom.xml</code>. Listing sau đây trình bày các dependency này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 9.1</strong><br>Thêm Spring Cloud Sleuth vào Zuul</figcaption>
+        <div class="listing-annotated listing-annotated--91" aria-label="Listing 9.1 dependency Maven có chú thích">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>&lt;dependency&gt;
+   &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+   &lt;artifactId&gt;spring-cloud-starter-sleuth&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 9.1">
+            <p class="listing-callout">Thêm <code>spring-cloud-starter-sleuth</code> vào Zuul sẽ khiến trace ID được tạo ra cho mọi dịch vụ được gọi trong Zuul</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Sau khi dependency mới này đã được thêm vào, chính Zuul &ldquo;post&rdquo; filter thực tế rất dễ triển khai. Listing sau đây trình bày mã nguồn dùng để xây dựng Zuul filter. File nằm tại <code>zuulsvr/src/main/java/com/thoughtmechanix/zuulsvr/filters/ResponseFilter.java</code>.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

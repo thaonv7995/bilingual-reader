@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Giới thiệu service gateway</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets {
+      margin-top: -0.5mm;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0178.html">← Trước</a>
+    <a href="page_0180.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">154</span>
+        <span class="rh-center">CHƯƠNG 6 <em>Định tuyến dịch vụ với Spring Cloud và Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent"><strong class="run-in">Đầu tiên,</strong> việc triển khai nhất quán các khả năng này trong từng dịch vụ đang được xây dựng là rất khó. Các nhà phát triển tập trung vào việc bàn giao chức năng, và trong vòng xoáy hoạt động hằng ngày, họ dễ quên triển khai ghi log hoặc tracking cho dịch vụ. (Bản thân tôi cũng từng mắc lỗi này.) Thật không may, đối với những ai làm việc trong các ngành bị quản lý chặt chẽ, chẳng hạn dịch vụ tài chính hoặc chăm sóc sức khỏe, việc thể hiện hành vi nhất quán và có tài liệu trong hệ thống thường là yêu cầu then chốt để tuân thủ quy định của chính phủ.</p>
+
+      <p class="no-indent"><strong class="run-in">Thứ hai,</strong> việc triển khai đúng các khả năng này là một thách thức. Những việc như bảo mật microservice có thể rất phiền khi thiết lập và cấu hình cho từng dịch vụ được triển khai. Đẩy trách nhiệm triển khai một mối quan tâm xuyên suốt (cross-cutting concern) như bảo mật xuống các nhóm phát triển riêng lẻ làm tăng đáng kể khả năng có người không triển khai đúng hoặc quên làm.</p>
+
+      <p class="no-indent"><strong class="run-in">Thứ ba,</strong> bạn đã tạo ra một phụ thuộc cứng (hard dependency) trên tất cả các dịch vụ của mình. Càng xây dựng nhiều khả năng vào một framework chung được chia sẻ trên tất cả dịch vụ, việc thay đổi hoặc thêm hành vi trong mã chung mà không phải biên dịch lại và triển khai lại toàn bộ dịch vụ càng khó. Điều này có thể không có vẻ quan trọng khi ứng dụng chỉ có sáu microservice, nhưng lại rất đáng kể khi bạn có số lượng dịch vụ lớn hơn, có thể 30 hoặc hơn. Đột nhiên, việc nâng cấp các khả năng lõi được xây trong thư viện dùng chung trở thành quy trình di chuyển kéo dài hàng tháng.</p>
+
+      <p>Để giải quyết vấn đề này, bạn cần trừu tượng hóa các mối quan tâm xuyên suốt này thành một dịch vụ có thể đứng độc lập và hoạt động như bộ lọc và bộ định tuyến cho mọi lời gọi microservice trong ứng dụng. Mối quan tâm xuyên suốt này được gọi là service gateway. Service client của bạn không còn gọi trực tiếp một dịch vụ. Thay vào đó, mọi lời gọi được định tuyến qua service gateway, đóng vai trò là một điểm thực thi chính sách duy nhất (Policy Enforcement Point &mdash; PEP), rồi được định tuyến tới đích cuối cùng.</p>
+
+      <p>Trong chương này, chúng ta sẽ xem cách dùng Spring Cloud và Zuul của Netflix để triển khai service gateway. Zuul là triển khai service gateway mã nguồn mở của Netflix. Cụ thể, chúng ta sẽ xem cách dùng Spring Cloud và Zuul để</p>
+
+      <ul class="manning-bullets" aria-label="Mục tiêu chương 6">
+        <li>Đặt tất cả lời gọi dịch vụ sau một URL duy nhất và ánh xạ các lời gọi đó bằng service discovery tới các service instance thực tế</li>
+        <li>Chèn correlation ID vào mọi lời gọi dịch vụ đi qua service gateway</li>
+        <li>Chèn correlation ID ngược lại từ phản hồi HTTP được gửi về từ client</li>
+        <li>Xây dựng cơ chế định tuyến động để định tuyến các tổ chức cụ thể tới endpoint service instance khác với những gì mọi người khác đang dùng</li>
+      </ul>
+
+      <p>Hãy đi sâu hơn vào cách service gateway phù hợp với tổng thể các microservice được xây dựng trong cuốn sách này.</p>
+
+      <h4 class="subsection-title">6.1 Service gateway là gì?</h4>
+
+      <p>Cho đến nay, với các microservice bạn đã xây dựng ở các chương trước, bạn hoặc đã gọi trực tiếp từng dịch vụ qua web client, hoặc gọi chúng theo chương trình qua engine service discovery như Eureka.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

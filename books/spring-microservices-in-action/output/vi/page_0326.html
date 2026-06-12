@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Hình 10.11 và 10.12 Mạng ECS và IAM</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .diagram-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+      gap: 0 2mm;
+      margin: 0 0 1.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .diagram-annotated figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page .diagram-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 10mm;
+      padding-top: 6mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-simple {
+      margin: 0 0 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram.fig-simple img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-simple figcaption {
+      margin: 1mm 0 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .diagram-annotated + figure.diagram.fig-caption-only,
+    .prose-page.chapter-page figure.diagram.fig-caption-only + p,
+    .prose-page.chapter-page p + figure.diagram.fig-simple {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0325.html">← Trước</a>
+    <a href="page_0327.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">EagleEye: thiết lập hạ tầng cốt lõi trên đám mây</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">301</span>
+      </header>
+
+      <div class="diagram-annotated diagram-annotated--1011" aria-label="Hình 10.11 ảnh chụp màn hình mạng ECS có chú thích">
+        <figure class="diagram">
+          <img src="../assets/images/page_0326_fig_10_12.png" width="1313" height="359" alt="Hình 10.11 — AWS ECS Create Cluster cấu hình mạng VPC, subnet và security group">
+        </figure>
+        <div class="diagram-callouts" aria-label="Chú thích Hình 10.11">
+          <p class="listing-callout">Hành vi mặc định là tạo VPC mới. Đừng làm vậy với ví dụ này. Hãy chọn VPC mặc định của bạn, nơi cơ sở dữ liệu và cluster Redis đang chạy.</p>
+          <p class="listing-callout">Hãy đảm bảo bạn thêm tất cả subnet trong VPC của mình. Ở đây, VPC đang chạy ở US-West-1 (khu vực California), nên sẽ chỉ có hai subnet.</p>
+          <p class="listing-callout">Bạn sẽ tạo security group mới với một quy tắc inbound cho phép toàn bộ lưu lượng qua cổng 5555. Mọi cổng khác trên cluster ECS sẽ bị khóa. Nếu cần mở hơn một cổng, hãy tạo security group tùy chỉnh và gán nó.</p>
+        </div>
+      </div>
+
+      <figure class="diagram fig-caption-only" aria-label="Chú thích Hình 10.11">
+        <figcaption><strong>Hình 10.11</strong><br>Sau khi thiết lập xong các máy chủ, hãy cấu hình mạng/nhóm bảo mật AWS dùng để truy cập chúng.</figcaption>
+      </figure>
+
+      <p class="no-indent">Cuối cùng, bạn phải chọn tạo security group mới hoặc chọn nhóm bảo mật Amazon hiện có mà bạn đã tạo để áp dụng cho cluster ECS mới. Vì bạn đang chạy Zuul, bạn muốn toàn bộ lưu lượng đi qua một cổng duy nhất, cổng 5555. Bạn sẽ cấu hình security group mới do trình hướng dẫn ECS tạo để cho phép toàn bộ lưu lượng inbound từ toàn cầu (0.0.0.0/0 là mặt nạ mạng cho toàn bộ internet).</p>
+
+      <p>Bước cuối cùng cần điền trong biểu mẫu là tạo Amazon IAM Role cho ECS container agent chạy trên máy chủ. ECS agent chịu trách nhiệm giao tiếp với Amazon về trạng thái các container đang chạy trên máy chủ. Bạn sẽ để trình hướng dẫn ECS tạo IAM role có tên ecsInstanceRole cho bạn. Hình 10.12 minh họa bước cấu hình này.</p>
+
+      <figure class="diagram fig-simple" aria-label="Hình 10.12 IAM role Container ECS">
+        <img src="../assets/images/page_0326_fig_10_12.png" width="1313" height="359" alt="Hình 10.12 — AWS ECS Create Cluster lựa chọn IAM role cho Container instance">
+        <figcaption><strong>Hình 10.12</strong><br>Cấu hình IAM role Container</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

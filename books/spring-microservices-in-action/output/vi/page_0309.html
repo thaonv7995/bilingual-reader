@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Hình 9.18 và Listing 9.6 span tùy chỉnh</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack figure.diagram {
+      margin: 0 0 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack figure.diagram.fig-caption-only {
+      margin: 0;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0 0 1.5mm;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout--top-left {
+      margin: 0 0 1.5mm;
+      max-width: 42%;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--96 .listing-callouts-right {
+      padding-top: 20mm;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0308.html">← Trước</a>
+    <a href="page_0310.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">284</span>
+        <span class="rh-center">CHƯƠNG 9 <em>Theo dõi phân tán với Spring Cloud Sleuth và Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="diagram-annotated-stack" aria-label="Hình 9.18 trace thông điệp Kafka Zipkin có chú thích">
+        <p class="listing-callout listing-callout--top-left">Bạn có thể thấy một thông điệp được nhận trên kênh <code>inboundOrgChanges</code> của bạn.</p>
+        <figure class="diagram">
+          <img src="../assets/images/page_0309_fig_9_18.png" width="1313" height="172" alt="Hình 9.18 — Trace Zipkin hiển thị span thông điệp licensingservice">
+        </figure>
+        <figure class="diagram fig-caption-only" aria-label="Chú thích Hình 9.18">
+          <figcaption><strong>Hình 9.18</strong><br>Dùng Zipkin, bạn có thể thấy thông điệp Kafka được publish bởi organization service.</figcaption>
+        </figure>
+      </div>
+
+      <p class="no-indent">Giờ bạn đã tìm được giao dịch licensing service mục tiêu, bạn có thể đi sâu vào giao dịch đó. Hình 9.18 cho thấy kết quả của lần đi sâu này.</p>
+
+      <p>Cho đến giờ bạn đã dùng Zipkin để trace các lời gọi HTTP và messaging từ bên trong các service của mình. Tuy nhiên, nếu bạn muốn thực hiện trace ra các dịch vụ bên thứ ba chưa được Zipkin instrument thì sao? Ví dụ, nếu bạn muốn lấy thông tin tracing và thời gian cho một lời gọi Redis hoặc Postgres SQL cụ thể thì sao? May mắn là Spring Cloud Sleuth và Zipkin cho phép bạn thêm span tùy chỉnh vào giao dịch để trace thời gian thực thi liên quan tới các lời gọi bên thứ ba này.</p>
+
+      <h4 class="subsection-title">9.3.8 Thêm span tùy chỉnh</h4>
+
+      <p class="no-indent">Thêm span tùy chỉnh trong Zipkin cực kỳ dễ. Bạn có thể bắt đầu bằng cách thêm span tùy chỉnh vào licensing service để trace thời gian lấy dữ liệu từ Redis. Sau đó bạn sẽ thêm span tùy chỉnh vào organization service để xem mất bao lâu để truy xuất dữ liệu từ cơ sở dữ liệu organization.</p>
+
+      <p>Để thêm span tùy chỉnh vào lời gọi Redis của licensing service, bạn sẽ instrument class <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/clients/OrganizationRestTemplateClient.java</code>. Trong class này bạn sẽ instrument phương thức <code>checkRedisCache()</code>. Listing sau trình bày đoạn mã này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 9.6</strong><br>Gắn instrumentation cho lời gọi đọc dữ liệu licensing từ Redis</figcaption>
+        <div class="listing-annotated listing-annotated--96" aria-label="Mã có chú thích Listing 9.6">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>import org.springframework.cloud.sleuth.Tracer;
+
+//Rest of imports removed for conciseness
+@Component
+public class OrganizationRestTemplateClient {
+    @Autowired
+    RestTemplate restTemplate;
+
+    @Autowired
+    Tracer tracer;
+
+    @Autowired
+    OrganizationRedisRepository orgRedisRepo;</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích Listing 9.6">
+            <p class="listing-callout">Lớp <code>Tracer</code> được dùng để truy cập programmatically thông tin trace Spring Cloud Sleuth.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0084.html">← Prev</a>
+    <a href="page_0086.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">85</span>
+      </header>
+
+      <ol class="numbered" style="counter-reset: init-step 3">
+        <li>While creating an object of B, A&rsquo;s instance initializer and constructor are invoked before
+        B&rsquo;s instance initializer and constructor.</li>
+        <li>Instance initializer and constructor of A are invoked each time an object of B is created.</li>
+      </ol>
+
+      <p class="no-indent">Order of execution of various members of a class and its superclass can sometimes get very
+      difficult to trace. However, the exam does not try to trick you too much on this topic. If you can
+      follow the above example, you will not have any problem with the code in the real exam.</p>
+
+      <h3 class="section-title">13.3 Using abstract, final, and sealed classes</h3>
+
+      <h3 class="section-title section-title--sub">13.3.1 Using abstract classes and abstract methods<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">I talked about <code>abstract class</code> as a type of type briefly in the &ldquo;Kickstarter for Beginners&rdquo;
+      chapter. An abstract class is used when you want to capture the common features of multiple
+      related object types while knowing that no object that exhibits only the features captured in the
+      abstract class can actually exist. For example, if you are creating an application that deals with
+      cats and dogs, you may want to capture the common features of cats and dogs into a class called
+      <code>Animal</code>. But you know that you can&rsquo;t have just an <code>Animal</code>. You can have a cat or a dog but not
+      something that is just an animal without being a cat, a dog or some other animal. In that sense,
+      <code>Animal</code> is an abstract concept. <code>Furniture</code> is another such concept. If you want to have a
+      <code>Furniture</code>, you have to get a chair or a table because <code>Furniture</code> doesn&rsquo;t exist on its own. It is an
+      abstract concept.</p>
+
+      <p>Abstract classes are used to capture such abstract concepts. An abstract class can be defined by
+      using the keyword <code>abstract</code> in its declaration. For example, the following is how you can
+      define <code>Furniture</code> :</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>abstract class Furniture{
+  private String material;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

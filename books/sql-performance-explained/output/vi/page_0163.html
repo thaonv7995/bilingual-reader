@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Paging Through Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note .doc-quote {
+      margin: 2mm 0 2.5mm 4mm;
+      padding: 0;
+      border: none;
+    }
+
+    .prose-page .sidebar-note .doc-quote p {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      line-height: 1.35;
+    }
+
+    .prose-page .sidebar-note .doc-quote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phân trang qua kết quả</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">một vài mục từ trang trước lại, nhưng ngay lập tức bỏ chúng đi.</p>
+
+      <p>Hình&nbsp;7.3 cho thấy đường dẫn truy cập tương ứng.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;7.3.&nbsp;Truy cập Sử dụng Phương pháp Tìm kiếm</figcaption>
+        <img src="../assets/images/page_0163_fig_7_3.png" width="1027" height="626" alt="Hình 7.3. Truy cập Sử dụng Phương pháp Tìm kiếm">
+      </figure>
+
+      <aside class="sidebar-note">
+        <h3>Giá trị hàng SQL</h3>
+
+        <p>Ngoài các giá trị vô hướng thông thường, tiêu chuẩn SQL cũng định nghĩa các bộ tạo giá trị hàng. Chúng &ldquo;Xác định một tập hợp có thứ tự các giá trị được xây dựng thành một hàng hoặc hàng một phần&rdquo; [SQL:92, &sect;7.1: &lt;row value constructor&gt;]. Về mặt cú pháp, giá trị hàng là danh sách trong dấu ngoặc. Cú pháp này được biết đến nhiều nhất vì được sử dụng trong câu lệnh chèn.</p>
+
+        <p>Sử dụng bộ tạo giá trị hàng trong mệnh đề <code><strong>where</strong></code> thì ít được biết đến hơn nhưng vẫn hoàn toàn hợp lệ. Tiêu chuẩn SQL thực sự định nghĩa tất cả các toán tử so sánh cho bộ tạo giá trị hàng. Định nghĩa cho các phép toán nhỏ hơn là, ví dụ, như sau:</p>
+
+        <blockquote class="doc-quote">
+          <p>&ldquo;R<sub>x</sub> &lt; R<sub>y</sub>&rdquo; là đúng nếu và chỉ nếu R<sub>X</sub><sub>i</sub> = R<sub>Y</sub><sub>i</sub> cho tất cả <em>i</em> &lt; <em>n</em> và R<sub>X</sub><sub>n</sub> &lt; R<sub>Y</sub><sub>n</sub> cho một số <em>n</em>.</p>
+          <p>&mdash;SQL:92, &sect;8.2.7.2</p>
+        </blockquote>
+
+        <p>Trong đó <em>i</em> và <em>n</em> phản ánh các chỉ mục vị trí trong danh sách. Điều đó có nghĩa là một giá trị hàng R<sub>X</sub> nhỏ hơn R<sub>Y</sub> nếu bất kỳ giá trị nào R<sub>X</sub><sub>n</sub> nhỏ hơn R<sub>Y</sub><sub>n</sub> tương ứng và tất cả các cặp giá trị trước đó đều bằng nhau (R<sub>X</sub><sub>i</sub> = R<sub>Y</sub><sub>i</sub>; cho <em>i</em>&lt;<em>n</em>).</p>
+
+        <p>Định nghĩa này làm cho biểu thức R<sub>X</sub> &lt; R<sub>Y</sub> đồng nghĩa với &ldquo;R<sub>X</sub> sắp xếp trước R<sub>Y</sub>&rdquo; điều này chính xác là logic mà chúng ta cần cho phương pháp tìm kiếm.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">153</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

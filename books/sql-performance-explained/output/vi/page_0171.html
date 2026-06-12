@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Insert</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Insert</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note">
+        <h3>Ghi chú</h3>
+        <p>Chỉ mục đầu tiên tạo ra sự khác biệt lớn nhất.</p>
+      </aside>
+
+      <p class="no-indent">Để tối ưu hóa hiệu suất <code>insert</code>, rất quan trọng để giữ số lượng chỉ mục ở mức thấp.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Sử dụng chỉ mục một cách có chủ đích và tiết kiệm, và tránh các chỉ mục dư thừa bất cứ khi nào có thể. Điều này cũng có lợi cho các câu lệnh <code>delete</code> và <code>update</code>.</p>
+      </aside>
+
+      <p>Xem xét chỉ các câu lệnh <code>insert</code>, tốt nhất là hoàn toàn tránh chỉ mục&mdash;điều này mang lại hiệu suất chèn tốt nhất. Tuy nhiên, các bảng không có chỉ mục là khá không thực tế trong các ứng dụng thế giới thực. Bạn thường muốn truy xuất lại dữ liệu đã lưu trữ để cần chỉ mục nhằm cải thiện tốc độ truy vấn. Ngay cả các bảng nhật ký chỉ ghi cũng thường có một khóa chính và một chỉ mục tương ứng.</p>
+
+      <p>Tuy nhiên, hiệu suất mà không có chỉ mục là rất tốt đến mức có thể hợp lý để tạm thời bỏ tất cả các chỉ mục trong khi tải một lượng lớn dữ liệu&mdash;miễn là các chỉ mục không cần thiết cho bất kỳ câu lệnh SQL nào khác trong thời gian đó. Điều này có thể tạo ra một sự tăng tốc đáng kể mà có thể thấy trong biểu đồ và thực sự là một thực tiễn phổ biến trong các kho dữ liệu.</p>
+
+      <aside class="sidebar-note">
+        <h3>Suy nghĩ về điều đó</h3>
+        <p>Hình&nbsp;8.1 sẽ thay đổi như thế nào khi sử dụng một bảng được tổ chức theo chỉ mục hoặc chỉ mục phân cụm?</p>
+        <p>Có cách nào gián tiếp mà một câu lệnh <code>insert</code> có thể hưởng lợi từ việc lập chỉ mục không? Tức là, một chỉ mục bổ sung có thể làm cho một câu lệnh <code>insert</code> nhanh hơn không?</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">161</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

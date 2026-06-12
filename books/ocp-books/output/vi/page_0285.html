@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + ol.numbered,
+    .prose-page.ocp-chapter-page p.no-indent + ol.numbered {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0284.html">← Trước</a>
+    <a href="page_0286.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">285</span>
+      </header>
+
+      <p class="no-indent">bản đồ ánh xạ giữa mã học sinh (student id) và tên học sinh (student name) sẽ cho phép bạn tra cứu tên học sinh bằng mã học sinh, v.v. Ở đây, countrycode và student id là các khóa (keys), còn country name và student name là các giá trị (values). Theo nghĩa đó, một <code>Map</code>&nbsp;là một tập hợp của các cặp khóa-giá trị (key-value).</p>
+
+      <p>Interface (Giao diện) <code>java.util.Map</code>&nbsp;của Collections API thể hiện hành vi này. Có một số lớp triển khai (implementation classes) thực thi interface (giao diện) <code>Map</code>&nbsp;. Lớp được sử dụng nhiều nhất là <code>java.util.HashMap</code>&nbsp;.</p>
+
+      <p>Điều quan trọng cần biết là <code>Map</code>&nbsp;không kế thừa (extend) interface (giao diện) <code>Collection</code>&nbsp;. <code>Map</code>&nbsp;là gốc của một hệ thống phân cấp các lớp (classes) và interface (giao diện) riêng biệt, không liên quan đến hệ thống phân cấp <code>Collection</code>&nbsp;. Bạn cần nắm rõ các phương thức sau của <code>Map</code>&nbsp;:</p>
+
+      <ol class="numbered">
+        <li><code>V get(Object key)</code>&nbsp;: Trả về giá trị mà khóa (key) chỉ định được ánh xạ tới, hoặc <code>null</code>&nbsp;nếu map này không chứa ánh xạ nào cho khóa đó.</li>
+        <li><code>V put(K key, V value)</code>&nbsp;: Liên kết giá trị chỉ định với khóa (key) chỉ định trong map này. Nếu map trước đó đã chứa một ánh xạ cho khóa đó, giá trị cũ sẽ được thay thế bằng giá trị chỉ định và giá trị cũ sẽ được trả về. Nó trả về <code>null</code>&nbsp;nếu trước đó không có ánh xạ nào cho khóa (key).</li>
+        <li><code>V remove(Object key)</code>&nbsp;: Xóa ánh xạ của một khóa (key) khỏi map này nếu tồn tại. Trả về giá trị đó hoặc <code>null</code>, nếu không tồn tại.</li>
+        <li><code>Set&lt;K&gt; keySet()</code>&nbsp;: Trả về một <code>Set</code>&nbsp;chứa các khóa (keys) có trong map. Lưu ý rằng các khóa là duy nhất, vì vậy kiểu trả về là <code>Set</code>&nbsp;(không phải <code>Collection</code>&nbsp;hay <code>List</code>&nbsp;).</li>
+        <li><code>Collection&lt;V&gt; values()</code>&nbsp;: Trả về một <code>Collection</code>&nbsp;chứa các giá trị (values) có trong map. Lưu ý rằng các giá trị có thể trùng lặp, vì vậy kiểu trả về là <code>Collection</code>&nbsp;.</li>
+        <li><code>void clear()</code>&nbsp;: Xóa tất cả các phần tử (entries) được lưu trữ trong map.</li>
+        <li><code>int size()</code>&nbsp;: Trả về số lượng phần tử (entries) được lưu trữ trong map.</li>
+        <li><code>default void forEach(BiConsumer&lt;? super K, ? super V&gt; action)</code>&nbsp;: Thực hiện hành động (action) đã chỉ định cho mỗi phần tử (entry) trong map này cho đến khi tất cả các phần tử đã được xử lý hoặc hành động đó ném ra một Exception (Ngoại lệ).</li>
+      </ol>
+
+      <p>Các phương thức trên và mô tả của chúng đã đủ cho kỳ thi, nhưng có một số phương thức thú vị và hữu ích trong <code>Map</code>&nbsp;và bạn nên tham khảo JavaDoc để tìm hiểu thêm.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

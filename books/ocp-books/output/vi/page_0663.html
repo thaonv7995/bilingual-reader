@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0662.html">← Trước</a>
+    <a href="page_0664.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">663</span>
+      </header>
+
+      <p class="no-indent"><code>DateTimeFormatter</code>&nbsp;cung cấp một cách tốt hơn để tạo các đối tượng formatter thông qua các phương thức static
+      <code>ofXXX</code>&nbsp;của nó. Nó có bốn phương thức như vậy:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>static DateTimeFormatter ofLocalizedDate(FormatStyle dateStyle)
+static DateTimeFormatter ofLocalizedDateTime(FormatStyle
+dateTimeStyle)
+static DateTimeFormatter ofLocalizedDateTime(FormatStyle dateStyle,
+FormatStyle timeStyle)
+static DateTimeFormatter ofLocalizedTime(FormatStyle timeStyle)</code></pre>
+      </figure>
+
+      <p>Phương thức cần sử dụng phụ thuộc vào loại đối tượng bạn muốn định dạng. Nếu bạn có một
+      <code>LocalDate</code>, bạn nên sử dụng <code>ofLocalizedDate</code>, nếu bạn có một <code>LocalTime</code>, bạn nên sử dụng
+      <code>ofLocalizedTime</code>, và nếu bạn có một <code>LocalDateTime</code>&nbsp;để định dạng, bạn nên sử dụng
+      <code>ofLocalizedDateTime</code>&nbsp;để lấy formatter. Việc sử dụng một formatter không tương thích, chẳng hạn như sử dụng một
+      formatter từ <code>ofLocalizedTime</code>&nbsp;để định dạng một <code>LocalDateTime</code>, sẽ dẫn đến một
+      <code>DateTimeException</code>&nbsp;bị ném ra.</p>
+
+      <p>Hãy quan sát rằng thay vì nhận một chuỗi cho định dạng, các phương thức này nhận một đối tượng thuộc kiểu
+      <code>FormatStyle</code>. <code>FormatStyle</code>&nbsp;thực chất là một enum với bốn giá trị - FULL, LONG,
+      MEDIUM, và SHORT. Bạn nên kết hợp phương thức <code>ofXXX</code>&nbsp;và <code>FormatStyle</code>
+      để tạo ra một <code>DateTimeFormatter</code>&nbsp;đáp ứng nhu cầu của bạn. Ví dụ, đoạn mã dưới
+      đây cho thấy cách bạn có thể in một ngày ở dạng đầy đủ cũng như dạng rút gọn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>DateTimeFormatter dtf1 =
+DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL);
+DateTimeFormatter dtf2 =
+DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
+LocalDate ld = LocalDate.now();
+System.out.println(dtf1.format(ld));//prints Saturday, April 27, 2024
+System.out.println(dtf2.format(ld));//prints 4/27/24</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

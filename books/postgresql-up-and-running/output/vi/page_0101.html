@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0100.html">← Trước</a>
+    <a href="page_0102.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">101</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-4.</strong> Lấy phần tử thứ n của một chuỗi phân cách</figcaption>
+        <pre class="code-block"><code>SELECT split_part('abc.123.z45', '.', 2) As x;
+ x
+ -----
+ 123</code></pre>
+      </figure>
+
+      <p class="no-indent">Hàm <code>string_to_array</code> rất hữu ích để tạo một mảng các phần tử từ một chuỗi phân cách.
+      Bằng cách kết hợp <code>string_to_array</code> với hàm <code>unnest</code>, bạn có thể mở rộng mảng trả về
+      thành một tập hợp các hàng, như được trình bày trong <span class="accent-word">Ví dụ 5-5</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-5.</strong> Chuyển đổi chuỗi phân cách thành mảng và hàng</figcaption>
+        <pre class="code-block"><code>SELECT unnest(string_to_array('abc.123.z45', '.')) As x;
+ x
+ -----
+ abc
+ 123
+ z45</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Biểu thức chính quy và Khớp mẫu</h3>
+      <p class="no-indent">Hỗ trợ biểu thức chính quy của PostgreSQL thật tuyệt vời. Bạn có thể trả về các kết quả khớp
+      dưới dạng bảng hoặc mảng và thực hiện các thay thế và cập nhật khá tinh vi. Việc tham chiếu ngược
+      và các mẫu tìm kiếm khá nâng cao khác cũng được hỗ trợ. Trong phần này, chúng tôi sẽ cung cấp
+      một mẫu nhỏ về những điều này. Để biết thêm thông tin, xem <span class="accent-word">Khớp mẫu và Hàm chuỗi</span>.</p>
+
+      <p><span class="accent-word">Ví dụ 5-6</span> cho bạn thấy cách định dạng số điện thoại được lưu trữ đơn giản dưới dạng các chữ số liên tiếp:</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-6.</strong> Định dạng lại số điện thoại bằng cách sử dụng tham chiếu ngược</figcaption>
+        <pre class="code-block"><code>SELECT regexp_replace(
+'6197306254',
+'([0-9]{3})([0-9]{3})([0-9]{4})',
+ E'\(\\1\) \\2-\\3'
+ ) As x;
+ x
+ --------------
+ (619) 730-6254</code></pre>
+      </figure>
+
+      <p class="no-indent">Các <code>\\1</code>, <code>\\2</code>, v.v. tham chiếu đến các phần tử trong biểu thức mẫu của chúng tôi. Chúng tôi sử dụng dấu gạch chéo ngược (<code>\</code>) để thoát khỏi dấu ngoặc đơn. Cấu trúc <code>E'</code> là cú pháp của PostgreSQL để chỉ ra rằng một chuỗi là một biểu thức để các ký tự đặc biệt như <code>\</code> được xử lý theo nghĩa đen.</p>
+
+      <p>Giả sử một trường nào đó chứa văn bản với các số điện thoại nhúng; <span class="accent-word">Ví dụ 5-7</span> cho thấy
+      cách trích xuất các số điện thoại và biến chúng thành các hàng chỉ trong một bước.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Ký tự và Chuỗi<span class="sep">|</span>83</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

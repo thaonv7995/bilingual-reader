@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 4: Listing 4.6 và Spring DiscoveryClient</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0136.html">← Trước</a>
+    <a href="page_0138.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">112</span>
+        <span class="rh-center">CHƯƠNG 4 <em>Về service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="Lưu ý">
+        <h3>LƯU Ý</h3>
+        <p>Vì tôi đang dùng cùng một mã nguồn cho cả ba loại client, bạn có thể gặp các tình huống mà bạn thấy annotation cho một số client ngay cả khi chúng có vẻ không cần thiết. Ví dụ, bạn sẽ thấy cả annotation <code>@EnableDiscoveryClient</code> và <code>@EnableFeignClients</code> trong mã nguồn, ngay cả khi văn bản chỉ giải thích một trong các loại client. Điều này để tôi có thể dùng một cơ sở mã nguồn cho các ví dụ của mình. Tôi sẽ chỉ ra các phần dư thừa và mã nguồn này bất cứ khi nào chúng xuất hiện.</p>
+      </aside>
+
+      <p>Trong lớp <code>src/main/java/com/thoughtmechanix/licenses/services/LicenseService.java</code>, tôi đã thêm một phương thức đơn giản tên là <code>retrieveOrgInfo()</code> sẽ phân giải dựa trên <code>clientType</code> được truyền vào route để xác định loại client sẽ được dùng để tra cứu một service instance của organization service. Phương thức <code>getLicense()</code> trên lớp <code>LicenseService</code> sẽ dùng <code>retrieveOrgInfo()</code> để lấy dữ liệu tổ chức từ cơ sở dữ liệu Postgres.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 4.6</strong> Hàm <code>getLicense()</code> sẽ dùng nhiều phương thức để thực hiện cuộc gọi REST</figcaption>
+        <pre class="code-block"><code>public License getLicense(String organizationId, String licenseId, String
+     clientType) {
+    License license = licenseRepository.findByOrganizationIdAndLicenseId(
+              organizationId, licenseId);
+
+    Organization org = retrieveOrgInfo(organizationId, clientType);
+
+    return license
+        .withOrganizationName( org.getName())
+        .withContactName( org.getContactName())
+        .withContactEmail( org.getContactEmail() )
+        .withContactPhone( org.getContactPhone() )
+        .withComment(config.getExampleProperty());
+  }</code></pre>
+      </figure>
+
+      <p>Bạn có thể tìm thấy từng client mà chúng ta đã xây dựng bằng Spring DiscoveryClient, Spring RestTemplate hoặc thư viện Feign trong package <code>src/main/java/com/thoughtmechanix/licenses/clients</code> của mã nguồn licensing-service.</p>
+
+      <h4 class="subsection-title">4.5.1 Tìm kiếm các phiên bản dịch vụ với Spring DiscoveryClient</h4>
+
+      <p>Spring DiscoveryClient cung cấp mức truy cập thấp nhất tới Ribbon và các dịch vụ đã đăng ký trong đó. Bằng cách dùng DiscoveryClient, bạn có thể truy vấn tất cả các dịch vụ đã đăng ký với ribbon client và các URL tương ứng của chúng.</p>
+
+      <p>Tiếp theo, bạn sẽ xây dựng một ví dụ đơn giản về việc dùng DiscoveryClient để lấy một trong các URL của organization service từ Ribbon, rồi gọi dịch vụ bằng lớp RestTemplate tiêu chuẩn. Để bắt đầu dùng DiscoveryClient, trước tiên bạn cần đánh dấu lớp <code>src/main/java/com/thoughtmechanix/licenses/Application.java</code> bằng annotation <code>@EnableDiscoveryClient</code>, như trình bày trong listing tiếp theo.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

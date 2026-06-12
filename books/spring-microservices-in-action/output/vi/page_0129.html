@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 4: Hình 4.4 bộ nhớ đệm phía client Eureka</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram + figcaption,
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page figure.diagram figcaption + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0128.html">← Trước</a>
+    <a href="page_0130.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">104</span>
+        <span class="rh-center">CHƯƠNG 4 <em>Về service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="diagram" aria-label="Hình 4.4">
+        <img src="../assets/images/page_0129_fig_4_4.png" width="1313" height="593" alt="Hình 4.4 — Bộ nhớ đệm phía client và Eureka với các dịch vụ licensing và organization">
+        <figcaption><strong>Hình 4.4</strong><br>Bằng cách triển khai bộ nhớ đệm phía client và Eureka với các dịch vụ licensing và organization, bạn có thể giảm tải cho các máy chủ Eureka và cải thiện độ ổn định phía client nếu Eureka không khả dụng.</figcaption>
+      </figure>
+
+      <p class="no-indent">Trong hai chương trước, bạn giữ licensing service đơn giản và đã đưa tên tổ chức cho các giấy phép cùng với dữ liệu license. Trong chương này, bạn sẽ tách thông tin tổ chức ra thành một dịch vụ riêng.</p>
+
+      <p>Khi licensing service được gọi, nó sẽ gọi organization service để lấy thông tin tổ chức liên quan tới organization ID được chỉ định. Việc phân giải vị trí thực tế của organization service sẽ được lưu trong một service discovery registry. Trong ví dụ này, bạn sẽ đăng ký hai instance của organization service với một service discovery registry, rồi dùng cân bằng tải phía client để tra cứu và lưu cache registry trong mỗi instance dịch vụ. Hình 4.4 minh họa cách bố trí này:</p>
+
+      <ol class="manning-numbered" aria-label="Các bước đăng ký Eureka và lưu cache Ribbon">
+        <li>Khi các dịch vụ đang khởi động (bootstrapping), licensing service và organization service cũng sẽ tự đăng ký với Eureka Service. Quá trình đăng ký này sẽ báo cho Eureka vị trí vật lý và số cổng của mỗi instance dịch vụ, kèm theo service ID cho dịch vụ đang được khởi động.</li>
+        <li>Khi licensing service gọi tới organization service, nó sẽ dùng thư viện Ribbon của Netflix để cung cấp cân bằng tải phía client. Ribbon sẽ liên hệ với dịch vụ Eureka để lấy thông tin vị trí dịch vụ rồi lưu cache cục bộ.</li>
+        <li>Định kỳ, thư viện Ribbon của Netflix sẽ ping dịch vụ Eureka và làm mới bộ nhớ đệm cục bộ về vị trí các dịch vụ.</li>
+      </ol>
+
+      <p>Mọi instance organization service mới giờ sẽ hiển thị cục bộ với licensing service, trong khi mọi instance không khỏe mạnh sẽ bị loại khỏi bộ nhớ đệm cục bộ.</p>
+
+      <p>Tiếp theo, bạn sẽ triển khai thiết kế này bằng cách thiết lập dịch vụ Spring Cloud Eureka của mình.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

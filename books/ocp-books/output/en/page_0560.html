@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0559.html">← Prev</a>
+    <a href="page_0561.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">560</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Stream&lt;Student&gt; students = Stream.of(101, 102, 103).flatMap(getStudentsByCourseId);</code></pre>
+      </figure>
+
+      <p class="no-indent">Observe that the <code>getStudentsByCourseId</code>&nbsp;is a <code>Function</code>&nbsp;that takes a <code>courseId</code>&nbsp;and
+      returns a <code>Stream</code>&nbsp;of <code>Student</code>s enrolled in that course. This function is then passed to the
+      <code>flatMap</code>&nbsp;method.</p>
+
+      <h3 class="section-title section-title--sub">Limiting a stream<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The <code>limit</code>&nbsp;method truncates a stream to the given number of elements. This method is helpful
+      to limit the number of elements of a large or an infinite stream. For example, the following code
+      limits the resulting stream to only 10 random numbers:</p>
+
+      <pre class="code-block ocp-code-line"><code>Stream&lt;Double&gt; sd = Stream.generate(Math::random).limit(10);</code></pre>
+
+      <h3 class="section-title section-title--sub">Peeking into a stream<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The <code>peek</code>&nbsp;method allows you to add a <code>Consumer</code>&nbsp;in a stream pipeline without altering the
+      incoming stream in any way. This method can be used to log each element as it passes through
+      that point in the stream pipeline. For example,</p>
+
+      <pre class="code-block ocp-code-line"><code>Stream&lt;Double&gt; sd = Stream.generate(Math::random).peek(d-&gt;{ logger.debug("Got
+double "+d);});</code></pre>
+
+      <h3 class="section-title section-title--sub">Sorting a stream<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>There are two overloaded <code>sorted</code>&nbsp;methods. The one without any parameter sorts the incoming
+      objects using their natural order. Recall that for objects to be sorted by their natural order, the
+      objects must implement the <code>java.lang.Comparable</code>&nbsp;interface. If the class does not
+      implement <code>Comparable</code>, you can use the <code>sorted</code>&nbsp;method that takes a
+      <code>java.util.Comparator</code>&nbsp;object. For example, the following statement generates a sorted
+      stream of 10 random numbers:</p>
+
+      <pre class="code-block ocp-code-line"><code>Stream&lt;Double&gt; sd = Stream.generate(Math::random).limit(10).sorted();</code></pre>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

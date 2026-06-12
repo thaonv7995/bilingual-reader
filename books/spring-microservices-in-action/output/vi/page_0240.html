@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Listing 7.8 JWT token store (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--78cont .listing-callouts-right {
+      padding-top: 1mm;
+    }
+    .prose-page.chapter-page .listing-annotated--78cont .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 11mm;
+    }
+    .prose-page.chapter-page .listing-annotated--78cont .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 9mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0239.html">← Trước</a>
+    <a href="page_0241.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">215</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">JavaScript Web Tokens và OAuth2</span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--78cont" aria-label="Listing 7.8 (tiếp theo)">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>    public DefaultTokenServices tokenServices() {
+        DefaultTokenServices defaultTokenServices
+            = new DefaultTokenServices();
+        defaultTokenServices.setTokenStore(tokenStore());
+        defaultTokenServices.setSupportRefreshToken(true);
+        return defaultTokenServices;
+    }
+    @Bean
+    public JwtAccessTokenConverter jwtAccessTokenConverter() {
+        JwtAccessTokenConverter converter =
+           new JwtAccessTokenConverter();
+        converter
+           .setSigningKey(serviceConfig.getJwtSigningKey());
+        return converter;
+    }
+    @Bean
+    public TokenEnhancer jwtTokenEnhancer() {
+        return new JWTTokenEnhancer();
+    }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 7.8">
+          <p class="listing-callout">Dùng để đọc và ghi dữ liệu từ token được trình cho dịch vụ</p>
+          <p class="listing-callout">Đóng vai trò bộ chuyển đổi giữa JWT và máy chủ OAuth2</p>
+          <p class="listing-callout">Xác định khóa ký sẽ được dùng để ký token</p>
+        </div>
+      </div>
+
+      <p class="no-indent">Class <code>JWTTokenStoreConfig</code> được dùng để xác định cách Spring sẽ quản lý việc tạo, ký và chuyển đổi JWT token. Phương thức <code>tokenServices()</code> sẽ sử dụng implementation token services mặc định của Spring Security, nên phần việc ở đây khá máy móc. Phương thức <code>jwtAccessTokenConverter()</code> là phần chúng ta cần tập trung. Nó xác định cách token sẽ được chuyển đổi. Điều quan trọng nhất cần lưu ý về phương thức này là bạn đang thiết lập khóa ký sẽ được dùng để ký token của bạn.</p>
+
+      <p class="block-indent">Trong ví dụ này, bạn sẽ dùng khóa đối xứng, nghĩa là cả dịch vụ xác thực và các dịch vụ được bảo vệ bởi dịch vụ xác thực phải dùng chung cùng một khóa giữa tất cả các dịch vụ. Khóa không gì khác ngoài một chuỗi giá trị ngẫu nhiên được lưu trong mục Spring Cloud Config của dịch vụ xác thực (<a href="https://github.com/carnellj/config-repo/blob/master/authenticationservice/authenticationservice.yml">https://github.com/carnellj/config-repo/blob/master/authenticationservice/authenticationservice.yml</a>). Giá trị thực tế của khóa ký là</p>
+
+      <figure class="code-snippet" aria-label="Cấu hình khóa ký JWT">
+        <pre class="code-block"><code>signing.key: &ldquo;345345fsdgsf5345&rdquo;</code></pre>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Spring Cloud Security hỗ trợ mã hóa khóa đối xứng và mã hóa bất đối xứng bằng khóa công khai/riêng tư. Chúng ta sẽ không hướng dẫn chi tiết cách thiết lập JWT bằng khóa công khai/riêng tư. Tiếc là tài liệu chính thức về JWT, Spring Security và khóa công khai/riêng tư còn rất ít. Nếu bạn quan tâm cách làm điều này, tôi rất khuyên bạn xem Baeldung.com (<a href="http://www.baeldung.com/spring-security-oauth-jwt">http://www.baeldung.com/spring-security-oauth-jwt</a>). Họ giải thích rất hay về JWT và cách thiết lập khóa công khai/riêng tư.</p>
+      </aside>
+
+      <p>Trong <code>JWTTokenStoreConfig</code> từ listing 7.8, bạn đã xác định cách JWT token sẽ được ký và tạo. Giờ bạn cần gắn phần này vào dịch vụ OAuth2 tổng thể của mình. Trong listing 7.2 bạn đã dùng class <code>OAuth2Config</code> để xác định cấu hình của</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

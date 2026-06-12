@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Biến môi trường và khởi động Docker</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p.continued-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-style: italic;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(1) {
+      margin-bottom: 7mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(2) {
+      margin-bottom: 9mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(3) {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .sidebar-note figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0106.html">← Trước</a>
+    <a href="page_0108.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">82</span>
+        <span class="rh-center">CHƯƠNG 3 <em>Kiểm soát cấu hình với Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>Vì bạn đã bổ sung khả năng introspection cho tất cả các dịch vụ thông qua Spring Boot Actuator, bạn có thể xác nhận môi trường đang chạy bằng cách gọi <code>http://localhost:8080/env</code>. Endpoint <code>/env</code> sẽ cung cấp danh sách đầy đủ thông tin cấu hình về dịch vụ, bao gồm các thuộc tính và endpoint mà dịch vụ đã khởi động cùng, như minh họa trong hình 3.7.</p>
+
+      <p>Điểm quan trọng cần lưu ý từ hình 3.7 là profile đang hoạt động của licensing service là <code>dev</code>. Bằng cách kiểm tra JSON trả về, bạn cũng có thể thấy cơ sở dữ liệu Postgres được trả về là URI phát triển <code>jdbc:postgresql://database:5432/eagle_eye_dev</code>.</p>
+
+      <aside class="sidebar-note" aria-label="Dùng biến môi trường để truyền thông tin khởi động (tiếp theo)">
+        <p class="no-indent continued-label">(tiếp theo)</p>
+        <p class="no-indent">biến môi trường vào container. Ví dụ, để khởi động licensing service trong môi trường dev, tệp <code>docker/dev/docker-compose.yml</code> chứa mục sau cho licensing-service:</p>
+
+        <div class="listing-annotated">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>licensingservice:
+    image: ch3-thoughtmechanix/licensing-service
+    ports:
+      - "8080:8080"
+    environment:
+      PROFILE: "dev"
+      CONFIGSERVER_URI: http://configserver:8888
+      CONFIGSERVER_PORT: "8888"
+      DATABASESERVER_PORT: "5432"</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích biến môi trường Docker Compose">
+            <p class="listing-callout">Chỉ định phần bắt đầu của các biến môi trường cho container licensing-service</p>
+            <p class="listing-callout">Biến môi trường PROFILE được truyền tới dòng lệnh dịch vụ Spring Boot và cho Spring Boot biết profile nào cần chạy.</p>
+            <p class="listing-callout">Endpoint của dịch vụ config</p>
+          </div>
+        </div>
+
+        <p>Mục environment trong tệp chứa giá trị của hai biến PROFILE, là Spring Boot profile mà licensing service sẽ chạy dưới đó. CONFIGSERVER_URI được truyền tới licensing service và xác định instance Spring Cloud configuration server mà dịch vụ sẽ đọc dữ liệu cấu hình từ đó.</p>
+
+        <p>Trong các script khởi động được container chạy, bạn sau đó truyền các biến môi trường này dưới dạng tham số &ndash;D cho các JVM khởi động ứng dụng. Trong mỗi dự án, bạn bake một Docker container, và Docker container đó dùng script khởi động để khởi chạy phần mềm trong container. Đối với licensing service, script khởi động được bake vào container có thể tìm thấy tại <code>licensing-service/src/main/docker/run.sh</code>. Trong script <code>run.sh</code>, mục sau khởi động JVM licensing-service:</p>
+
+        <figure class="code-snippet">
+          <pre class="code-block"><code>echo "********************************************************"
+echo "Starting License Server with Configuration Service :
+$CONFIGSERVER_URI";
+echo "********************************************************"
+java -Dspring.cloud.config.uri=$CONFIGSERVER_URI \
+-Dspring.profiles.active=$PROFILE -jar /usr/local/licensingservice/ \
+licensing-service-0.0.1-SNAPSHOT.jar</code></pre>
+        </figure>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

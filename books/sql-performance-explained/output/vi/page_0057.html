@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục LIKE Filters</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note figure.code-snippet {
+      margin: 2mm 0 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">57</span>
+      </header>
+      <p class="chapter-running-head">Chỉ mục LIKE Filters</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Tránh các biểu thức <code>LIKE</code> với ký tự đại diện đứng đầu (ví dụ: <code>'%TERM'</code>).</p>
+      </aside>
+
+      <p class="no-indent">Vị trí của các ký tự đại diện ảnh hưởng đến việc sử dụng chỉ mục&mdash;ít nhất là về lý thuyết. Trong thực tế, bộ tối ưu hóa tạo ra một kế hoạch thực thi chung khi thuật ngữ tìm kiếm được cung cấp qua các tham số liên kết. Trong trường hợp đó, bộ tối ưu hóa phải đoán xem liệu phần lớn các lần thực thi có chứa ký tự đại diện đứng đầu hay không.</p>
+
+      <p>Hầu hết các cơ sở dữ liệu chỉ giả định rằng không có ký tự đại diện đứng đầu khi tối ưu hóa một điều kiện <code>LIKE</code> với tham số liên kết, nhưng giả định này là sai nếu biểu thức <code>LIKE</code> được sử dụng cho tìm kiếm toàn văn. Thật không may, không có cách nào trực tiếp để đánh dấu một điều kiện <code>LIKE</code> là tìm kiếm toàn văn. Hộp &ldquo;Đánh dấu Biểu thức LIKE Toàn văn&rdquo; cho thấy một nỗ lực không thành công. Việc chỉ định thuật ngữ tìm kiếm mà không có tham số liên kết là giải pháp rõ ràng nhất, nhưng điều đó làm tăng chi phí tối ưu hóa và mở ra một lỗ hổng SQL injection. Một giải pháp hiệu quả nhưng vẫn an toàn và di động là cố tình làm mờ điều kiện <code>LIKE</code>. &ldquo;Kết hợp Các Cột&rdquo; ở trang&nbsp;70 giải thích điều này chi tiết.</p>
+
+      <aside class="sidebar-note">
+        <h3>Đánh dấu Biểu thức LIKE Toàn văn</h3>
+        <p>Khi sử dụng toán tử <code>LIKE</code> cho tìm kiếm toàn văn, chúng ta có thể tách các ký tự đại diện ra khỏi thuật ngữ tìm kiếm:</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>WHERE text_column LIKE '%' || ? || '%'</code></pre>
+        </figure>
+        <p>Các ký tự đại diện được viết trực tiếp vào câu lệnh SQL, nhưng chúng ta sử dụng một tham số liên kết cho thuật ngữ tìm kiếm. Biểu thức <code>LIKE</code> cuối cùng được xây dựng bởi chính cơ sở dữ liệu sử dụng toán tử nối chuỗi <code>||</code> (Oracle, PostgreSQL). Mặc dù sử dụng một tham số liên kết, biểu thức <code>LIKE</code> cuối cùng sẽ luôn bắt đầu bằng một ký tự đại diện. Thật không may, các cơ sở dữ liệu không nhận ra điều đó.</p>
+      </aside>
+
+      <p>Đối với cơ sở dữ liệu PostgreSQL, vấn đề là khác vì PostgreSQL giả định có một ký tự đại diện đứng đầu khi sử dụng tham số liên kết cho một biểu thức <code>LIKE</code>. PostgreSQL chỉ không sử dụng chỉ mục trong trường hợp đó. Cách duy nhất để có được quyền truy cập chỉ mục cho một biểu thức <code>LIKE</code> là làm cho thực tế</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">47</p>
+    </article>
+  </main>
+</body>
+</html>

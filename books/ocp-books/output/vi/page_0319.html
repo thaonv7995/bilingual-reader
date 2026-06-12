@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 17: Biểu thức Lambda (Lambda expression) và Tham chiếu Phương thức (Method reference)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: lambda-body;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: lambda-body;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(lambda-body) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li strong {
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li figure.code-snippet {
+      margin: 1.5mm 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0318.html">← Trước</a>
+    <a href="page_0320.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">319</span>
+      </header>
+
+      <p class="no-indent">cũng áp dụng tương tự cho các biểu thức Lambda (Lambda expression). Cụ thể, kiểu tham số của một biểu thức Lambda (Lambda expression) (nếu được chỉ định rõ ràng) phải khớp chính xác với kiểu tham số của phương thức được khai báo trong Interface (Giao diện) và kiểu của giá trị trả về phải đồng biến (covariant) với kiểu trả về của phương thức trong Interface (Giao diện).</p>
+
+      <p>Cú pháp của phần mã nguồn trong một biểu thức Lambda (Lambda expression) rất đơn giản. Nó có thể là một biểu thức hoặc một khối mã nguồn (block of code) được đặt trong dấu ngoặc nhọn. Vì phần thân (body) có thể trả về hoặc không trả về giá trị, nên sẽ có bốn khả năng xảy ra:</p>
+
+      <ol class="numbered">
+        <li><strong>Biểu thức có hoặc không có giá trị trả về</strong> - Đây là trường hợp sử dụng phổ biến nhất và do đó cũng là ngắn gọn nhất. Bạn chỉ cần đặt một biểu thức ở phía bên phải của <code>-&gt;</code>. Nếu biểu thức có một giá trị trả về và nếu biểu thức Lambda (Lambda expression) được yêu cầu phải trả về một giá trị, trình biên dịch (compiler) sẽ tự động nhận biết rằng giá trị được tạo ra bởi biểu thức đó sẽ được trả về và tự nó sẽ chèn một câu lệnh return. Bạn không được viết từ khóa return. Ví dụ,
+          <figure class="code-snippet">
+            <pre class="code-block"><code>a -&gt; a + 2 //valid</code></pre>
+          </figure>
+          <figure class="code-snippet code-snippet--warn">
+            <pre class="code-block"><code>a -&gt; return a + 2 //invalid, must not have return keyword</code></pre>
+          </figure>
+          Tương tự, một biểu thức không trả về bất kỳ giá trị nào cũng có thể được sử dụng trực tiếp làm phần thân (body) của biểu thức Lambda (Lambda expression). Ví dụ,
+          <figure class="code-snippet">
+            <pre class="code-block"><code>(a, b) -&gt; System.out.println(a+b)
+//method call is a valid expression</code></pre>
+          </figure>
+        </li>
+        <li><strong>Khối mã nguồn (Block of code) có hoặc không có giá trị trả về</strong> - Nếu bạn có nhiều dòng mã nguồn, bạn phải viết chúng trong dấu ngoặc nhọn, nghĩa là <code>{ }</code>. Nếu biểu thức được yêu cầu phải trả về một giá trị, bạn phải sử dụng một câu lệnh return để trả về giá trị mong muốn. Điều này hầu như giống hệt như việc viết phần thân của một phương thức (method body) có hoặc không có giá trị trả về. Bạn có thể sử dụng cú pháp này ngay cả khi chỉ có một câu lệnh trong phần thân. Ví dụ, dưới đây là biểu thức Lambda (Lambda expression) trả về một giá trị:</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

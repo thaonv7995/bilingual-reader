@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .ocp-chapter-title {
+      margin: 0 0 8mm;
+      font-size: 24pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-indent: 0;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives {
+      margin: 0 0 10mm;
+    }
+
+    .ocp-exam-objectives__label {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives__rule {
+      flex: 1;
+      height: 0;
+      border-top: 0.35mm solid #ea580c;
+    }
+
+    .ocp-exam-objectives__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ocp-exam-objectives__list li {
+      position: relative;
+      margin: 0;
+      padding-left: 5mm;
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+      text-align: justify;
+    }
+
+    .ocp-exam-objectives__list li::before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #ea580c;
+      font-size: 11pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0239.html">← Trước</a>
+    <a href="page_0241.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">240</span>
+      </header>
+
+      <p class="ocp-chapter-title no-indent">Chương 16 Tìm hiểu về Generics</p>
+
+      <section class="ocp-exam-objectives" aria-labelledby="exam-objectives-label">
+        <h2 class="ocp-exam-objectives__label" id="exam-objectives-label">
+          <span>Mục tiêu kỳ thi</span>
+          <span class="ocp-exam-objectives__rule" aria-hidden="true"></span>
+        </h2>
+        <ul class="ocp-exam-objectives__list">
+          <li>Thí sinh cũng được kỳ vọng sử dụng Generics, bao gồm cả wildcard.</li>
+        </ul>
+      </section>
+
+      <h3 class="section-title">16.1 Giới thiệu về Collection và Generics<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Chủ đề về generics thực chất hoàn toàn độc lập với collections vì generics là một tính năng
+      của ngôn ngữ Java trong khi collections chỉ là một tập hợp các Lớp (Class) trong Java SDK. Tuy
+      nhiên, thông thường các lập trình viên Java tiếp cận với generics lần đầu tiên khi sử dụng collections.
+      Ngoài ra, việc giúp collections an toàn kiểu (type safe) là một trong những lý do generics được
+      giới thiệu trong Java.</p>
+
+      <p>Mặc dù kỳ thi OCP không tập trung trực tiếp vào generics, nhưng nó yêu cầu bạn phải hiểu rõ
+      về chúng trong mối quan hệ với Java collections. Vì lý do này, tôi sẽ thảo luận về những kiến
+      thức cơ bản của collection và generics cùng một lúc trong chương này.</p>
+
+      <h3 class="section-title section-title--sub">16.1.1 Sử dụng ArrayList thay thế cho mảng<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Xử lý nhiều Đối tượng (Object) cùng loại theo cùng một cách thường là một yêu cầu trong các
+      ứng dụng. Việc in tên của tất cả các Employee trong một danh sách Employee, tính lãi suất cho một danh
+      sách tài khoản, hoặc một việc đơn giản như tính trung bình cộng của một danh sách các con số đều yêu cầu
+      bạn phải làm việc với một danh sách các Đối tượng (Object) thay vì một Đối tượng (Object) đơn lẻ. Bạn đã thấy
+      một cấu trúc dữ liệu có khả năng lưu trữ nhiều Đối tượng (Object) cùng loại - mảng (array). Một mảng cho phép
+      bạn giữ các tham chiếu đến nhiều Đối tượng (Object) của một kiểu dữ liệu và truyền chúng đi cùng nhau như một nhóm.
+      Tuy nhiên, mảng có một số hạn chế. Thứ nhất, một mảng không thể tăng hoặc giảm độ dài sau khi nó được tạo.
+      Nếu bạn tạo một mảng gồm 10 nhân viên và sau đó nhận ra bạn có 11 nhân viên cần lưu trữ, bạn</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

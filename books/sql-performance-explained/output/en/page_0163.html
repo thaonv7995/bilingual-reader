@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Paging Through Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note .doc-quote {
+      margin: 2mm 0 2.5mm 4mm;
+      padding: 0;
+      border: none;
+    }
+
+    .prose-page .sidebar-note .doc-quote p {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      line-height: 1.35;
+    }
+
+    .prose-page .sidebar-note .doc-quote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Paging Through Results</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">few entries from the previous page again, but drops them immediately.</p>
+
+      <p>Figure&nbsp;7.3 shows the respective access path.</p>
+
+      <figure class="diagram">
+        <figcaption>Figure&nbsp;7.3.&nbsp;Access Using the Seek Method</figcaption>
+        <img src="../assets/images/page_0163_fig_7_3.png" width="1027" height="626" alt="Figure 7.3. Access Using the Seek Method">
+      </figure>
+
+      <aside class="sidebar-note">
+        <h3>SQL Row Values</h3>
+
+        <p>Besides regular scalar values, the SQL standard also defines the so-called row value constructors. They &ldquo;Specify an ordered set of values to be constructed into a row or partial row&rdquo; [SQL:92, &sect;7.1: &lt;row value constructor&gt;]. Syntactically, row values are lists in brackets. This syntax is best known for its use in the insert statement.</p>
+
+        <p>Using row value constructors in the <code><strong>where</strong></code> clause is, however, less well-known but still perfectly valid. The SQL standard actually defines all comparison operators for row value constructors. The definition for the less than operations is, for example, as follows:</p>
+
+        <blockquote class="doc-quote">
+          <p>&ldquo;R<sub>x</sub> &lt; R<sub>y</sub>&rdquo; is true if and only if R<sub>X</sub><sub>i</sub> = R<sub>Y</sub><sub>i</sub> for all <em>i</em> &lt; <em>n</em> and R<sub>X</sub><sub>n</sub> &lt; R<sub>Y</sub><sub>n</sub> for some <em>n</em>.</p>
+          <p>&mdash;SQL:92, &sect;8.2.7.2</p>
+        </blockquote>
+
+        <p>Where <em>i</em> and <em>n</em> reflect positional indexes in the lists. That means a row value R<sub>X</sub> is less than R<sub>Y</sub> if any value R<sub>X</sub><sub>n</sub> is smaller than the corresponding R<sub>Y</sub><sub>n</sub> and all preceding value pairs are equal (R<sub>X</sub><sub>i</sub> = R<sub>Y</sub><sub>i</sub>; for <em>i</em>&lt;<em>n</em>).</p>
+
+        <p>This definition makes the expression R<sub>X</sub> &lt; R<sub>Y</sub> synonymous to &ldquo;R<sub>X</sub> sorts before R<sub>Y</sub>&rdquo; which is exactly the logic we need for the seek method.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">153</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

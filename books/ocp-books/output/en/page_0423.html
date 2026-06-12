@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table {
+      width: 100%;
+      margin: 0 0 4mm;
+      border-collapse: collapse;
+      font-size: 12pt;
+      line-height: 1.35;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table th,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td {
+      border: 0.25mm solid #888;
+      padding: 1.5mm 2mm;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table th {
+      font-weight: 700;
+      background: transparent;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td p:last-child {
+      margin-bottom: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class th.nio-file-ref-table__type,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class td.nio-file-ref-table__type {
+      width: 52%;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class th.nio-file-ref-table__methods,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class td.nio-file-ref-table__methods {
+      width: 48%;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0422.html">← Prev</a>
+    <a href="page_0424.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">423</span>
+      </header>
+
+      <table class="data-table nio-file-ref-table nio-file-ref-table--class">
+        <tbody>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p>enum <code>StandardOpenOption</code></p>
+              <p>implements <code>OpenOption</code></p>
+            </td>
+            <td class="nio-file-ref-table__methods">
+              <p>Defines 10 modes: <code>READ</code>, <code>WRITE</code>, <code>APPEND</code>,
+              <code>TRUNCATE_EXISTING</code>, <code>CREATE</code>, <code>CREATE_NEW</code>,
+              <code>DELETE_ON_CLOSE</code>, <code>DSYNC</code>, <code>SYNC</code>, <code>SPARSE</code></p>
+            </td>
+          </tr>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p>enum <code>StandardCopyOption</code></p>
+              <p>implements <code>CopyOption</code></p>
+            </td>
+            <td class="nio-file-ref-table__methods">
+              <p>Defines 3 modes: <code>ATOMIC_MOVE</code>, <code>COPY_ATTRIBUTES</code>,
+              <code>REPLACE_EXISTING</code></p>
+            </td>
+          </tr>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p>enum <code>LinkOption</code> implements</p>
+              <p><code>OpenOption</code>, <code>CopyOption</code></p>
+            </td>
+            <td class="nio-file-ref-table__methods">
+              <p>Defines 1 mode: <code>NOFOLLOW_LINKS</code></p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="section-title section-title--sub">19.2.2 Using the Path interface<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>You have already seen file names and paths in the previous section. They were all just strings
+      and they used platform specific separators. The <code>java.nio.file</code>&nbsp;package formally abstracts
+      the concept of a path using the <code>java.nio.file.Path</code>&nbsp;interface. Other classes of this package
+      use <code>Path</code>&nbsp;objects instead of strings whenever they need to refer to a file.</p>
+
+      <p>There is no publicly accessible class that implements the <code>Path</code>&nbsp;interface, which means, you
+      cannot instantiate <code>Path</code>&nbsp;objects directly. You need to get <code>Path</code>&nbsp;objects using either an
+      existing <code>Path</code>&nbsp;object or by using the static <code>of(...)</code>&nbsp;methods of the <code>Path</code>&nbsp;interface.</p>
+
+      <p>The following example shows the usage of a few commonly used methods of the
+      <code>Path</code>&nbsp;interface. The output is (shown in comments) assumes that it is run from <code>C:\temp</code>&nbsp;:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Path currentDirPath = Path.of("./files");
+System.out.println(currentDirPath.getFileName()); // files
+System.out.println(currentDirPath.subpath(1, 2)); // files
+System.out.println(currentDirPath.getRoot()); // null
+Path absPath = currentDirPath.toAbsolutePath();
+System.out.println(absPath); // C:\temp\.\files
+Path normalizedCurrentDirPath = absPath.normalize();
+System.out.println(normalizedCurrentDirPath); // C:\temp\files</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

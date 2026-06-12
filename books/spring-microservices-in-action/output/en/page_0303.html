@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 9: Setting tracing levels</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page h4.subsection-title + p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0302.html">← Prev</a>
+    <a href="page_0304.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">278</span>
+        <span class="rh-center">CHAPTER 9 <em>Distributed tracing with Spring Cloud Sleuth and Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>For the purposes of this book, you&rsquo;ll use Zipkin with an in-memory data store. Configuring the individual data stores used in Zipkin is outside of the scope of this book, but if you&rsquo;re interested in the topic, you can find more information at the Zipkin GitHub repository (<a href="https://github.com/openzipkin/zipkin/tree/master/zipkin-server">https://github.com/openzipkin/zipkin/tree/master/zipkin-server</a>).</p>
+      </aside>
+
+      <h4 class="subsection-title">9.3.4 Setting tracing levels</h4>
+
+      <p class="no-indent">At this point you have the clients configured to talk to a Zipkin server and you have the server configured and ready to be run. You need to do one more thing before you start using Zipkin. You need to define how often each service should write data to Zipkin.</p>
+
+      <p>By default, Zipkin will only write 10% of all transactions to the Zipkin server. The transaction sampling can be controlled by setting a Spring property on each of the services sending data to Zipkin. This property is called <code>spring.sleuth.sampler.percentage</code>. The property takes a value between 0 and 1:</p>
+
+      <ul class="manning-bullets" aria-label="Sampler percentage values">
+        <li>A value of 0 means Spring Cloud Sleuth won&rsquo;t send Zipkin any transactions.</li>
+        <li>A value of .5 means Spring Cloud Sleuth will send 50% of all transactions.</li>
+      </ul>
+
+      <p>For our purposes, you&rsquo;re going to send trace information for all services. To do this, you can set the value of <code>spring.sleuth.sampler.percentage</code> or you can replace the default <code>Sampler</code> class used in Spring Cloud Sleuth with the <code>AlwaysSampler</code>. The <code>AlwaysSampler</code> can be injected as a Spring Bean into an application. For example, the licensing service has the <code>AlwaysSampler</code> defined as a Spring Bean in its <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/Application.java</code> class as</p>
+
+      <figure class="code-snippet" aria-label="AlwaysSampler Spring Bean">
+        <pre class="code-block"><code>@Bean
+public Sampler defaultSampler() { return new AlwaysSampler();}</code></pre>
+      </figure>
+
+      <p>The Zuul, licensing, and organization services all have the <code>AlwaysSampler</code> defined in them so that in this chapter all transactions will be traced with Zipkin.</p>
+
+      <h4 class="subsection-title">9.3.5 Using Zipkin to trace transactions</h4>
+
+      <p class="no-indent">Let&rsquo;s start this section with a scenario. Imagine you&rsquo;re one of the developers on the EagleEye application and you&rsquo;re on-call this week. You get a support ticket from a customer who&rsquo;s complaining that one of the screens in the EagleEye application is running slow. You have a suspicion that the licensing service being used by the screen is running slow. But why and where? The licensing service relies on the organization service and both services make calls to different databases. Which service is the poor performer? Also, you know that these services are constantly being modified, so someone might have added a new service call into the mix. Understanding all the services that participate in the user&rsquo;s transaction and their individual performance times is critical to supporting a distributed architecture such as a microservice architecture.</p>
+
+      <p>You&rsquo;ll begin by using Zipkin to watch two transactions from your organization service as they&rsquo;re traced by the Zipkin service. The organization service is a simple service</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

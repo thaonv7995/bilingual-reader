@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0375.html">← Trước</a>
+    <a href="page_0377.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">376</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class Person implements Comparable&lt;Person&gt;{
+  String name;
+  int age;
+
+  public int compareTo(Person otherP) {
+    int a = this.age - otherP.age;
+    if(a != 0) return a; //this establishes the order based on age
+    else return name.compareTo(otherP.name); //if the age is same
+// then we order alphabetically
+  }
+
+  public boolean equals(Object o){
+    if( o instanceof Person p){
+      return age == p.age &amp;&amp; name.equals(p.name);
+    }else return false;
+  }
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Theo như phần triển khai ở trên, chúng ta coi hai đối tượng (object) <code>Person</code>&nbsp;là bằng nhau chỉ khi tên và tuổi của chúng khớp nhau. Phương thức <code>compareTo</code>&nbsp;cũng sử dụng cùng một logic để xác định xem hai đối tượng (object) <code>Person</code>&nbsp;có bằng nhau hay không. Hãy lưu ý rằng trong phần triển khai <code>compareTo</code>&nbsp;của mình, chúng ta đang dựa vào phương thức <code>compareTo</code>&nbsp;của <code>String</code>&nbsp;và điều đó hoàn toàn ổn vì <code>String</code>&nbsp;có triển khai <code>Comparable</code>.</p>
+
+      <p>Mặc dù không bắt buộc về mặt kỹ thuật, việc giữ cho phần triển khai của <code>compareTo</code>&nbsp;và <code>equals</code>&nbsp;nhất quán với nhau là rất quan trọng. Nghĩa là, <code>a.compareTo(b)</code>&nbsp;nên trả về <code>0</code>&nbsp;khi và chỉ khi <code>a.equals(b)</code>&nbsp;trả về <code>true</code>. Nếu không tuân thủ hạn chế này, về cơ bản bạn sẽ có hai định nghĩa khác nhau về sự bằng nhau về mặt logic cho lớp (class) đó, và điều này có thể gây ra các lỗi khó truy vết như được minh họa bởi đoạn mã dưới đây:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//change compareTo of Person to compare just the age</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

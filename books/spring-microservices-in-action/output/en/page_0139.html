@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: DiscoveryClient sidebar and section 4.5.2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0138.html">← Prev</a>
+    <a href="page_0140.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">114</span>
+        <span class="rh-center">CHAPTER 4 <em>On service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">The first item of interest in the code is the <code>DiscoveryClient</code>. This is the class you&rsquo;ll use to interact with Ribbon. To retrieve all instances of the organization services registered with Eureka, you can use the <code>getInstances()</code> method, passing in the key of service you&rsquo;re looking for, to retrieve a list of <code>ServiceInstance</code> objects.</p>
+
+      <p>The <code>ServiceInstance</code> class is used to hold information about a specific instance of a service including its hostname, port and URI.</p>
+
+      <p>In listing 4.8, you take the first <code>ServiceInstance</code> class in your list to build a target URL that can then be used to call your service. Once you have a target URL, you can use a standard Spring <code>RestTemplate</code> to call your organization service and retrieve data.</p>
+
+      <aside class="sidebar-note" aria-label="The DiscoveryClient and real life">
+        <h3>The DiscoveryClient and real life</h3>
+        <p>I&rsquo;m walking through the <code>DiscoveryClient</code> to be completed in our discussion of building service consumers with Ribbon. The reality is that you should only use the <code>DiscoveryClient</code> directly when your service needs to query Ribbon to understand what services and service instances are registered with it. There are several problems with this code including the following:</p>
+        <ul class="manning-bullets" aria-label="Problems with using DiscoveryClient directly">
+          <li><strong class="run-in">You aren&rsquo;t taking advantage of Ribbon&rsquo;s client side load-balancing</strong>&mdash;By calling the <code>DiscoveryClient</code> directly, you get back a list of services, but it becomes your responsibility to choose which service instances returned you&rsquo;re going to invoke.</li>
+          <li><strong class="run-in">You&rsquo;re doing too much work</strong>&mdash;Right now, you have to build the URL that&rsquo;s going to be used to call your service. It&rsquo;s a small thing, but every piece of code that you can avoid writing is one less piece of code that you have to debug.</li>
+        </ul>
+        <p>Observant Spring developers might have noticed that you&rsquo;re directly instantiating the <code>RestTemplate</code> class in the code. This is antithetical to normal Spring REST invocations, as normally you&rsquo;d have the Spring Framework inject the <code>RestTemplate</code> the class using it via the <code>@Autowired</code> annotation.</p>
+        <p>You instantiated the <code>RestTemplate</code> class in listing 4.8 because once you&rsquo;ve enabled the Spring <code>DiscoveryClient</code> in the application class via the <code>@EnableDiscoveryClient</code> annotation, all <code>RestTemplate</code>s managed by the Spring framework will have a Ribbon-enabled interceptor injected into them that will change how URLs are created with the <code>RestTemplate</code> class. Directly instantiating the <code>RestTemplate</code> class allows you to avoid this behavior.</p>
+        <p>In summary, there are better mechanisms for calling a Ribbon-backed service.</p>
+      </aside>
+
+      <h4 class="subsection-title">4.5.2 Invoking services with Ribbon-aware Spring RestTemplate</h4>
+
+      <p>Next, we&rsquo;re going to see an example of how to use a <code>RestTemplate</code> that&rsquo;s Ribbon-aware. This is one of the more common mechanisms for interacting with Ribbon via Spring. To use a Ribbon-aware <code>RestTemplate</code> class, you need to define a <code>RestTemplate</code> bean construction method with a Spring Cloud annotation called <code>@LoadBalanced</code>. For the licensing service, the method that will be used to create the <code>RestTemplate</code> bean can be found in <code>src/main/java/com/thoughtmechanix/licenses/Application.java</code>.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

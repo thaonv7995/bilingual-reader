@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0460.html">← Trước</a>
+    <a href="page_0462.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">461</span>
+      </header>
+
+      <ol class="numbered">
+        <li>
+          <p>chuyển giao các đầu vào đó ngay khi chúng xảy ra. Điều quan trọng cần hiểu là các lệnh gọi hệ thống (system call) là đặc thù đối với từng hệ điều hành (OS), đó là lý do tại sao một chương trình được viết cho một hệ điều hành này không thể thực thi trên một hệ điều hành khác. Từ đó dẫn đến thuật ngữ &ldquo;phụ thuộc nền tảng&rdquo;.</p>
+          <p>Hệ điều hành cũng cung cấp cho một tiến trình quyền truy cập độc quyền vào một lượng RAM nhất định để tiến trình đó có thể lưu giữ trạng thái thực thi của mình. Tiến trình chịu trách nhiệm duy nhất trong việc quản lý bộ nhớ đã được cấp phát cho nó. Bộ nhớ này được gọi là bộ nhớ chương trình (program memory) và có thể truy cập được từ mọi phần của tiến trình. Hệ điều hành sẽ thu hồi lại bộ nhớ này khi tiến trình kết thúc. Một tiến trình không được phép truy cập bộ nhớ của tiến trình khác. Nếu cố tình làm vậy, hệ điều hành thường sẽ buộc dừng (kill) tiến trình đó.</p>
+          <p>Khi chúng ta khởi chạy một chương trình Java, thực chất chúng ta đang khởi chạy JVM, nhưng đối với hệ điều hành, đó cũng chỉ là một tiến trình bình thường khác.</p>
+        </li>
+        <li>
+          <p>Một hệ điều hành quản lý các tài nguyên phần cứng có sẵn trên máy vật lý và phân phối chúng cho nhiều tiến trình trên cơ sở chia sẻ thời gian (time sharing). Hệ điều hành đạt được điều này thông qua việc sử dụng các Thread (Luồng). Một Thread (Luồng) giống như một tác nhân với một danh sách các chỉ thị mà nó cần thực thi trên CPU bên dưới. Hệ điều hành tạo ra nhiều thread, một số dành cho mục đích sử dụng của riêng nó và một số khác để thực thi các chương trình của người dùng. Các thread này được gọi là <strong>kernel threads</strong>. Khi bạn khởi chạy một chương trình, hệ điều hành sẽ gán một tác nhân, tức là một kernel thread, để thực thi các chỉ thị có trong chương trình đó.</p>
+          <p>Vì một CPU chỉ có thể thực thi một chỉ thị tại một thời điểm, tất cả các thread không thể cùng thực thi các chỉ thị của chúng trên cùng một CPU tại cùng một thời điểm. Do đó, hệ điều hành sử dụng một bộ lập lịch luồng <strong>thread scheduler</strong> để quyết định thread nào sẽ có quyền truy cập CPU tại bất kỳ thời điểm nào. Bộ lập lịch luồng (thread scheduler) phân bổ thời gian CPU giữa các thread theo chính sách được triển khai bởi hệ điều hành. Khi định mức thời gian (quota) của một thread kết thúc, hệ điều hành sẽ hoán chuyển thread đó ra ngoài và đưa một thread khác vào. Sự hoán chuyển giữa các thread này được gọi là <strong>context switching</strong> (chuyển đổi ngữ cảnh). Về mặt khái niệm, việc này tương tự như những gì chúng ta làm khi đọc nhiều cuốn sách hoặc xem nhiều chương trình truyền hình ở các thời điểm khác nhau. Khi chuyển đổi giữa hai chương trình, chúng ta không quay lại Mùa 1 Tập 1 mỗi lần. Chúng ta nhớ mình đã dừng lại ở đâu vào lần trước và</p>
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

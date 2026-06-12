@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0479.html">← Prev</a>
+    <a href="page_0481.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">480</span>
+      </header>
+
+      <p class="no-indent">the main thread could even find that thread <code>t</code>&nbsp;has finished execution and so, it could also print
+      <code>2: TERMINATED</code>&nbsp;.</p>
+
+      <p class="no-indent"><strong class="run-in">Possibility 2:</strong> The main thread launches the new thread <code>t</code>&nbsp;and executes <code>t.interrupt()</code>&nbsp;before the new thread gets a chance to execute <code>Thread.sleep(5000)</code>&nbsp;. Since, in this case, thread <code>t</code>&nbsp;is not sleeping when it is interrupted, only its interrupted status will be set to true and it will not receive any exception. Therefore, the catch clause will not be executed. The print statement in the main thread may get to execute either before or after thread <code>t</code>&nbsp;executes <code>t.sleep(5000)</code>&nbsp;. It may, therefore, print <code>2: RUNNABLE</code>&nbsp;or <code>2: TIMED_WAITING</code>&nbsp;. Hence, option E is correct.</p>
+
+      <p>Note that there is no state called <code>INTERRUPTED</code>. So, option C is incorrect. A sleeping thread is in the <code>TIMED_WAITING</code>&nbsp;state and not in <code>BLOCKED</code>&nbsp;state. So, option D is also incorrect.</p>
+
+      <h3 class="section-title">20.2 Sharing memory with multiple threads<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The example programs that I showed in the previous section create threads that execute independently of each other. Meaning, they go about doing their jobs without caring what the other threads are doing. They don&rsquo;t depend on another thread for any data and they don&rsquo;t produce any data that is required by another thread. Those programs are fine for introducing multi-threading, but most non-trivial multi-threaded programs require some sort of data sharing as well as coordination among themselves. For example, in a simple producer-consumer program where one thread consumes the data that is produced by another thread, has to have some coordination so that the consumer thread can know when the producer thread has produced the data and can then use the data. Although &ldquo;sharing&rdquo; and &ldquo;coordination&rdquo; are not exactly the same thing, there is lot of overlap between the two. Let us look at sharing first.</p>
+
+      <p>Since all threads in a Java program belong to the same OS process, they share the memory allocated to the process and since all objects exist on the heap space, which is common to all threads, sharing an object between multiple threads is as easy as</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

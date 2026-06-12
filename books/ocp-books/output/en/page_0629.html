@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 22: Date and Time API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub + h3.section-title.section-title--sub {
+      margin-top: 4mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0628.html">← Prev</a>
+    <a href="page_0630.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">629</span>
+      </header>
+
+      <p class="no-indent">If you browse through the JavaDoc of the new Date/Time API, you will see many different
+      classes and many different methods in each of these classes. It is easy to get overwhelmed, but
+      don&rsquo;t worry. The API is actually quite easy to understand once you realize that there are only
+      four types of operations that you can do with these classes - creating new objects, comparing,
+      reading the state of the objects, and converting them to strings. There are no methods for
+      updating because the objects of these classes are immutable. All relevant classes have similar
+      methods to perform these operations. In the following sections, I will explain each of these
+      operations with examples.</p>
+
+      <h3 class="section-title">22.2 Creating Date/time Objects<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Remember that none of the date/time classes have a public constructor. Therefore, it is not
+      possible to create them using the <code>new</code>&nbsp;operator. If you see something like <code>new LocalDate()</code>
+      anywhere in the code, go straight for the option that says, &ldquo;compilation fails&rdquo;!</p>
+
+      <p>Instead of having constructors, the new date/time API provides several other ways to create
+      date/time objects. They can broadly be classified into two categories:</p>
+
+      <ol class="numbered">
+        <li>The overloaded <strong>public</strong>&nbsp;<strong>static</strong>&nbsp;factory methods named <code>now</code>, <code>of</code>, and <code>from</code></li>
+        <li>The overloaded <strong>public instance</strong> methods named <code>with</code> and <code>truncatedTo</code></li>
+      </ol>
+
+      <p class="no-indent">Let&rsquo;s check them out.</p>
+
+      <h3 class="section-title section-title--sub">22.2.1 Using the static now/of/from methods<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--sub">The <code>now</code>&nbsp;methods<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The <strong>now</strong> methods returns an instance that represents the current date or time in the time line
+      that the class is meant to represent. For example, since the <code>LocalDateTime</code>&nbsp;class represents
+      the date and time of the system on which the program is running, <code>LocalDateTime.now();</code>
+      returns a <code>LocalDateTime</code>&nbsp;object set</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

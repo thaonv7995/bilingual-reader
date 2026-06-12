@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 8: Viết Hàm — Viết Hàm PL/Python</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 8.5pt;
+      line-height: 1.18;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 10.5pt;
+      font-style: italic;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 0 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 8.5pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0170.html">← Trước</a>
+    <a href="page_0172.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">171</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>$$
+LANGUAGE plpgsql VOLATILE;
+CREATE TRIGGER trig_1
+BEFORE INSERT OR UPDATE OF session_state, session_id ❷
+ON web_sessions
+FOR EACH ROW EXECUTE PROCEDURE trig_time_stamper();</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">❶</span> Định nghĩa hàm kích hoạt. Hàm này có thể được sử dụng trên bất kỳ bảng nào có cột
+      <code>upd_ts</code>. Nó cập nhật trường <code>upd_ts</code> thành thời gian hiện tại trước khi trả về
+      bản ghi đã thay đổi. Các hàm kích hoạt thay đổi giá trị của một hàng chỉ nên được
+      gọi trong sự kiện BEFORE, vì trong sự kiện AFTER, tất cả các cập nhật cho bản ghi
+      NEW sẽ bị bỏ qua.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">❷</span> Đây là một tính năng mới được giới thiệu trong phiên bản 9.0 cho phép chúng ta giới hạn việc kích hoạt
+      của hàm kích hoạt để nó chỉ xảy ra nếu các cột được chỉ định đã thay đổi. Trước
+      phiên bản 9.0, hàm kích hoạt sẽ được kích hoạt trên bất kỳ cập nhật nào và bạn sẽ cần thực hiện
+      một so sánh theo cột sử dụng <code>OLD.some_column</code> và <code>NEW.some_column</code> để
+      xác định điều gì đã thay đổi. (Tính năng này không được hỗ trợ cho các hàm kích hoạt INSTEAD OF.)</p>
+
+      <h3 class="section-title">Viết Hàm PL/Python</h3>
+
+      <p class="no-indent">Python là một ngôn ngữ mượt mà với một số lượng lớn thư viện có sẵn. PostgreSQL là
+      cơ sở dữ liệu duy nhất mà chúng tôi biết cho phép bạn soạn thảo các hàm bằng Python. Kể từ phiên bản
+      9.0, PostgreSQL hỗ trợ cả Python 2 và Python 3.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0171_icon_warning.png" width="50" height="48" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Mặc dù bạn có thể cài đặt cả <code>plpython2u</code> và <code>plpython3u</code> trong
+        cùng một cơ sở dữ liệu, bạn không thể sử dụng cả hai trong cùng một phiên. Điều này
+        có nghĩa là bạn không thể viết một truy vấn gọi cả hai hàm <code>plpython2u</code> và
+        <code>plpython3u</code>. Bạn có thể gặp một tiện ích mở rộng thứ ba gọi là
+        <code>plpythonu</code>; đây là một bí danh cho <code>plpython2u</code> và được giữ lại để tương thích ngược.</p>
+      </div>
+
+      <p>Để sử dụng PL/Python, trước tiên bạn cần cài đặt Python trên máy chủ của mình. Đối với Windows
+      và Mac, các trình cài đặt Python có sẵn tại http://www.python.org/download/. Đối với
+      hệ thống Linux/Unix, các tệp nhị phân Python thường có sẵn qua các bản phân phối khác nhau.
+      Để biết chi tiết, xem PL/Python. Sau khi cài đặt Python, hãy cài đặt tiện ích mở rộng Python của PostgreSQL:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE EXTENSION plpython2u;
+CREATE EXTENSION plpython3u;</code></pre>
+      </figure>
+
+      <p>Hãy chắc chắn rằng bạn đã chạy Python đúng cách trên máy chủ của mình trước khi
+      cố gắng cài đặt tiện ích mở rộng, nếu không bạn sẽ gặp phải các lỗi có thể khó
+      khắc phục.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">Viết Hàm PL/Python<span class="sep">|</span>153</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

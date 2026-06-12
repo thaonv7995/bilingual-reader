@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0243.html">← Trước</a>
+    <a href="page_0245.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">244</span>
+      </header>
+
+      <p class="no-indent">Bây giờ, về các thông báo cảnh báo mà tôi đã yêu cầu bạn bỏ qua. Hãy quan sát vòng lặp <code>for</code>&nbsp;trong đoạn mã trên. Kiểu của biến vòng lặp <code>o</code>&nbsp;là <code>Object</code>&nbsp;(chứ không phải <code>String</code>&nbsp;). Để gọi phương thức <code>length</code>&nbsp;của <code>String</code>&nbsp;trên <code>o</code>&nbsp;, chúng ta cần ép kiểu <code>o</code>&nbsp;sang <code>String</code>&nbsp;. Điều này là do, tương tự như việc một chiếc túi không biết bên trong nó chứa gì, đối tượng <code>ArrayList</code>&nbsp;cũng không hề biết về kiểu của các đối tượng đã được thêm vào nó. Trách nhiệm của lập trình viên là phải ép kiểu các đối tượng mà họ lấy ra từ danh sách về các kiểu dữ liệu thích hợp. Trong chương trình này, chúng ta biết rằng mình đã thêm các <code>String</code> vào danh sách này, và do đó chúng ta biết rằng mình có thể ép kiểu đối tượng lấy ra từ danh sách này sang <code>String</code>&nbsp;. Nhưng điều gì sẽ xảy ra nếu chúng ta chỉ đơn giản được truyền vào một danh sách đã có sẵn dữ liệu làm đối số? Vì danh sách đó sẽ được điền dữ liệu bởi một lớp khác do người khác viết, chúng ta có đảm bảo gì về kiểu của các đối tượng tìm thấy trong danh sách? Thực tế là không có gì cả. Như bạn đã biết, nếu chúng ta cố gắng ép kiểu một đối tượng sang một kiểu không phù hợp, chúng ta sẽ gặp <code>ClassCastException</code>&nbsp;lúc runtime. Gặp <code>ClassCastException</code>&nbsp;lúc runtime sẽ là một lỗi lập trình chỉ được phát hiện lúc runtime. Phát hiện lỗi lập trình lúc runtime không phải là một điều tốt, và trình biên dịch chỉ đang cố gắng cảnh báo chúng ta về vấn đề tiềm ẩn này bằng cách tạo ra các thông báo cảnh báo trong khi biên dịch mã nguồn của chúng ta.</p>
+
+      <p>Thông báo cảnh báo đầu tiên mà nó in ra là, &ldquo;Warning: unchecked call to add(E) as a member of the raw type java.util.ArrayList&rdquo; cho đoạn mã <code>al.add("alice");</code>&nbsp;ở dòng 6. Nó in ra cùng một cảnh báo đó mỗi khi một đối tượng được thêm vào danh sách. Trình biên dịch đang cố gắng báo cho chúng ta biết rằng nó không biết đối tượng loại nào sẽ được chứa trong <code>ArrayList</code>&nbsp;này và nó không có cách nào để kiểm tra những gì chúng ta đang thêm vào danh sách. Bằng cách in ra cảnh báo, trình biên dịch đang báo cho chúng ta rằng nó sẽ không chịu trách nhiệm về các đối tượng được đưa vào danh sách này. Bất kỳ ai muốn lấy các đối tượng ra từ danh sách này đều phải biết trước kiểu của các đối tượng có trong danh sách và tự chịu rủi ro ép kiểu các đối tượng đó một cách thích hợp khi lấy ra. Nói cách khác, danh sách này về cơ bản là &ldquo;không an toàn về kiểu (type unsafe)&rdquo;. Nó không an toàn vì phụ thuộc vào các giả định của con người về nội dung của danh sách. Những giả định này không được trình biên dịch kiểm tra hoặc xác thực tính đúng đắn. Một người có thể đưa bất kỳ loại đối tượng nào vào danh sách và những người khác sẽ không nhận ra cho đến khi họ gặp <code>ClassCastException</code>&nbsp;lúc runtime khi cố gắng ép kiểu đối tượng lấy ra về kiểu mong đợi của nó.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

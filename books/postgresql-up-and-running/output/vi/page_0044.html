@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0043.html">← Trước</a>
+    <a href="page_0045.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">Thêm vai trò vào vai trò nhóm bằng một câu lệnh SQL như:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>GRANT</strong> royalty <strong>TO</strong> leo;
+<strong>GRANT</strong> royalty <strong>TO</strong> regina;</code></pre>
+      </figure>
+
+      <h3 class="section-title">Kế thừa quyền từ các vai trò nhóm</h3>
+      <p class="no-indent">Một điều kỳ quặc (hoặc tiện lợi) trong PostgreSQL là khả năng chỉ định rằng một vai trò nhóm không
+      chuyển quyền của nó cho các vai trò thành viên. Để tránh phải nhớ giá trị mặc định, bạn
+      nên luôn thêm từ khóa <code>INHERIT</code> nếu bạn muốn các thành viên kế thừa quyền
+      của vai trò cha, và <code>NOINHERIT</code> nếu bạn không muốn họ kế thừa quyền của
+      vai trò cha.</p>
+
+      <p>Có một số quyền không thể kế thừa. Ví dụ, mặc dù bạn có thể tạo một vai trò nhóm mà
+      bạn đánh dấu là superuser, điều này không làm cho các vai trò thành viên của nó trở thành superuser; tuy nhiên, những
+      người dùng đó có thể “giả mạo” vai trò cha của họ thông qua việc sử dụng <code>SET ROLE</code>, từ đó có được
+      quyền superuser trong suốt phiên làm việc. Ví dụ, một thành viên của nhóm roy‐
+      alty có thể đảm nhận vai trò đó thông qua:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SET ROLE</strong> royalty;</code></pre>
+      </figure>
+
+      <p>Hãy nhớ rằng điều này là theo phiên kết nối và không phải là một sự ủy quyền quyền
+      vĩnh viễn. Để gán quyền không thể kế thừa cho các vai trò thành viên, bạn phải làm điều đó theo từng thành viên.
+      Điều này nhằm bảo vệ chống lại việc vô tình cấp quyền superuser cho một
+      loạt các vai trò.</p>
+
+      <p>Một sự giả mạo mạnh mẽ hơn so với <code>SET ROLE some_role</code> là <code>SET SESSION AUTHORIZATION
+      some_role</code>. Những khác biệt chính giữa <code>SET ROLE</code> và <code>SET SESSION AUTHORIZATION</code> là:</p>
+
+      <ul class="bullets">
+        <li>Chỉ có superuser mới có thể thực thi <code>SET SESSION AUTHORIZATION</code>, và nó cho phép họ
+        giả mạo bất kỳ người dùng nào bất kể tư cách thành viên vai trò.</li>
+        <li><code>SET SESSION AUTHORIZATION</code> thay đổi giá trị của các biến <code>current_user</code> và <code>session_user</code>
+        thành của người dùng đang được giả mạo. <code>SET ROLE</code> chỉ thay đổi
+        biến <code>current_user</code>.</li>
+        <li>Bởi vì cả <code>current_user</code> và <code>session_user</code> đều bị thay đổi bởi <code>SET SESSION
+        AUTHORIZATION</code>, các lệnh <code>SET role</code> tiếp theo bị giới hạn bởi
+        những gì được phép bởi người dùng đang được giả mạo. Sau <code>SET ROLE</code>, các vai trò có thể được đặt thành bất kỳ vai trò nào mà
+        người dùng gốc có quyền giả mạo.</li>
+      </ul>
+
+      <h3 class="section-title">Tạo cơ sở dữ liệu</h3>
+      <p class="no-indent">Câu lệnh SQL cơ bản để tạo một cơ sở dữ liệu là:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE DATABASE</strong> mydb;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">26<span class="sep">|</span>Chương 2: Quản trị cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

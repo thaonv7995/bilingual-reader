@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Thời gian phản hồi và thông lượng</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Thời gian phản hồi và thông lượng</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Thời gian phản hồi đáng ngờ thường bị xem nhẹ trong quá trình phát triển. Điều này chủ yếu là vì chúng ta mong đợi &ldquo;phần cứng sản xuất mạnh mẽ hơn&rdquo; sẽ cung cấp hiệu suất tốt hơn. Thường thì điều ngược lại xảy ra vì hạ tầng sản xuất phức tạp hơn và tích lũy độ trễ mà không xảy ra trong môi trường phát triển. Ngay cả khi thử nghiệm trên một hạ tầng tương đương sản xuất, tải nền vẫn có thể gây ra thời gian phản hồi khác nhau. Trong phần tiếp theo, chúng ta sẽ thấy rằng nói chung không hợp lý khi mong đợi phản hồi nhanh hơn từ &ldquo;phần cứng lớn hơn&rdquo;.</p>
+
+      <h3 class="section-title">Thời gian phản hồi và thông lượng</h3>
+
+      <p class="no-indent">Phần cứng lớn hơn không phải lúc nào cũng nhanh hơn&mdash;nhưng nó thường có thể xử lý nhiều tải hơn. Phần cứng lớn hơn giống như một con đường rộng hơn hơn là một chiếc xe nhanh hơn: bạn không thể lái nhanh hơn&mdash;thực ra, bạn không được phép&mdash;chỉ vì có nhiều làn đường hơn. Đó là lý do mà nhiều phần cứng không tự động cải thiện các truy vấn SQL chậm.</p>
+
+      <p>Chúng ta không còn ở những năm 1990 nữa. Công suất tính toán của các CPU lõi đơn đã tăng nhanh chóng vào thời điểm đó. Hầu hết các vấn đề về thời gian phản hồi đã biến mất trên phần cứng mới hơn&mdash;chỉ vì CPU được cải thiện. Nó giống như các mẫu xe mới liên tục chạy nhanh gấp đôi so với các mẫu cũ&mdash;mỗi năm! Tuy nhiên, sức mạnh của CPU lõi đơn đã chạm đến giới hạn trong vài năm đầu của thế kỷ 21. Hầu như không có sự cải thiện nào trên trục này nữa. Để tiếp tục xây dựng các CPU mạnh mẽ hơn, các nhà cung cấp đã phải chuyển sang chiến lược đa lõi. Mặc dù nó cho phép nhiều tác vụ chạy đồng thời, nhưng nó không cải thiện hiệu suất nếu chỉ có một tác vụ. Hiệu suất có nhiều hơn một chiều.</p>
+
+      <p>Mở rộng theo chiều ngang (thêm nhiều máy chủ) có những hạn chế tương tự. Mặc dù nhiều máy chủ có thể xử lý nhiều yêu cầu hơn, nhưng chúng không cải thiện thời gian phản hồi cho một truy vấn cụ thể. Để làm cho việc tìm kiếm nhanh hơn, bạn cần một cây tìm kiếm hiệu quả&mdash;ngay cả trong các hệ thống phi quan hệ như CouchDB và MongoDB.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Chỉ mục đúng cách là cách tốt nhất để giảm thời gian phản hồi truy vấn&mdash;trong các cơ sở dữ liệu SQL quan hệ cũng như trong các hệ thống phi quan hệ.</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">87</p>
+    </article>
+  </main>
+</body>
+</html>

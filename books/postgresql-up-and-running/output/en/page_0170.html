@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 8: Writing Functions — Writing PL/pgSQL Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0169.html">← Prev</a>
+    <a href="page_0171.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">170</span>
+      </header>
+
+      <h3 class="section-title">Writing PL/pgSQL Functions</h3>
+
+      <p class="no-indent">When your functional needs outgrow SQL, turning to PL/pgSQL is a common practice.
+      PL/pgSQL surpasses SQL in that you can declare local variables using <code>DECLARE</code> and you
+      can incorporate control flow.</p>
+
+      <h3 class="subsection-title">Basic PL/pgSQL Function</h3>
+
+      <p class="no-indent">To demonstrate syntax differences from SQL, in <span class="accent-word">Example 8-10</span> we rewrite <span class="accent-word">Example 8-4</span>
+      as a PL/pgSQL function.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-10.</strong> Function to return a table using PL/pgSQL</figcaption>
+        <pre class="code-block"><code>CREATE FUNCTION select_logs_rt(param_user_name varchar)
+RETURNS TABLE (log_id int, user_name varchar(50), description text, log_ts timestamptz) AS
+$$
+BEGIN RETURN QUERY
+    SELECT log_id, user_name, description, log_ts FROM logs
+     WHERE user_name = param_user_name;
+END;
+$$
+LANGUAGE 'plpgsql' STABLE;</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Writing Trigger Functions in PL/pgSQL</h3>
+
+      <p class="no-indent">Because you can&rsquo;t write trigger functions in SQL, PL/pgSQL is your next-best bet. In
+      this section, we&rsquo;ll demonstrate how to write a basic trigger function in PL/pgSQL.</p>
+
+      <p>We proceed in two steps. First, we write the trigger function. Second, we explicitly attach
+      the trigger function to the appropriate trigger. The second step is a powerful feature of
+      PostgreSQL that decouples the function handling the trigger from the trigger itself. You
+      can attach the same trigger function to multiple triggers, adding another level of reuse
+      not found in other databases. Because each trigger function can stand on its own, you
+      have your choice of languages, and mixing is completely OK. For a single triggering
+      event, you can set up multiple triggers, each with functions written in a different lan&shy;guage.
+      For example, you can have a trigger email a client written in PL/PythonU or PL/
+      PerlU and another trigger write to a log file with plPgSQL.</p>
+
+      <p>A basic trigger function and accompanying trigger is demonstrated in <span class="accent-word">Example 8-11</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-11.</strong> Trigger function to timestamp new and changed records</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION trig_time_stamper() RETURNS trigger AS ❶
+$$
+BEGIN
+    NEW.upd_ts := CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">152<span class="sep">|</span>Chapter 8: Writing Functions</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

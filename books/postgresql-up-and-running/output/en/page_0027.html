@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 1: The Basics (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0026.html">← Prev</a>
+    <a href="page_0028.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="object-term">rule</p>
+      <p class="object-def">Rules are instructions to substitute one action for another. PostgreSQL uses rules
+      internally to define views. As an example, you could create a view as follows:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE</strong> <strong>VIEW</strong> vw_pupils <strong>AS</strong> <strong>SELECT</strong> * <strong>FROM</strong> pupils <strong>WHERE</strong> active;</code></pre>
+      </figure>
+
+      <p class="object-def">Behind the scenes, PostgresSQL adds an <strong>INSTEAD OF SELECT</strong> rule dictating that
+      when you try to select from a table called <code>vw_pupils</code>, you will get back only rows
+      from the <code>pupils</code> table in which the <code>active</code> field is true.</p>
+
+      <p class="object-def">A rule is also useful in lieu of certain simple triggers. Normally a trigger is called
+      for each record in your update/insert/delete statement. A rule, instead, rewrites the
+      action (your SQL statement) or inserts additional SQL statements on top of your
+      original. This avoids the overhead of touching each record separately. For changing
+      data, triggers are the preferred method of operation. Many PostgreSQL users con‐
+      sider rules to be legacy technology for action-based queries because they are much
+      harder to debug when things go wrong, and you can write rules only in SQL, not
+      in any of the other PLs.</p>
+
+      <h3 class="section-title">What’s New in Latest Versions of PostgreSQL?</h3>
+      <p>The PostgreSQL release cycle is fairly predictable, with major releases slated for each
+      September. Each new version adds enhancements to ease of use, stability, security, per‐
+      formance, and avant-garde features. The upgrade process gets simpler with each new
+      version. The lesson here? Upgrade, and upgrade often. For a summary chart of key
+      features added in each release, check the <a href="http://www.postgresql.org/about/featurematrix" class="accent-word">PostgreSQL Feature Matrix</a>.</p>
+
+      <h3 class="tool-title">Why Upgrade?</h3>
+      <p>If you’re using PostgreSQL 8.4 or below, upgrade now! Version 8.4 entered end-of-life
+      (EOL) support in July 2014. Details about PostgreSQL EOL policy can be found at the
+      <a href="http://www.postgresql.org/support/versioning/" class="accent-word">PostgreSQL Release Support Policy</a>. EOL is not a place you want to be. New security
+      updates and fixes to serious bugs will no longer be available. You’ll need to hire speci‐
+      alized PostgreSQL core consultants to patch problems or to implement workarounds
+      —probably not a cheap proposition, assuming you can even locate someone willing to
+      do the work.</p>
+
+      <p>Regardless of which major version you are running, you should always try to keep up
+      with the latest micro versions. An upgrade from, say, 8.4.17 to 8.4.21, requires just binary
+      file replacement and a restart. Micro versions only patch bugs. Nothing will stop work‐
+      ing after a micro upgrade, and performing a micro upgrade can in fact save you grief.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">What’s New in Latest Versions of PostgreSQL?<span class="sep">|</span>9</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

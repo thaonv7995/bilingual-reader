@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .ocp-chapter-title {
+      margin: 0 0 8mm;
+      font-size: 24pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-indent: 0;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives {
+      margin: 0 0 10mm;
+    }
+
+    .ocp-exam-objectives__label {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #111117;
+    }
+
+    .ocp-exam-objectives__rule {
+      flex: 1;
+      height: 0;
+      border-top: 0.35mm solid #ea580c;
+    }
+
+    .ocp-exam-objectives__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ocp-exam-objectives__list li {
+      position: relative;
+      margin: 0;
+      padding-left: 5mm;
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+      text-align: justify;
+    }
+
+    .ocp-exam-objectives__list li::before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #ea580c;
+      font-size: 11pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0057.html">← Prev</a>
+    <a href="page_0059.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">58</span>
+      </header>
+
+      <p class="ocp-chapter-title no-indent">Chapter 13 Implementing Inheritance</p>
+
+      <section class="ocp-exam-objectives" aria-labelledby="exam-objectives-label">
+        <h2 class="ocp-exam-objectives__label" id="exam-objectives-label">
+          <span>Exam Objectives</span>
+          <span class="ocp-exam-objectives__rule" aria-hidden="true"></span>
+        </h2>
+        <ul class="ocp-exam-objectives__list">
+          <li>Implement inheritance, including abstract and sealed classes.</li>
+          <li>Override methods, including that of Object class.</li>
+          <li>Implement polymorphism and differentiate object type versus reference type.</li>
+        </ul>
+      </section>
+
+      <h3 class="section-title">13.1 Create and use subclasses and superclasses</h3>
+
+      <h3 class="section-title section-title--sub">13.1.1 Understanding Inheritance<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>In general terms, when a class extends another class, we say that the class inherits from the
+      other class. But this is a very vague view of inheritance. It is important to understand what
+      exactly this class inherits from the other class and what exactly inheriting something means.</p>
+
+      <p>There are two things that a class contains - the instance fields defined in the class, i.e., state, the
+      instance methods that provide behavior to the class, i.e., implementation. Furthermore, a
+      class, on its own, also defines a type. Any of these three things can be inherited by the extending
+      class. Thus, inheritance could be of state, it could be of implementation, and it could be of type.</p>
+
+      <p>When a class inherits something, it implies that it automatically gets that thing without you
+      needing to explicitly define it in the class. This is very much like real life objects. When you say
+      that a Poodle is a Dog, or a Beagle is a Dog, you implicitly know that a Poodle has a tail and that
+      it barks. So, does a Beagle. You don't have to convey this information explicitly with a Poodle or
+      a Beagle. In other words, both a Poodle</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Listing 7.11 (tiếp theo) và Hình 7.11</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--711cont .listing-callouts-right {
+      padding-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.diagram {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0244.html">← Trước</a>
+    <a href="page_0246.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">220</span>
+        <span class="rh-center">CHƯƠNG 7 <em>Bảo mật microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--711cont" aria-label="Listing 7.11 (tiếp theo)">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>  @Override
+  public ClientHttpResponse intercept(
+         HttpRequest request, byte[] body,
+         ➥ ClientHttpRequestExecution execution)
+         throws IOException {
+   headers.add(UserContext.CORRELATION_ID,
+               ➥ UserContextHolder.getContext().getCorrelationId());
+     headers.add(UserContext.AUTH_TOKEN,
+               ➥ UserContextHolder.getContext().getAuthToken());
+    return execution.execute(request, body);
+  }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 7.11">
+          <p class="listing-callout">Thêm token ủy quyền vào header HTTP</p>
+        </div>
+      </div>
+
+      <p class="no-indent"><code>UserContextInterceptor</code> đang dùng một số utility class từ chương 6. Hãy nhớ, mỗi dịch vụ của bạn đều dùng một servlet filter tùy chỉnh (gọi là <code>UserContextFilter</code>) để tách token xác thực và correlation ID từ header HTTP. Trong listing 7.11, bạn đang dùng giá trị <code>UserContext.AUTH_TOKEN</code> đã được parse sẵn để điền vào lời gọi HTTP đi ra.</p>
+
+      <p>Thế là xong. Với các phần này đã sẵn sàng, giờ bạn có thể gọi licensing service (hoặc organization service) và đặt JWT đã mã hóa Base64 vào header HTTP <code>Authorization</code> với giá trị <code>Bearer &lt;&lt;JWT-Token&gt;&gt;</code>, và dịch vụ của bạn sẽ đọc cũng như xác thực JWT token một cách chính xác.</p>
+
+      <h4 class="subsection-title">7.4.3 Mở rộng JWT Token</h4>
+
+      <p class="no-indent">Nếu bạn nhìn kỹ JWT token trong hình 7.10, bạn sẽ thấy trường EagleEye <code>organizationId</code>. (Hình 7.11 cho thấy cận cảnh phóng to hơn của JWT Token được hiển thị</p>
+
+      <figure class="diagram" aria-label="Hình 7.11">
+        <img src="../assets/images/page_0245_fig_7_11.png" width="1313" height="1281" alt="Hình 7.11 — Ví dụ mở rộng JWT token bằng organizationId">
+        <figcaption><strong>Hình 7.11</strong><br>Ví dụ mở rộng JWT token bằng organizationId</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

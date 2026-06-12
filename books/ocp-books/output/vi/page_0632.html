@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.code-block--plain {
+      margin: 0 0 1.5mm;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0631.html">← Trước</a>
+    <a href="page_0633.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">632</span>
+      </header>
+
+      <ol class="numbered">
+        <li>Việc đánh chỉ mục cho tham số tháng bắt đầu từ <code>1</code>. Nói cách khác, để chỉ định
+        <strong>tháng Một</strong>, bạn phải truyền vào <code>1</code>&nbsp;(hoặc sử dụng giá trị enum <code>Month.JANUARY</code>).</li>
+        <li>Họ sử dụng <strong>đồng hồ 24 giờ</strong> cho tham số <code>hour</code>. Vì vậy, để chỉ định
+        <strong>11 giờ sáng (11 AM)</strong>, bạn cần truyền vào <code>11</code>&nbsp;và để chỉ định <strong>11 giờ tối (11 PM)</strong>, bạn cần truyền vào
+        <code>23</code>.</li>
+        <li>Họ sẽ ném ra <code>java.time.DateTimeException</code>&nbsp;(kế thừa từ
+        <code>java.lang.RuntimeException</code>&nbsp;và do đó là một ngoại lệ unchecked (Unchecked Exception)) nếu giá trị
+        được truyền cho bất kỳ trường nào vượt quá phạm vi. Ví dụ, <code>LocalDate.of(2018, 2, 29);</code>&nbsp;sẽ
+        ném ra <code>DateTimeException</code>&nbsp;vì tháng Hai năm 2018 không có 29 ngày. Tương tự,
+        <code>LocalTime.of(24, 10);</code>&nbsp;cũng sẽ ném ra <code>DateTimeException</code>&nbsp;vì phạm vi của
+        tham số giờ chỉ từ 0 đến 23.</li>
+      </ol>
+
+      <p class="no-indent">Lớp (Class) <code>Period</code>&nbsp;có các phương thức <code>of</code>&nbsp;sau:</p>
+
+      <pre class="code-block code-block--plain"><code>static Period of(int years, int months, int days)
+static Period ofDays(int days)
+static Period ofMonths(int months)
+static Period ofWeeks(int weeks)
+static Period ofYears(int years)</code></pre>
+
+      <p class="no-indent">Dưới đây là một vài ví dụ minh họa cách sử dụng chúng:</p>
+
+      <pre class="code-block code-block--plain"><code>out.print(Period.ofDays(40)); //prints P40D
+out.print(Period.ofMonths(-2)); //negative values are also acceptable. prints P-2M
+out.print(Period.of(0, 1, 10); //prints P1M10D</code></pre>
+
+      <p>Lưu ý rằng một <code>Period</code>&nbsp;40 ngày không giống với một <code>Period</code>&nbsp;1 tháng và 10 ngày vì 1
+      tháng không phải lúc nào cũng bằng 30 ngày.</p>
+
+      <p class="no-indent">Lớp (Class) <code>Duration</code>&nbsp;có các phương thức <code>of</code>&nbsp;tương tự:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>System.out.println(Duration.ofDays(1)); //prints PT24H
+System.out.println(Duration.ofHours(24)); //prints PT24H
+System.out.println(Duration.of(24, ChronoUnit.HOURS)); //prints </code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

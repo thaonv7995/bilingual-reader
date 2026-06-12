@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0497.html">← Trước</a>
+    <a href="page_0499.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">498</span>
+      </header>
+
+      <p class="no-indent">sự phối hợp khi một Thread (Luồng) yêu cầu sự kết thúc của một Thread (Luồng) khác trước khi nó có thể tiếp tục.
+      Phương pháp này không hữu ích trong các tình huống mà nhiều Thread (Luồng) cần phối hợp thực thi
+      khi chúng đang hoạt động.</p>
+
+      <h3 class="section-title section-title--sub">20.3.2 Sử dụng sleep<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một Thread (Luồng) đang ngủ không tiêu thụ bất kỳ Resource (Tài nguyên) nào. Vì vậy, một cách để một consumer Thread (Luồng) giảm
+      chờ bận (busy-waiting) là đi ngủ trong các khoảng thời gian ngắn. Ví dụ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public static void main(String[] args) throws Exception{
+Factorial f = new Factorial(100000);
+Thread t = Thread.ofVirtual().start(f);
+while(f.result == null){
+Thread.currentThread().sleep(5000);
+}
+System.out.println("Factorial is : "+f.result);
+}</code></pre>
+      </figure>
+
+      <p>Trong chương trình trên, main Thread (Luồng) khởi chạy factorial Thread (Luồng) và đi ngủ trong 5
+      giây. Vòng lặp while đảm bảo rằng nếu factorial Thread (Luồng) mất nhiều hơn 5 giây để
+      tính toán, main Thread (Luồng) sẽ tiếp tục đi ngủ lại. Điểm tốt duy nhất ở cách tiếp cận này
+      so với cách tiếp cận chờ bận (busy-waiting) là nó không tiêu tốn nhiều CPU, nhưng nhược điểm
+      lớn nhất của nó là mất tối thiểu năm giây ngay cả khi tính toán giai thừa cho các số
+      nhỏ. Thời gian sleep có thể được tối ưu hóa dựa trên bài toán cần giải quyết.</p>
+
+      <h3 class="section-title section-title--sub">Sleep và lock<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một Thread (Luồng) không tự động mở khóa (unlock) bất kỳ monitor nào mà nó có thể đã khóa (lock) khi đi
+      ngủ. Hạn chế này khiến việc sử dụng phương thức sleep để phối hợp trở nên khó khăn khi nhiều
+      Thread (Luồng) yêu cầu khóa (lock) cùng một monitor để truy cập vào một Resource (Tài nguyên) được chia sẻ.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

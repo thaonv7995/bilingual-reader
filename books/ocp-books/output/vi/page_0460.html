@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.diagram {
+      margin: 0 auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page.ocp-chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0459.html">← Trước</a>
+    <a href="page_0461.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">460</span>
+      </header>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0460_fig_diagram.png" width="1067" height="1094" alt="Đa nhiệm trong thế giới Java: các chương trình người dùng, các virtual thread (luồng ảo) JVM, các thread (luồng) kernel của hệ điều hành (OS), và bộ xử lý siêu phân luồng">
+      </figure>
+
+      <p class="no-indent">Dưới đây là một vài điểm đáng chú ý về sơ đồ trên:</p>
+
+      <ol class="numbered">
+        <li>
+          <p>Tại tầng trên cùng, có các tiến trình. Một tiến trình (process) là một chương trình, tức là một danh sách các
+          chỉ thị (instruction), đang được thực thi. Ví dụ, khi bạn nhấp vào một tệp thực thi (executable file), hệ điều hành (OS)
+          sẽ xác định điểm bắt đầu (entry point) của chương trình và lập lịch thực thi các chỉ thị từ
+          điểm đó. Hệ điều hành (OS) là cả thế giới đối với một tiến trình. Hệ điều hành (OS) cung cấp cho tiến trình
+          bất kỳ thứ gì nó cần bằng cách sử dụng các lời gọi hệ thống (system call). Nếu bạn không có nền tảng
+          về khoa học máy tính, bạn có thể hình dung một lời gọi hệ thống (system call) như một hàm do hệ điều hành (OS) cung cấp mà một tiến trình
+          có thể gọi để sử dụng các Resource (Tài nguyên) của phần cứng bên dưới. Ví dụ, nếu một tiến trình
+          muốn đọc một tệp, mở một socket mạng, hoặc muốn có thêm bộ nhớ, nó sẽ thực hiện một lời gọi hệ thống (system call).
+          Tương tự, tiến trình tự đăng ký với hệ điều hành (OS) để nhận các dữ liệu đầu vào như di chuyển chuột,
+          nhấn phím, và kết nối mạng, và hệ điều hành (OS) thực hiện các lời gọi đến tiến trình để</p>
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

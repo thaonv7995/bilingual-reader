@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--major {
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0718.html">← Trước</a>
+    <a href="page_0720.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">719</span>
+      </header>
+
+      <p class="no-indent">không thể che giấu những khác biệt về khả năng phần cứng của rất nhiều nền tảng được nữa.
+      Nhưng nếu bạn có một Java runtime cho một thiết bị và nếu runtime đó không thể chạy một ứng dụng Java
+      được phát triển cho một thiết bị khác, thì điều đó sẽ đồng nghĩa với việc từ bỏ lời hứa WORA.
+      Java cuối cùng đã từ bỏ WORA khi đưa ra nhiều phiên bản runtime khác nhau như J2SE, J2EE và J2ME.
+      J2ME là phiên bản Java runtime gọn nhẹ (small footprint) có thể chạy trên thế hệ điện thoại di động
+      đầu tiên. Nó khác biệt rất lớn so với J2SE và J2EE về mặt khả năng. Tuy nhiên, thư viện Java cốt lõi
+      vẫn được giữ nguyên.</p>
+
+      <p>Đến phiên bản Java 8, thư viện Java tiêu chuẩn, với hơn bốn ngàn năm trăm Lớp (Class), đã trở thành
+      một khối monolithic khổng lồ gồm các Lớp (Class) và package phụ thuộc lẫn nhau đến mức không thể tách rời
+      thành các phần độc lập nhỏ hơn. Ngay cả khi một ứng dụng sử dụng một phần rất nhỏ của thư viện runtime,
+      nó vẫn phải đi kèm với toàn bộ thư viện. Bạn có thể đã từng nghe nói về một file jar có tên là
+      <code>rt.jar</code> mà mọi bản cài đặt Java trước đây đều đi kèm. File jar 60 MB này chứa toàn bộ
+      thư viện Java SE. Nếu bạn muốn phân phối ứng dụng Java của mình chỉ gồm một Lớp (Class) duy nhất, bạn
+      sẽ phải đính kèm file jar khổng lồ này.</p>
+
+      <p>Modular JDK là một nỗ lực nhằm giải quyết vấn đề này. Nó đã chia JDK thành nhiều module liên kết
+      lỏng lẻo (loosely coupled) có thể được kết hợp tại thời điểm biên dịch (compile time), thời điểm build
+      (build time), cũng như thời điểm chạy (runtime), thành nhiều cấu hình khác nhau tùy theo nhu cầu của các
+      ứng dụng. Ví dụ, một ứng dụng lớn phía máy chủ có thể sử dụng toàn bộ JDK nhưng một microservice có thể
+      được đóng gói chỉ với các module thực sự cần thiết. Nó cũng cho phép các ứng dụng được đóng gói cùng
+      với runtime được phân phối với các profile nhỏ hơn, nhờ đó tăng khả năng tiếp cận của các ứng dụng Java
+      tới nhiều thiết bị và nền tảng hơn.</p>
+
+      <h3 class="section-title section-title--minor">23.7.2 Tổ chức của modular JDK<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Các package, hay package API, theo cách gọi trong thuật ngữ chuyên môn, nằm trong nền tảng Java
+      được phân phối vào các module khác nhau. Các module này có thể được chia thành hai nhóm lớn - module
+      tiêu chuẩn và module không tiêu chuẩn. Các module được quản lý bởi Java Community Process (JCP)
+      được gọi là Tiêu chuẩn</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

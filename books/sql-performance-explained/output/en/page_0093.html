@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Performance Impacts of Data Volume</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Performance Impacts of Data Volume</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>------------------------------------------------------
+| Id | Operation         | Name       | Rows  | Cost |
+------------------------------------------------------
+|  0 | SELECT STATEMENT  |            |     1 |  972 |
+|  1 |  SORT AGGREGATE   |            |     1 |      |
+|* 2 |   INDEX RANGE SCAN| SCALE_SLOW |  3000 |  972 |
+------------------------------------------------------
+
+Predicate Information (identified by operation id):
+   2 - access("SECTION"=TO_NUMBER(:A))
+       filter("ID2"=TO_NUMBER(:B))</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>------------------------------------------------------
+| Id   Operation         | Name       | Rows  | Cost |
+------------------------------------------------------
+|  0 | SELECT STATEMENT  |            |     1 |   13 |
+|  1 |  SORT AGGREGATE   |            |     1 |      |
+|* 2 |   INDEX RANGE SCAN| SCALE_FAST |  3000 |   13 |
+------------------------------------------------------
+
+Predicate Information (identified by operation id):
+   2 - access("SECTION"=TO_NUMBER(:A) AND "ID2"=TO_NUMBER(:B))</code></pre>
+      </figure>
+
+      <aside class="sidebar-note">
+        <h3>Note</h3>
+        <p>The execution plan was simplified for clarity. The appendix on page 170 explains the details of the &ldquo;Predicate Information&rdquo; section in an Oracle execution plan.</p>
+      </aside>
+
+      <p class="no-indent">The difference is obvious now: only the condition on SECTION is an access predicate when using the SCALE_SLOW index. The database reads all rows from the section and discards those not matching the filter predicate on ID2. The response time grows with the number of rows in the section. With the SCALE_FAST index, the database uses all conditions as access predicates. The response time grows with the number of selected rows.</p>
+
+      <aside class="sidebar-note">
+        <h3>Important</h3>
+        <p>Filter predicates are like unexploded ordnance devices. They can explode at any time.</p>
+      </aside>
+
+      <p>The last missing pieces in our puzzle are the index definitions. Can we reconstruct the index definitions from the execution plans?</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">83</p>
+    </article>
+  </main>
+</body>
+</html>

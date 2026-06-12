@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 7: SQL: Cách PostgreSQL — FILTER / Hàm Cửa Sổ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0149.html">← Trước</a>
+    <a href="page_0151.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">150</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code> jojo    | {74,NULL,NULL,NULL,74,..} | {NULL,83,NULL,NULL,NULL,79,..}
+ jdoe    | {75,NULL,NULL,NULL,78,..} | {NULL,72,NULL,NULL,NULL,72..}
+ robe    | {68,NULL,NULL,NULL,77,..} | {NULL,83,NULL,NULL,NULL,85,..}
+ lhsu    | {84,NULL,NULL,NULL,80,..} | {NULL,72,NULL,NULL,NULL,72,..}
+(4 hàng)</code></pre>
+      </figure>
+
+      <p class="no-indent">Lưu ý rằng trong <span class="accent-word">Ví dụ 7-21</span> chúng ta nhận được một loạt các <code>NULL</code> trong các mảng của chúng ta. Chúng ta có thể giải quyết vấn đề này bằng cách sử dụng một số subselect thông minh, nhưng hầu hết trong số đó sẽ dài dòng hơn và chậm hơn so với lựa chọn <code>FILTER</code> được hiển thị trong <span class="accent-word">Ví dụ 7-22</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-22.</strong> FILTER được sử dụng với array_agg</figcaption>
+        <pre class="code-block"><code>SELECT student,
+    array_agg(score) FILTER (WHERE subject ='algebra') As algebra,
+    array_agg(score) FILTER (WHERE subject ='physics') As physics
+FROM test_scores
+GROUP BY student;
+ student | algebra | physics
+---------+---------+---------
+ jojo    | {74,74} | {83,79}
+ jdoe    | {75,78} | {72,72}
+ robe    | {68,77} | {83,85}
+ lhsu    | {84,80} | {72,72}</code></pre>
+      </figure>
+
+      <p>Điều khoản <code>FILTER</code> hoạt động cho tất cả các hàm tổng hợp, không chỉ các hàm tổng hợp được xây dựng trong PostgreSQL.</p>
+
+      <h3 class="subsection-title">Hàm Cửa Sổ</h3>
+      <p class="no-indent">Hàm cửa sổ là một tính năng SQL ANSI phổ biến được hỗ trợ trong PostgreSQL kể từ phiên bản 8.4. Một hàm cửa sổ có khả năng nhìn thấy và sử dụng dữ liệu vượt ra ngoài hàng hiện tại; do đó thuật ngữ cửa sổ. Một cửa sổ xác định các hàng khác cần được xem xét ngoài hàng hiện tại. Cửa sổ cho phép bạn thêm thông tin tổng hợp vào mỗi hàng của đầu ra của bạn, nơi việc tổng hợp liên quan đến các hàng khác trong cùng một cửa sổ. Các hàm cửa sổ như <code>row_number</code> và <code>rank</code> rất hữu ích để sắp xếp dữ liệu của bạn theo những cách tinh vi mà sử dụng các hàng bên ngoài kết quả đã chọn nhưng trong một cửa sổ.</p>
+
+      <p>Nếu không có các hàm cửa sổ, bạn sẽ phải resort đến việc sử dụng các phép nối và subqueries để lấy dữ liệu từ các hàng lân cận. Bề ngoài, các hàm cửa sổ vi phạm nguyên tắc dựa trên tập hợp của SQL, nhưng chúng tôi làm dịu những người thuần túy bằng cách khẳng định rằng chúng chỉ là viết tắt. Bạn có thể tìm thấy thêm chi tiết và ví dụ trong <span class="accent-word">Hàm Cửa Sổ</span>.</p>
+
+      <p><span class="accent-word">Ví dụ 7-23</span> cung cấp cho bạn một khởi đầu nhanh chóng. Sử dụng một hàm cửa sổ, chúng ta có thể thu được cả dữ liệu chi tiết và giá trị trung bình cho tất cả các bản ghi có <code>fact_type_id</code> là 86 trong một SELECT duy nhất. Lưu ý rằng điều khoản WHERE luôn được đánh giá trước hàm cửa sổ.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">132<span class="sep">|</span>Chương 7: SQL: Cách PostgreSQL</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

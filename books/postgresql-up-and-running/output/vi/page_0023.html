@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 1: Những Điều Cơ Bản (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0022.html">← Trước</a>
+    <a href="page_0024.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="object-term">schema</p>
+      <p class="object-def">Schemas là một phần của tiêu chuẩn ANSI SQL. Chúng là cấp tổ chức ngay lập tức tiếp theo trong mỗi cơ sở dữ liệu. Nếu bạn nghĩ về cơ sở dữ liệu như một quốc gia, schemas sẽ là các tiểu bang (hoặc tỉnh, khu vực, hoặc bộ, tùy thuộc vào quốc gia). Hầu hết các đối tượng cơ sở dữ liệu đầu tiên thuộc về một schema, mà thuộc về một cơ sở dữ liệu. PostgreSQL tự động tạo một schema có tên <code>public</code> khi bạn tạo một cơ sở dữ liệu mới. PostgreSQL đưa mọi thứ bạn tạo vào <code>public</code> theo mặc định trừ khi bạn thay đổi <code>search_path</code> của cơ sở dữ liệu (được thảo luận trong một mục sắp tới). Nếu bạn chỉ có một vài bảng, điều này là ổn. Nhưng nếu bạn có hàng ngàn bảng, bạn sẽ cần phải đưa chúng vào các schemas khác nhau.</p>
+
+      <p class="object-term">catalog</p>
+      <p class="object-def">Catalogs là các schema hệ thống lưu trữ các hàm và siêu dữ liệu tích hợp sẵn của PostgreSQL. Mỗi cơ sở dữ liệu được sinh ra chứa hai catalogs: <code>pg_catalog</code>, chứa tất cả các hàm, bảng, chế độ xem hệ thống, chuyển đổi, và kiểu dữ liệu được đóng gói với PostgreSQL; và <code>information_schema</code>, bao gồm các chế độ xem tiêu chuẩn ANSI mà phơi bày siêu thông tin của PostgreSQL theo định dạng được quy định bởi tiêu chuẩn ANSI SQL.</p>
+
+      <p class="object-def">PostgreSQL thực hành những gì nó giảng dạy. Bạn sẽ thấy rằng PostgreSQL tự nó được xây dựng trên một cấu trúc tự sao chép. Tất cả các cài đặt để tinh chỉnh máy chủ được giữ trong các bảng hệ thống mà bạn có thể truy vấn và sửa đổi. Điều này mang lại cho PostgreSQL một mức độ linh hoạt (hoặc khả năng hack) không thể đạt được bởi các sản phẩm cơ sở dữ liệu độc quyền. Hãy tiến hành và xem xét kỹ bên trong schema <code>pg_catalog</code>. Bạn sẽ có cảm giác về cách mà PostgreSQL được cấu thành. Nếu bạn có quyền superuser, bạn có quyền thực hiện các cập nhật trực tiếp vào schema (và làm hỏng cài đặt của bạn một cách nghiêm trọng).</p>
+
+      <p class="object-def">Catalog <code>information_schema</code> là một catalog mà bạn cũng sẽ tìm thấy trong MySQL và SQL Server. Các chế độ xem thường được sử dụng nhất trong <code>information_schema</code> của PostgreSQL là <code>columns</code>, liệt kê tất cả các cột bảng trong một cơ sở dữ liệu; <code>tables</code>, liệt kê tất cả các bảng (bao gồm cả chế độ xem) trong một cơ sở dữ liệu; và <code>views</code>, liệt kê tất cả các chế độ xem và SQL liên quan để xây dựng lại chế độ xem. Một lần nữa, bạn cũng sẽ tìm thấy những chế độ xem này trong MySQL và SQL Server, với một tập hợp con các cột mà PostgreSQL có. PostgreSQL thêm một vài cột nữa, chẳng hạn như <code>columns.udt_name</code>, để mô tả các cột kiểu dữ liệu tùy chỉnh.</p>
+
+      <p class="object-def">Mặc dù <code>columns</code>, <code>tables</code>, và <code>views</code> đều được triển khai dưới dạng các chế độ xem của PostgreSQL, pgAdmin hiển thị chúng trong một nhánh <code>information_schema</code>→Đối tượng Catalog.</p>
+
+      <p class="object-term">variable</p>
+      <p class="object-def">Một phần của những gì PostgreSQL gọi là Cấu Hình Tập Hợp Lớn (GUC), các biến là các tùy chọn khác nhau có thể được thiết lập ở cấp dịch vụ, cấp cơ sở dữ liệu, và các cấp khác. Một tùy chọn mà nhiều người gặp khó khăn là <code>search_path</code>, điều khiển các tài sản schema không cần phải được tiền tố bằng tên schema để được sử dụng. Chúng tôi sẽ thảo luận về <code>search_path</code> chi tiết hơn trong “Sử Dụng Schemas” trên trang 27.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các Đối Tượng Cơ Sở Dữ Liệu PostgreSQL<span class="sep">|</span>5</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

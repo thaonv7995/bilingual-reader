@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 4: 4.5 Sử dụng service discovery để tra cứu dịch vụ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--route .listing-callouts {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0135.html">← Trước</a>
+    <a href="page_0137.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Sử dụng service discovery để tra cứu dịch vụ</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">111</span>
+      </header>
+
+      <h4 class="subsection-title">4.5 Sử dụng service discovery để tra cứu dịch vụ</h4>
+
+      <p>Bây giờ bạn đã đăng ký organization service với Eureka. Bạn cũng có thể để licensing service gọi organization service mà không cần biết trực tiếp vị trí của bất kỳ instance organization service nào. licensing service sẽ tra cứu vị trí vật lý của organization bằng cách sử dụng Eureka.</p>
+
+      <p>Với mục đích của chúng ta, chúng ta sẽ xem xét ba thư viện client Spring/Netflix khác nhau mà service consumer có thể tương tác với Ribbon. Các thư viện này sẽ đi từ mức trừu tượng thấp nhất khi tương tác với Ribbon đến mức cao nhất. Các thư viện chúng ta sẽ khám phá bao gồm</p>
+
+      <ul class="manning-bullets" aria-label="Các thư viện client Spring và Netflix">
+        <li>Spring Discovery client</li>
+        <li>Spring Discovery client enabled RestTemplate</li>
+        <li>Netflix Feign client</li>
+      </ul>
+
+      <p class="no-indent">Hãy đi qua từng client này và xem cách sử dụng chúng trong bối cảnh licensing service. Trước khi đi vào chi tiết của client, tôi đã viết một vài lớp và phương thức tiện ích trong mã để bạn có thể thử nghiệm các loại client khác nhau bằng cùng một service endpoint.</p>
+
+      <p>Đầu tiên, tôi đã sửa đổi <code>src/main/java/com/thoughtmechanix/licenses/controllers/LicenseServiceController.java</code> để thêm một route mới cho các dịch vụ license. Route mới này cho phép bạn chỉ định loại client muốn dùng để gọi dịch vụ. Đây là route hỗ trợ để khi chúng ta khám phá từng cách gọi organization service qua Ribbon, bạn có thể thử từng cơ chế qua một route duy nhất. Listing sau đây trình bày mã cho route mới trong lớp <code>LicenseServiceController</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 4.5</strong><br>Gọi licensing service với các REST Client khác nhau</figcaption>
+        <div class="listing-annotated listing-annotated--route" aria-label="Mã nguồn Listing 4.5 có chú thích">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>@RequestMapping(value="/{licenseId}/{clientType}",
+method = RequestMethod.GET)
+public License getLicensesWithClient(
+   @PathVariable("organizationId") String organizationId,
+   @PathVariable("licenseId")      String licenseId,
+   @PathVariable("clientType")     String clientType) {
+
+    return licenseService.getLicense(organizationId,
+   licenseId, clientType);
+}</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích Listing 4.5">
+            <p class="listing-callout"><code>clientType</code> xác định loại Spring REST client sẽ sử dụng.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>Trong mã này, tham số <code>clientType</code> được truyền trên route sẽ quyết định loại client chúng ta sẽ sử dụng trong các ví dụ mã. Các loại cụ thể bạn có thể truyền trên route này bao gồm</p>
+
+      <ul class="manning-bullets" aria-label="Các giá trị clientType trên route">
+        <li><strong class="run-in">Discovery</strong>&mdash;Sử dụng discovery client và lớp Spring <code>RestTemplate</code> tiêu chuẩn để gọi organization service</li>
+        <li><strong class="run-in">Rest</strong>&mdash;Sử dụng Spring <code>RestTemplate</code> được nâng cấp để gọi dịch vụ dựa trên Ribbon</li>
+        <li><strong class="run-in">Feign</strong>&mdash;Sử dụng thư viện Feign client của Netflix để gọi dịch vụ qua Ribbon</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

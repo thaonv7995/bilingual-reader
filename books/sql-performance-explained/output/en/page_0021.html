@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Primary Keys</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Primary Keys</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">The Oracle execution plan shows an <code>INDEX UNIQUE SCAN</code> — the operation that only traverses the index tree. It fully utilizes the logarithmic scalability of the index to find the entry very quickly — almost independent of the table size.</p>
+
+      <aside class="sidebar-note">
+        <h3>Tip</h3>
+        <p>The execution plan (sometimes <i>explain plan</i> or <i>query plan</i>) shows the steps the database takes to execute an SQL statement. Appendix&nbsp;A on page&nbsp;165 explains how to retrieve and read execution plans with other databases.</p>
+      </aside>
+
+      <p>After accessing the index, the database must do one more step to fetch the queried data (<code>FIRST_NAME</code>, <code>LAST_NAME</code>) from the table storage: the <code>TABLE ACCESS BY INDEX ROWID</code> operation. This operation can become a performance bottleneck — as explained in <i>&ldquo;Slow Indexes, Part I&rdquo;</i> — but there is no such risk in connection with an <code>INDEX UNIQUE SCAN</code>. This operation cannot deliver more than one entry so it cannot trigger more than one table access. That means that the ingredients of a slow query are not present with an <code>INDEX UNIQUE SCAN</code>.</p>
+
+      <aside class="sidebar-note">
+        <h3>Primary Keys without Unique Index</h3>
+        <p>A primary key does not necessarily need a unique index — you can use a non-unique index as well. In that case the Oracle database does not use an <code>INDEX UNIQUE SCAN</code> but instead the <code>INDEX RANGE SCAN</code> operation. Nonetheless, the constraint still maintains the uniqueness of keys so that the index lookup delivers at most one entry.</p>
+        <p>One of the reasons for using non-unique indexes for a primary keys are deferrable constraints. As opposed to regular constraints, which are validated during statement execution, the database postpones the validation of deferrable constraints until the transaction is committed. Deferred constraints are required for inserting data into tables with circular dependencies.</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">11</p>
+    </article>
+  </main>
+</body>
+</html>

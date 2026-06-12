@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài — Sự phát triển của Sao chép PostgreSQL</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 0 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0198.html">← Trước</a>
+    <a href="page_0200.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">199</span>
+      </header>
+
+      <p class="no-indent">cần truy cập vào một kho lưu trữ WAL; điều này có thể được thực hiện thông qua streaming, và các slave không còn cần phải được sao chép lại. Từ phiên bản 9.4, một lần khởi động vẫn cần thiết. Điều này có thể thay đổi trong các phiên bản phát hành trong tương lai.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0199_icon_tip.png" width="92" height="87" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Các bảng không ghi không tham gia vào sao chép.</p>
+      </div>
+
+      <h3 class="subsection-title">Sự phát triển của Sao chép PostgreSQL</h3>
+
+      <p class="no-indent">Sao chép mặc định của PostgreSQL dựa vào việc vận chuyển WAL. Trong các phiên bản trước 9.3, các slave sao chép streaming phải chạy cùng một kiến trúc để đảm bảo thực thi chính xác luồng nhật ký nhận được. Sao chép streaming trong phiên bản 9.3 và các phiên bản sau đó hiện đã độc lập với kiến trúc nhưng vẫn yêu cầu tất cả các máy chủ chạy cùng một phiên bản của PostgreSQL.</p>
+
+      <p>Hỗ trợ cho sao chép tích hợp đã được cải thiện qua các phiên bản PostgreSQL sau:</p>
+
+      <ol class="numbered">
+        <li>Trước phiên bản 9.0, PostgreSQL chỉ cung cấp các slave ấm không đồng bộ. Một slave ấm lấy WAL và giữ cho nó đồng bộ nhưng không có sẵn cho các truy vấn. Nó chỉ hoạt động như một chế độ chờ.</li>
+        <li>Phiên bản 9.0 giới thiệu các slave nóng không đồng bộ cũng như sao chép streaming, trong đó người dùng có thể thực hiện các truy vấn chỉ đọc đối với slave và sao chép có thể xảy ra mà không cần truy cập tệp trực tiếp giữa các máy chủ (sử dụng kết nối cơ sở dữ liệu để vận chuyển nhật ký thay thế).</li>
+        <li>Với phiên bản 9.1, sao chép đồng bộ trở nên khả thi.</li>
+        <li>Phiên bản 9.2 giới thiệu sao chép streaming theo chuỗi. Lợi ích chính là giảm độ trễ. Nó nhanh hơn nhiều cho một slave nhận cập nhật từ một slave gần đó hơn là từ một master ở xa.</li>
+      </ol>
+
+      <h3 class="subsection-title">Các tùy chọn Sao chép của Bên thứ Ba</h3>
+
+      <p class="no-indent">Như là các lựa chọn thay thế cho sao chép tích hợp của PostgreSQL, có nhiều tùy chọn bên thứ ba phổ biến. <span class="accent-word">Slony</span> và <span class="accent-word">Bucardo</span> là hai trong số những tùy chọn mã nguồn mở phổ biến nhất. Mặc dù PostgreSQL đang cải thiện sao chép với mỗi phiên bản mới, Slony, Bucardo và các tùy chọn sao chép bên thứ ba khác vẫn cung cấp nhiều tính linh hoạt hơn. Slony và Bucardo cho phép bạn sao chép các cơ sở dữ liệu riêng lẻ hoặc thậm chí các bảng thay vì toàn bộ máy chủ. Chúng cũng không yêu cầu tất cả các master và slave phải cùng phiên bản PostgreSQL và hệ điều hành. Cả hai cũng hỗ trợ các kịch bản đa master. Tuy nhiên, cả hai đều dựa vào các trigger bổ sung để khởi động sao chép và thường không hỗ trợ các lệnh DDL cho các hành động như tạo</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Tổng quan về Sao chép<span class="sep">|</span>181</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

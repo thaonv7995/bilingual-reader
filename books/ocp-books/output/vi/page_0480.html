@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0479.html">← Trước</a>
+    <a href="page_0481.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">480</span>
+      </header>
+
+      <p class="no-indent">main thread (thread chính) thậm chí có thể nhận thấy rằng thread (luồng) <code>t</code>&nbsp;đã hoàn thành việc thực thi và do đó, nó cũng có thể in ra
+      <code>2: TERMINATED</code>&nbsp;.</p>
+
+      <p class="no-indent"><strong class="run-in">Khả năng 2:</strong> main thread (thread chính) khởi chạy thread (luồng) mới <code>t</code>&nbsp;và thực thi <code>t.interrupt()</code>&nbsp;trước khi thread mới có cơ hội thực thi <code>Thread.sleep(5000)</code>&nbsp;. Vì trong trường hợp này, thread <code>t</code>&nbsp;không ngủ khi bị ngắt (interrupted), chỉ có trạng thái bị ngắt của nó được thiết lập thành true và nó sẽ không nhận bất kỳ Exception (ngoại lệ) nào. Do đó, mệnh đề catch sẽ không được thực thi. Câu lệnh in trong main thread (thread chính) có thể được thực thi trước hoặc sau khi thread <code>t</code>&nbsp;thực thi <code>t.sleep(5000)</code>&nbsp;. Vì vậy, nó có thể in ra <code>2: RUNNABLE</code>&nbsp;hoặc <code>2: TIMED_WAITING</code>&nbsp;. Do đó, phương án E là đúng.</p>
+
+      <p>Lưu ý rằng không có trạng thái nào tên là <code>INTERRUPTED</code>. Do đó, phương án C không đúng. Một thread (luồng) đang ngủ sẽ ở trạng thái <code>TIMED_WAITING</code>&nbsp;chứ không phải trạng thái <code>BLOCKED</code>&nbsp;. Do đó, phương án D cũng không đúng.</p>
+
+      <h3 class="section-title">20.2 Chia sẻ bộ nhớ với nhiều thread (luồng)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Các chương trình ví dụ mà tôi đã trình bày ở phần trước tạo ra các thread (luồng) hoạt động độc lập với nhau. Nghĩa là, chúng thực hiện công việc của mình mà không quan tâm các thread khác đang làm gì. Chúng không phụ thuộc vào thread khác để lấy dữ liệu và cũng không tạo ra bất kỳ dữ liệu nào mà thread khác yêu cầu. Các chương trình đó phù hợp để giới thiệu về lập trình đa luồng (multi-threading), nhưng hầu hết các chương trình đa luồng phức tạp đều yêu cầu một số hình thức chia sẻ dữ liệu cũng như sự phối hợp giữa chúng. Ví dụ, trong một chương trình producer-consumer (nhà sản xuất - người tiêu dùng) đơn giản, nơi một thread tiêu thụ dữ liệu được tạo ra bởi một thread khác, cần phải có sự phối hợp để thread tiêu dùng có thể biết khi nào thread sản xuất đã tạo ra dữ liệu và sau đó sử dụng dữ liệu đó. Mặc dù &ldquo;chia sẻ&rdquo; và &ldquo;phối hợp&rdquo; không hoàn toàn là cùng một thứ, nhưng có rất nhiều điểm chồng chéo giữa hai khái niệm này. Trước tiên, hãy cùng tìm hiểu về việc chia sẻ.</p>
+
+      <p>Vì tất cả các thread (luồng) trong một chương trình Java đều thuộc cùng một tiến trình hệ điều hành (OS process), chúng chia sẻ bộ nhớ được cấp phát cho tiến trình đó, và vì tất cả các đối tượng (Object) đều tồn tại trên vùng nhớ heap vốn là chung cho tất cả các thread, việc chia sẻ một đối tượng (Object) giữa nhiều thread đơn giản chỉ là</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

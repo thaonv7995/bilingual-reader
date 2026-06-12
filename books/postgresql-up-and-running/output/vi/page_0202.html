@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài — Khởi động quy trình sao chép</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ol.numbered > li figure.code-snippet {
+      margin: 1mm 0 1.5mm;
+      padding-left: 8mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0201.html">← Trước</a>
+    <a href="page_0203.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">202</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>hoo'
+trigger_file = 'failover.now'</code></pre>
+      </figure>
+
+      <ol class="numbered" start="7">
+        <li>Nếu bạn thấy rằng slave không thể phát lại WAL đủ nhanh, bạn có thể chỉ định một vị trí
+        để lưu trữ. Trong trường hợp đó, thêm vào tệp <code>recovery.conf</code> một dòng như sau,
+        tùy thuộc vào hệ điều hành:
+        Trên Linux/Unix
+          <figure class="code-snippet">
+            <pre class="code-block"><code>restore_command = 'cp %p ../archive/%f'</code></pre>
+          </figure>
+        Trên Windows
+          <figure class="code-snippet">
+            <pre class="code-block"><code>restore_command = 'copy %p ..\\archive\\%f'</code></pre>
+          </figure>
+        Trong ví dụ này, thư mục archive là nơi chúng ta đang lưu trữ.</li>
+      </ol>
+
+      <h3 class="subsection-title">Khởi động quy trình sao chép</h3>
+
+      <p class="no-indent">Thật là một ý tưởng tốt để khởi động dịch vụ postgres trên tất cả các slave trước khi khởi động trên
+      master. Nếu không, master có thể bắt đầu ghi dữ liệu hoặc thay đổi cơ sở dữ liệu trước khi
+      các slave có thể nắm bắt và sao chép các thay đổi. Khi bạn khởi động mỗi máy chủ slave,
+      bạn sẽ nhận được một lỗi trong nhật ký nói rằng nó không thể kết nối với master. Bỏ qua thông báo đó.
+      Khi các slave đã khởi động, hãy khởi động dịch vụ postgres trên master.</p>
+
+      <p>Bây giờ bạn nên có thể kết nối với cả hai máy chủ. Bất kỳ thay đổi nào bạn thực hiện trên master,
+      ngay cả những thay đổi cấu trúc như cài đặt tiện ích mở rộng hoặc tạo bảng, sẽ được truyền
+      xuống các slave. Bạn cũng nên có thể truy vấn các slave.</p>
+
+      <p>Khi và nếu thời điểm đến để giải phóng một slave đã chọn, hãy tạo một tệp trống có tên <code>failover.now</code>
+      trong thư mục dữ liệu của slave. PostgreSQL sẽ hoàn tất việc phát lại WAL
+      và đổi tên tệp <code>recovery.conf</code> thành <code>recover.done</code>. Tại thời điểm đó, slave của bạn sẽ được giải phóng
+      khỏi master và tiếp tục cuộc sống của nó với tất cả dữ liệu từ WAL cuối cùng.
+      Khi slave đã nếm trải tự do, sẽ không có đường quay lại. Để biến nó thành một
+      slave lần nữa, bạn sẽ cần phải thực hiện toàn bộ quy trình từ đầu.</p>
+
+      <h3 class="section-title">Bộ bao dữ liệu ngoại</h3>
+
+      <p class="no-indent">Bộ bao dữ liệu ngoại (FDWs) là một phương pháp mở rộng, tuân thủ tiêu chuẩn để máy chủ
+      PostgreSQL của bạn truy vấn các nguồn dữ liệu khác: các máy chủ PostgreSQL khác, và nhiều
+      loại nguồn dữ liệu không phải PostgreSQL. FDW lần đầu tiên được giới thiệu trong PostgreSQL 9.1. Tại
+      trung tâm của khái niệm là một bảng ngoại, một bảng mà bạn có thể truy vấn như một bảng trong
+      cơ sở dữ liệu PostgreSQL của bạn nhưng nằm trong một nguồn dữ liệu khác, có thể thậm chí trên một
+      máy chủ vật lý khác. Khi bạn bỏ công sức để thiết lập các bảng ngoại, chúng sẽ tồn tại trong cơ sở dữ liệu của bạn và bạn sẽ mãi mãi tự do khỏi việc phải lo lắng về các giao thức phức tạp của
+      việc giao tiếp với các nguồn dữ liệu lạ. Bạn có thể tìm thấy một danh mục các FDWs cho PostgreSQL
+      tại <a href="http://pgxn.org/tag/fdw/" class="accent-word">PGXN FDW</a> và <a href="http://bit.ly/1z3j9D3" class="accent-word">PGXN Bộ bao dữ liệu ngoại</a>. Bạn cũng có thể tìm thấy các ví dụ về cách sử dụng
+      trong <a href="http://wiki.postgresql.org/wiki/Foreign_data_wrappers" class="accent-word">PostgreSQL Wiki FDW</a>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">184<span class="sep">|</span>Chương 10: Sao chép và Dữ liệu bên ngoài</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 10: Replication and External Data — Foreign Data Wrappers</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0206.html">← Prev</a>
+    <a href="page_0208.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">207</span>
+      </header>
+
+      <p class="no-indent">Next, establish at least one user for your FDW. All users that connect to your server
+      should be able to access the Google search server, so here we create one for the entire
+      <code>public</code> group:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE USER MAPPING FOR public SERVER www_fdw_server_google_search;</code></pre>
+      </figure>
+
+      <p>Now create your foreign table, as shown in <span class="accent-word">Example 10-4</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 10-4.</strong> Make a foreign table from Google</figcaption>
+        <pre class="code-block"><code>CREATE FOREIGN TABLE www_fdw_google_search (
+    q text,
+    GsearchResultClass text,
+    unescapedUrl text,
+    url text,
+    visibleUrl text,
+    cacheUrl text,
+    title text,
+    content text
+) SERVER www_fdw_server_google_search;</code></pre>
+      </figure>
+
+      <p>The user mapping doesn&rsquo;t assign any rights. You still need to grant rights before being
+      able to query the foreign table:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>GRANT SELECT ON TABLE www_fdw_google_search TO public;</code></pre>
+      </figure>
+
+      <p>Now comes the fun part. We search with the term <code>New in PostgreSQL 9.4</code> and mix in
+      a bit of regular expression goodness to strip off HTML tags:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT regexp_replace(title, E'(?x)(&lt; [^&gt;]*? &gt;)', '', 'g') As title
+FROM www_fdw_google_search where q='New in PostgreSQL 9.4'
+LIMIT 2;</code></pre>
+      </figure>
+
+      <p>Voil&agrave;! We have our response:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>title
+----------------------------------------------------
+What's new in PostgreSQL 9.4 - PostgreSQL wiki
+PostgreSQL: PostgreSQL 9.4 Beta 1 Released
+(2 rows)</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Foreign Data Wrappers<span class="sep">|</span>189</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

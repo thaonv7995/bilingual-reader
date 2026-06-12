@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài — Truy vấn Các Máy chủ PostgreSQL Khác</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word,
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 0 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0204.html">← Trước</a>
+    <a href="page_0206.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">205</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT x[1] As geo_id, x[2] As tract_id FROM staging.factfinder_array WHERE
+x[1] ~ '[0-9]+';</code></pre>
+      </figure>
+
+      <p>Khi bạn không còn cần bảng ngoại nữa, bạn có thể xóa nó:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>DROP FOREIGN TABLE staging.factfinder_array;</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Truy vấn Các Máy chủ PostgreSQL Khác</h3>
+
+      <p class="no-indent">PostgreSQL FDW, <code>postgres_fdw</code>, được đóng gói với hầu hết các bản phân phối của Post&shy;greSQL
+      9.3. FDW này cho phép bạn đọc cũng như đẩy các bản cập nhật đến các máy chủ PostgreSQL khác,
+      ngay cả các phiên bản khác nhau.</p>
+
+      <p>Bắt đầu bằng cách cài đặt FDW cho máy chủ PostgreSQL trong một cơ sở dữ liệu mới:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE EXTENSION postgres_fdw;</code></pre>
+      </figure>
+
+      <p>Tiếp theo, tạo một máy chủ ngoại:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE SERVER book_server
+FOREIGN DATA WRAPPER postgres_fdw
+OPTIONS (host 'localhost', port '5432', dbname 'postgresql_book');</code></pre>
+      </figure>
+
+      <p>Nếu bạn cần thay đổi hoặc thêm tùy chọn kết nối cho máy chủ ngoại sau khi tạo,
+      bạn có thể sử dụng lệnh <code>ALTER SERVER</code>. Ví dụ, nếu bạn cần thay đổi
+      máy chủ mà bạn đang chỉ đến, bạn có thể làm:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER SERVER book_server OPTIONS (SET host 'prod');</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0205_icon_tip.png" width="92" height="87" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Các thay đổi đối với cài đặt kết nối như máy chủ, cổng và cơ sở dữ liệu sẽ không có hiệu lực
+        cho đến khi một phiên mới được tạo. Điều này là do kết nối được mở khi sử dụng lần đầu và được giữ mở.</p>
+      </div>
+
+      <p>Tiếp theo, tạo một người dùng, ánh xạ vai trò công cộng của nó đến một vai trò duy nhất trên máy chủ ngoại:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE USER MAPPING FOR public SERVER book_server
+OPTIONS (user 'role_on_foreign', password 'your_password');</code></pre>
+      </figure>
+
+      <p>Bất kỳ ai có thể kết nối với cơ sở dữ liệu của bạn sẽ có thể truy cập máy chủ ngoại
+      cũng như vậy. Vai trò mà bạn ánh xạ phải tồn tại trên máy chủ ngoại và có quyền đăng nhập.</p>
+
+      <p>Giờ đây, bạn đã sẵn sàng để tạo một bảng ngoại. Bảng này có thể có một tập hợp con hoặc tập hợp đầy đủ
+      các cột của bảng mà nó kết nối đến. Trong <span class="accent-word">Ví dụ 10-3</span>, chúng tôi tạo một bảng ngoại ánh xạ
+      đến bảng <code>census.facts</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 10-3.</strong> Định nghĩa một bảng ngoại PostgreSQL</figcaption>
+        <pre class="code-block"><code>CREATE FOREIGN TABLE ft_facts (
+    fact_type_id int NOT NULL, tract_id varchar(11),
+    yr int, val numeric(12,3), perc numeric(6,2))
+SERVER book_server OPTIONS (schema_name 'census', table_name 'facts');</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các Bộ dữ liệu Ngoại<span class="sep">|</span>187</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

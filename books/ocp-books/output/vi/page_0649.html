@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p a {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0648.html">← Trước</a>
+    <a href="page_0650.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">649</span>
+      </header>
+
+      <p class="no-indent">Bạn có thể thấy rằng khoảng lệch múi giờ (time zone offset) của đối tượng <code>ZonedDateTime</code> mới được tạo từ
+      <code>nyZdt</code> đã thay đổi từ -4 thành -5 (vì DST kết thúc vào ngày 3 tháng 11 năm 2024) sau khi cộng thêm 7 tháng vào đó, nhưng nó
+      không thay đổi đối với <code>newZdt</code> bởi vì mặc dù một đối tượng <code>ZonedDateTime</code> biết cách xử lý
+      DST, nó chỉ có thể làm như vậy nếu được tạo bằng một đối tượng <code>ZoneId</code> chính thức.</p>
+
+      <h3 class="section-title section-title--sub">Chuyển đổi từ <code>ZonedDateTime</code> và <code>OffsetDateTime</code> sang <code>Instant</code></h3>
+
+      <p>Vì một đối tượng <code>Instant</code> tương ứng với thời gian trong UTC (có khoảng lệch bằng 0), việc chuyển đổi một đối tượng
+      <code>ZonedDateTime</code> hoặc <code>OffsetDateTime</code> sang <code>Instant</code> là khả thi và chỉ yêu cầu trừ đi
+      lượng khoảng lệch (offset) của các kiểu này khỏi thời gian mà chúng chứa. Ví dụ, một đối tượng
+      <code>ZonedDateTime</code> có giá trị 2024-12-01T06:00-05:00[America/New_York] sẽ chuyển đổi thành một đối tượng
+      <code>Instant</code> biểu diễn 2024-12-01T11:00Z (vì 6 - -5 = 11). Tương tự, một đối tượng
+      <code>ZonedDateTime</code> có giá trị 2024-04-29T19:30+05:30[Asia/Calcutta] sẽ chuyển đổi thành một đối tượng
+      <code>Instant</code> biểu diễn 2024-04-29T14:00:00Z (vì 19:30 - 5:30 = 14:00).</p>
+
+      <p>Tuy nhiên, một đối tượng <code>Instant</code> không thể chuyển đổi sang <code>ZonedDateTime</code> hoặc
+      <code>OffsetDateTime</code> vì nó không biết múi giờ (zone id) hay lượng khoảng lệch (offset amount) nào được sử dụng cho việc
+      chuyển đổi. Tất nhiên, bạn có thể tạo chúng từ một đối tượng <code>Instant</code> bằng cách cung cấp một <code>ZoneId</code> hoặc một
+      <code>ZoneOffset</code>. Ví dụ: <code>instant.atZone(ZoneId.of("America/New_York")</code> hoặc
+      <code>instant.atOffset(ZoneOffset.ofHoursMinutes(1, 20))</code>.</p>
+
+      <h3 class="section-title">22.5 Làm việc với Giờ tiết kiệm ánh sáng ngày (Daylight savings time)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent"><strong>Lưu ý:</strong> Nếu bạn chưa biết gì về Giờ tiết kiệm ánh sáng ngày (Daylight Savings Time), tốt nhất là bạn nên đọc một vài bài viết cơ bản
+      về nó trước khi đọc phần này. Bạn có thể bắt đầu với trang Wikipedia này:</p>
+
+      <p class="no-indent"><a href="https://en.wikipedia.org/wiki/Daylight_saving_time">https://en.wikipedia.org/wiki/Daylight_saving_time</a></p>
+
+      <p>Trong phần trước bạn đã thấy rằng <code>10AM</code> ngày <code>29th</code> <code>April</code> <code>2024</code> tại New York là</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

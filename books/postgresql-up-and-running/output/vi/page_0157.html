@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 7: SQL: Cách PostgreSQL — Các phép nối Lateral</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      font-style: italic;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0156.html">← Trước</a>
+    <a href="page_0158.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">157</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code> tableoid | schemaname |            tablename
+--------+------------+----------------------------------
+3152249 | public     | logs
+3152260 | public     | logs-&gt;logs_2011
+3152272 | public     | logs-&gt;logs_2011-&gt;logs_2011_01_02</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">1</span> Lấy danh sách tất cả các bảng có bảng con nhưng không có bảng cha.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">2</span> Đây là phần đệ quy; nó lấy tất cả các bảng con của các bảng trong <code>tbls</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">3</span> Tên của các bảng con bắt đầu bằng tên của bảng cha.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">4</span> Trả về các bảng cha và tất cả các bảng con. Bởi vì chúng ta sắp xếp theo tên bảng, mà
+      thêm tên bảng cha, tất cả các bảng con sẽ theo sau bảng cha của chúng trong
+      đầu ra.</p>
+
+      <h3 class="subsection-title">Các phép nối Lateral</h3>
+      <p class="no-indent"><code>LATERAL</code> là một cấu trúc ANSI SQL mới trong phiên bản 9.3. Đây là động lực phía sau
+      nó: giả sử bạn thực hiện các phép nối trên hai bảng hoặc truy vấn con; thông thường, cặp tham gia
+      vào phép nối là các đơn vị độc lập và không thể đọc dữ liệu từ nhau. Ví dụ,
+      tương tác sau đây sẽ tạo ra một lỗi vì <code>l.year = 2011</code> không phải là một cột
+      ở bên phải của phép nối:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+    FROM
+        census.facts L
+        INNER JOIN
+        (SELECT *
+            FROM census.lu_fact_types
+            WHERE category =
+                CASE WHEN L.yr = 2011 THEN 'Housing' ELSE category END
+        ) R
+    ON L.fact_type_id = R.fact_type_id;</code></pre>
+      </figure>
+
+      <p>Bây giờ thêm từ khóa <code>LATERAL</code>, và lỗi đã biến mất:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM census.facts L INNER JOIN LATERAL
+    (SELECT * FROM census.lu_fact_types
+      WHERE category = CASE WHEN L.yr = 2011 THEN 'Housing' ELSE category END) R
+    ON L.fact_type_id = R.fact_type_id;</code></pre>
+      </figure>
+
+      <p><code>LATERAL</code> cho phép bạn chia sẻ dữ liệu trong các cột giữa hai bảng trong một <code>FROM</code> clause. Tuy nhiên, nó
+      chỉ hoạt động theo một hướng: bên phải có thể lấy dữ liệu từ bên trái, nhưng không ngược lại.</p>
+
+      <p>Có những tình huống khi bạn nên sử dụng <code>LATERAL</code> để tránh cú pháp cực kỳ phức tạp. Trong <span class="accent-word">Ví dụ 7-32</span>, một cột ở bên trái đóng vai trò là tham số trong
+      hàm <code>generate_series</code> của bên phải:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các phép nối Lateral<span class="sep">|</span>139</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

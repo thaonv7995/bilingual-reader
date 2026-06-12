@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 24: Triển khai Bản địa hóa (Implementing Localization)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 12pt;
+      margin: 6mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0739.html">← Trước</a>
+    <a href="page_0741.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">740</span>
+      </header>
+
+      <p class="no-indent">theo cách tương tự. Do đó, nó sẽ tìm kiếm <code>helloapp_en.properties</code> để tạo
+      bundle <code>helloapp_en</code>. Tương tự, vì parent của <code>helloapp_en</code> là <code>helloapp</code>,
+      <code>helloapp.properties</code> cũng sẽ được tải.</p>
+
+      <p>Nếu trong quá trình tạo cấu trúc phân cấp của các resource bundle, tại bất kỳ giai đoạn nào, phương thức <code>getBundle</code> không
+      thể tìm thấy tệp properties phù hợp, nó sẽ cố gắng tạo parent bundle của bundle được
+      yêu cầu và trả về parent bundle đó. Vì vậy, nếu <code>helloapp_hi_IN.properties</code> không
+      có sẵn, phương thức <code>getBundle("helloapp", Locale.of("hi", "IN"))</code> sẽ cố gắng tạo
+      parent bundle, tức là <code>helloapp_hi</code> theo quy trình mô tả ở trên và trả về bundle này
+      thay thế.</p>
+
+      <p>Về cơ bản, việc gọi <code>getBundle</code> dẫn đến việc tạo cấu trúc phân cấp từ bundle
+      được yêu cầu cho đến base bundle (nhưng không bao gồm các bundle con hoặc sibling) sử dụng các tệp properties.
+      Hình dưới đây minh họa đường dẫn tìm kiếm mà <code>getBundle</code> thực hiện trong ví dụ này:</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0740_fig_diagram.png" width="1185" height="503" alt="Đường dẫn tìm kiếm resource bundle cho getBundle với locale mặc định en_US">
+      </figure>
+
+      <h3 class="section-title section-title--sub">Yêu cầu một resource bundle cho locale không mặc định<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Quy trình tạo một bundle được yêu cầu cho locale không mặc định gần như tương tự như trên.
+      Sự khác biệt duy nhất là khi <code>getBundle</code> không thể tìm thấy bất kỳ tệp properties cụ thể nào cho locale,
+      nó không trả về base resource bundle ngay lập tức. Trước khi trả về base bundle, nó
+      cố gắng tìm và trả về bundle cho locale mặc định</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

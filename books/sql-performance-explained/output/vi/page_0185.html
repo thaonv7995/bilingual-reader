@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — PostgreSQL Operations</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 0 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-desc {
+      margin: 0 0 0 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page h3.subsection-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .doc-quote {
+      margin: 2.5mm 0 4mm 4.5mm;
+      padding: 3mm 4mm;
+      background: #dcdedf;
+      border: 0.35pt solid var(--book-rule);
+      text-indent: 0;
+    }
+
+    .prose-page .doc-quote p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+    }
+
+    .prose-page .doc-quote p:last-child {
+      margin-bottom: 0;
+      text-align: right;
+    }
+
+    .prose-page .footnotes {
+      margin-top: 4mm;
+      padding-top: 0;
+      border-top: none;
+      font-size: 9.5pt;
+      line-height: 1.35;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">PostgreSQL Operations</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="operation-label">Quét chỉ mục Bitmap / Quét Heap Bitmap / Kiểm tra lại điều kiện</p>
+
+      <p class="no-indent">Bài viết của Tom Lane trên danh sách gửi thư về hiệu suất PostgreSQL rất rõ ràng và súc tích.</p>
+
+      <blockquote class="doc-quote">
+        <p>Một Quét Chỉ Mục đơn giản lấy một con trỏ tuple tại một thời điểm từ chỉ mục, và ngay lập tức truy cập tuple đó trong bảng. Một quét bitmap lấy tất cả các con trỏ tuple từ chỉ mục trong một lần, sắp xếp chúng bằng cách sử dụng một cấu trúc dữ liệu "bitmap" trong bộ nhớ, và sau đó truy cập các tuple bảng theo thứ tự vị trí tuple vật lý.</p>
+        <p>&mdash;Tom Lane<sup>1</sup></p>
+      </blockquote>
+
+      <h3 class="subsection-title">Các Hoạt Động Kết Nối</h3>
+
+      <p class="no-indent">Thông thường, các hoạt động kết nối chỉ xử lý hai bảng tại một thời điểm. Trong trường hợp một truy vấn có nhiều kết nối, chúng được thực hiện tuần tự: trước tiên hai bảng, sau đó là kết quả trung gian với bảng tiếp theo. Trong bối cảnh của các kết nối, thuật ngữ "bảng" cũng có thể có nghĩa là "kết quả trung gian".</p>
+
+      <p class="operation-label">Vòng Lặp Lồng Ghép</p>
+      <p class="operation-desc">Kết nối hai bảng bằng cách lấy kết quả từ một bảng và truy vấn bảng còn lại cho mỗi hàng từ bảng đầu tiên. Xem thêm &ldquo;Vòng Lặp Lồng Ghép&rdquo; trên trang&nbsp;92.</p>
+
+      <p class="operation-label">Kết Nối Băm / Băm</p>
+      <p class="operation-desc">Kết nối băm tải các bản ghi ứng viên từ một bên của kết nối vào một bảng băm (được đánh dấu bằng Băm trong kế hoạch) mà sau đó được kiểm tra cho mỗi bản ghi từ bên còn lại của kết nối. Xem thêm &ldquo;Kết Nối Băm&rdquo; trên trang&nbsp;101.</p>
+
+      <p class="operation-label">Kết Nối Gộp</p>
+      <p class="operation-desc">Kết nối gộp (sắp xếp) kết hợp hai danh sách đã được sắp xếp như một chiếc khóa kéo. Cả hai bên của kết nối phải được sắp xếp trước. Xem thêm &ldquo;Sắp Xếp Gộp&rdquo; trên trang&nbsp;109.</p>
+
+      <div class="footnotes">
+        <p><sup>1</sup> http://archives.postgresql.org/pgsql-performance/2005-12/msg00623.php</p>
+      </div>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">175</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

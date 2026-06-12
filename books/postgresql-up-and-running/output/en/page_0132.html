@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Operator Classes</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.index-type-name {
+      margin: 2.5mm 0 0;
+      font-weight: 700;
+      font-style: italic;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.index-type-name + p.index-type-body {
+      margin: 0 0 3mm 6mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.index-type-body + p.index-type-body {
+      margin: 0 0 3mm 6mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0131.html">← Prev</a>
+    <a href="page_0133.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">132</span>
+      </header>
+
+      <p class="index-type-name no-indent">SP-GiST</p>
+      <p class="index-type-body no-indent">Space-Partitioning Trees Generalized Search Tree (SP-GiST), introduced in version
+      9.2, can be used in the same situations as GiST but can be faster for certain kinds
+      of data distribution. PostgreSQL&rsquo;s native geometric data types, such as <code>point</code> and
+      <code>box</code>, and the <code>text</code> data type, were the first to support SP-GiST. In version 9.3, support
+      extended to range types. The PostGIS spatial extension also has plans to take ad‐
+      vantage of this specialized index in the near future.</p>
+
+      <p class="index-type-name no-indent">hash</p>
+      <p class="index-type-body no-indent">Hash indexes were popular prior to the advent of GiST and GIN. General consensus
+      rates GiST and GIN above hash in terms of both performance and transaction safety.
+      The write-ahead log does not track hash indexes; therefore, you can&rsquo;t use them in
+      streaming replication setups. PostgreSQL has relegated hash to legacy status. You
+      may still encounter this index type in other databases, but it&rsquo;s best to eschew hash
+      in PostgreSQL.</p>
+
+      <p class="index-type-name no-indent">B-Tree-GiST/B-Tree-GIN</p>
+      <p class="index-type-body no-indent">If you want to explore stock beyond what PostgreSQL installs by default, either out
+      of need or curiosity, start with the composite B-Tree-GiST or B-Tree-GIN indexes,
+      both available as extensions.</p>
+      <p class="index-type-body no-indent">These hybrids support the specialized operators of GiST or GIN, but also offers
+      indexablity of the equality operator in B-Tree indexes. You&rsquo;ll find them indispen‐
+      sable when you want to create a compound index composed of multiple columns
+      with data types like <code>character varying</code> or <code>number</code>&mdash;normally serviced by equality
+      operators&mdash;or like a hierarchical <code>ltree</code> type or full-text vector with operators sup‐
+      ported only by GIN/GiST.</p>
+
+      <h3 class="subsection-title">Operator Classes</h3>
+      <p class="no-indent">We would have loved to skip this section on operator classes. Many of you will sail
+      through your index-capades without ever needing to know what they are and why they
+      matter for indexes. But if you falter, you&rsquo;ll need to understand operator classes to trou‐
+      bleshoot the perennial question, &ldquo;Why is the planner not taking advantage of my index?&rdquo;</p>
+
+      <p>Algorithm experts intend for their indexes to work against certain data types and com‐
+      parison operators. An expert in indexing ranges could obsess over the overlap operator
+      (<code>&amp;&amp;</code>), whereas an expert inventing indexes for faster text search may find little meaning
+      in an overlap. A computational linguist trying to index Chinese or other logographic
+      languages probably has little use for inequalities, whereas A-to-Z sorting is critical for
+      an alphabetical writing system.</p>
+
+      <p>PostgreSQL groups comparison operators that are similar and permissible data types
+      into operator classes (opclass for short). For example, the <code>int4_ops</code> operator class in‐
+      cludes the operators <code>= &lt; &gt; &gt; &lt;</code> to be applied against the data type of <code>int4</code>. The <code>pg_op</code></p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">114<span class="sep">|</span>Chapter 6: Tables, Constraints, and Indexes</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0295.html">← Prev</a>
+    <a href="page_0297.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">296</span>
+      </header>
+
+      <p>Observe the usage of <code>&lt;? super Number&gt;</code>&nbsp;as the type argument to <code>List</code>. The &ldquo;? super
+      Number&rdquo; pattern matches <code>Number</code>&nbsp;or any of its super types. Since the lowest subtype that
+      matches this pattern is <code>Number</code>, we call <code>Number</code>&nbsp;the &ldquo;lower bound&rdquo; of this type argument.
+      Thus, <code>List&lt;? super Number&gt; targetList</code>&nbsp;means that <code>targetList</code>&nbsp;points to a <code>List</code>&nbsp;of
+      type <code>Number</code>&nbsp;or of any super type of <code>Number</code>. Since <code>Number</code>&nbsp;extends <code>Object</code>, the list could
+      be either of <code>Number</code>s or of <code>Object</code>s. This is also evident from the fact that inside the
+      <code>loadAllNumbers()</code>&nbsp;method, we are able to call <code>loadValuesFromDB()</code>&nbsp;and
+      <code>loadValuesFromFile()</code>&nbsp;with <code>ArrayList&lt;Number&gt;</code>&nbsp;as well as <code>ArrayList&lt;Object&gt;</code>&nbsp;as
+      arguments.</p>
+
+      <p>Let us now see how this plays out while putting objects and taking out objects from the list
+      pointed to by the <code>targetList</code>&nbsp;variable.</p>
+
+      <p>If <code>targetList</code>&nbsp;points to a list of <code>Object</code>s, we can put any object in it. Let us say we try to put
+      a String in it. But what if the list turns out to be of <code>Number</code>s? Putting a String in a list of
+      <code>Number</code>s is precisely the type of situation we want to avoid! It will cause a
+      <code>ClassCastException</code>&nbsp;when the <code>for</code>&nbsp;loop written further down in the above code is
+      executed. A <code>Number</code>, however, will not cause any issue in either case. A <code>Number</code>&nbsp;can be safely
+      added to a list of <code>Object</code>s (because a <code>Number</code>&nbsp;is-a <code>Object</code>) as well as to a list of <code>Number</code>s
+      (because a <code>Number</code>&nbsp;is-a <code>Number</code>). This implies that we cannot write code assuming that
+      <code>targetList</code>&nbsp;will always point to a list of <code>Object</code>s but we can write code assuming that
+      <code>targetList</code>&nbsp;will always be able to contain <code>Number</code>s. For this reason, the only type of objects
+      that the compiler will allow us to put in the list pointed to by <code>targetList</code>&nbsp;is <code>Number</code>&nbsp;and that
+      is exactly why, in the above code, we are able to call <code>targetList.add(1)</code>&nbsp;and
+      <code>targetList.add(1.0)</code>. Since both an <code>Integer</code>&nbsp;and a <code>Double</code>&nbsp;are <code>Number</code>s, the compiler
+      is satisfied that these method invocations will never cause a violation of type safety irrespective
+      of the kind of list <code>targetList</code>&nbsp;points to at run time.</p>
+
+      <p>When we take an object out of the list pointed to by <code>targetList</code>, we know that it is either of
+      type <code>Object</code>&nbsp;or of type <code>Number</code>&nbsp;but we don&rsquo;t know exactly which one. Thus, we can&rsquo;t assign it
+      to a variable of type <code>Number</code>. What if we try to assign it to a <code>Number</code>&nbsp;variable and it turns out
+      to be of type <code>Object</code>? In fact, the only type of variable we can assign this object to
+      is <code>Object</code>&nbsp;(because every object is-a <code>Object</code>). That is why</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

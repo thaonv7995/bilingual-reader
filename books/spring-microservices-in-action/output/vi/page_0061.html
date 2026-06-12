@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Đặc điểm kiến trúc microservice</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0060.html">← Trước</a>
+    <a href="page_0062.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">36</span>
+        <span class="rh-center">CHƯƠNG 2 <em>Xây dựng microservice với Spring Boot</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">việc đặt mọi đặc tả phần mềm cho &ldquo;đúng&rdquo; đến mức hầu như không còn chỗ để đáp ứng yêu cầu nghiệp vụ mới, hoặc refactor và học hỏi từ những sai lầm trong giai đoạn đầu phát triển.</p>
+
+      <p>Tuy nhiên, thực tế là phát triển phần mềm không phải quy trình tuyến tính của định nghĩa rồi thực thi, mà là quy trình tiến hóa, nơi cần nhiều vòng lặp <em>giao tiếp với, học hỏi từ và bàn giao cho</em> khách hàng trước khi nhóm phát triển thực sự hiểu vấn đề đang đối mặt.</p>
+
+      <p>Làm trầm trọng thêm thách thức khi sử dụng các phương pháp waterfall truyền thống là nhiều khi độ chi tiết của các artifact phần mềm được giao trong những dự án này</p>
+
+      <ul class="manning-bullets">
+        <li><strong class="run-in">Ghép chặt</strong>&mdash;Việc gọi logic nghiệp vụ diễn ra ở cấp độ ngôn ngữ lập trình thay vì qua các giao thức trung lập về triển khai như SOAP và REST. Điều này làm tăng đáng kể khả năng ngay cả một thay đổi nhỏ ở thành phần ứng dụng có thể làm hỏng các phần khác của ứng dụng và tạo ra lỗi mới.</li>
+        <li><strong class="run-in">Rò rỉ</strong>&mdash;Hầu hết các ứng dụng phần mềm lớn quản lý nhiều loại dữ liệu khác nhau. Ví dụ, một ứng dụng quản lý quan hệ khách hàng (CRM) có thể quản lý thông tin khách hàng, bán hàng và sản phẩm. Trong mô hình truyền thống, dữ liệu này được lưu trong cùng một mô hình dữ liệu và trong cùng một kho dữ liệu. Mặc dù có ranh giới rõ ràng giữa các dữ liệu, nhưng thường rất dễ bị cám dỗ để một nhóm từ miền này truy cập trực tiếp dữ liệu thuộc về nhóm khác. Việc truy cập dữ liệu dễ dàng này tạo ra các phụ thuộc ẩn và cho phép chi tiết triển khai của cấu trúc dữ liệu nội bộ của một thành phần rò rỉ ra toàn bộ ứng dụng. Ngay cả những thay đổi nhỏ đối với một bảng cơ sở dữ liệu có thể yêu cầu số lượng đáng kể các thay đổi code và kiểm thử hồi quy trên toàn bộ ứng dụng.</li>
+        <li><strong class="run-in">Nguyên khối</strong>&mdash;Vì hầu hết các thành phần ứng dụng của một ứng dụng truyền thống nằm trong một code base duy nhất được chia sẻ giữa nhiều nhóm, mỗi khi có thay đổi code, toàn bộ ứng dụng phải được biên dịch lại, chạy qua toàn bộ chu kỳ kiểm thử và triển khai lại. Ngay cả những thay đổi nhỏ đối với code base của ứng dụng, dù là yêu cầu khách hàng mới hay sửa lỗi, đều trở nên tốn kém và tốn thời gian, còn những thay đổi lớn gần như không thể thực hiện kịp thời.</li>
+      </ul>
+
+      <p>Kiến trúc dựa trên microservice áp dụng cách tiếp cận khác để cung cấp chức năng. Cụ thể, kiến trúc dựa trên microservice có các đặc điểm sau:</p>
+
+      <ul class="manning-bullets">
+        <li><strong class="run-in">Có giới hạn</strong>&mdash;Microservice có một tập trách nhiệm duy nhất và phạm vi hẹp. Microservice theo đuổi triết lý UNIX rằng một ứng dụng không gì khác ngoài tập hợp các dịch vụ, trong đó mỗi dịch vụ làm một việc và làm việc đó thật tốt.</li>
+        <li><strong class="run-in">Liên kết lỏng</strong>&mdash;Một ứng dụng dựa trên microservice là tập hợp các dịch vụ nhỏ chỉ tương tác với nhau qua giao diện không phụ thuộc vào triển khai cụ thể, sử dụng giao thức gọi không độc quyền (ví dụ: HTTP</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

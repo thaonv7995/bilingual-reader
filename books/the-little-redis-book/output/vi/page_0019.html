@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Cuốn sách Redis nhỏ — Trang 19</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Điều hướng trang">
+      <a href="page_0018.html">← Trước</a>
+      <span>Trang 19 / 30</span>
+      <a href="page_0020.html">Tiếp →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<figure class="code-snippet"><pre class="code-block"><code>redis.set('powerlevel', current + 1)
+redis.exec()</code></pre></figure><p class="lead no-indent">Client khác đổi <code>powerlevel</code> sau <code>watch</code> → transaction fail. Không đổi → set OK. Lặp đến khi thành công.</p><h3 class="section-title">Anti-pattern: lệnh keys</h3><p><code>keys</code> khớp pattern — không dùng production: quét tuyến tính mọi key, chậm.</p><p>Ví dụ bug tracker: key <code>bug:account_id:bug_id</code>. Liệt kê bug account — đừng <code>keys bug:1233:*</code>.</p><figure class="code-snippet"><pre class="code-block"><code>keys bug:1233:*</code></pre></figure><p>Dùng hash:</p><figure class="code-snippet"><pre class="code-block"><code>hset bugs:1233 1 <span class="cli-string">"{id:1, account: 1233, subject: '...'}"</span>
+hset bugs:1233 2 <span class="cli-string">"{id:2, account: 1233, subject: '...'}"</span></code></pre></figure><p><code>hkeys bugs:1233</code> lấy id; <code>hdel bugs:1233 2</code> xóa bug; <code>del bugs:1233</code> xóa account.</p><h3 class="section-title">Tóm tắt chương</h3><p>Hai chương trước + chương này — insight dùng Redis cho feature thật. Hiểu cấu trúc cơ bản là then chốt.</p>
+      <p class="page-folio">18</p>
+    </article>
+  </main>
+</body>
+</html>

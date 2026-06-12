@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Mục 8.4 bộ nhớ đệm phân tán</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + .sidebar-note--gray {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0273.html">← Trước</a>
+    <a href="page_0275.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">249</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">Một use case Spring Cloud Stream: bộ nhớ đệm phân tán</span>
+      </header>
+
+      <p class="no-indent">Giờ bạn đã có hai service giao tiếp với nhau bằng messaging. Spring Cloud Stream đóng vai trò trung gian cho các service này. Từ góc nhìn messaging, các service không biết gì về nhau. Chúng dùng message broker để giao tiếp thông qua một bên trung gian và Spring Cloud Stream như một lớp trừu tượng phủ lên message broker.</p>
+
+      <h4 class="subsection-title">8.4 Một use case Spring Cloud Stream: bộ nhớ đệm phân tán</h4>
+
+      <p class="no-indent">Đến thời điểm này, bạn đã có hai service giao tiếp bằng messaging, nhưng bạn thực sự chưa làm gì với các message. Giờ bạn sẽ xây dựng ví dụ bộ nhớ đệm phân tán mà chúng ta đã thảo luận trước đó trong chương. Bạn sẽ để licensing service luôn kiểm tra bộ nhớ đệm Redis phân tán để lấy dữ liệu organization liên quan đến một license cụ thể. Nếu dữ liệu organization tồn tại trong cache, bạn sẽ trả về dữ liệu từ cache. Nếu không, bạn sẽ gọi organization service và lưu kết quả của lần gọi đó vào Redis hash.</p>
+
+      <p>Khi dữ liệu được cập nhật trong organization service, organization service sẽ gửi message tới Kafka. Licensing service sẽ nhận message và thực hiện lệnh delete trên Redis để xóa cache.</p>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="Bộ nhớ đệm đám mây và messaging">
+        <p class="no-indent"><strong class="run-in">Bộ nhớ đệm đám mây và messaging</strong> Dùng Redis làm bộ nhớ đệm phân tán rất phù hợp với phát triển microservice trên đám mây. Với công ty hiện tại của tôi, chúng tôi xây dựng giải pháp bằng Amazon Web Services (AWS) và là người dùng nặng Amazon DynamoDB. Chúng tôi cũng dùng Amazon ElastiCache (Redis) để</p>
+        <ul class="manning-bullets" aria-label="Lợi ích của caching Redis với DynamoDB">
+          <li><strong class="run-in">Cải thiện hiệu năng tra cứu dữ liệu thường dùng</strong>&mdash;Bằng cách dùng cache, chúng tôi đã cải thiện đáng kể hiệu năng của nhiều service quan trọng. Tất cả các bảng trong sản phẩm chúng tôi bán đều đa tenant (lưu nhiều bản ghi khách hàng trong một bảng), nghĩa là chúng có thể khá lớn. Vì caching thường ghim dữ liệu được dùng &ldquo;nhiều&rdquo;, chúng tôi đã thấy cải thiện hiệu năng đáng kể nhờ dùng Redis và caching để tránh đọc ra Dynamo.</li>
+          <li><strong class="run-in">Giảm tải (và chi phí) lên các bảng Dynamo chứa dữ liệu của chúng tôi</strong>&mdash;Truy cập dữ liệu trong Dynamo có thể tốn kém. Mỗi lần đọc đều là một sự kiện tính phí. Dùng server Redis rẻ hơn đáng kể cho các lần đọc theo primary key so với một lần đọc Dynamo.</li>
+          <li><strong class="run-in">Tăng khả năng phục hồi để các service của chúng tôi có thể suy giảm một cách êm ái nếu kho dữ liệu chính (Dynamo) gặp vấn đề hiệu năng</strong>&mdash;Nếu AWS Dynamo gặp sự cố (thỉnh thoảng vẫn xảy ra), dùng cache như Redis có thể giúp service suy giảm một cách êm ái. Tùy theo lượng dữ liệu bạn giữ trong cache, giải pháp caching có thể giúp giảm số lỗi khi truy cập kho dữ liệu.</li>
+        </ul>
+        <p>Redis còn hơn nhiều so với một giải pháp caching, nhưng nó có thể đảm nhận vai trò đó nếu bạn cần bộ nhớ đệm phân tán.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

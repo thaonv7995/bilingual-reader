@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Common Table Expressions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.cte-type-label {
+      margin: 0 0 1mm;
+      text-indent: 0;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0153.html">← Prev</a>
+    <a href="page_0155.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">154</span>
+      </header>
+
+      <p class="no-indent">In PostgreSQL, any aggregate function you create can be used as a window function.
+      Other databases tend to limit window functions to using built-in aggregates such as <code>AVG</code>,
+      <code>SUM</code>, <code>MIN</code>, and <code>MAX</code>.</p>
+
+      <h3 class="subsection-title">Common Table Expressions</h3>
+      <p class="no-indent">Essentially, common table expressions (CTEs) allow you to define a query that can be
+      reused in a larger query. PostgreSQL has supported this feature since version 8.4 and
+      expanded the feature in version 9.1 with the introduction of writable CTEs. CTEs act
+      as temporary tables defined within the scope of the statement; they&rsquo;re gone once the
+      enclosing statement has finished execution.</p>
+
+      <p class="no-indent">There are three ways to use CTEs:</p>
+
+      <p class="cte-type-label no-indent">Basic CTE</p>
+      <p>This is your plain-vanilla CTE, used to make your SQL more readable or to en&shy;courage
+      the planner to materialize a costly intermediate result for better perfor&shy;mance.</p>
+
+      <p class="cte-type-label no-indent">Writable CTE</p>
+      <p>This is an extension of the basic CTE with <code>UPDATE</code>, <code>INSERT</code>, and <code>DELETE</code> commands.
+      A common final step in the CTE is to return changed rows.</p>
+
+      <p class="cte-type-label no-indent">Recursive CTE</p>
+      <p>This puts an entirely new whirl on standard CTE. The rows returned by a recursive
+      CTE vary during the execution of the query.</p>
+
+      <p>PostgreSQL allows you to have a CTE that is both writable and recursive.</p>
+
+      <h3 class="subsection-title">Basic CTEs</h3>
+      <p class="no-indent">The basic CTE looks like <span class="accent-word">Example 7-28</span>. The <code>WITH</code> keyword introduces the CTE.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-28.</strong> Basic CTE</figcaption>
+        <pre class="code-block"><code>WITH cte AS (
+    SELECT
+        tract_id, substring(tract_id,1, 5) As county_code,
+        COUNT(*) OVER(PARTITION BY substring(tract_id,1, 5)) As cnt_tracts
+    FROM census.lu_tracts
+)
+SELECT MAX(tract_id) As last_tract, county_code, cnt_tracts
+FROM cte
+WHERE cnt_tracts &gt; 100
+GROUP BY county_code, cnt_tracts;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">136<span class="sep">|</span>Chapter 7: SQL: The PostgreSQL Way</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

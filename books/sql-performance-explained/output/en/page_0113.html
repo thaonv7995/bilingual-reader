@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Hash Join</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Hash Join</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+| Id | Operation                    | Name      | Bytes| Cost|
+--------------------------------------------------------------
+|  0 | SELECT STATEMENT             |           |   59M| 3252|
+|* 1 |  HASH JOIN                   |           |   59M| 3252|
+|  2 |   TABLE ACCESS FULL          | EMPLOYEES |    9M|  478|
+|  3 |   TABLE ACCESS BY INDEX ROWID| SALES     |   10M| 1724|
+|* 4 |    INDEX RANGE SCAN          | SALES_DATE|      |     |
+--------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - access("S"."SUBSIDIARY_ID"="E"."SUBSIDIARY_ID"
+          AND "S"."EMPLOYEE_ID"  ="E"."EMPLOYEE_ID"  )
+   4 - access("S"."SALE_DATE" > TRUNC(SYSDATE@!)
+                           -INTERVAL'+00-06' YEAR(2) TO MONTH)</code></pre>
+      </figure>
+
+      <p>Indexing a hash join is&mdash;contrary to the nested loops join&mdash;symmetric. That means that the join order does not influence indexing. The <code>SALES_DATE</code> index can be used to load the hash table if the join order is reversed.</p>
+
+      <aside class="sidebar-note">
+        <h3>Note</h3>
+        <p>Indexing a hash join is independent of the join order.</p>
+      </aside>
+
+      <p>A rather different approach to optimizing hash join performance is to minimize the hash table size. This method works because an optimal hash join is only possible if the entire hash table fits into memory. The optimizer will therefore automatically use the smaller side of the join for the hash table. The Oracle execution plan shows the estimated memory requirement in the &ldquo;Bytes&rdquo; column. In the above execution plan, the <code>EMPLOYEES</code> table needs nine megabytes and is thus the smaller one.</p>
+
+      <p>It is also possible to reduce the hash table size by changing the SQL query, for example by adding extra conditions so that the database loads fewer candidate records into the hash table. Continuing the above example it would mean adding a filter on the <code>DEPARTMENT</code> attribute so only sales staff is considered. This improves hash join performance even if there is no index on the <code>DEPARTMENT</code> attribute because the database does not need to store employees who cannot have sales in the hash table. When doing so you have to make sure there are no <code>SALES</code> records for employees that do not work in the respective department. Use constraints to guard your assumptions.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">103</p>
+    </article>
+  </main>
+</body>
+</html>

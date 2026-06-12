@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0476.html">← Trước</a>
+    <a href="page_0478.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">477</span>
+      </header>
+
+      <p class="no-indent">trong khi cố gắng giành quyền truy cập độc quyền vào các biến dùng chung hoặc trong khi phối hợp thực thi với
+      một hoặc nhiều Thread (Luồng), nhưng điểm quan trọng cần lưu ý là một Thread (Luồng) có thể chuyển qua lại
+      giữa các trạng thái <code>RUNNABLE</code>&nbsp;và&nbsp;<code>BLOCKED</code>, <code>RUNNABLE</code>&nbsp;và&nbsp;<code>WAITING</code>, hoặc <code>RUNNABLE</code>&nbsp;và
+      <code>TIMED_WAITING</code>&nbsp;nhiều lần trong suốt quá trình thực thi của nó tùy thuộc vào logic nghiệp vụ
+      của tác vụ đó. Phương thức <code>isAlive</code>&nbsp;của Thread (Luồng) chỉ trả về <code>true</code>&nbsp;khi nó ở một trong bốn
+      trạng thái này.</p>
+
+      <h3 class="section-title section-title--minor">Sự khác biệt giữa các trạng thái BLOCKED và WAITING/TIMED_WAITING<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một Thread (Luồng) không thể được lên lịch để thực thi khi nó ở bất kỳ trạng thái nào trong các trạng thái BLOCKED, WAITING, và
+      TIMED_WAITING. Theo nghĩa đó, các trạng thái này tương tự nhau và được gọi là &ldquo;các trạng thái chặn&rdquo;.</p>
+
+      <p>Nhưng có một sự khác biệt cơ bản giữa các trạng thái BLOCKED và WAITING/TIMED_WAITING.
+      Một Thread (Luồng) ở trạng thái BLOCKED sẽ trở thành RUNNABLE và tự động bắt đầu cạnh tranh lại khóa
+      khi khóa mà nó đang cố gắng giành lấy trở nên sẵn sàng. Trong khi đó, một
+      Thread (Luồng) ở trạng thái WAITING/TIMED_WAITING chỉ đơn giản là đang chờ thông báo từ một
+      Thread (Luồng) khác hoặc chờ hết thời gian (timeout). Nó sẽ trở thành RUNNABLE khi các sự kiện này xảy ra. Sự khác biệt này đóng một
+      vai trò quan trọng trong quá trình phối hợp các Thread (Luồng).</p>
+
+      <p>Tuy nhiên, nhìn chung, logic chương trình không nên phụ thuộc vào việc biết chính xác một Thread (Luồng) đang ở trạng thái nào
+      trong các trạng thái chặn vì các chuyển đổi trạng thái này phụ thuộc rất nhiều vào cách triển khai cụ thể.
+      Việc biết trạng thái chính xác của một Thread (Luồng) chỉ hữu ích cho mục đích gỡ lỗi.</p>
+
+      <h3 class="section-title section-title--minor">Độ ưu tiên của Thread (Luồng)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một <strong>platform thread</strong> có một độ ưu tiên, có thể nằm trong khoảng từ <code>Thread.MIN_PRIORITY</code>
+      và <code>Thread.MAX_PRIORITY</code>&nbsp;và có thể được quản lý bằng cách sử dụng</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — Random Page Cost and Quality of Drives</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0187.html">← Prev</a>
+    <a href="page_0189.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">188</span>
+      </header>
+
+      <p class="no-indent">To get a sense of what the planner uses, query the <code>pg_stats</code> table, as illustrated in
+      <span class="accent-word">Example 9-10</span>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT
+    attname As colname,
+    n_distinct,
+    most_common_vals AS common_vals,
+    most_common_freqs As dist_freq
+FROM pg_stats
+WHERE tablename = 'facts'
+ORDER BY schemaname, tablename, attname;</code></pre>
+      </figure>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-10.</strong> Data distribution histogram</figcaption>
+        <pre class="code-block"><code>colname      | n_distinct | common_vals      | dist_freq
+-------------+------------+------------------+-----------------
+fact_type_id |         68 | {135,113...      | {0.0157,0.0156333,...
+perc         |        985 | {0.00,...        | {0.1845,0.0579333,0.056...
+tract_id     |       1478 | {25025090300...  | {0.00116667,0.00106667,0.0...
+val          |       3391 | {0.000,1.000,2...| {0.2116,0.0681333,0...
+yr           |          2 | {2011,2010}      | {0.748933,0.251067}</code></pre>
+      </figure>
+
+      <p class="no-indent"><code>pg_stats</code> gives the planner a sense of how actual values are dispersed within a given
+      column and lets it plan accordingly. The <code>pg_stats</code> table is constantly updated as a
+      background process. After a large data load or a major deletion, you should manually
+      update the stats by executing <code>VACUUM ANALYZE</code>. <code>VACUUM</code> permanently removes deleted
+      rows from tables; <code>ANALYZE</code> updates the stats.</p>
+
+      <p>For columns that participate often in joins and are used heavily in WHERE clauses, you
+      should consider increasing sampled rows.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE census.facts ALTER COLUMN fact_type_id SET STATISTICS 1000;</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Random Page Cost and Quality of Drives</h3>
+
+      <p class="no-indent">Another setting that influences the planner is the <code>random_page_cost</code> (RPC) ratio, which
+      is the relative cost of the disk in retrieving a record using a sequential read versus using
+      random access. Generally, the faster (and more expensive) the physical disk, the lower
+      the ratio. The default value for RPC is 4, which works well for most mechanical hard
+      drives on the market today. The use of solid-state drives (SSDs), high-end storage area
+      networks (SANs), or cloud storage makes it worth tweaking this value.</p>
+
+      <p>You can set the RPC ratio per database, per server, or per tablespace. At the server level,
+      it makes most sense to set the ratio in the <code>postgresql.conf</code> file. If you have different kinds
+      of disks, you can set the values at the tablespace level using the <code>ALTER TABLESPACE</code>
+      command:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLESPACE pg_default SET (random_page_cost=2);</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">170<span class="sep">|</span>Chapter 9: Query Performance Tuning</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

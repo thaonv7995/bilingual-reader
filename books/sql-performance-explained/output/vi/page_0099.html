@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Eventual Consistency and the CAP Theorem</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Thời gian phản hồi và thông lượng</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note">
+        <h3>Tính nhất quán cuối cùng và Định lý CAP</h3>
+
+        <p>Việc duy trì tính nhất quán nghiêm ngặt trong một hệ thống phân tán yêu cầu sự phối hợp đồng bộ của tất cả các thao tác ghi giữa các nút. Nguyên tắc này có hai tác động phụ không mong muốn: (1) nó làm tăng độ trễ và thời gian phản hồi; (2) nó giảm tính khả dụng tổng thể vì nhiều thành viên phải có mặt cùng một lúc để hoàn thành một thao tác ghi.</p>
+
+        <p>Một cơ sở dữ liệu SQL <i>phân tán</i> thường bị nhầm lẫn với các cụm máy tính sử dụng hệ thống lưu trữ chia sẻ hoặc sao chép chủ-tớ. Thực tế, một cơ sở dữ liệu <i>phân tán</i> giống như một cửa hàng trực tuyến được tích hợp với một hệ thống ERP—thường là hai sản phẩm khác nhau từ các nhà cung cấp khác nhau. Tính nhất quán giữa cả hai hệ thống vẫn là một mục tiêu mong muốn thường đạt được bằng cách sử dụng giao thức cam kết hai pha (2PC). Giao thức này thiết lập các giao dịch toàn cầu cung cấp hành vi “tất cả hoặc không có gì” nổi tiếng trên nhiều cơ sở dữ liệu. Việc hoàn thành một giao dịch toàn cầu chỉ có thể xảy ra nếu tất cả các thành viên tham gia đều có sẵn. Do đó, nó giảm tính khả dụng tổng thể.</p>
+
+        <p>Càng nhiều nút trong một hệ thống phân tán, tính nhất quán nghiêm ngặt càng trở nên khó khăn. Việc duy trì tính nhất quán nghiêm ngặt gần như là không thể nếu hệ thống có nhiều hơn một vài nút. Ngược lại, việc từ bỏ tính nhất quán nghiêm ngặt giải quyết vấn đề khả dụng và loại bỏ thời gian phản hồi tăng lên. Ý tưởng cơ bản là tái thiết lập tính nhất quán toàn cầu sau khi hoàn thành thao tác ghi trên một tập hợp các nút. Cách tiếp cận này chỉ để lại một vấn đề chưa được giải quyết: không thể ngăn chặn xung đột nếu hai nút chấp nhận các thay đổi mâu thuẫn. Tính nhất quán cuối cùng đạt được bằng cách <i>xử lý</i> các xung đột, không phải bằng cách <i>ngăn chặn</i> chúng. Trong bối cảnh đó, tính nhất quán có nghĩa là tất cả các nút có cùng dữ liệu—nó không nhất thiết phải là dữ liệu chính xác hoặc tốt nhất.</p>
+
+        <p>Định lý CAP của Brewer mô tả các phụ thuộc chung giữa <i>C</i>onsistency, <i>A</i>vailability, và <i>P</i>artition tolerance.</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">89</p>
+    </article>
+  </main>
+</body>
+</html>

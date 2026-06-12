@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Cấu trúc của một trace Spring Cloud Sleuth</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p + figure.diagram,
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0286.html">← Prev</a>
+    <a href="page_0288.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">262</span>
+        <span class="rh-center">CHƯƠNG 9 <em>Theo dõi phân tán với Spring Cloud Sleuth và Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">9.1.2 Cấu trúc của một trace Spring Cloud Sleuth</h4>
+
+      <p class="no-indent">Nếu mọi thứ được thiết lập đúng, mọi câu lệnh log được viết trong mã ứng dụng dịch vụ của bạn giờ sẽ bao gồm thông tin trace Spring Cloud Sleuth. Ví dụ, hình 9.1 cho thấy output của dịch vụ sẽ trông như thế nào nếu bạn thực hiện HTTP GET <code>http://localhost:5555/api/organization/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a</code> trên organization service.</p>
+
+      <figure class="diagram" aria-label="Hình 9.1">
+        <img src="../assets/images/page_0287_fig_9_1.png" width="1313" height="621" alt="Hình 9.1 — Spring Cloud Sleuth thêm bốn phần thông tin tracing vào mỗi mục log do dịch vụ của bạn ghi">
+        <figcaption><strong>Hình 9.1</strong><br>Spring Cloud Sleuth thêm bốn phần thông tin tracing vào mỗi mục log do dịch vụ của bạn ghi. Dữ liệu này giúp liên kết các lời gọi dịch vụ cho một yêu cầu của người dùng.</figcaption>
+      </figure>
+
+      <p class="no-indent">Spring Cloud Sleuth sẽ thêm bốn phần thông tin vào mỗi mục log. Bốn phần này (đánh số tương ứng với các số trong hình 9.1) là</p>
+
+      <ol class="manning-numbered" aria-label="Các trường log trace Spring Cloud Sleuth">
+        <li>Tên ứng dụng của dịch vụ&mdash;Đây là tên của ứng dụng mà mục log đang được ghi. Theo mặc định, Spring Cloud Sleuth dùng tên ứng dụng (<code>spring.application.name</code>) làm tên được ghi trong trace.</li>
+        <li>Trace ID&mdash;Trace ID là thuật ngữ tương đương với correlation ID. Đây là một số duy nhất đại diện cho toàn bộ giao dịch.</li>
+        <li>Span ID&mdash;Span ID là một ID duy nhất đại diện cho một phần của giao dịch tổng thể. Mỗi dịch vụ tham gia trong giao dịch sẽ có span ID riêng. Span ID đặc biệt quan trọng khi bạn tích hợp với Zipkin để trực quan hóa các giao dịch của mình.</li>
+        <li>Trace data đã được gửi tới Zipkin hay chưa&mdash;Với các dịch vụ có lưu lượng cao, lượng dữ liệu trace tạo ra có thể quá lớn và không mang lại nhiều giá trị. Spring Cloud Sleuth cho phép bạn xác định khi nào và cách gửi một giao dịch tới Zipkin. Chỉ báo true/false ở cuối khối tracing Spring Cloud Sleuth cho biết liệu thông tin tracing đã được gửi tới Zipkin hay chưa.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

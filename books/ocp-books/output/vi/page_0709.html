@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng mô-đun</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--major {
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0708.html">← Trước</a>
+    <a href="page_0710.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">709</span>
+      </header>
+
+      <p class="no-indent">để định vị các dịch vụ. Service Locator là một mẫu thiết kế nổi tiếng được sử dụng để tách biệt
+      logic định vị một hoặc nhiều dịch vụ tại một nơi duy nhất. Nó khá hữu ích khi một ứng dụng có
+      nhiều dịch vụ, nhiều nhà cung cấp cho nhiều dịch vụ, hoặc sử dụng nhiều cơ chế khác nhau để
+      định vị dịch vụ như ServiceLoader, JNDI, hoặc dependency injection. Tuy nhiên, đó là một mức độ
+      trừu tượng cao hơn và không liên quan gì đến kỳ thi OCP. Đối với kỳ thi OCP,
+      một lớp sử dụng <code>ServiceLoader</code>&nbsp;và lấy ra một dịch vụ từ nó được coi là phía tiêu thụ (consumer) của dịch vụ
+      đó. Việc lớp này hoạt động như một service locator hay tự sử dụng dịch vụ đó hoàn toàn phụ thuộc vào
+      thiết kế của ứng dụng.</p>
+
+      <h3 class="section-title section-title--major">23.6 Di chuyển các ứng dụng phi mô-đun<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Việc tổ chức lại một ứng dụng phi mô-đun để sử dụng các mô-đun, sau đó biên dịch và chạy nó bằng các
+      tùy chọn mô-đun mà bạn đã thấy trước đó được gọi là di chuyển một ứng dụng phi mô-đun thành một
+      ứng dụng mô-đun. Lý tưởng nhất, một ứng dụng mô-đun hoàn chỉnh chỉ bao gồm các mô-đun được đặt tên rõ ràng (explicitly named modules),
+      tức là nó không chứa bất kỳ mô-đun tự động (automatic modules) hoặc mô-đun không tên (unnamed module) nào.</p>
+
+      <p>Thông thường, việc mô-đun hóa một ứng dụng không yêu cầu bất kỳ thay đổi nào trong mã nguồn, nhưng vì
+      các mô-đun tạo ra các ranh giới bất khả xâm phạm giữa các phần của một chương trình bằng cách thực thi các nguyên tắc
+      tính đóng gói (Encapsulation) nghiêm ngặt, việc di chuyển một ứng dụng không phải lúc nào cũng đơn giản. Di chuyển bất kỳ
+      ứng dụng phức tạp nào cũng đặt ra các thách thức sau:</p>
+
+      <ol class="numbered">
+        <li>Làm thế nào để chia cơ sở mã nguồn (codebase) của ứng dụng thành các mô-đun?</li>
+        <li>Làm thế nào để xử lý các thư viện do các nhóm khác trong tổ chức cung cấp mà đã
+        được mô-đun hóa?</li>
+        <li>Làm thế nào để xử lý các thư viện do các nhóm khác trong tổ chức cung cấp mà chưa được
+        mô-đun hóa nhưng sẽ được mô-đun hóa?</li>
+        <li>Làm thế nào để xử lý các thư viện bên thứ ba không dự kiến sẽ được mô-đun hóa?</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

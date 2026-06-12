@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 5: Clustering Data</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 5: Nhóm Dữ Liệu</p>
+
+      <p class="no-indent">Chỉ mục cho phép người ta nhóm dữ liệu. Cơ sở cho điều này đã được giải thích trong Chương&nbsp;1, &ldquo;Giải Phẫu của Một Chỉ Mục&rdquo;: các nút lá của chỉ mục lưu trữ các cột được chỉ mục theo cách có thứ tự để các giá trị tương tự được lưu trữ cạnh nhau. Điều đó có nghĩa là các chỉ mục xây dựng các cụm hàng với các giá trị tương tự.</p>
+
+      <p>Khả năng nhóm dữ liệu này quan trọng đến mức tôi gọi nó là sức mạnh thứ hai của việc lập chỉ mục.</p>
+
+      <p>Các phần tiếp theo giải thích cách sử dụng các chỉ mục để nhóm dữ liệu và cải thiện hiệu suất truy vấn.</p>
+
+      <h3 class="section-title">Các Điều Kiện Lọc Chỉ Mục Được Sử Dụng Có Chủ Đích</h3>
+
+      <p class="no-indent">Rất thường xuyên, các điều kiện lọc chỉ mục chỉ ra việc sử dụng chỉ mục không đúng do thứ tự cột không chính xác trong một chỉ mục nối. Tuy nhiên, các điều kiện lọc chỉ mục cũng có thể được sử dụng vì lý do tốt—không phải để cải thiện hiệu suất quét khoảng mà để nhóm dữ liệu được truy cập liên tiếp lại với nhau.</p>
+
+      <p>Các điều kiện trong mệnh đề WHERE không thể phục vụ như một điều kiện truy cập là những ứng cử viên tốt cho kỹ thuật này:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, subsidiary_id, phone_number
+  FROM employees
+ WHERE subsidiary_id = ?
+   AND UPPER(last_name) LIKE '%INA%';</code></pre>
+      </figure>
+
+      <p>Hãy nhớ rằng các biểu thức LIKE với ký tự đại diện ở đầu không thể sử dụng cây chỉ mục. Điều đó có nghĩa là việc lập chỉ mục LAST_NAME không thu hẹp phạm vi chỉ mục được quét—dù bạn lập chỉ mục LAST_NAME hay UPPER(last_name). Điều kiện này do đó không phải là ứng cử viên tốt cho việc lập chỉ mục.</p>
+
+      <p>Tuy nhiên, điều kiện trên SUBSIDIARY_ID rất phù hợp cho việc lập chỉ mục. Chúng ta thậm chí không cần phải thêm một chỉ mục mới vì SUBSIDIARY_ID đã là cột dẫn đầu trong chỉ mục cho khóa chính.</p>
+
+      <p class="page-folio page-folio--left">112</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

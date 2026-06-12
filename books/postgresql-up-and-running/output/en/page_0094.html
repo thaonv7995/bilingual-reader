@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 4: Using pgAdmin (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0093.html">← Prev</a>
+    <a href="page_0095.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">94</span>
+      </header>
+
+      <h3 class="section-title">Helpful pgAgent Queries</h3>
+      <p class="no-indent">With your finely honed SQL skills, you can easily replicate jobs, delete jobs, and edit
+      jobs directly by messing with pgAgent metatables. Just be careful! For example, to get
+      a glimpse inside the tables controlling all of your agents and jobs, connect to the post‐
+      gres database and execute the query in <span class="accent-word">Example 4-3</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 4-3.</strong> Description of pgAgent tables</figcaption>
+        <pre class="code-block"><code>SELECT c.relname As table_name, d.description
+FROM
+    pg_class As c INNER JOIN
+    pg_namespace n ON n.oid = c.relnamespace INNER JOIN
+    pg_description As d ON d.objoid = c.oid AND d.objsubid = 0
+WHERE n.nspname = 'pgagent'
+ORDER BY c.relname;
+table_name     |       description
+---------------+-------------------------
+pga_job        | Job main entry
+pga_jobagent   | Active job agents
+pga_jobclass   | Job classification
+pga_joblog     | Job run logs.
+pga_jobstep    | Job step to be executed
+pga_jobsteplog | Job step run logs.
+pga_schedule   | Job schedule exceptions</code></pre>
+      </figure>
+
+      <p class="no-indent">Although pgAdmin already provides an intuitive interface to pgAgent scheduling and
+      logging, you may find the need to generate your own jobs reports. This is especially true
+      if you have many jobs or you want to compile stats from your job results. <span class="accent-word">Example 4-4</span>
+      demonstrates the one query we use often.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 4-4.</strong> List log step results from today</figcaption>
+        <pre class="code-block"><code>SELECT j.jobname, s.jstname, l.jslstart,l.jslduration, l.jsloutput
+FROM
+    pgagent.pga_jobsteplog As l INNER JOIN
+    pgagent.pga_jobstep As s ON s.jstid = l.jsljstid INNER JOIN
+    pgagent.pga_job As j ON j.jobid = s.jstjobid
+WHERE jslstart &gt; CURRENT_DATE
+ORDER BY j.jobname, s.jstname, l.jslstart DESC;</code></pre>
+      </figure>
+
+      <p class="no-indent">We find this query essential for monitoring batch jobs because sometimes a job will
+      report success even though it failed. pgAgent can’t always discern the success or failure
+      of a shell script on the OS. The <code>jsloutput</code> field in the logs provides the shell output,
+      which usually details what went wrong.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">76<span class="sep">|</span>Chapter 4: Using pgAdmin</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

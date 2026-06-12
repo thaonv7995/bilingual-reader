@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Logspout và Hình 9.8</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + figure.diagram,
+    .prose-page.chapter-page figure.diagram + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0293.html">← Trước</a>
+    <a href="page_0295.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Tổng hợp nhật ký và Spring Cloud Sleuth</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">269</span>
+      </header>
+
+      <p class="no-indent">có thể kết nối với <code>docker.sock</code> và nhận tất cả thông điệp do tất cả các container khác đang chạy trên máy chủ đó tạo ra. Nói đơn giản nhất, <code>docker.sock</code> giống như một đường ống mà các container của bạn có thể cắm vào để capture tổng thể các hoạt động diễn ra trong môi trường runtime Docker trên máy ảo mà Docker daemon đang chạy.</p>
+
+      <p>Bạn sẽ sử dụng một phần mềm được &ldquo;Docker hóa&rdquo; gọi là Logspout (<a href="https://github.com/gliderlabs/logspout">https://github.com/gliderlabs/logspout</a>) lắng nghe socket <code>docker.sock</code>, sau đó capture mọi thông điệp standard out được tạo ra trong Docker runtime và chuyển hướng output tới syslog từ xa (Papertrail). Để thiết lập container Logspout, bạn chỉ cần thêm một mục vào tệp <code>docker-compose.yml</code> dùng để khởi chạy tất cả container Docker cho các ví dụ mã trong chương này. Tệp <code>docker/common/docker-compose.yml</code> cần chỉnh sửa nên có mục sau được thêm vào:</p>
+
+      <figure class="code-snippet" aria-label="Mục docker-compose Logspout">
+        <pre class="code-block"><code>logspout:
+    image: gliderlabs/logspout
+    command: syslog://logs5.papertrailapp.com:21218
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock</code></pre>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Trong đoạn mã trước, bạn cần thay giá trị trong thuộc tính &ldquo;command&rdquo; bằng giá trị Papertrail cung cấp cho bạn. Nếu dùng đoạn Logspout trước đó, container Logspout sẽ vui vẻ ghi các mục log của bạn vào tài khoản Papertrail của tôi.</p>
+      </aside>
+
+      <p class="no-indent">Giờ khi bạn khởi chạy môi trường Docker trong chương này, mọi dữ liệu gửi tới standard output của container sẽ được gửi tới Papertrail. Bạn có thể tự kiểm chứng bằng cách đăng nhập vào tài khoản Papertrail sau khi đã khởi chạy các ví dụ Docker của chương 9 và nhấp nút Events ở phía trên bên phải màn hình.</p>
+
+      <p>Hình 9.8 cho thấy ví dụ về dữ liệu gửi tới Papertrail trông như thế nào.</p>
+
+      <figure class="diagram" aria-label="Hình 9.8">
+        <img src="../assets/images/page_0294_fig_9_8.png" width="1313" height="573" alt="Hình 9.8 — Sự kiện log được gửi tới Papertrail qua Logspout">
+        <figcaption><strong>Hình 9.8</strong><br>Với container Docker Logspout đã được định nghĩa, dữ liệu ghi vào standard out của mỗi container sẽ được gửi tới Papertrail.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

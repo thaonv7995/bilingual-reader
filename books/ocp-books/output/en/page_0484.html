@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0483.html">← Prev</a>
+    <a href="page_0485.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">484</span>
+      </header>
+
+      <p class="no-indent">even observe the caches used by the platform that exists underneath the JVM. There is no API to
+      prevent reordering of instructions either. Instead, Java defines a &ldquo;memory model&rdquo;, known as the
+      <strong>Java Memory Model</strong>, that abstracts this problem away into a set of rules that, if followed,
+      establish a predictable, consistent, and dependable, order of execution of the statements
+      irrespective of the thread from which they are executed. Effectively, the Java memory model
+      defines how the shared memory behaves when accessed by multiple threads. More specifically,
+      it defines the conditions in which updates to a shared variable by one thread can be seen by
+      another thread. Here, shared memory essentially means static and instance fields only because
+      method local variables are always local to one thread and they are never shared with any other
+      thread.</p>
+
+      <p>Looking back at the factorial example above from this perspective, although the factorial thread
+      may have executed the assignment statement, the main thread failed to see the update to the
+      <code>result</code>&nbsp;field because the Java memory model does not promise that the assignment operation
+      performed by one thread, i.e., the factorial thread, on the <code>result</code>&nbsp;variable will actually be seen
+      as executed from another thread, i.e., the main thread. In other words, since the Java memory
+      model does not promise that the assignment done by the factorial thread will happen
+      <strong>before</strong>&nbsp;the main thread tries to read the same field, the main thread may not observe that the
+      update is completed by the factorial thread even if the main thread keeps checking the <code>result</code>
+      variable forever. Since the assignment may, theoretically, appear to happen&nbsp;<strong>after</strong>&nbsp;one, two, or
+      any number of checks performed by the main thread, the main thread cannot depend on the fact
+      that the assignment will definitely be executed before any number of checks. Thus, the main
+      thread may never come out of the while loop.</p>
+
+      <p>To ensure that an action is seen as happened before another action, there needs to exist a
+      &ldquo;happens before&rdquo; relationship between the two actions. The Java memory model defines the
+      conditions in which such a relationship exits and it is up to the JVM implementers how they
+      implement these relationships internally. As Java programmers, we just need to create such
+      conditions in our code so that we can rely on the visibility guarantees provided by the Java
+      memory model.</p>
+
+      <p>Although there are numerous ways in which a happens-before is established but don&rsquo;t</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

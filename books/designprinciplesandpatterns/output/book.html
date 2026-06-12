@@ -1,0 +1,1331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Designprinciplesandpatterns</title>
+  <link rel="stylesheet" href="assets/book.css">
+  <link rel="stylesheet" href="assets/page-tokens.css">
+  <link rel="stylesheet" href="assets/prose-page.css">
+  <link rel="stylesheet" href="assets/code-page.css">
+  <link rel="stylesheet" href="assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+  </style>
+</head>
+<body class="book-standalone book-full">
+  <main class="book-full__main">
+<section class="book-sheet" id="page-0001" data-page="1">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">1</span>
+      </header>
+      <h1 class="chapter-opener">Design Principles and</h1>
+      <h2 class="chapter-title">Design Patterns</h2>
+      <p class="lead no-indent">Robert C. Martin</p>
+      <p class="lead no-indent">www.objectmentor.com</p>
+      <p class="lead">What is software architecture? The answer is multitiered. At the highest level, there are the architecture patterns that define the overall shape and structure of software applications<sup>1</sup>. Down a level is the architecture that is specifically related to the purpose of the software application. Yet another level down resides the architecture of the modules and their interconnections. This is the domain of design patterns<sup>2</sup>, packages, components, and classes. It is this level that we will concern ourselves with in this chapter.</p>
+      <p>Our scope in this chapter is quite limitted. There is much more to be said about the principles and patterns that are exposed here. Interested readers are referred to [Martin99].</p>
+      <h3 class="section-title">Architecture and Dependencies</h3>
+      <p>What goes wrong with software? The design of many software applications begins as a vital image in the minds of its designers. At this stage it is clean, elegant, and compelling. It has a simple beauty that makes the designers and implementers itch to see it working. Some of these applications manage to maintain this purity of design through the initial development and into the first release.</p>
+      <p>But then something begins to happen. The software starts to rot. At first it isn’t so bad. An ugly wart here, a clumsy hack there, but the beauty of the design still shows through. Yet, over time as the rotting continues, the ugly festering sores and boils accumulate until they dominate the design of the application. The program becomes a festering mass of code that the developers find increasingly hard to maintain. Eventu-</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Shaw96]</p>
+        <p><sup>2</sup> [GOF96]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0002" data-page="2">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">2</span>
+      </header>
+      <p class="lead">ally the sheer effort required to make even the simplest of changes to the application becomes so high that the engineers and front line managers cry for a redesign project. Such redesigns rarely succeed. Though the designers start out with good intentions, they find that they are shooting at a moving target. The old system continues to evolve and change, and the new design must keep up. The warts and ulcers accumulate in the new design before it ever makes it to its first release. On that fateful day, usually much later than planned, the morass of problems in the new design may be so bad that the designers are already crying for another redesign.</p>
+      <h3 class="section-title">Symptoms of Rotting Design</h3>
+      <p>There are four primary symptoms that tell us that our designs are rotting. They are not orthogonal, but are related to each other in ways that will become obvious. they are: rigidity, fragility, immobility, and viscosity.</p>
+      <p class="no-indent"><strong class="run-in">Rigidity.</strong> Rigidity is the tendency for software to be difficult to change, even in simple ways. Every change causes a cascade of subsequent changes in dependent modules. What begins as a simple two day change to one module grows into a multi-week marathon of change in module after module as the engineers chase the thread of the change through the application.</p>
+      <p>When software behaves this way, managers fear to allow engineers to fix non-critical problems. This reluctance derives from the fact that they don’t know, with any reliability, when the engineers will be finished. If the managers turn the engineers loose on such problems, they may disappear for long periods of time. The software design begins to take on some characteristics of a roach motel — engineers check in, but they don’t check out.</p>
+      <p>When the manager’s fears become so acute that they refuse to allow changes to software, official rigidity sets in. Thus, what starts as a design deficiency, winds up being adverse management policy.</p>
+      <p class="no-indent"><strong class="run-in">Fragility.</strong> Closely related to rigidity is fragility. Fragility is the tendency of the software to break in many places every time it is changed. Often the breakage occurs in areas that have no conceptual relationship with the area that was changed. Such errors fill the hearts of managers with foreboding. Every time they authorize a fix, they fear that the software will break in some unexpected way.</p>
+      <p>As the fragility becomes worse, the probability of breakage increases with time, asymptotically approaching 1. Such software is impossible to maintain. Every fix makes it worse, introducing more problems than are solved.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0003" data-page="3">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">3</span>
+      </header>
+      <p class="lead">Such software causes managers and customers to suspect that the developers have lost control of their software. Distrust reigns, and credibility is lost.</p>
+      <p class="no-indent"><strong class="run-in">Immobility.</strong> Immobility is the inability to reuse software from other projects or from parts of the same project. It often happens that one engineer will discover that he needs a module that is similar to one that another engineer wrote. However, it also often happens that the module in question has too much baggage that it depends upon. After much work, the engineers discover that the work and risk required to separate the desirable parts of the software from the undesirable parts are too great to tolerate. And so the software is simply rewritten instead of reused.</p>
+      <p class="no-indent"><strong class="run-in">Viscosity.</strong> Viscosity comes in two forms: viscosity of the design, and viscosity of the environment. When faced with a change, engineers usually find more than one way to make the change. Some of the ways preserve the design, others do not (i.e. they are hacks.) When the design preserving methods are harder to employ than the hacks, then the viscosity of the design is high. It is easy to do the wrong thing, but hard to do the right thing.</p>
+      <p>Viscosity of environment comes about when the development environment is slow and inefficient. For example, if compile times are very long, engineers will be tempted to make changes that don’t force large recompiles, even though those changes are not optimal from a design point of view. If the source code control system requires hours to check in just a few files, then engineers will be tempted to make changes that require as few check-ins as possible, regardless of whether the design is preserved.</p>
+      <p>These four symptoms are the tell-tale signs of poor architecture. Any application that exhibits them is suffering from a design that is rotting from the inside out. But what causes that rot to take place?</p>
+      <h3 class="section-title">Changing Requirements</h3>
+      <p>The immediate cause of the degradation of the design is well understood. The requirements have been changing in ways that the initial design did not anticipate. Often these changes need to be made quickly, and may be made by engineers who are not familiar with the original design philosophy. So, though the change to the design works, it somehow violates the original design. Bit by bit, as the changes continue to pour in, these violations accumulate until malignancy sets in.</p>
+      <p>However, we cannot blame the drifting of the requirements for the degradation of the design. We, as software engineers, know full well that requirements change. Indeed, most of us realize that the requirements document is the most volatile document in the</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0004" data-page="4">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">4</span>
+      </header>
+      <p class="lead">project. If our designs are failing due to the constant rain of changing requirements, it is our designs that are at fault. We must somehow find a way to make our designs resilient to such changes and protect them from rotting.</p>
+      <h3 class="section-title">Dependency Management</h3>
+      <p>What kind of changes cause designs to rot? Changes that introduce new and unplanned for dependencies. Each of the four symptoms mentioned above is either directly, or indirectly caused by improper dependencies between the modules of the software. It is the dependency architecture that is degrading, and with it the ability of the software to be maintained.</p>
+      <p>In order to forestall the degradation of the dependency architecture, the dependencies between modules in an application must be managed. This management consists of the creation of dependency firewalls. Accross such firewalls, dependencies do not propogate.</p>
+      <p>Object Oriented Design is replete with principles and techniques for building such firewalls, and for managing module dependencies. It is these principles and techniques that will be discussed in the remainder of this chapter. First we will examine the principles, and then the techniques, or design patterns, that help maintain the dependency architecture of an application.</p>
+      <h3 class="section-title">Principles of Object Oriented Class Design</h3>
+      <h3 class="section-title">The Open Closed Principle (OCP)<sup>1</sup></h3>
+      <p class="no-indent">A module should be open for extension but closed for modification.</p>
+      <p>Of all the principles of object oriented design, this is the most important. It originated from the work of Bertrand Meyer<sup>2</sup>. It means simply this: We should write our modules so that they can be extended, without requiring them to be modified. In other words, we want to be able to change what the modules do, without changing the source code of the modules.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [OCP97]</p>
+        <p><sup>2</sup> [OOSC98]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0005" data-page="5">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">5</span>
+      </header>
+      <p class="lead">This may sound contradictory, but there are several techniques for achieving the OCP on a large scale. All of these techniques are based upon abstraction. Indeed, abstraction is the key to the OCP. Several of these techniques are described below.</p>
+      <p class="no-indent"><strong class="run-in">Dynamic Polymorphism.</strong> Consider Listing 2-1. the LogOn function must be changed every time a new kind of modem is added to the software. Worse, since each different type of modem depends upon the Modem::Type enumeration, each modem must be recompiled every time a new kind of modem is added.</p>
+      <figure class="listing"><figcaption><strong>Listing 2-1</strong><br>Logon, must be modified to be extended.</figcaption><pre class="code-block"><code>struct Modem
+{
+enum Type {hayes, courrier, ernie) type;
+};
+struct Hayes
+{
+Modem::Type type;
+// Hayes related stuff
+};
+struct Courrier
+{
+Modem::Type type;
+// Courrier related stuff
+};
+struct Ernie
+{
+Modem::Type type;
+// Ernie related stuff
+};
+void LogOn(Modem&amp; m,
+string&amp; pno, string&amp; user, string&amp; pw)
+{
+if (m.type == Modem::hayes)
+DialHayes((Hayes&amp;)m, pno);
+else if (m.type == Modem::courrier)
+DialCourrier((Courrier&amp;)m, pno);
+else if (m.type == Modem::ernie)
+DialErnie((Ernie&amp;)m, pno)
+// ...you get the idea
+}</code></pre>
+      </figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0006" data-page="6">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">6</span>
+      </header>
+      <p class="lead">Of course this is not the worst attribute of this kind of design. Programs that are designed this way tend to be littered with similar if/else or switch statement. Every time anything needs to be done to the modem, a switch statement if/else chain will need to select the proper functions to use. When new modems are added, or modem policy changes, the code must be scanned for all these selection statements, and each must be appropriately modified.</p>
+      <p>Worse, programmers may use local optimizations that hide the structure of the selection statements. For example, it might be that the function is exactly the same for Hayes and Courrier modems. Thus we might see code like this:</p>
+      <pre class="code-block"><code>if (modem.type == Modem::ernie)
+SendErnie((Ernie&amp;)modem, c);
+else
+SendHayes((Hayes&amp;)modem, c);</code></pre>
+      <p>Clearly, such structures make the system much harder to maintain, and are very prone to error.</p>
+      <p>As an example of the OCP, consider Figure 2-13. Here the LogOn function depends only upon the Modem interface. Additional modems will not cause the LogOn function to change. Thus, we have created a module that can be extended, with new modems, without requiring modification. See Listing 2-2.</p>
+      <figure class="diagram">
+        <img src="assets/images/page_0006_fig_2_13.png" width="1546" height="509" alt="Figure 2-13">
+  <figcaption>Figure 2-13</figcaption>
+</figure>
+      <figure class="listing"><figcaption><strong>Listing 2-2</strong><br>LogOn has been closed for modification</figcaption><pre class="code-block"><code>class Modem
+{
+public:
++ Dial(pno)
++ Send(char)
++ Recv() : char
++ Hangup()
+};</code></pre>
+      </figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0007" data-page="7">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">7</span>
+      </header>
+      <p class="no-indent"><strong class="run-in">Static Polymorphism.</strong> Another technique for conforming to the OCP is through the use of templates or generics. Listing 2-3 shows how this is done. The LogOn function can be extended with many different types of modems without requiring modification.</p>
+      <p class="no-indent"><strong class="run-in">Architectural Goals of the OCP.</strong> By using these techniques to conform to the OCP, we can create modules that are extensible, without being changed. This means that, with a little forethought, we can add new features to existing code, without changing the existing code and by only adding new code. This is an ideal that can be difficult to achieve, but you will see it achieved, several times, in the case studies later on in this book.</p>
+      <p>Even if the OCP cannot be fully achieved, even partial OCP compliance can make dramatic improvements in the structure of an application. It is always better if changes do not propogate into existing code that already works. If you don’t have to change working code, you aren’t likely to break it.</p>
+      <pre class="code-block"><code>virtual void Dial(const string&amp; pno) = 0;
+virtual void Send(char) = 0;
+virtual char Recv() = 0;
+virtual void Hangup() = 0;
+};
+void LogOn(Modem&amp; m,
+string&amp; pno, string&amp; user, string&amp; pw)
+{
+m.Dial(pno);
+// you get the idea.
+}</code></pre>
+      <figure class="listing"><figcaption><strong>Listing 2-3</strong><br>Logon is closed for modification through static polymorphism</figcaption><pre class="code-block"><code>template &lt;typename MODEM&gt;
+void LogOn(MODEM&amp; m,
+string&amp; pno, string&amp; user, string&amp; pw)
+{
+m.Dial(pno);
+// you get the idea.
+}</code></pre>
+      </figure>
+      <figure class="diagram">
+        <figcaption>Listing 2-2<br>LogOn has been closed for modification</figcaption>
+      </figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0008" data-page="8">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">8</span>
+      </header>
+      <h3 class="section-title">The Liskov Substitution Principle (LSP)<sup>1</sup></h3>
+      <p class="no-indent principle-statement">Subclasses should be substitutable for their base classes.</p>
+      <p>This principle was coined by Barbar Liskov<sup>2</sup> in her work regarding data abstraction and type theory. It also derives from the concept of Design by Contract (DBC) by Bertrand Meyer<sup>3</sup>.</p>
+      <p>The concept, as stated above, is depicted in Figure 2-14. Derived classes should be substitutable for their base classes. That is, a user of a base class should continue to function properly if a derivative of that base class is passed to it.</p>
+      <figure class="diagram">
+        <img src="assets/images/page_0008_fig_2_14.png" width="1546" height="389" alt="Figure 2-14">
+        <figcaption><strong>Figure 2-14</strong><br>LSP schema.</figcaption>
+      </figure>
+      <p>In other words, if some function <code>User</code> takes an argument ot type <code>Base</code>, then as shown in Listing 2-4, it should be legal to pass in an instance of <code>Derived</code> to that function.</p>
+      <figure class="listing">
+        <figcaption><strong>Listing 2-4</strong><br>User, Based, Derived, example.</figcaption>
+        <pre class="code-block"><code>void User(Base&amp; b);
+
+Derived d;
+User(d);</code></pre>
+      </figure>
+      <p>This may seem obvious, but there are subtleties that need to be considered. The canonical example is the Circle/Ellipse dilemma.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [LSP97]</p>
+        <p><sup>2</sup> [Liksov88]</p>
+        <p><sup>3</sup> [OOSC98]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0009" data-page="9">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">9</span>
+      </header>
+      <p class="no-indent"><strong class="run-in">The Circle/Ellipse Dilemma.</strong> Most of us learn, in high school math, that a circle is just a degenerate form of an ellipse. All circles are ellipses with coincident foci. This is-a relationship tempts us to model circles and ellipses using inheritance as shown in Figure 2-15.</p>
+      <p>While this satisfies our conceptual model, there are certain difficulties. A closer look at the declaration of Ellipse in Figure 2-16 begins to expose them. Notice that Ellipse has three data elements. The first two are the foci, and the last is the length of the major axis. If Circle inherits from Ellipse, then it will inherit these data variables. This is unfortunate since Circle really only needs two data elements, a center point and a radius.</p>
+      <figure class="diagram">
+  <img src="assets/images/page_0009_fig_2_15.png" width="1546" height="389" alt="Figure 2-15">
+  <figcaption>Figure 2-15<br>Circle / Ellipse Dilemma</figcaption>
+</figure>
+      <figure class="diagram">
+  <img src="assets/images/page_0009_fig_2_16.png" width="1546" height="500" alt="Figure 2-16">
+  <figcaption>Figure 2-16<br>Declaration of Ellipse</figcaption>
+</figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0010" data-page="10">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">10</span>
+      </header>
+
+      <p class="lead no-indent">Still, if we ignore the slight overhead in space, we can make Circle behave properly by overriding its SetFoci method to ensure that both foci are kept at the same value. See Listing 2-5. Thus, either focus will act as the center of the circle, and the major axis will be its diameter.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 2-5</strong><br>Keeping the Circle Foci coincident.</figcaption>
+        <pre class="code-block"><code>void Circle::SetFoci(const Point&amp; a, const Point&amp; b)
+{
+  itsFocusA = a;
+  itsFocusB = a;
+}</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong class="run-in">Clients Ruin Everything.</strong> Certainly the model we have created is self consistent. An instance of Circle will obeys all the rules of a circle. There is nothing you can do to it to make it violate those rules. So too for Ellipse. The two classes form a nicely consistent model, even if Circle has one too many data elements.</p>
+      <p>However, Circle and Ellipse do not live alone in a universe by themselves. They cohabit that universe with many other entities, and provide their public interfaces to those entities. Those interfaces imply a contract. The contract may not be explicitly stated, but it is there nonetheless. For example, users of Ellipse have the right to expect the following code fragment to succeed:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>void f(Ellipse&amp; e)
+{
+  Point a(-1,0);
+  Point b(1,0);
+  e.SetFoci(a,b);
+  e.SetMajorAxis(3);
+  assert(e.GetFocusA() == a);
+  assert(e.GetFocusB() == b);
+  assert(e.GetMajorAxis() == 3);
+}</code></pre>
+      </figure>
+
+      <p>In this case the function expects to be working with an Ellipse. As such, it expects to be able to set the foci, and major axis, and then verify that they have been properly set. If we pass an instance of Ellipse into this function, it will be quite happy. However, if we pass an instance of Circle into the function, it will fail rather badly.</p>
+      <p>If we were to make the contract of Ellipse explicit, we would see a postcondition on the SetFoci that guaranteed that the input values got copied to the member variables, and that the major axis variable was left unchanged. Clearly Circle violates this guarantee because it ignores the second input variable of SetFoci.</p>
+      <p class="no-indent"><strong class="run-in">Design by Contract.</strong> Restating the LSP, we can say that, in order to be substitutable, the contract of the base class must be honored by the derived class. Since</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0011" data-page="11">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">11</span>
+      </header>
+      <p class="lead">Circle does not honor the implied contract of Ellipse, it is not substitutable and violates the LSP.</p>
+      <p>Making the contract explicit is an avenue of research followed by Bertrand Meyer. He has invented a language named Eiffel in which contracts are explicitly stated for each method, and explicitly checked at each invocation. Those of us who are not using Eiffel, have to make do with simple assertions and comments.</p>
+      <p>To state the contract of a method, we declare what must be true before the method is called. This is called the precondition. If the precondition fails, the results of the method are undefined, and the method ought not be called. We also declare what the method guarantees will be true once it has completed. This is called the postcondition. A method that fails its postcondition should not return.</p>
+      <p>Restating the LSP once again, this time in terms of the contracts, a derived class is substitutable for its base class if:</p>
+      <ol class="numbered">
+        <li>Its preconditions are no stronger than the base class method.</li>
+        <li>Its postconditions are no weaker than the base class method.</li>
+      </ol>
+      <p>Or, in other words, derived methods should expect no more and provide no less.</p>
+      <p class="no-indent"><strong class="run-in">Repercussions of LSP Violation.</strong> Unfortunately, LSP violations are difficult to detect until it is too late. In the Circle/Ellipse case, everything worked fine until some client came along and discovered that the implicit contract had been violated.</p>
+      <p>If the design is heavily used, the cost of repairing the LSP violation may be too great to bear. It might not be economical to go back and change the design, and then rebuild and retest all the existing clients. Therefore the solution will likely be to put into an if/else statement in the client that discovered the violation. This if/else statement checks to be sure that the Ellipse is actually an Ellipse and not a Circle. See Listing 2-6.</p>
+      <figure class="listing"><figcaption><strong>Listing 2-6</strong><br>Ugly fix for LSP violation</figcaption><pre class="code-block"><code>void f(Ellipse&amp; e)
+{
+  if (typeid(e) == typeid(Ellipse))
+  {
+    Point a(-1,0);
+    Point b(1,0);
+    e.SetFoci(a,b);
+    e.SetMajorAxis(3);
+    assert(e.GetFocusA() == a);
+    assert(e.GetFocusB() == b);</code></pre>
+      </figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0012" data-page="12">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">12</span>
+      </header>
+      <p class="lead">Careful examination of Listing 2-6 will show it to be a violation of the OCP. Now, whenever some new derivative of Ellipse is created, this function will have to be checked to see if it should be allowed to operate upon it. Thus, violations of LSP are latent violations of OCP.</p>
+      <h3 class="section-title">The Dependency Inversion Principle (DIP)<sup>1</sup></h3>
+      <p class="no-indent">Depend upon Abstractions. Do not depend upon concretions.</p>
+      <p>If the OCP states the goal of OO architecture, the DIP states the primary mechanism. Dependency Inversion is the strategy of depending upon interfaces or abstract functions and classes, rather than upon concrete functions and classes. This principle is the enabling force behind component design, COM, CORBA, EJB, etc.</p>
+      <p>Procedural designs exhibit a particular kind of dependency structure. As Figure 2-17 shows, this structure starts at the top and points down towards details. High level modules depend upon lower level modules, which depend upon yet lower level modules, etc..</p>
+      <p>A little thought should expose this dependency structure as intrinsically weak. The high level modules deal with the high level policies of the application. These policies generally care little about the details that implement them. Why then, must these high level modules directly depend upon those implementation modules?</p>
+      <p>An object oriented architecture shows a very different dependency structure, one in which the majority of dependencies point towards abstractions. Morevoer, the modules that contain detailed implementation are no longer depended upon, rather they depend themselves upon abstractions. Thus the dependency upon them has been inverted. See Figure 2-18.</p>
+      <p class="no-indent"><strong class="run-in">Depending upon Abstractions.</strong> The implication of this principle is quite simple. Every dependency in the design should target an interface, or an abstract class. No dependency should target a concrete class.</p>
+      <figure class="listing"><figcaption><strong>Listing 2-6</strong><br>Ugly fix for LSP violation</figcaption><pre class="code-block"><code>    assert(e.GetMajorAxis() == 3);
+  }
+  else
+    throw NotAnEllipse(e);
+}</code></pre>
+      </figure>
+      <div class="footnotes">
+        <p><sup>1</sup> [DIP97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0013" data-page="13">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">13</span>
+      </header>
+      <p class="lead">Clearly such a restriction is draconian, and there are mitigating circumstatnces that we will explore momentarily. But, as much as is feasible, the principle should be followed. The reason is simple, concrete things change alot, abstract things change much less frequently. Morevoer, abstractions are “hinge points”, they represent the places where the design can bend or be extended, without themselves being modified (OCP).</p>
+      <figure class="diagram">
+  <img src="assets/images/page_0013_fig_2_17.png" width="1546" height="570" alt="Figure 2-17">
+  <figcaption>Figure 2-17<br>Dependency Structure of a Procedural Architecture</figcaption>
+</figure>
+      <figure class="diagram">
+  <img src="assets/images/page_0013_fig_2_18.png" width="1546" height="570" alt="Figure 2-18">
+  <figcaption>Figure 2-18<br>Dependency Structure of an Object Oriented Architecture</figcaption>
+</figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0014" data-page="14">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">14</span>
+      </header>
+      <p class="lead">Substrates such as COM enforce this principle, at least between components. The only visible part of a COM component is its abstract interface. Thus, in COM, there is little escape from the DIP.</p>
+      <p class="no-indent"><strong class="run-in">Mitigating Forces.</strong> One motivation behind the DIP is to prevent you from depending upon volatile modules. The DIP makes the assumption that anything concrete is volatile. While this is frequently so, especially in early development, there are exceptions. For example, the <code>string.h</code> standard C library is very concrete, but is not at all volatile. Depending upon it in an ANSI string environment is not harmful. Likewise, if you have tried and true modules that are concrete, but not volatile, depending upon them is not so bad. Since they are not likely to change, they are not likely to inject volatility into your design.</p>
+      <p>Take care however. A dependency upon <code>string.h</code> could turn very ugly when the requirements for the project forced you to change to UNICODE characters. Non-volatility is not a replacement for the substitutability of an abstract interface.</p>
+      <p class="no-indent"><strong class="run-in">Object Creation.</strong> One of the most common places that designs depend upon concrete classes is when those designs create instances. By definition, you cannot create instances of abstract classes. Thus, to create an instance, you must depend upon a concrete class.</p>
+      <p>Creation of instances can happen all through the architecture of the design. Thus, it might seem that there is no escape and that the entire architecture will be littered with dependencies upon concrete classes. However, there is an elegant solution to this problem named ABSTRACTFACTORY<sup>1</sup> -- a design pattern that we’ll be examining in more detail towards the end of this chapter.</p>
+      <h3 class="section-title">The Interface Segregation Principle (ISP)<sup>2</sup></h3>
+      <p class="no-indent">Many client specific interfaces are better than one general purpose interface</p>
+      <p>The ISP is another one of the enabling technologies supporting component substrates such as COM. Without it, components and classes would be much less useful and portable.</p>
+      <p>The essence of the principle is quite simple. If you have a class that has several clients, rather than loading the class with all the methods that the clients need, create specific interfaces for each client and multiply inherit them into the class.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [GOF96] p??</p>
+        <p><sup>2</sup> [ISP97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0015" data-page="15">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">15</span>
+      </header>
+      <p class="lead">Figure 2-19 shows a class with many clients, and one large interface to serve them all. Note that whenever a change is made to one of the methods that ClientA calls, ClientB and ClientC may be affected. It may be necessary to recompile and redeploy them. This is unfortunate.</p>
+      <p>A better technique is shown in Figure 2-20. The methods needed by each client are placed in special interfaces that are specific to that client. Those interfaces are multiply inherited by the Service class, and implemented there.</p>
+      <p>If the interface for ClientA needs to change, ClientB and ClientC will remain unaffected. They will not have to be recompiled or redeployed.</p>
+      <figure class="diagram">
+  <img src="assets/images/page_0015_fig_2_19.png" width="1546" height="489" alt="Figure 2-19">
+  <figcaption>Figure 2-19<br>Fat Service with Integrated Interfaces</figcaption>
+</figure>
+      <h3 class="section-title">What does Client Specific Mean?</h3>
+      <p>The ISP does not recommend that every class that uses a service have its own special interface class that the service must inherit from. If that were the case, the service would depend upon each and every client in a bizarre and unhealthy way. Rather, clients should be categorized by their type, and interfaces for each type of client should be created.</p>
+      <p>If two or more different client types need the same method, the method should be added to both of their interfaces. This is neither harmful nor confusing to the client.</p>
+      <p class="no-indent"><strong class="run-in">Changing Interfaces.</strong> When object oriented applications are maintained, the interfaces to existing classes and components often change. There are times when these changes have a huge impact and force the recompilation and redeployment of a very large part of the design. This impact can be mitigated by adding new interfaces to existing objects, rather than changing the existing interface. Clients of the old inter-</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0016" data-page="16">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">16</span>
+      </header>
+      <p class="lead">face that wish to access methods of the new interface, can query the object for that interface as shown in the following code.</p>
+      <figure class="code-snippet"><pre class="code-block"><code>void Client(Service* s)
+{
+  if (NewService* ns = dynamic_cast&lt;NewService*&gt;(s))
+  {
+    // use the new service interface
+  }
+}</code></pre>
+      </figure>
+      <p>As with all principles, care must be taken not to overdo it. The specter of a class with hundreds of different interfaces, some segregated by client and other segregated by version, would be frightening indeed.</p>
+      <h3 class="section-title">Principles of Package Architecture</h3>
+      <p>Classes are a necessary, but insufficient, means of organizing a design. The larger granularity of packages are needed to help bring order. But how do we choose which classes belong in which packages. Below are three principles known as the Package Cohesion Principles, that attempt to help the software architect.</p>
+      <figure class="diagram">
+  <img src="assets/images/page_0016_fig_2_20.png" width="1546" height="630" alt="Figure 2-20">
+  <figcaption>Figure 2-20<br>Segregated Interfaces</figcaption>
+</figure>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0017" data-page="17">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">17</span>
+      </header>
+      <h3 class="section-title">The Release Reuse Equivalency Principle (REP)<sup>1</sup></h3>
+      <p class="no-indent">The granule of reuse is the granule of release.</p>
+      <p>A reusable element, be it a component, a class, or a cluster of classes, cannot be reused unless it is managed by a release system of some kind. Users will be unwilling to use the element if they are forced to upgrade every time the author changes it. Thus. even though the author has released a new version of his reusable element, he must be willing to support and maintain older versions while his customers go about the slow business of getting ready to upgrade. Thus, clients will refuse to reuse an element unless the author promises to keep track of version numbers, and maintain old versions for awhile.</p>
+      <p>Therefore, one criterion for grouping classes into packages is reuse. Since packages are the unit of release, they are also the unit of reuse. Therefore architects would do well to group reusable classes together into packages.</p>
+      <h3 class="section-title">The Common Closure Principle (CCP)<sup>2</sup></h3>
+      <p class="no-indent">Classes that change together, belong together.</p>
+      <p>A large development project is subdivided into a large network of interelated packages. The work to manage, test, and release those packages is non-trivial. The more packages that change in any given release, the greater the work to rebuild, test, and deploy the release. Therefore we would like to minimze the number of packages that are changed in any given release cycle of the product.</p>
+      <p>To achieve this, we group together classes that we think will change together. This requires a certain amount of precience since we must anticipate the kinds of changes that are likely. Still, when we group classes that change together into the same packages, then the package impact from release to release will be minimzed.</p>
+      <h3 class="section-title">The Common Reuse Principle (CRP)<sup>3</sup></h3>
+      <p class="no-indent">Classes that aren’t reused together should not be grouped together.</p>
+      <p>A dependency upon a package is a dependency upon everything within the package. When a package changes, and its release number is bumped, all clients of that pack-</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Granularity97]</p>
+        <p><sup>2</sup> [Granularity97]</p>
+        <p><sup>3</sup> [Granularity97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0018" data-page="18">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">18</span>
+      </header>
+
+      <p class="no-indent">age must verify that they work with the new package — even if nothing they used within the package actually changed.</p>
+      <p>We frequently experience this when our OS vendor releases a new operating system. We have to upgrade sooner or later, because the vendor will not support the old version forever. So even though nothing of interest to us changed in the new release, we must go through the effort of upgrading and revalidating.</p>
+      <p>The same can happen with packages if classes that are not used together are grouped together. Changes to a class that I don’t care about will still force a new release of the package, and still cause me to go through the effort of upgrading and revalidating.</p>
+      <h3 class="section-title">Tension between the Package Cohesion Principles</h3>
+      <p>These three principles are mutually exclusive. They cannot simultaneously be satisfied. That is because each principle benefits a different group of people. The REP and CRP makes life easy for reusers, whereas the CCP makes life easier for maintainers. The CCP strives to make packages as large as possible (after all, if all the classes live in just one package, then only one package will ever change). The CRP, however, tries to make packages very small.</p>
+      <p>Fortunately, packages are not fixed in stone. Indeed, it is the nature of packages to shift and jitter during the course of development. Early in a project, architects may set up the package structure such that CCP dominates and develoipment and maintenance is aided. Later, as the architecture stabilizes, the architects may refactor the package structure to maximize REP and CRP for the external reusers.</p>
+      <p class="no-indent"><strong class="run-in">The Package Coupling Principles.</strong> The next three packages govern the interlationships between packages. Applications tend to be large networks of interlated packages. The rules that govern these interrelationship are some of the most important rules in object oriented architecture.</p>
+      <h3 class="section-title">The Acyclic Dependencies Principle (ADP)<sup>1</sup></h3>
+      <p class="principle-statement">The dependencies betwen packages must not form cycles.</p>
+      <p>Since packages are the granule of release, they also tend to focus manpower. Engineers will typically work inside a single package rather than working on dozens. This tedency is amplified by the package cohesion principles, since they tend to group</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Granularity97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0019" data-page="19">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">19</span>
+      </header>
+
+      <p class="no-indent">together those classes that are related. Thus, engineers will find that their changes are directed into just a few package. Once those changes are made, they can release those packages to the rest of the project.</p>
+      <p>Before they can do this release, however, they must test that the package works. To do that, they must compile and build it with all the packages that it depends upon. Hopefully this number is small.</p>
+      <p>Consider Figure 2-21. Astute readers will recognize that there are a number of flaws in the architecture. The DIP seems to have been abandoned, and along with it the OCP. The GUI depends directly upon the communications package, and apparently is reponsible for transporting data to the analysis package. Yuk.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0019_fig.png" width="789" height="588" alt="Figure 2-21 Acyclic Package Network">
+  <figcaption><strong>Figure 2-21</strong><br>Acyclic Package Network</figcaption>
+</figure>
+      <p>Still, lets use this rather ugly structure for some examples. Consider what would be required to release the Protocol package. The engineers would have to build it with the latest release of the CommError package, and run their tests. Protocol has no other dependencies, so no other package is needed. This is nice. We can test and release with a minimal amount of work.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0020" data-page="20">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">20</span>
+      </header>
+
+      <p class="no-indent"><strong>A Cycle Creeps In.</strong>&emsp;But now lets say that I am an engineer working on the CommError package. I have decided that I need to display a message on the screen. Since the screen is controlled by the GUI, I send a message to one of the GUI objects to get my message up on the screen. This means that I have made CommError dependent upon GUI. See Figure 2-22.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0020_fig.png" width="789" height="588" alt="Figure 2-22 A cycle has been added.">
+  <figcaption><strong>Figure 2-22</strong><br>A cycle has been added.</figcaption>
+</figure>
+      <p>Now what happens when the guys who are working on Protocol want to release their package. They have to build their test suite with CommError, GUI, Comm, ModemControl, Analysis, and Database! This is clearly disastrous. The workload of the engineers has been increased by an abhorent amount, due to one single little dependency that got out of control.</p>
+      <p>This means that someone needs to be watching the package dependency structure with regularity, and breaking cycles wherever they appear. Otherwise the transitive dependencies between modules will cause every module to depend upon every other module.</p>
+      <p class="no-indent"><strong>Breaking a Cycle.</strong>&emsp;Cycles can be broken in two ways. The first involves creating a new package, and the second makes use of the DIP and ISP.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0021" data-page="21">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">21</span>
+      </header>
+
+      <p class="no-indent">Figure 2-23 shows how to break the cycle by adding a new package. The classes that CommError needed are pulled out of GUI and placed in a new package named MessageManager. Both GUI and CommError are made to depend upon this new package.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0021_fig_2_23.png" width="1546" height="840" alt="Figure 2-23">
+  <figcaption><strong>Figure 2-23</strong></figcaption>
+</figure>
+      <p>This is an example of how the package structure tends to jitter and shift during development. New package come into existence, and classes move from old package to new packages, to help break cycles.</p>
+      <p>Figure 2-24 shows a before and after picture of the other technique for breaking cycles. Here we see two packages that are bound by a cycle. Class A depends upon class X, and class Y depends upon class B. We break the cycle by inverting the dependency between Y and B. This is done by adding a new interface, BY, to B. This interface has all the methods that Y needs. Y uses this interface and B implements it.</p>
+      <p>Notice the placement of BY. It is placed in the package with the class that uses it. This is a pattern that you will see repeated throughout the case studies that deal with pack-</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0022" data-page="22">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">22</span>
+      </header>
+
+      <p class="no-indent">ages. Interfaces are very often included in the package that uses them, rather than in the package that implements them.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0022_fig_2_24.png" width="1546" height="860" alt="Figure 2-24">
+  <figcaption><strong>Figure 2-24</strong></figcaption>
+</figure>
+      <h3 class="section-title">The Stable Dependencies Principle (SDP)<sup>1</sup></h3>
+      <p class="principle-statement">Depend in the direction of stability.</p>
+      <p>Though this seems to be an obvious principle, there is quite a bit we can say about it. Stability is not always well understood.</p>
+      <p class="no-indent"><strong>Stability.</strong>&emsp;What is meant by stability? Stand a penny on its side. Is it stable in that position? Likely you’d say not. However, unless disturbed, it will remain in that posi-</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Stability97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0023" data-page="23">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">23</span>
+      </header>
+
+      <p class="no-indent">tion for a very very long time. Thus stability has nothing direclty to do with frequency of change. The penny is not changing, but it is hard to think of it as stable.</p>
+      <p>Stability is related to the amount of work required to make a change. The penny is not stable because it requires very little work to topple it. On the other hand, a table is very stable because it takes a considerable amount of effort to turn it over.</p>
+      <p>How does this relate to software? There are many factors that make a software package hard to change. Its size, complexity, clarity, etc. We are going to ignore all those factors and focus upon something different. One sure way to make a software package difficult to change, is to make lots of other software packages depend upon it. A package with lots of incomming dependencies is very stable because it requires a great deal of work to reconcile any changes with all the dependent packages.</p>
+<figure class="diagram">
+  <img src="assets/images/page_0023_fig.png" width="549" height="268" alt="Figure 2-25 X is a stable package">
+  <figcaption><strong>Figure 2-25</strong><br>X is a stable package</figcaption>
+</figure>
+      <p>Figure 2-25 shows X: a stable package. This package has three packages depending upon it, and therefore it has three good reasons not to change. We say that it is responsible to those three packages. On the other hand, X depends upon nothing, so it has no external influence to make it change. We say it is independent.</p>
+      <p>Figure 2-26, on the other hand, shows a very instable package. Y has no other packages depending upon it; we say that it is irresponsible. Y also has three packages that it depends upon, so changes may come from three external sources. We say that Y is dependent.</p>
+      <p class="no-indent"><strong>Stability Metrics.</strong>&emsp;We can calculate the stability of a package using a trio of simple metrics.</p>
+      <p class="metric-block"><span class="metric-name">Ca</span> — Afferent Coupling. The number of classes outside the package that depend upon classes inside the package. (i.e. incomming dependencies)</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0024" data-page="24">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">24</span>
+      </header>
+
+<figure class="diagram">
+  <img src="assets/images/page_0024_fig.png" width="549" height="308" alt="Figure 2-26 Y is instable.">
+  <figcaption><strong>Figure 2-26</strong><br>Y is instable.</figcaption>
+</figure>
+      <p class="metric-block"><span class="metric-name">Ce</span> — Efferent Coupling. The number of classes outside the package that classes inside the package depend upon. (i.e. outgoing dependencies)</p>
+      <p class="metric-block"><span class="metric-name">I</span> — Instability. <span class="formula">I = Ce / (Ca + Ce)</span> This is a metric that has the range: [0,1].</p>
+      <p>If there are no outgoing dependencies, then I will be zero and the package is stable. If there are no incomming dependencies then I will be one and the package is instable.</p>
+      <p>Now we can rephrase the SDP as follows: “Depend upon packages whose I metric is lower than yours.”</p>
+      <p class="no-indent"><strong>Rationale.</strong> Should all software be stable? One of the most important attributes of well designed software is ease of change. Software that is flexible in the presence of changing requirements is thought well of. Yet that software is instable by our definition. Indeed, we greatly desire that portions of our software be instable. We want certain modules to be easy to change so that when requirements drift, the design can respond with ease.</p>
+      <p>Figure 2-27 shows how the SDP can be violated. Flexible is a package that we intend to be easy to change. We want Flexible to be instable. However, some engineer, working in the package named Stable, hung a dependency upon Flexible. This violates the SDP since the I metric for Stable is much lower than the I metric for Flexible. As a result, Flexible will no longer be easy to change. A change to Flexible will force us to deal with Stable and all its dependents.</p>
+      <h3 class="section-title">The Stable Abstractions Principle (SAP)<sup>1</sup></h3>
+      <p class="principle-statement">Stable packages should be abstract packages.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0025" data-page="25">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">25</span>
+      </header>
+
+<figure class="diagram">
+  <img src="assets/images/page_0025_fig.png" width="549" height="408" alt="Figure 2-27 Violation of SDP.">
+  <figcaption><strong>Figure 2-27</strong><br>Violation of SDP.</figcaption>
+</figure>
+      <p>We can envision the packages structure of our application as a set of interconnected packages with instable packages at the top, and stable packages on the bottom. In this view, all dependencies point downwards.</p>
+      <p>Those packages at the top are instable and flexible. But those at the bottom are very difficult to change. And this leads us to a dilemma: Do we want packages in our design that are hard to change?</p>
+      <p>Clearly, the more packages that are hard to change, the less flexible our overall design will be. However, there is a loophole we can crawl through. The highly stable packages at the bottom of the dependency network may be very difficult to change, but according to the OCP they do not have to be difficult to extend!</p>
+      <p>If the stable packages at the bottom are also highly abstract, then they can be easily extended. This means that it is possible to compose our application from instable packages that are easy to change, and stable packages that are easy to extend. This is a good thing.</p>
+      <p>Thus, the SAP is just a restatement of the DIP. It states the packages that are the most depended upon (i.e. stable) should also be the most abstract. But how do we meaure abstractness?</p>
+      <p class="no-indent"><strong>The Abstractness Metrics.</strong> We can derive another trio of metrics to help us calculate abstractness.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [Stability97]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0026" data-page="26">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">26</span>
+      </header>
+
+      <p class="metric-block"><span class="metric-name">Nc</span> — Number of classes in the package.</p>
+      <p class="metric-block"><span class="metric-name">Na</span> — Number of abstract classes in the package. Remember, an abstract class is a class with at least one pure interface, and cannot be instantiated.</p>
+      <p class="metric-block"><span class="metric-name">A</span> — Abstractness. <span class="math formula">A = <span class="frac"><span class="top">N<sub>a</sub></span><span class="bottom">N<sub>c</sub></span></span></span></p>
+      <p>The A metric has a range of [0,1], just like the I metric. A value of zero means that the package contains no abstract classes. A value of one means that the package contains nothing but abstract classes.</p>
+      <p class="no-indent"><strong>The I vs A graph.</strong>&emsp;The SAP can now be restated in terms of the I and A metrics: I should increase as A decreases. That is, concrete packages should be instable while abstract packages should be stable. We can plot this graphically on the A vs I graph. See Figure 2-28.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 420 300" width="420" height="300" role="img" aria-label="Figure 2-28 The A vs I graph">
+          <defs>
+            <marker id="arrow-open" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- axes -->
+          <line x1="60" y1="240" x2="360" y2="240" stroke="#000" stroke-width="1.2"/>
+          <line x1="60" y1="240" x2="60" y2="40" stroke="#000" stroke-width="1.2"/>
+          <text x="210" y="275" text-anchor="middle" font-family="Times, serif" font-size="14" font-style="italic">I</text>
+          <text x="30" y="140" text-anchor="middle" font-family="Times, serif" font-size="14" font-style="italic" transform="rotate(-90 30 140)">A</text>
+          <text x="52" y="248" text-anchor="end" font-family="Times, serif" font-size="12">0</text>
+          <text x="365" y="248" font-family="Times, serif" font-size="12">1</text>
+          <text x="52" y="245" text-anchor="end" font-family="Times, serif" font-size="12">0</text>
+          <text x="52" y="48" text-anchor="end" font-family="Times, serif" font-size="12">1</text>
+          <!-- dashed bounding box -->
+          <line x1="60" y1="40" x2="360" y2="40" stroke="#000" stroke-width="1" stroke-dasharray="6,4"/>
+          <line x1="360" y1="40" x2="360" y2="240" stroke="#000" stroke-width="1" stroke-dasharray="6,4"/>
+          <!-- main sequence -->
+          <line x1="60" y1="40" x2="360" y2="240" stroke="#000" stroke-width="1.5"/>
+          <text x="200" y="115" font-family="Times, serif" font-size="11" transform="rotate(-35 200 115)">The Main Sequence</text>
+          <!-- endpoints -->
+          <circle cx="60" cy="40" r="6" fill="#000"/>
+          <circle cx="360" cy="240" r="6" fill="#000"/>
+          <!-- zone labels -->
+          <text x="95" y="215" font-family="Times, serif" font-size="11" transform="rotate(35 95 215)">The Zone of</text>
+          <text x="105" y="228" font-family="Times, serif" font-size="11" transform="rotate(35 105 228)">Pain</text>
+          <text x="285" y="95" font-family="Times, serif" font-size="11" transform="rotate(-35 285 95)">The</text>
+          <text x="275" y="108" font-family="Times, serif" font-size="11" transform="rotate(-35 275 108)">Zone of</text>
+          <text x="265" y="121" font-family="Times, serif" font-size="11" transform="rotate(-35 265 121)">Uselessness</text>
+        </svg>
+        <figcaption><strong>Figure 2-28</strong><br>The A vs I graph.</figcaption>
+      </figure>
+      <p>It seems clear that packages should appear at either of the two black dots on Figure 2-28. Those at the upper left are completely abstract and very stable. Those at the lower right are completely concrete and very instable. This is just the way we like it. However what about package X in Figure 2-29? Where should it go?</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0027" data-page="27">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">27</span>
+      </header>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 360 220" width="360" height="220" role="img" aria-label="Figure 2-29 What do we put X on the A vs I Graph?">
+          <defs>
+            <marker id="pkg-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Package C -->
+          <rect x="30" y="20" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <path d="M30,20 L55,20 L55,32 L30,32 Z" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="75" y="52" text-anchor="middle" font-family="Times, serif" font-size="13">C</text>
+          <!-- Package X -->
+          <rect x="130" y="85" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <path d="M130,85 L155,85 L155,97 L130,97 Z" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="175" y="117" text-anchor="middle" font-family="Times, serif" font-size="13">X</text>
+          <!-- Package A -->
+          <rect x="230" y="150" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <path d="M230,150 L255,150 L255,162 L230,162 Z" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="275" y="182" text-anchor="middle" font-family="Times, serif" font-size="13">A</text>
+          <!-- dependencies -->
+          <line x1="175" y1="75" x2="175" y2="85" stroke="#000" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#pkg-arrow)"/>
+          <line x1="220" y1="140" x2="230" y2="150" stroke="#000" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#pkg-arrow)"/>
+        </svg>
+        <figcaption><strong>Figure 2-29</strong><br>What do we put X on the A vs I Graph?</figcaption>
+      </figure>
+      <p>We can determine where we want Package X, by looking at where we don’t want it to go. The upper right corner of the AI graph represents packages that are highly abstract and that nobody depends upon. This is the zone of uselessness. Certainly we don’t want X to live there. On the other hand, the the lower left point of the AI graph represents packages that are concrete and have lots of incomming dependencies. This point represents the worst case for a package. Since the elements there are concrete, they cannot be extended the way abstract entities can; and since they have lots of incomming dependencies, the change will be very painful. This is the zone of pain, and we certainly don’t want our package to live there.</p>
+      <p>Maximizing the distance between these two zones gives us a line called the main sequence. We’d like our packages to sit on this line if at all possible. A position on this line means that the package is abstract in proportion to its incomming dependencies and is concrete in proportion to its outgoing dependencies. In other words, the classes in such a package are conforming to the DIP.</p>
+      <p class="no-indent"><strong>Distance Metrics.</strong>&emsp;This leaves us one more set of metrics to examine. Given the A and I values of any package, we’d like to know how far that package is from the main sequence.</p>
+      <p class="metric-block"><span class="metric-name">D</span> — Distance. <span class="math formula">D = |A + I − 1| / √2</span> This ranges from [0,~0.707].</p>
+      <p class="metric-block"><span class="metric-name">D′</span> — Normalized Distance. <span class="math formula">D′ = |A + I − 1|</span> This metric is much more convenient than D since it ranges from [0,1]. Zero indicates that the package is directly on the main sequence. One indicates that the package is as far away as possible from the main sequence.</p>
+      <p>These metrics measure object oriented architecture. They are imperfect, and reliance upon them as the sole indicator of a sturdy architecture would be foolhardy. However, they can be, and have been, used to help measure the dependency structure of an application.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0028" data-page="28">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">28</span>
+      </header>
+
+      <h3 class="section-title">Patterns of Object Oriented Architecture</h3>
+      <p class="lead">When following the principles described above to create object oriented architectures, , one finds that one repeats the same structures over and over again. These repeating structures of design and architecture are known as design patterns<sup>1</sup>.</p>
+      <p>The essential definition of a design pattern is a well worn and known good solution to a common problem. Design patterns are definitively not new. Rather they are old techniques that have shown their usefulness over a period of many years.</p>
+      <p>Some common design patterns are described below. These are the patterns that you will come accross while reading through the case studies later in the book.</p>
+      <p>It should be noted that the topic of Design Patterns cannot be adequately covered in a single chapter of a single book. Interested readers are strongly encouraged to read [GOF96].</p>
+      <p class="no-indent"><strong>Abstract Server</strong></p>
+      <p class="no-indent">When a client depends directly on a server, the DIP is violated. Changes to the server will propogate to the client, and the client will be unable to easily use similar servers. This can be rectified by inserting an anbstract interface between the client and the server as shown in Figure 2-30.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 400 200" width="400" height="200" role="img" aria-label="Figure 2-30 Abstract Server">
+          <defs>
+            <marker id="assoc-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Consumer -->
+          <rect x="20" y="70" width="100" height="50" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="70" y="100" text-anchor="middle" font-family="Times, serif" font-size="13">Consumer</text>
+          <!-- Interface -->
+          <rect x="220" y="20" width="150" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="295" y="42" text-anchor="middle" font-family="Times, serif" font-size="11">«interface»</text>
+          <text x="295" y="60" text-anchor="middle" font-family="Times, serif" font-size="13">Resource</text>
+          <text x="295" y="72" text-anchor="middle" font-family="Times, serif" font-size="13">Manager</text>
+          <!-- Implementation -->
+          <rect x="240" y="120" width="110" height="50" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="295" y="150" text-anchor="middle" font-family="Times, serif" font-size="13">Resource</text>
+          <text x="295" y="162" text-anchor="middle" font-family="Times, serif" font-size="13">Manager_I</text>
+          <!-- association -->
+          <line x1="120" y1="95" x2="220" y2="48" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+          <!-- realization -->
+          <line x1="295" y1="120" x2="295" y2="75" stroke="#000" stroke-width="1.2"/>
+          <polygon points="295,75 288,88 302,88" fill="none" stroke="#000" stroke-width="1.2"/>
+        </svg>
+        <figcaption><strong>Figure 2-30</strong><br>Abstract Server</figcaption>
+      </figure>
+      <p>The abstract interface becomes a “hinge point” upon which the design can flex. Different implementations of the server can be bound to an unsuspecting client.</p>
+      <div class="footnotes">
+        <p><sup>1</sup> [GOF96]</p>
+      </div>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0029" data-page="29">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">29</span>
+      </header>
+
+      <p class="no-indent"><strong>Adapter</strong></p>
+      <p class="no-indent">When inserting an abstract interface is infeasible because the server is third party software, or is so heavily depended upon that it cannot easily be changed, an ADAPTER can be used to bind the abstract interface to the server. See Figure 2-31.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 420 220" width="420" height="220" role="img" aria-label="Figure 2-31 Adapter">
+          <defs>
+            <marker id="assoc-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Consumer -->
+          <rect x="20" y="80" width="100" height="50" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="70" y="110" text-anchor="middle" font-family="Times, serif" font-size="13">Consumer</text>
+          <!-- Interface -->
+          <rect x="160" y="20" width="150" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="235" y="42" text-anchor="middle" font-family="Times, serif" font-size="11">«interface»</text>
+          <text x="235" y="60" text-anchor="middle" font-family="Times, serif" font-size="13">Resource</text>
+          <text x="235" y="72" text-anchor="middle" font-family="Times, serif" font-size="13">Manager</text>
+          <!-- Adapter -->
+          <rect x="175" y="110" width="120" height="45" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="235" y="128" text-anchor="middle" font-family="Times, serif" font-size="11">Resource</text>
+          <text x="235" y="142" text-anchor="middle" font-family="Times, serif" font-size="11">Manager</text>
+          <text x="235" y="152" text-anchor="middle" font-family="Times, serif" font-size="11">Adapter</text>
+          <!-- Server -->
+          <rect x="320" y="105" width="90" height="55" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="365" y="130" text-anchor="middle" font-family="Times, serif" font-size="12">Resource</text>
+          <text x="365" y="145" text-anchor="middle" font-family="Times, serif" font-size="12">Manager_I</text>
+          <!-- Consumer -> interface -->
+          <line x1="120" y1="100" x2="160" y2="48" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+          <!-- Adapter -> interface -->
+          <line x1="235" y1="110" x2="235" y2="75" stroke="#000" stroke-width="1.2"/>
+          <polygon points="235,75 228,88 242,88" fill="none" stroke="#000" stroke-width="1.2"/>
+          <!-- Adapter -> server -->
+          <line x1="295" y1="132" x2="320" y2="132" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+        </svg>
+        <figcaption><strong>Figure 2-31</strong><br>Adapter</figcaption>
+      </figure>
+      <p>The adapter is an object that implements the abstract interface to delegate to the server. Every method of the adpater simply translates and then delegates.</p>
+      <p class="no-indent"><strong>Observer</strong></p>
+      <p class="no-indent">It often occurs that one element of a design needs to take some form of action when another element in the design discovers that an event has occurred. However, we frequently don’t want the detector to know about the actor.</p>
+      <p>Consider the case of a meter that shows the status of a sensor. Every time the sensor changes its reading we want the meter to display the new value. However, we don’t want the sensor to know anything about the meter.</p>
+      <p>We can address this situation with an OBSERVER, see Figure 2-32. The <code>Sensor</code> derives from a class named <code>Subject</code>, and <code>Meter</code> derives from an interface called <code>Observer</code>. <code>Subject</code> contains a list of <code>Observers</code>. This list is loaded by the <code>Regsiter</code> method of <code>Subject</code>. In order to be told of events, our <code>Meter</code> must register with the <code>Subject</code> base class of the <code>Sensor</code>.</p>
+      <p>Figure 2-33 describes the dynamics of the collaboration. Some entity passes control to the <code>Sensor</code> who determines that its reading has changed. The <code>Sensor</code> calls <code>Notify</code> on its <code>Subject</code>. The <code>Subject</code> then cycles through all the <code>Observers</code></p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0030" data-page="30">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">30</span>
+      </header>
+
+      <p class="no-indent">that have been registered, calling <code>Update</code> on each. The <code>Update</code> message is caught by the <code>Meter</code> who uses it to read the new value of the <code>Sensor</code> and display it.</p>
+      <figure class="diagram">
+        <svg viewBox="0 0 440 260" width="440" height="260" role="img" aria-label="Figure 2-32 Observer Structure">
+          <defs>
+            <marker id="gen-arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+            <marker id="assoc-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Observer interface -->
+          <rect x="20" y="20" width="150" height="70" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="20" y1="42" x2="170" y2="42" stroke="#000" stroke-width="1"/>
+          <line x1="20" y1="58" x2="170" y2="58" stroke="#000" stroke-width="1"/>
+          <text x="95" y="36" text-anchor="middle" font-family="Times, serif" font-size="11">«interface» Observer</text>
+          <text x="30" y="78" font-family="Times, serif" font-size="11">+ Update</text>
+          <!-- Subject -->
+          <rect x="250" y="20" width="170" height="85" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="250" y1="42" x2="420" y2="42" stroke="#000" stroke-width="1"/>
+          <line x1="250" y1="58" x2="420" y2="58" stroke="#000" stroke-width="1"/>
+          <text x="335" y="36" text-anchor="middle" font-family="Times, serif" font-size="13">Subject</text>
+          <text x="260" y="74" font-family="Times, serif" font-size="10">+ Register(Observer*)</text>
+          <text x="260" y="88" font-family="Times, serif" font-size="10">+ Notify</text>
+          <!-- Meter -->
+          <rect x="20" y="160" width="120" height="70" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="20" y1="182" x2="140" y2="182" stroke="#000" stroke-width="1"/>
+          <line x1="20" y1="198" x2="140" y2="198" stroke="#000" stroke-width="1"/>
+          <text x="80" y="176" text-anchor="middle" font-family="Times, serif" font-size="13">Meter</text>
+          <text x="30" y="218" font-family="Times, serif" font-size="11">+ Update()</text>
+          <!-- Sensor -->
+          <rect x="250" y="160" width="150" height="85" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="250" y1="182" x2="400" y2="182" stroke="#000" stroke-width="1"/>
+          <line x1="250" y1="198" x2="400" y2="198" stroke="#000" stroke-width="1"/>
+          <text x="325" y="176" text-anchor="middle" font-family="Times, serif" font-size="13">Sensor</text>
+          <text x="260" y="218" font-family="Times, serif" font-size="10">+ Check()</text>
+          <text x="260" y="232" font-family="Times, serif" font-size="10">+ GetValue() : double</text>
+          <!-- generalizations -->
+          <line x1="80" y1="160" x2="95" y2="90" stroke="#000" stroke-width="1.2" marker-end="url(#gen-arrow)"/>
+          <line x1="325" y1="160" x2="335" y2="105" stroke="#000" stroke-width="1.2" marker-end="url(#gen-arrow)"/>
+          <!-- associations -->
+          <line x1="250" y1="70" x2="170" y2="55" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+          <text x="200" y="55" font-family="Times, serif" font-size="12">*</text>
+          <line x1="140" y1="195" x2="250" y2="195" stroke="#000" stroke-width="1.2" marker-end="url(#assoc-arrow)"/>
+        </svg>
+        <figcaption><strong>Figure 2-32</strong><br>Observer Structure</figcaption>
+      </figure>
+      <figure class="diagram">
+        <svg viewBox="0 0 440 200" width="440" height="200" role="img" aria-label="Figure 2-33 Observer sequence diagram">
+          <defs>
+            <marker id="msg-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="none" stroke="#000" stroke-width="1"/>
+            </marker>
+            <marker id="ret-arrow" markerWidth="8" markerHeight="8" refX="1" refY="4" orient="auto">
+              <path d="M8,0 L0,4 L8,8 Z" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="2,2"/>
+            </marker>
+          </defs>
+          <!-- lifeline headers -->
+          <circle cx="40" cy="14" r="8" fill="none" stroke="#000" stroke-width="1.2"/>
+          <line x1="40" y1="22" x2="40" y2="38" stroke="#000" stroke-width="1.2"/>
+          <line x1="28" y1="30" x2="52" y2="30" stroke="#000" stroke-width="1.2"/>
+          <line x1="40" y1="38" x2="40" y2="55" stroke="#000" stroke-width="1.2"/>
+          <rect x="110" y="10" width="60" height="28" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="140" y="28" text-anchor="middle" font-family="Times, serif" font-size="12">Sensor</text>
+          <rect x="210" y="10" width="60" height="28" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="240" y="28" text-anchor="middle" font-family="Times, serif" font-size="12">Subject</text>
+          <rect x="320" y="10" width="60" height="28" fill="none" stroke="#000" stroke-width="1.2"/>
+          <text x="350" y="28" text-anchor="middle" font-family="Times, serif" font-size="12">Meter</text>
+          <!-- lifelines -->
+          <line x1="40" y1="55" x2="40" y2="185" stroke="#000" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="140" y1="38" x2="140" y2="185" stroke="#000" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="240" y1="38" x2="240" y2="185" stroke="#000" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="350" y1="38" x2="350" y2="185" stroke="#000" stroke-width="1" stroke-dasharray="4,4"/>
+          <!-- activation bars -->
+          <rect x="133" y="65" width="14" height="100" fill="none" stroke="#000" stroke-width="1"/>
+          <rect x="233" y="85" width="14" height="60" fill="none" stroke="#000" stroke-width="1"/>
+          <rect x="343" y="105" width="14" height="50" fill="none" stroke="#000" stroke-width="1"/>
+          <!-- messages -->
+          <line x1="40" y1="65" x2="133" y2="65" stroke="#000" stroke-width="1" marker-end="url(#msg-arrow)"/>
+          <text x="75" y="60" text-anchor="middle" font-family="Times, serif" font-size="11">Check</text>
+          <line x1="147" y1="85" x2="233" y2="85" stroke="#000" stroke-width="1" marker-end="url(#msg-arrow)"/>
+          <text x="190" y="80" text-anchor="middle" font-family="Times, serif" font-size="11">Notify</text>
+          <line x1="247" y1="105" x2="343" y2="105" stroke="#000" stroke-width="1" marker-end="url(#msg-arrow)"/>
+          <text x="295" y="100" text-anchor="middle" font-family="Times, serif" font-size="11">Update</text>
+          <text x="380" y="115" font-family="Times, serif" font-size="11">Observer</text>
+          <line x1="350" y1="125" x2="147" y2="125" stroke="#000" stroke-width="1" marker-end="url(#msg-arrow)"/>
+          <text x="248" y="120" text-anchor="middle" font-family="Times, serif" font-size="11">GetValue</text>
+          <line x1="147" y1="145" x2="350" y2="145" stroke="#000" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#ret-arrow)"/>
+          <text x="248" y="140" text-anchor="middle" font-family="Times, serif" font-size="11">Value</text>
+        </svg>
+        <figcaption><strong>Figure 2-33</strong></figcaption>
+      </figure>
+      <p class="no-indent"><strong>Bridge</strong></p>
+      <p class="no-indent">One of the problems with implementing an abstract class with inheritance is that the derived class is so tightly coupled to the base class. This can lead to problems when other clients want to use the derived class functions without dragging along the baggage of the base hiearchy.</p>
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0031" data-page="31">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">31</span>
+      </header>
+
+      <p class="no-indent">For example, consider a music synthesizer class. The base class translates MIDI input into a set of primitive EmitVoice calls that are implemented by a derived class. Note that the EmitVoice function of the derived class would be useful, in and of itself. Unforunately it is inextricably bound to the MusicSynthesizer class and the PlayMidi function. There is no way to get at the PlayVoice method without dragging the base class around with it. Also, there is no way to create different implementations of the PlayMidi function that use the same EmitVoice function. In short, the hiearchy is just to coupled.</p>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Figure 2-34 Badly coupled hierarchy">
+          <defs>
+            <marker id="fig234-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <rect x="65" y="8" width="90" height="62" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="65" y1="28" x2="155" y2="28" stroke="black" stroke-width="1"/>
+          <line x1="65" y1="42" x2="155" y2="42" stroke="black" stroke-width="1"/>
+          <text x="110" y="20" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="110" y="30" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer</text>
+          <text x="110" y="38" text-anchor="middle" font-size="8">{abstract}</text>
+          <text x="72" y="54" font-size="8">+ PlayMidi</text>
+          <text x="72" y="64" font-size="8" font-style="italic">- EmitVoice</text>
+          <line x1="110" y1="70" x2="110" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig234-inherit)"/>
+          <rect x="58" y="118" width="104" height="38" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="58" y1="136" x2="162" y2="136" stroke="black" stroke-width="1"/>
+          <text x="110" y="130" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="110" y="140" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer_I</text>
+          <text x="66" y="152" font-size="8">+ EmitVoice</text>
+        </svg>
+        <figcaption><strong>Figure 2-34</strong><br>Badly coupled hierarchy</figcaption>
+      </figure>
+
+      <p>The BRIDGE pattern solves this problem by creating a strong seperation between the interface and implementation. Figure 2-35 shows how this works. The MusicSynthesizer class contains an abstract PlayMidi function which is implemented by MusicSynthesizer_I. It calls the EmitVoice function that is implemented in MusicSynthesizer to delegate to the VoiceEmitter interface. This interface is implemented by VoiceEmitter_I and emits the necessary sounds.</p>
+      <p>Now it is possible to implement both EmitVoice and PlayMidi separately from each other. The two functions have been decoupled. EmitVoice can be called without bringing along all the MusicSynthesizer baggage, and PlayMidi can be implemented any number of different ways, while still using the same EmitVoice function.</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0032" data-page="32">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">32</span>
+      </header>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Figure 2-35 Hierarchy decoupled with Bridge">
+          <defs>
+            <marker id="fig235-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+            <marker id="fig235-assoc" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Music Synthesizer -->
+          <rect x="20" y="8" width="110" height="62" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="20" y1="28" x2="130" y2="28" stroke="black" stroke-width="1"/>
+          <line x1="20" y1="42" x2="130" y2="42" stroke="black" stroke-width="1"/>
+          <text x="75" y="20" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="75" y="30" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer</text>
+          <text x="75" y="38" text-anchor="middle" font-size="8">{abstract}</text>
+          <text x="28" y="54" font-size="8" font-style="italic">+ PlayMidi</text>
+          <text x="28" y="64" font-size="8">- EmitVoice</text>
+          <!-- Voice Emitter interface -->
+          <rect x="210" y="8" width="110" height="48" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="210" y1="28" x2="320" y2="28" stroke="black" stroke-width="1"/>
+          <text x="265" y="18" text-anchor="middle" font-size="8">«interface»</text>
+          <text x="265" y="26" text-anchor="middle" font-size="9" font-weight="bold">Voice Emitter</text>
+          <text x="218" y="40" font-size="8">+ EmitVoice</text>
+          <!-- Association -->
+          <line x1="130" y1="36" x2="210" y2="36" stroke="black" stroke-width="1" marker-end="url(#fig235-assoc)"/>
+          <!-- Music Synthesizer_I -->
+          <line x1="75" y1="70" x2="75" y2="108" stroke="black" stroke-width="1" marker-end="url(#fig235-inherit)"/>
+          <rect x="18" y="108" width="114" height="38" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="18" y1="126" x2="132" y2="126" stroke="black" stroke-width="1"/>
+          <text x="75" y="120" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="75" y="130" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer_I</text>
+          <text x="26" y="142" font-size="8">- PlayMidi</text>
+          <!-- Voice Emitter_I -->
+          <line x1="265" y1="56" x2="265" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig235-inherit)"/>
+          <rect x="218" y="118" width="94" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="265" y="130" text-anchor="middle" font-size="9" font-weight="bold">Voice</text>
+          <text x="265" y="140" text-anchor="middle" font-size="9" font-weight="bold">Emitter_I</text>
+        </svg>
+        <figcaption><strong>Figure 2-35</strong><br>Hierarchy decoupled with Bridge</figcaption>
+      </figure>
+
+      <h3 class="section-title">Abstract Factory</h3>
+      <p class="no-indent">The DIP strongly recommends that modules not depend upon concrete classes. However, in order ot create an instance of a class, you must depend upon the concrete class. ABSTRACTFACTORY is a pattern that allows that dependency upon the concrete class to exist in one, and only one, place.</p>
+      <p>Figure 2-36 shows how this is accomplished for the Modem example. All the users who wish to create modems use an interface called ModemFactory. A pointer to this interface is held in a global variable named GtheFactory. The users call the Make function passing in a string that uniquely defines the particular subclass of Modem that they want. The Make function returns a pointer to a Modem interface.</p>
+      <p>The ModemFactory interface it implemented by ModemFactory_I. This class is created by main, and a pointer to it is loaded into the GtheFactory global. Thus, no module in the system knows about the concrete modem classes except for ModemFactory_I, and no module knows about ModemFactory_I except for main.</p>
+
+      <h3 class="section-title">Conclusion</h3>
+      <p class="no-indent">This chapter has introduced the concept of object oriented architecture and defined it as the structure of classes and packages that keeps the software application flexible, robust, reusable, and developable. The principles and patterns presented here support</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0033" data-page="33">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">33</span>
+      </header>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 420 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Figure 2-36 Abstract Factory">
+          <defs>
+            <marker id="fig236-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+            <marker id="fig236-open" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Users -->
+          <rect x="8" y="52" width="36" height="18" fill="white" stroke="black" stroke-width="1"/>
+          <rect x="12" y="48" width="36" height="18" fill="white" stroke="black" stroke-width="1"/>
+          <text x="30" y="61" text-anchor="middle" font-size="8" font-weight="bold">Users</text>
+          <!-- Modem Factory interface -->
+          <rect x="168" y="8" width="96" height="52" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="168" y1="28" x2="264" y2="28" stroke="black" stroke-width="1"/>
+          <text x="216" y="18" text-anchor="middle" font-size="8">«interface»</text>
+          <text x="216" y="26" text-anchor="middle" font-size="9" font-weight="bold">Modem</text>
+          <text x="216" y="34" text-anchor="middle" font-size="9" font-weight="bold">Factory</text>
+          <text x="176" y="48" font-size="7">+ Make(string) : Modem*</text>
+          <!-- GtheFactory link -->
+          <text x="118" y="44" text-anchor="middle" font-size="7">«global»</text>
+          <text x="118" y="54" text-anchor="middle" font-size="7">GtheFactory</text>
+          <line x1="48" y1="56" x2="168" y2="34" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+          <!-- Modem interface -->
+          <rect x="8" y="118" width="72" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="44" y="128" text-anchor="middle" font-size="7">«interface»</text>
+          <text x="44" y="138" text-anchor="middle" font-size="9" font-weight="bold">Modem</text>
+          <!-- Concrete modems -->
+          <rect x="8" y="168" width="56" height="22" fill="white" stroke="black" stroke-width="1"/>
+          <text x="36" y="183" text-anchor="middle" font-size="8" font-weight="bold">Hayes</text>
+          <rect x="8" y="196" width="56" height="22" fill="white" stroke="black" stroke-width="1"/>
+          <text x="36" y="211" text-anchor="middle" font-size="8" font-weight="bold">Courrier</text>
+          <rect x="8" y="224" width="56" height="22" fill="white" stroke="black" stroke-width="1"/>
+          <text x="36" y="239" text-anchor="middle" font-size="8" font-weight="bold">Ernie</text>
+          <!-- Inheritance tree -->
+          <line x1="36" y1="168" x2="36" y2="158" stroke="black" stroke-width="1"/>
+          <line x1="36" y1="196" x2="36" y2="190" stroke="black" stroke-width="1"/>
+          <line x1="36" y1="224" x2="36" y2="218" stroke="black" stroke-width="1"/>
+          <line x1="36" y1="158" x2="20" y2="158" stroke="black" stroke-width="1"/>
+          <line x1="20" y1="158" x2="20" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig236-inherit)"/>
+          <!-- Modem Factory_I -->
+          <rect x="168" y="118" width="96" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="216" y="128" text-anchor="middle" font-size="9" font-weight="bold">Modem</text>
+          <text x="216" y="138" text-anchor="middle" font-size="9" font-weight="bold">Factory_I</text>
+          <line x1="216" y1="60" x2="216" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig236-inherit)"/>
+          <!-- Dashed dependency to Modem -->
+          <line x1="168" y1="132" x2="80" y2="132" stroke="black" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#fig236-open)"/>
+          <!-- main -->
+          <rect x="318" y="118" width="88" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="362" y="128" text-anchor="middle" font-size="7">«main program»</text>
+          <text x="362" y="138" text-anchor="middle" font-size="9" font-weight="bold">main</text>
+          <text x="290" y="112" text-anchor="middle" font-size="7">«creates»</text>
+          <line x1="318" y1="132" x2="264" y2="132" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+          <!-- creates modems -->
+          <text x="118" y="152" text-anchor="middle" font-size="7">«creates»</text>
+          <line x1="168" y1="145" x2="120" y2="145" stroke="black" stroke-width="1"/>
+          <line x1="120" y1="145" x2="120" y2="235" stroke="black" stroke-width="1"/>
+          <line x1="120" y1="179" x2="64" y2="179" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+          <line x1="120" y1="207" x2="64" y2="207" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+          <line x1="120" y1="235" x2="64" y2="235" stroke="black" stroke-width="1" marker-end="url(#fig236-open)"/>
+        </svg>
+        <figcaption><strong>Figure 2-36</strong><br>Abstract Factory</figcaption>
+      </figure>
+
+      <p class="no-indent">such architectures, and have been proven over time to be powerful aids in software architecture.</p>
+      <p>This has been an overview. There is much more to be said about the topic of OO architecture than can be said in the few pages of this chapter, indeed by foreshortening the topic so much, we have run the risk of doing the reader a disservice. It has been said that a little knowledge is a dangerous thing, and this chapter has provided a little knowledge. We strongly urge you to search out the books and papers in the citings of this chapter to learn more.</p>
+
+      <h3 class="section-title">Bibliography</h3>
+      <p class="bib-entry"><span class="bib-key">[Shaw96]:</span> Patterns of Software Architecture (???), Garlan and Shaw, ...</p>
+      <p class="bib-entry"><span class="bib-key">[GOF96]:</span> Design Patterns...</p>
+      <p class="bib-entry"><span class="bib-key">[OOSC98]:</span> OOSC...</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+<section class="book-sheet" id="page-0034" data-page="34">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+<header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">34</span>
+      </header>
+
+      <p class="bib-entry no-indent"><span class="bib-key">[OCP97]:</span> The Open Closed Principle, Robert C. Martin...</p>
+      <p class="bib-entry"><span class="bib-key">[LSP97]:</span> The Liskov Substitution Principle, Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[DIP97]:</span> The Dependency Inversion Principle, Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[ISP97]:</span> The Interface Segregation Principle, Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[Granularity97]:</span> Granularity, Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[Stability97]:</span> Stability, Robert C. Martin</p>
+      <p class="bib-entry"><span class="bib-key">[Liksov88]:</span> Data Abstraction and Hierarchy...</p>
+      <p class="bib-entry"><span class="bib-key">[Martin99]:</span> Designing Object Oriented Applications using UML, 2d. ed., Robert C. Martin, Prentice Hall, 1999.</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</section>
+  </main>
+</body>
+</html>

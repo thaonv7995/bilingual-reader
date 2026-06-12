@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Indexing Order By</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Indexing Order By</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">In both cases, you might wonder if and how you could possibly reach a pipelined <code><strong>order by</strong></code> execution. For this you can execute the query with the full index definition in the <code><strong>order by</strong></code> clause and inspect the result. You will often realize that you have a false perception of the index and that the index order is indeed not as required by the original <code><strong>order by</strong></code> clause so the database cannot use the index to avoid a sort operation.</p>
+
+      <p>If the optimizer prefers an explicit sort operation for its cost value, it is usually because the optimizer takes the best execution plan for the <i>full</i> <i>execution</i> of the query. In other words, the optimizer opts for the execution plan which is the fastest to get the last record. If the database detects that the application fetches only the first few rows, it might in turn prefer an indexed <code><strong>order by</strong></code>. Chapter 7, &ldquo;Partial Results&rdquo;, explains the corresponding optimization methods.</p>
+
+      <h3 class="section-title">Automatically Optimized Clustering Factor</h3>
+
+      <p class="no-indent">The Oracle database keeps the clustering factor at a minimum by considering the <code>ROWID</code> for the index order. Whenever two index entries have the same key values, the <code>ROWID</code> decides upon their final order.</p>
+
+      <p>The index is therefore also ordered according to the table order and thus has the smallest possible clustering factor because the <code>ROWID</code> represents the physical address of table row.</p>
+
+      <p>By adding another column to an index, you insert a new sort criterion <i>before</i> the <code>ROWID</code>. The database has less freedom in aligning the index entries according to the table order so the index clustering factor can only get worse.</p>
+
+      <p>Regardless, it is still possible that the index order roughly corresponds to the table order. The sales of a day are probably still clustered together in the table as well as in the index&mdash;even though their sequence is not exactly the same anymore. The database has to read the table blocks multiple times when using the <code>SALE_DT_PR</code> index&mdash;but these are just the same table blocks as before. Due to the caching of frequently accessed data, the performance impact could be considerably lower than indicated by the cost values.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">133</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

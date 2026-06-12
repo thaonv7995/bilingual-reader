@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page ul.bullets code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0429.html">← Trước</a>
+    <a href="page_0431.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">430</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>bfw = Files.newBufferedWriter(path, StandardOpenOption.WRITE);
+bfw = Files.newBufferedWriter(path, Charset.forName("UTF-8"),
+StandardOpenOption.CREATE);</code></pre>
+      </figure>
+
+      <p>Hầu hết các tham số đều tự giải thích, nhưng tham số <code>OpenOption</code>&nbsp;thì hơi phức tạp một chút. <code>OpenOption</code>&nbsp;là một Interface (Giao diện) và không định nghĩa bất kỳ giá trị nào. Các giá trị được định nghĩa trong Lớp (Class) <code>StandardOpenOption</code>, lớp triển khai <code>OpenOption</code>. Cả bốn phương thức được đề cập ở trên đều có thể được gọi mà không cần đối số này, và trong trường hợp đó, một giá trị mặc định sẽ được sử dụng. Các giá trị mặc định là khác nhau đối với mỗi phương thức và cụ thể như sau:</p>
+
+      <ul class="bullets">
+        <li>Đối với <code>newInputStream</code>, mặc định là <code>READ</code>.</li>
+        <li>Đối với <code>newOutputStream</code>, mặc định là sự kết hợp của&nbsp;<code>WRITE</code>, <code>CREATE</code>, và
+        <code>TRUNCATE_EXISTING</code>.</li>
+        <li>Phương thức <code>newBufferedReader</code>&nbsp;không có tham số này vì file chỉ được mở để đọc.</li>
+        <li>Đối với <code>newBufferedWriter</code>, mặc định là sự kết hợp của <code>WRITE</code>, <code>CREATE</code>, và
+        <code>TRUNCATE_EXISTING</code>.</li>
+      </ul>
+
+      <p>Sự kết hợp của <code>WRITE</code>, <code>CREATE</code>, và <code>TRUNCATE_EXISTING</code>&nbsp;nghĩa là file được mở để ghi, nó sẽ được tạo nếu chưa tồn tại, và nó sẽ bị cắt bớt (nghĩa là toàn bộ nội dung của nó sẽ bị xóa) nếu đã tồn tại.</p>
+
+      <p>Hơn nữa, tùy thuộc vào việc bạn đang mở file để đọc hay ghi, một số sự kết hợp <code>OpenOption</code>&nbsp;có thể là không hợp lệ khi khởi tạo stream. Ví dụ, nếu bạn truyền <code>StandardOpenOption.WRITE</code>&nbsp;vào <code>newInputStream</code>, hoặc <code>StandardOpenOption.READ</code>&nbsp;vào <code>newOutputStream</code>, một <code>IllegalArgumentException</code>&nbsp;sẽ bị ném ra. Bạn không cần phải nhớ tất cả các sự kết hợp của các giá trị hợp lệ và không hợp lệ này cho kỳ thi.</p>
+
+      <h3 class="section-title section-title--minor">Đọc và ghi toàn bộ dữ liệu cùng một lúc<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Nếu bạn cảm thấy việc sử dụng stream để đọc hoặc ghi các file nhỏ tốn quá nhiều công sức, bạn sẽ thích các phương thức sau đây:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

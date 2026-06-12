@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 8: Writing Functions — Function Qualifiers</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p.qual-term {
+      margin: 1.5mm 0 0.5mm 6mm;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.qual-desc {
+      margin: 0 0 2mm 12mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.qual-subterm {
+      margin: 1mm 0 0.5mm 18mm;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.qual-subdesc {
+      margin: 0 0 1.5mm 24mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0161.html">← Prev</a>
+    <a href="page_0163.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">162</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>$$
+LANGUAGE language_of_function</code></pre>
+      </figure>
+
+      <p class="no-indent">Argument names are optional, but if the arguments are not named, you cannot call
+      them using the <code>arg1 := ...</code> argument syntax. Arguments can also take a default value,
+      which makes the argument optional. Optional arguments should be positioned after
+      nonoptional arguments.</p>
+
+      <p>Functional definitions often include additional qualifiers to optimize execution and to
+      enforce security:</p>
+
+      <p class="qual-term">LANGUAGE</p>
+      <p class="qual-desc">The language must be one installed in your database. Obtain a list with the <code>SELECT
+      lanname FROM pg_language;</code> query.</p>
+
+      <p class="qual-term">VOLATILITY</p>
+      <p class="qual-desc">This setting clues the query planner into whether outputs can be cached and used
+      across multiple calls. Your choices are:</p>
+
+      <p class="qual-subterm">IMMUTABLE</p>
+      <p class="qual-subdesc">The function will always return the same output for the same input.</p>
+
+      <p class="qual-subterm">STABLE</p>
+      <p class="qual-subdesc">The function will return the same value for the same inputs within the same
+      query.</p>
+
+      <p class="qual-subterm">VOLATILE</p>
+      <p class="qual-subdesc">The function can return different values with each call, even with the same
+      inputs. Functions that change data or depend on environment settings like
+      system time should be marked as VOLATILE. This is the default.</p>
+
+      <p class="qual-subdesc">Keep in mind that the volatility setting is merely a hint to the planner. The
+      default value of VOLATILE ensures that the planner will always recompute the
+      plan. If you use one of the other values, the planner can still choose to forgo
+      caching if it decides that recomputing is more cost-effective.</p>
+
+      <p class="qual-term">STRICT</p>
+      <p class="qual-desc">A strict function will always return NULL if any inputs are NULL, and the planner
+      in that case will skip evaluating the function altogether. Unless the function is
+      adorned with the STRICT qualifier, the query planner deems it not to be strict.</p>
+
+      <p class="qual-desc">When writing SQL functions, be careful when using STRICT, because it could
+      prevent the planner from taking advantage of indexes. Read our aticle <span class="accent-word">STRICT
+      on SQL Functions</span> for more details.</p>
+
+      <p class="qual-term">COST</p>
+      <p class="qual-desc">This is a relative measure of computational intensiveness. SQL and PL/pgSQL
+      functions default to 100 and C functions to 1. This affects the order that the planner
+      will follow when evaluating functions in a WHERE clause, and the likelihood of cach&shy;ing.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">144<span class="sep">|</span>Chapter 8: Writing Functions</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

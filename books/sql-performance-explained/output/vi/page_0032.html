@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">32</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <p>Nếu không có thống kê nào có sẵn&mdash;ví dụ như vì chúng đã bị xóa&mdash;trình tối ưu hóa sẽ sử dụng các giá trị mặc định. Các thống kê mặc định của cơ sở dữ liệu Oracle gợi ý một chỉ mục nhỏ với độ chọn lọc trung bình. Chúng dẫn đến ước lượng rằng <code>INDEX RANGE SCAN</code> sẽ trả về 40 hàng. Kế hoạch thực thi cho thấy ước lượng này trong cột Rows (một lần nữa, xem Ví dụ&nbsp;2.1 trên trang&nbsp;19). Rõ ràng đây là một sự đánh giá thấp nghiêm trọng, vì có 1000 nhân viên làm việc cho chi nhánh này.</p>
+
+      <p>Nếu chúng ta cung cấp thống kê chính xác, trình tối ưu hóa sẽ làm tốt hơn. Kế hoạch thực thi sau đây cho thấy ước lượng mới: 1000 hàng cho <code>INDEX RANGE SCAN</code>. Do đó, nó đã tính toán một giá trị chi phí cao hơn cho việc truy cập bảng tiếp theo.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id |Operation                   | Name         | Rows | Cost |
+---------------------------------------------------------------
+| 0 |SELECT STATEMENT            |              |    1 |  680 |
+|*1 | TABLE ACCESS BY INDEX ROWID| EMPLOYEES    |    1 |  680 |
+|*2 |  INDEX RANGE SCAN          | EMPLOYEES_PK | 1000 |    4 |
+---------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+  1 - filter("LAST_NAME"='WINAND')
+  2 - access("SUBSIDIARY_ID"=30)</code></pre>
+      </figure>
+
+      <p>Giá trị chi phí 680 thậm chí còn cao hơn giá trị chi phí cho kế hoạch thực thi sử dụng <code>FULL TABLE SCAN</code> (477, xem trang&nbsp;20). Do đó, trình tối ưu hóa sẽ tự động ưu tiên <code>FULL TABLE SCAN</code>.</p>
+
+      <p>Ví dụ về một chỉ mục chậm này không nên che giấu thực tế rằng việc lập chỉ mục đúng là giải pháp tốt nhất. Tất nhiên, việc tìm kiếm theo họ là tốt nhất được hỗ trợ bởi một chỉ mục trên <code>LAST_NAME</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX emp_name ON employees (last_name);</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">22</p>
+    </article>
+  </main>
+</body>
+</html>

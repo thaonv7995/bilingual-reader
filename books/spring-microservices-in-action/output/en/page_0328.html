@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: Section 10.2.1 ECS manual deployment</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0327.html">← Prev</a>
+    <a href="page_0329.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Beyond the infrastructure: deploying EagleEye</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">303</span>
+      </header>
+
+      <p class="no-indent">work is for the terminally impatient (like me) and will show how to deploy EagleEye manually to your Amazon instance. This will help you understand the mechanics of deploying the service and see the deployed services running in your container. While getting your hands dirty and manually deploying your services is fun, it isn&rsquo;t sustainable or recommended.</p>
+
+      <p>This is where the second part of this section comes into play. You&rsquo;re going to automate the entire build and deployment process and take the human being out of the picture. This is your targeted end state and really caps the work you&rsquo;ve been doing in the book by demonstrating how to design, build, and deploy microservices to the cloud.</p>
+
+      <h4 class="subsection-title">10.2.1 Deploying the EagleEye services to ECS manually</h4>
+
+      <p class="no-indent">To manually deploy your EagleEye services, you&rsquo;re going to switch gears and move away from the Amazon AWS console. To deploy the EagleEye services, you&rsquo;re going to use the Amazon ECS command-line client (<a href="https://github.com/aws/amazon-ecs-cli">https://github.com/aws/amazon-ecs-cli</a>).</p>
+
+      <p>After you&rsquo;ve installed the ECS command-line client, you need to configure the ecs-cli run-time environment to</p>
+
+      <ol class="manning-numbered" aria-label="ECS CLI configuration steps">
+        <li>Configure the ECS client with your Amazon credentials</li>
+        <li>Select the region the client is going to work in</li>
+        <li>Define the default ECS cluster the ECS client will be working against</li>
+      </ol>
+
+      <p class="no-indent">This work is done by running the ecs-cli configure command:</p>
+
+      <figure class="code-snippet" aria-label="ecs-cli configure command">
+        <pre class="code-block"><code>ecs-cli configure --region us-west-1 \
+                  --access-key $AWS_ACCESS_KEY \
+                  --secret-key $AWS_SECRET_KEY \
+                  --cluster spmia-tmx-dev</code></pre>
+      </figure>
+
+      <p>The ecs-cli configure command will set the region where your cluster is located, your Amazon access and secret key, and the name of the cluster (<code>spmia-tmx-dev</code>) you&rsquo;ve deployed to. If you look at the previous command, I&rsquo;m using environment variables (<code>$AWS_ACCESS_KEY</code> and <code>$AWS_SECRET_KEY</code>) to hold my Amazon access and secret key.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>I selected the us-west-1 region for purely demonstrative purposes. Depending on the country you&rsquo;re located in, you might choose an Amazon region more specific to your part of the world.</p>
+      </aside>
+
+      <p>Next, let&rsquo;s see how to do a build. Unlike in other chapters, you have to set the build name because the Maven scripts in this chapter are going to be used in the build-deploy pipeline being set up later on in the chapter. You&rsquo;re going to set an environment variable called <code>$BUILD_NAME</code>. The <code>$BUILD_NAME</code> environment variable is used to tag the Docker image that&rsquo;s created by the build script. Change to the root directory of the chapter 10 code you downloaded from GitHub and issue the following two commands:</p>
+
+      <figure class="code-snippet" aria-label="Manual build commands">
+        <pre class="code-block"><code>export BUILD_NAME=TestManualBuild
+mvn clean package docker:build</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

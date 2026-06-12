@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Appendix B: Figure B.3 steps and B.4 Implicit grant</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 1;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered li ul.manning-dashes {
+      margin: 1.5mm 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-dashes li {
+      position: relative;
+      margin: 0 0 1mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-dashes li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: 10pt;
+      line-height: 1.4;
+      color: #262626;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0365.html">← Prev</a>
+    <a href="page_0367.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">341</span>
+        <span class="rh-center"></span>
+        <span class="rh-right"><em>Implicit grant</em></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Figure B.3 authorization code grant flow steps (continued)">
+        <li>The user configures their Salesforce application with the following information:
+          <ul class="manning-dashes" aria-label="Salesforce application configuration details">
+            <li>Their application name they created for Salesforce</li>
+            <li>The secret key they generated for Salesforce</li>
+            <li>A URL that points to the EagleEye OAuth2 login page</li>
+            <li>Now when the user tries to use their Salesforce application and access their EagleEye data via the organization service, they&rsquo;ll be redirected over to the EagleEye login page via the URL described in the previous bullet point. The user will provide their EagleEye credentials. If they&rsquo;ve provided valid EagleEye credentials, the EagleEye OAuth2 server will generate an authorization code and redirect the user back to SalesForce via the URL provided in number 1. The authorization code will be sent as a query parameter on the callback URL.</li>
+          </ul>
+        </li>
+        <li>The custom Salesforce application will persist this authorization code. Note: this authorization code isn&rsquo;t an OAuth2 access token.</li>
+        <li>Once the authorization code has been stored, the custom Salesforce application can present the Salesforce application the secret key they generated during the registration process and the authorization code back to EagleEye OAuth2 server. The EagleEye OAuth2 server will validate that the authorization code is valid and then return back an OAuth2 token to the custom Salesforce application. This authorization code is used every time the custom Salesforce needs to authenticate the user and get an OAuth2 access token.</li>
+        <li>The Salesforce application will call the EagleEye organization service, passing an OAuth2 token in the header.</li>
+        <li>The organization service will validate the OAuth2 access token passed in to the EagleEye service call with the EagleEye OAuth2 service. If the token is valid, the organization service will process the user&rsquo;s request.</li>
+      </ol>
+
+      <p>Wow! I need to come up for air. Application-to-application integration is convoluted. The key to note from this entire process is that even though the user is logged into Salesforce and they&rsquo;re accessing EagleEye data, at no time were the user&rsquo;s EagleEye credentials directly exposed to Salesforce. After the initial authorization code was generated and provided by the EagleEye OAuth2 service, the user never had to provide their credentials back to the EagleEye service.</p>
+
+      <h4 class="subsection-title">B.4 Implicit grant</h4>
+
+      <p class="no-indent">The authorization grant is used when you&rsquo;re running a web application through a traditional server-side web programming environment like Java or .NET. What happens if your client application is a pure JavaScript application or a mobile application that runs completely in a web browser and doesn&rsquo;t rely on server-side calls to invoke third-party services?</p>
+
+      <p>This is where the last grant type, the implicit grant, comes into play. Figure B.4 shows the general flow of what occurs in the implicit grant.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

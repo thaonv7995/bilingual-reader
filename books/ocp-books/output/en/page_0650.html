@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 22: Date and Time API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0649.html">← Prev</a>
+    <a href="page_0651.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">650</span>
+      </header>
+
+      <p class="no-indent">translated to 7.30PM in India. Normally, Eastern Time (ET) is 5 hours behind UTC but on 29th
+      Apr 2024, Daylight Savings Time (DST) was in effect in ET (which means, the clocks had
+      already been shifted 1 hour forward in New York) and so, ET was only 4 hours behind UTC on
+      this date. India does not observe DST and so, Indian Standard Time (IST) is always 5.30 hours
+      ahead of UTC. You may verify these numbers by printing <code>nyTime.getOffset()</code> and
+      <code>indiaTime.getOffset()</code>. They will print <code>-04:00</code> and <code>+05:30</code> respectively. That is why the
+      10AM in ET was translated to 7.30PM in IST instead of 8.30PM on this day. This example shows
+      that <code>ZonedDateTime</code> handles the adjustments required due to DST automatically.</p>
+
+      <p>Note that I have used ET and IST only for illustrating the logic. You do not need to remember
+      the offsets for any time zone or the dates and the amount of shift required due to DST for any
+      location.</p>
+
+      <p>In the real exam, the problem statement will include this information if it is needed to arrive at
+      the correct answer.</p>
+
+      <h3 class="section-title section-title--sub">Translating into gaps and overlaps created due to DST</h3>
+
+      <p>The translation from ET to IST was easy, but what if, after the translation, the date and time at
+      the target location doesn&rsquo;t exist? This could happen when the target location observes DST and
+      the translated date/time happens to fall at the time when the clocks have been moved forward.</p>
+
+      <p>For example, given that ET is 5 hours behind UTC and the DST starts on 10th March 2024 at
+      2AM (this means, as soon as the clocks in New York hit 2AM on this day, they are moved forward
+      by 1 hour to show 3AM), what if you try to convert 10th March 2024 7.30AM UTC to ET?</p>
+
+      <p>Normally, the time in ET would be 2.30AM but on 10th March 2024, 2.30AM doesn&rsquo;t exist
+      in ET!</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>LocalDateTime ldt = LocalDateTime.of(2024, 03, 10, 7, 30, 0); //10th
+March 2024 7.30 AM</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Top-N Queries</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h2.appendix-section-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phụ lục A: Kế hoạch thực thi</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">Truy vấn Top-N</h3>
+
+      <p class="no-indent">Hiệu quả của các truy vấn top-N phụ thuộc vào chế độ thực thi của các hoạt động cơ sở. Chúng rất không hiệu quả khi hủy bỏ các hoạt động không theo ống dẫn như <code>SORT ORDER BY</code>.</p>
+
+      <p class="operation-label">COUNT STOPKEY</p>
+
+      <p class="no-indent">Hủy bỏ các hoạt động cơ sở khi số lượng hàng mong muốn đã được lấy. Xem thêm phần có tiêu đề &ldquo;Truy vấn các hàng Top-N&rdquo;.</p>
+
+      <p class="operation-label">WINDOW NOSORT STOPKEY</p>
+
+      <p class="no-indent">Sử dụng một hàm cửa sổ (<code>over</code> clause) để hủy bỏ thực thi khi số lượng hàng mong muốn đã được lấy. Xem thêm &ldquo;Sử dụng hàm cửa sổ cho phân trang&rdquo; trên trang 156.</p>
+
+      <h2 class="appendix-section-title">Phân biệt giữa Truy cập và Bộ lọc điều kiện</h2>
+
+      <p class="no-indent">Cơ sở dữ liệu Oracle sử dụng ba phương pháp khác nhau để áp dụng các điều kiện <code>where</code>:</p>
+
+      <p class="operation-label">Điều kiện truy cập (&ldquo;access&rdquo;)</p>
+
+      <p class="no-indent">Các điều kiện truy cập diễn tả các điều kiện bắt đầu và dừng của việc duyệt nút lá.</p>
+
+      <p class="operation-label">Điều kiện bộ lọc chỉ mục (&ldquo;filter&rdquo; cho các hoạt động chỉ mục)</p>
+
+      <p class="no-indent">Các điều kiện bộ lọc chỉ mục chỉ được áp dụng trong quá trình duyệt nút lá. Chúng không góp phần vào các điều kiện bắt đầu và dừng và không thu hẹp phạm vi quét.</p>
+
+      <p class="operation-label">Điều kiện bộ lọc cấp bảng (&ldquo;filter&rdquo; cho các hoạt động bảng)</p>
+
+      <p class="no-indent">Các điều kiện trên các cột không phải là một phần của chỉ mục được đánh giá ở cấp bảng. Để điều này xảy ra, cơ sở dữ liệu phải tải hàng từ bảng trước.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">170</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

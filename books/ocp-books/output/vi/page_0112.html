@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="2"] {
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="4"] {
+      counter-reset: init-step 3;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0111.html">← Trước</a>
+    <a href="page_0113.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">112</span>
+      </header>
+
+      <ol class="numbered" start="4">
+        <li>gặp bất kỳ vấn đề gì nếu <code>computeInterest</code> cũng không ném ra bất kỳ Exception (Ngoại lệ) nào. Nhưng nếu phương thức ghi đè quyết định ném ra một Exception (Ngoại lệ) của lớp cha (superclass) như <code>Throwable</code>, thì mã nguồn trong <code>getInterest</code> của <code>Account</code> sẽ bị lỗi vì nó không được chuẩn bị để xử lý một <code>Throwable</code>. Bạn sẽ phải cập nhật mệnh đề catch thành <code>catch(Throwable )</code> và biên dịch lại <code>Account</code>.</li>
+      </ol>
+
+      <p class="no-indent">Tôi đề xuất bạn nên viết một ví dụ tương tự để xác thực các quy tắc trên trong trường hợp ẩn (hiding) một phương thức static.</p>
+
+      <h3 class="section-title section-title--sub">13.4.3 Các trường hợp ghi đè không hợp lệ<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--sub">Ghi đè một phương thức static bằng một phương thức instance và ngược lại<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Java không cho phép một lớp con (subclass) thay đổi kiểu (static/instance) của một phương thức không phải private được định nghĩa trong lớp cha (superclass). Do đó, đoạn mã sau sẽ không biên dịch:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class Person{
+static void message(){ }
+void initialize(){ }
+}
+class Employee extends Person{
+void message(){} //will not compile because overridden method is
+static
+static void initialize(){} //will not compile because overridden
+method is instance
+}</code></pre>
+      </figure>
+
+      <h3 class="section-title section-title--sub">Ghi đè các phương thức private<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Vì các phương thức private không được kế thừa bởi một lớp con (subclass), nên không thể ghi đè chúng. Nhưng một lớp con (subclass) được phép có một phương thức với signature tương tự như phương thức private</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

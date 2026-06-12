@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered + h3.section-title.section-title--minor {
+      margin-top: 8mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + ol.numbered {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0283.html">← Trước</a>
+    <a href="page_0285.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">284</span>
+      </header>
+
+      <ol class="numbered" start="1">
+        <li>nó.</li>
+        <li>An toàn kiểu (Type safety) - Một <code>ArrayList</code>&nbsp;có thể được đảm bảo an toàn kiểu bằng cách sử dụng generics.</li>
+        <li>Các tính năng có sẵn - <code>ArrayList</code>&nbsp;cung cấp các phương thức để tìm kiếm và chèn các phần tử vào bất kỳ vị trí nào trong danh sách.</li>
+      </ol>
+
+      <h3 class="section-title section-title--minor">Nhược điểm của ArrayList<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <ol class="numbered">
+        <li>Sử dụng nhiều bộ nhớ hơn - Một <code>ArrayList</code>&nbsp;thường yêu cầu nhiều không gian hơn mức cần thiết để chứa cùng một số lượng phần tử so với một mảng.</li>
+        <li>Không có an toàn kiểu - Nếu không có generics, một <code>ArrayList</code>&nbsp;hoàn toàn không an toàn kiểu.</li>
+        <li>Không hỗ trợ các giá trị nguyên thủy - Các <code>ArrayList</code> không thể lưu trữ các giá trị nguyên thủy trong khi mảng thì có thể. Nhược điểm này đã được giảm bớt phần nào nhờ sự ra đời của autoboxing trong Java 5, giúp ta có thể truyền các giá trị nguyên thủy vào các phương thức khác nhau của một <code>ArrayList</code>. Tuy nhiên, autoboxing có ảnh hưởng đến hiệu năng.</li>
+      </ol>
+
+      <h3 class="section-title section-title--minor">Sự tương đồng giữa ArrayList và mảng<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <ol class="numbered">
+        <li>Thứ tự (Ordering) - Cả hai đều duy trì thứ tự các phần tử của chúng.</li>
+        <li>Trùng lặp (Duplicates) - Cả hai đều cho phép lưu trữ các phần tử trùng lặp.</li>
+        <li>Các giá trị <code>null</code> - Cả hai đều cho phép lưu trữ các giá trị <code>null</code>.</li>
+        <li>Hiệu năng (Performance) - Vì một <code>ArrayList</code>&nbsp;được hỗ trợ bởi một mảng ở bên trong, nên không có sự khác biệt về hiệu năng của các thao tác khác nhau như tìm kiếm trên một <code>ArrayList</code>&nbsp;và trên một mảng.</li>
+        <li>Thread safety - Cả hai đều không an toàn với Thread (Luồng). Bạn sẽ tìm hiểu về thread safety sau, nhưng hiện tại, hãy lưu ý thực tế rằng việc truy cập một trong hai từ nhiều Thread (Luồng) có thể tạo ra kết quả không chính xác trong một số tình huống nhất định.</li>
+      </ol>
+
+      <h3 class="section-title">16.1.9 Map và HashMap<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent"><code>Map</code>&nbsp;là cấu trúc dữ liệu cho phép bạn tra cứu một phần thông tin, tức là giá trị (value), bằng cách sử dụng một phần thông tin khác, tức là khóa (key). Ví dụ: một map gồm mã quốc gia và tên quốc gia sẽ cho phép bạn tra cứu tên quốc gia bằng mã quốc gia, một</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

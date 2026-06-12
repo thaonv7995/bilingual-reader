@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0289.html">← Prev</a>
+    <a href="page_0291.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">290</span>
+      </header>
+
+      <p><code>DataHolder&lt;Number&gt;</code>&nbsp;or <code>DataHolder&lt;Integer&gt;</code>&nbsp;are fine but <code>DataHolder&lt;String&gt;</code>&nbsp;will
+      fail to compile.</p>
+
+      <p>By using the <code>extends</code>&nbsp;keyword, we are essentially setting a limit on the super type of <code>E</code>.
+      Since in the UML diagram the superclass is drawn above the subclass and the arrow points upwards
+      from subclass to superclass, we call this the &ldquo;upper bound of <code>E</code>&rdquo;, i.e., <code>Number</code>&nbsp;is the upper
+      bound of <code>E</code>.</p>
+
+      <p>Recall that I used the same analogy while explaining upcast and downcast
+      (casting a variable to a super type is called upcasting). Another way to look at it is, the upper
+      most type in the type hierarchy that matches the pattern <code>E extends Number</code>&nbsp;is <code>Number</code>. Any
+      type that is lower in the type hierarchy than <code>Number</code>, such as <code>Integer</code>&nbsp;and <code>Double</code>, in the
+      hierarchy is also a match but any class above <code>Number</code>, which is just <code>Object</code>&nbsp;in this case, is
+      not.</p>
+
+      <p>It is worth mentioning here that the keyword used to specify an upper bound is always
+      <code>extends</code>&nbsp;even if we want to specify an interface name as the upper bound. So, for example, <code>&lt;E
+      extends CharSequence&gt;</code>&nbsp;is a valid upper bounded type parameter and <code>String</code>&nbsp;matches it
+      because <code>String</code>&nbsp;implements <code>CharSequence</code>.</p>
+
+      <p>Okay, moving on, can we apply a lower bound on the type parameter? Can we put a limitation
+      on <code>E</code>&nbsp;such that <code>E</code>&nbsp;can never be a subtype of <code>Number</code>? Something like <code>&lt;E super Number&gt;</code>?</p>
+
+      <p>It wouldn&rsquo;t be completely absurd to do so but no, Java does not allow setting a lower bound on a
+      type parameter for reasons not officially documented. The most likely reason in my opinion that
+      it is not too useful and it would have made the language grammar too complex to implement.</p>
+
+      <h3 class="section-title section-title--sub">Having multiple upper bounds<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>As discussed previously, Java allows multiple inheritance of type through the use of interfaces.
+      So, if a class implements two unrelated interfaces, it will belong to two lineages of ancestors. It
+      is, therefore, possible to apply an upper bound on each of its lineages. For example, the
+      <code>DataHolder</code>&nbsp;class can be defined as follows:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

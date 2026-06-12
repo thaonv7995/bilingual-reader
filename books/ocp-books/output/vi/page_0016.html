@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 12: Luồng điều khiển chương trình</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0015.html">← Trước</a>
+    <a href="page_0017.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">16</span>
+      </header>
+
+      <p class="no-indent">Giờ đây bạn đã có thể cho biết kết quả của hai dòng mã sau:</p>
+
+      <pre class="code-block ocp-code-line"><code>   int value = a == b? 10 : "hello"; //1
+
+
+   System.out.println(a == b? 10 : "hello"); //2</code></pre>
+
+      <p>Như đã thảo luận ở trên, kiểu của biểu thức <code>a == b? 10 : "hello";</code> là <code>Object</code>. Bạn có thể gán một <code>Object</code> cho một biến <code>int</code> không? Không, đúng không? Do đó, dòng đầu tiên sẽ không biên dịch. Bạn có thể truyền một <code>Object</code> vào phương thức <code>println</code> không? Tất nhiên là được. Do đó, dòng thứ hai sẽ biên dịch và chạy tốt.</p>
+
+      <h3 class="section-title section-title--sub">Đặc tính ngắn mạch của ?:<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Tùy thuộc vào việc giá trị của toán hạng thứ nhất là true hay false, toán hạng 2 hoặc toán hạng 3 sẽ được đánh giá. Nói cách khác, nếu điều kiện là <code>true</code>, toán hạng 3 sẽ không được đánh giá; còn nếu điều kiện là <code>false</code>, toán hạng 2 sẽ không được đánh giá. Về mặt này, toán tử điều kiện ba ngôi tương tự như hai toán tử ngắn mạch khác, cụ thể là <code>&amp;&amp;</code> và <code>||</code>. Tuy nhiên, có một sự khác biệt quan trọng giữa hai bên. Trong khi với <code>&amp;&amp;</code> và <code>||</code>, việc đánh giá cả hai toán hạng có thể xảy ra trong một số tình huống nhất định, thì điều đó không bao giờ xảy ra với toán tử <code>?:</code>. Toán tử <code>?:</code> luôn đánh giá chính xác một trong hai toán hạng trong mọi tình huống.</p>
+
+      <p>Đặc tính ngắn mạch của <code>?:</code> tạo cơ hội tốt cho các câu hỏi mẹo trong kỳ thi. Ví dụ, đoạn mã sau đây sẽ in ra kết quả gì?</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>int x = 0;
+int y = 1;
+System.out.println(x&gt;y? ++x : y++);
+System.out.println(x+" "+y);</code></pre>
+      </figure>
+
+      <p class="no-indent">Đoạn mã này in ra:</p>
+
+      <pre class="code-block ocp-code-line"><code>   1
+   0 2</code></pre>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

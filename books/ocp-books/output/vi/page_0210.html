@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0209.html">← Trước</a>
+    <a href="page_0211.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">210</span>
+      </header>
+
+      <p class="no-indent">ví dụ, <code>Throwable</code> có nhiều lớp con (Subclass) hơn so với <code>Exception</code> bởi vì cây phân cấp của
+      <code>Throwable</code> bao gồm cả cây phân cấp của <code>Exception</code> cũng như cây phân cấp của <code>Error</code>. Tương tự,
+      <code>Exception</code> lớn hơn <code>IOException</code> bởi vì cây phân cấp của <code>Exception</code> bao gồm cây phân cấp của
+      <code>IOException</code> cùng với rất nhiều lớp con (Subclass) ngoại lệ khác.</p>
+
+      <p>Nếu một phương thức không muốn catch Exception (Ngoại lệ) thì nó phải khai báo Exception (Ngoại lệ) đó (hoặc lớp cha (Superclass)
+      của nó) trong mệnh đề <code>throws</code> của nó. Điều này không khác gì quy tắc bạn đã thấy trước đây
+      khi tạo một phương thức ném (throw) một Exception (Ngoại lệ). Ví dụ, giả sử phương thức
+      <code>message</code> ném (throw) <code>Exception</code>, dưới đây là các mệnh đề throws hợp lệ cho một phương thức gọi
+      <code>message</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//declare the same exception class
+public static void callMessage() throws Exception {
+message();
+}
+//declare a super class of the exception class thrown by message
+public static void callMessage() throws Throwable {
+message();
+}</code></pre>
+      </figure>
+
+      <p>Tất nhiên, <code>callMessage</code> không bị giới hạn ở việc chỉ ném (throw) các Exception (Ngoại lệ) được khai báo trong mệnh đề <code>throws</code>
+      của <code>message</code>. Nó có thể thêm các Exception (Ngoại lệ) của riêng mình vào mệnh đề <code>throws</code> bất kể mã nguồn bên trong
+      phương thức có thực sự ném (throw) chúng hay không.</p>
+
+      <h3 class="section-title section-title--sub">Catch hay ném (throw)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Quyết định catch một Exception (Ngoại lệ) hay để nó lan truyền (propagate) đến phương thức gọi (caller) phụ thuộc vào việc bạn
+      có thể giải quyết được vấn đề dẫn đến việc Exception (Ngoại lệ) bị ném (throw) hay không. Hãy xem xét
+      đoạn mã nguồn sau đây của một phương thức tính lãi đơn:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

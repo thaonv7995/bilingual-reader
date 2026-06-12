@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0056.html">← Trước</a>
+    <a href="page_0058.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">Để tạo một bản sao lưu nén của các bảng có tên bắt đầu bằng “pay” trong bất kỳ schema nào:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F c -b -v -t *.pay* -f pay.backup mydb</code></pre>
+      </figure>
+
+      <p class="no-indent">Để tạo một bản sao lưu nén của tất cả các đối tượng trong các schema hr và payroll:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F c -b -v -n hr -n payroll -f hr.backup mydb</code></pre>
+      </figure>
+
+      <p class="no-indent">Để tạo một bản sao lưu nén của tất cả các đối tượng trong tất cả các schema, ngoại trừ schema public:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F c -b -v -N public -f all_sch_except_pub.backup mydb</code></pre>
+      </figure>
+
+      <p class="no-indent">Để tạo một bản sao lưu SQL dạng văn bản thuần của các bảng chọn, hữu ích cho việc chuyển cấu trúc và dữ liệu
+      sang các phiên bản thấp hơn của PostgreSQL hoặc các cơ sở dữ liệu không phải PostgreSQL (văn bản thuần tạo ra một
+      script SQL mà bạn có thể chạy trên bất kỳ hệ thống nào hỗ trợ SQL):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F p --column-inserts -f select_tables.backup mydb</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0057_icon_tip.png" width="43" height="58" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Nếu đường dẫn tệp của bạn chứa khoảng trắng hoặc các ký tự khác có thể gây nhầm lẫn cho shell dòng lệnh, hãy bọc đường dẫn tệp trong dấu ngoặc kép: “/
+        đường dẫn có khoảng trắng/mydb.backup”. Như một quy tắc chung, bạn có thể luôn sử dụng dấu ngoặc kép nếu bạn không chắc chắn.</p>
+      </div>
+
+      <p>Tùy chọn định dạng thư mục được giới thiệu trong phiên bản 9.1. Tùy chọn này sao lưu mỗi
+      bảng dưới dạng một tệp riêng biệt trong một thư mục và vượt qua các giới hạn tiềm năng về kích thước tệp trong hệ thống tệp của bạn. Tùy chọn này là tùy chọn định dạng sao lưu pg_dump duy nhất tạo ra nhiều
+      tệp, như được trình bày trong Ví dụ 2-8. Nó tạo ra một thư mục mới và điền vào đó với một tệp nén
+      cho mỗi bảng, cùng với một tệp liệt kê tất cả các cấu trúc đã bao gồm. Lệnh sẽ thoát với một lỗi nếu thư mục đã tồn tại.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 2-8.</strong> Sao lưu định dạng thư mục</figcaption>
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F d -f /somepath/a_directory mydb</code></pre>
+      </figure>
+
+      <p>Một tùy chọn sao lưu song song được giới thiệu trong phiên bản 9.3 với tùy chọn --jobs (-j).
+      Đặt tùy chọn này thành --jobs=3 sẽ chạy ba bản sao lưu song song. Tùy chọn sao lưu song song
+      chỉ có ý nghĩa với tùy chọn định dạng thư mục, vì mỗi ghi song song phải
+      ghi vào một tệp riêng biệt. Ví dụ 2-9 minh họa việc sử dụng nó.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 2-9.</strong> Sao lưu song song định dạng thư mục</figcaption>
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -j 3 -Fd -f /somepath/a_directory mydb</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Sao lưu và Khôi phục<span class="sep">|</span>39</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

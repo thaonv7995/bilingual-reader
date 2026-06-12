@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Listing 7.6 Hạn chế vai trò ADMIN</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--76 .listing-callouts-right {
+      padding-top: 30mm;
+    }
+    .prose-page.chapter-page .listing-annotated--76 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 5mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + h3.section-title,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0233.html">← Prev</a>
+    <a href="page_0235.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Bảo vệ organization service bằng OAuth2</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">209</span>
+      </header>
+
+      <p class="no-indent">Hình 7.7 cho thấy lời gọi tới organization service, nhưng lần này có truyền mã thông báo truy cập OAuth2.</p>
+
+      <p>Đây có lẽ là một trong những trường hợp sử dụng đơn giản nhất để bảo vệ endpoint bằng OAuth2. Tiếp theo, bạn sẽ mở rộng trên nền tảng này và hạn chế truy cập một endpoint cụ thể chỉ cho một vai trò cụ thể.</p>
+
+      <h3 class="section-title">Bảo vệ dịch vụ theo vai trò cụ thể</h3>
+
+      <p class="no-indent">Trong ví dụ tiếp theo, bạn sẽ khóa chặt lời gọi DELETE trên organization service chỉ cho những người dùng có quyền ADMIN. Như bạn sẽ nhớ từ mục 7.2.3, &ldquo;Cấu hình người dùng EagleEye,&rdquo; bạn đã tạo hai tài khoản người dùng có thể truy cập các dịch vụ EagleEye: <code>john.carnell</code> và <code>william.woodward</code>. Tài khoản <code>john.carnell</code> được gán vai trò USER. Tài khoản <code>william.woodward</code> có vai trò USER và vai trò ADMIN.</p>
+
+      <p>Listing sau đây cho thấy cách thiết lập phương thức <code>configure()</code> để hạn chế truy cập endpoint DELETE chỉ cho những người dùng đã xác thực có vai trò ADMIN.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.6</strong><br>Hạn chế xóa chỉ cho vai trò ADMIN</figcaption>
+        <div class="listing-annotated listing-annotated--76" aria-label="Code có chú thích Listing 7.6">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.organization.security;
+
+//Imports removed for conciseness
+
+@Configuration
+public class ResourceServerConfiguration extends
+  ResourceServerConfigurerAdapter {
+  @Override
+  public void configure(HttpSecurity http) throws Exception{
+    http
+    .authorizeRequests()
+     .antMatchers(HttpMethod.DELETE, "/v1/organizations/**")
+     .hasRole("ADMIN")
+     .anyRequest()
+     .authenticated();
+  }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 7.6">
+            <p class="listing-callout">Phương thức <code>antMatchers()</code> cho phép bạn hạn chế URL và phương thức HTTP được bảo vệ.</p>
+            <p class="listing-callout">Phương thức <code>hasRole()</code> là danh sách các vai trò được phép truy cập, phân tách bằng dấu phẩy.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Trong listing 7.6, bạn đang hạn chế lời gọi DELETE trên mọi endpoint bắt đầu bằng <code>/v1/organizations</code> trong dịch vụ của bạn cho vai trò ADMIN.:</p>
+
+      <figure class="code-snippet" aria-label="Endpoint DELETE bị hạn chế cho vai trò ADMIN">
+        <pre class="code-block"><code>.authorizeRequests()
+  .antMatchers(HttpMethod.DELETE, "/v1/organizations/**")
+  .hasRole("ADMIN")</code></pre>
+      </figure>
+
+      <p>Phương thức <code>antMatcher()</code> có thể nhận danh sách endpoint phân tách bằng dấu phẩy. Các endpoint này có thể dùng ký hiệu kiểu wildcard để định nghĩa các endpoint bạn muốn truy cập. Ví dụ, nếu bạn muốn hạn chế mọi lời gọi DELETE bất kể phiên bản trong tên URL, bạn có thể dùng <code>*</code> thay cho số phiên bản trong định nghĩa URL của mình:</p>
+
+      <figure class="code-snippet" aria-label="Phiên bản wildcard trong mẫu endpoint DELETE">
+        <pre class="code-block"><code>.authorizeRequests()
+  .antMatchers(HttpMethod.DELETE, "/*/organizations/**")
+.hasRole("ADMIN")</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

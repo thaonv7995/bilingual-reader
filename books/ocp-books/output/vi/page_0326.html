@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 17: Lambda Expressions and Method References</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="3"] {
+      counter-reset: list-step 2;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="4"] {
+      counter-reset: list-step 3;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0325.html">← Trước</a>
+    <a href="page_0327.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">326</span>
+      </header>
+
+      <ol class="numbered" start="3">
+        <li><code>= c -&gt; c.company.equals(&quot;Honda&quot;);</code>&nbsp;và <code>Predicate&lt;Car&gt; isToyota = c -&gt;
+        c.company.equals(&quot;Toyota&quot;);</code>&nbsp;thì <code>Predicate&lt;Car&gt; isHondaOrToyota = isHonda().or(isToyota);</code>&nbsp;biểu thị một predicate trong đó tên công ty là
+        &ldquo;Honda&rdquo; hoặc &ldquo;Toyota&rdquo;.</li>
+      </ol>
+
+      <ol class="numbered" start="4">
+        <li><code>static &lt;T&gt; Predicate&lt;T&gt; isEqual(Object targetRef)</code>&nbsp;: Trả về một predicate kiểm tra xem hai đối số có bằng nhau hay không theo <code>Objects.equals(Object, Object)</code>. Phương thức này là một cách để chuyển đổi phương thức equals của một lớp (Class) thành một <code>Predicate</code>. Ví dụ, thông thường, bạn sẽ so sánh hai đối tượng (Object) Car bằng cách sử dụng <code>c1.equals(c2)</code>. Bạn có thể tạo một <code>Predicate</code> từ phương thức equals như thế này &mdash; <code>Predicate equals =
+        Predicate.isEqual(c1);</code>&nbsp;và sau đó so sánh <code>c1</code> với các đối tượng (Object) <code>Car</code> khác bằng cách sử dụng Predicate này, nghĩa là <code>equals.test(c2)</code>.</li>
+      </ol>
+
+      <h3 class="section-title section-title--sub">17.1.5 Các Functional Interface tiêu chuẩn trong JDK<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Interface (Giao diện) <code>Predicate</code> mà bạn vừa thấy là một trong số vài interface (giao diện) được định nghĩa trong
+      package <code>java.util.function</code>. Interface (Giao diện) <code>Predicate</code> thể hiện trường hợp sử dụng để kiểm tra một
+      điều kiện. Bằng cách tương tự, các nhà thiết kế Java đã xác định được một số trường hợp sử dụng thường gặp
+      trong quá trình phát triển Java hàng ngày và đã tạo ra các interface (giao diện) sẵn có cho chúng để
+      mỗi dự án không phải định nghĩa lại các kiểu interface (giao diện) giống nhau. Tất cả chúng đều có chính xác
+      một phương thức abstract (được gọi là phương thức functional) và do đó, đều là các Functional Interface. Ví dụ,
+      phương thức functional của interface (giao diện) <code>Predicate</code> là <code>boolean test(T t)</code>. Việc có
+      chính xác một phương thức abstract là một thuộc tính quan trọng vì nó cho phép bạn triển khai các
+      interface (giao diện) như vậy bằng cách sử dụng các biểu thức Lambda (Biểu thức Lambda (Lambda expression)).</p>
+
+      <p>Lý do chúng được gọi là các Functional Interface là vì chúng đại diện cho một hàm duy nhất mà không
+      duy trì bất kỳ trạng thái nào. Một Functional Interface được thiết kế để làm chính xác một việc. Ví dụ, nếu
+      bạn nhìn vào interface (giao diện) <code>Predicate</code>, bạn sẽ nhận thấy rằng nó được dùng để kiểm tra một điều kiện.
+      Nhưng logic cho điều kiện thực tế không nằm ở đó trong phương thức functional (bởi vì nó là một
+      phương thức abstract). Logic này được cung cấp bởi</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

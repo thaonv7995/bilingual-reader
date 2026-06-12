@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0045.html">← Trước</a>
+    <a href="page_0047.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">46</span>
+      </header>
+
+      <p>Một cách phổ biến khác để tổ chức các lược đồ là theo vai trò. Chúng tôi thấy điều này đặc biệt
+      hữu ích với các ứng dụng phục vụ nhiều khách hàng mà dữ liệu của họ phải được giữ riêng biệt.</p>
+
+      <p>Giả sử bạn bắt đầu một doanh nghiệp để xây dựng và cho thuê một hệ thống quản lý chó cho các
+      spa chó. Thông qua quảng cáo sáng tạo, bạn hiện có một tá khách hàng, nhưng cơ sở dữ liệu của bạn vẫn
+      chỉ có một bảng để lưu trữ tất cả các chú chó. Một quy định chính phủ kỳ quặc được thông qua, và
+      bây giờ bạn phải đưa ra những đảm bảo chắc chắn rằng một spa không thể xem thông tin chó
+      từ spa khác. Để tuân thủ, bạn thiết lập một lược đồ cho mỗi spa và tạo bảng chó giống nhau
+      trong mỗi lược đồ. Bạn sau đó di chuyển các bản ghi chó vào lược đồ cho spa nơi những chú chó đó
+      được chăm sóc. Chi tiết cuối cùng là tạo các vai trò đăng nhập khác nhau cho mỗi lược đồ với
+      cùng tên như lược đồ, để lược đồ <code>doggy_day_care</code> sẽ được sở hữu bởi vai trò
+      <code>doggy_day_care</code>, lược đồ <code>hot_dogs</code> sẽ được sở hữu bởi vai trò <code>hot_dogs</code>, v.v. Các chú chó
+      bây giờ hoàn toàn bị cô lập trong các lược đồ tương ứng của chúng. Khi các spa đăng nhập vào cơ sở dữ liệu của bạn
+      để thực hiện chỉnh sửa, họ sẽ chỉ có thể truy cập dữ liệu trong các lược đồ của riêng họ.</p>
+
+      <p>Chờ đã, còn tốt hơn nữa. Bởi vì chúng tôi đã đặt tên cho các vai trò của mình để phù hợp với các lược đồ tương ứng,
+      chúng tôi được ban phước với một kỹ thuật hữu ích khác. Nhưng trước tiên chúng ta phải giới thiệu biến cơ sở dữ liệu
+      <code>search_path</code>.</p>
+
+      <p>Như chúng tôi đã đề cập trước đó, tên đối tượng phải là duy nhất trong một lược đồ, nhưng bạn có thể
+      có các đối tượng cùng tên trong các lược đồ khác nhau. Ví dụ, bạn có cùng một bảng
+      gọi là dogs trong tất cả 12 lược đồ. Khi bạn thực hiện một cái gì đó như <code>SELECT * FROM dogs</code>,
+      làm thế nào PostgreSQL biết bạn đang đề cập đến lược đồ nào? Câu trả lời đơn giản là
+      luôn thêm tên lược đồ được phân tách khỏi tên bảng bằng một dấu chấm, chẳng hạn như trong
+      <code>SELECT * FROM doggy_day_care.dogs</code>. Một phương pháp khác là thiết lập biến <code>search_path</code>
+      thành một cái gì đó như <code>public</code>, <code>doggy_day_care</code>, <code>hot_dogs</code>. Khi truy vấn
+      được thực hiện, trình lập kế hoạch tìm kiếm bảng dogs trước tiên trong lược đồ <code>public</code>, sau đó <code>doggy_day_care</code>, sau đó <code>hot_dogs</code>.</p>
+
+      <p>PostgreSQL có một biến ít được biết đến gọi là <code>user</code> liệt kê tên của người dùng hiện tại
+      đang đăng nhập. <code>SELECT user</code> trả về tên này.</p>
+
+      <p>Nhớ lại cách chúng tôi đã đặt tên cho các lược đồ spa của mình giống như các vai trò đăng nhập của chúng. Chúng tôi đã làm điều này để
+      có thể tận dụng đường dẫn tìm kiếm mặc định được thiết lập trong <code>postgresql.conf</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>search_path = "$user", public;</code></pre>
+      </figure>
+
+      <p>Bây giờ, nếu vai trò <code>doggy_day_care</code> đăng nhập, tất cả các truy vấn sẽ đầu tiên tìm kiếm trong lược đồ <code>doggy_day_care</code>
+      cho các bảng trước khi chuyển sang <code>public</code>. Và quan trọng nhất, SQL vẫn
+      giống nhau cho tất cả các spa. Ngay cả khi doanh nghiệp quản lý spa phát triển đến hàng nghìn hoặc
+      hàng trăm nghìn khách hàng, không có kịch bản SQL nào cần phải thay đổi. Để làm
+      cho mọi thứ dễ dàng hơn, hãy tạo một cơ sở dữ liệu mẫu không có chó. Thêm một spa mới chỉ cần một
+      vài dòng để tạo một lược đồ, cơ sở dữ liệu, vai trò và các bảng khung.</p>
+
+      <p>Một thực hành khác mà chúng tôi mạnh mẽ khuyến khích là tạo các lược đồ để chứa các phần mở rộng
+      (<span class="accent-word">“Bước 2: Cài đặt vào một cơ sở dữ liệu (phiên bản 9.1 trở lên)” trên trang 35</span>). Khi bạn cài đặt
+      một phần mở rộng, các bảng mới, hàm, kiểu dữ liệu, và nhiều di sản khác sẽ vào cơ sở dữ liệu của bạn</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">28<span class="sep">|</span>Chương 2: Quản trị cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

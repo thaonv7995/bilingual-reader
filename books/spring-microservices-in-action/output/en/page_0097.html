@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 3: Spring Cloud release train</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0096.html">← Prev</a>
+    <a href="page_0098.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">72</span>
+        <span class="rh-center">CHAPTER 3 <em>Controlling your configuration with Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">sub-dependencies. The rest of the example in listing 3.1 deals with declaring the specific Spring Cloud dependencies that you&rsquo;ll use in the service. The first dependency is the <code>spring-cloud-starter-config</code> dependency that&rsquo;s used by all Spring Cloud projects. The second dependency is the <code>spring-cloud-config-server</code> starter project. This contains the core libraries for the <code>spring-cloud-config-server</code>.</p>
+
+      <aside class="sidebar-note" aria-label="Come on, ride the train, the release train">
+        <h3>Come on, ride the train, the release train</h3>
+        <p>Spring Cloud uses a non-traditional mechanism for labeling Maven projects. Spring Cloud is a collection of independent subprojects. The Spring Cloud team does their releases through what they call the &ldquo;release train.&rdquo; All the subprojects that make up Spring Cloud are packaged under one Maven bill of materials (BOM) and released as a whole. The Spring Cloud team has been using the name of London subway stops as the name of their releases, with each incrementing major release giving a London subway stop that has the next highest letter. There have been three releases: Angel, Brixton, and Camden. Camden is by far the newest release, but still has multiple release candidate branches for the subprojects within it.</p>
+        <p>One thing to note is that Spring Boot is released independently of the Spring Cloud release train. Therefore, different versions of Spring Boot are incompatible with different releases of Spring Cloud. You can see the version dependences between Spring Boot and Spring Cloud, along with the different subproject versions contained within the release train, by referring to the Spring Cloud website (<a href="http://projects.spring.io/spring-cloud/">http://projects.spring.io/spring-cloud/</a>).</p>
+      </aside>
+
+      <p>You still need to set up one more file to get the core configuration server up and running. This file is your <code>application.yml</code> file and is in the <code>confsvr/src/main/resources</code> directory. The <code>application.yml</code> file will tell your Spring Cloud configuration service what port to listen to and where to locate the back end that will serve up the configuration data.</p>
+
+      <p>You&rsquo;re almost ready to bring up your Spring Cloud configuration service. You need to point the server to a back-end repository that will hold your configuration data. For this chapter, you&rsquo;ll use the licensing service that you began to build in chapter 2 as an example of how to use Spring Cloud Config. To keep things simple, you&rsquo;ll set up application configuration data for three environments: a default environment for when you run the service locally, a dev environment, and a production environment.</p>
+
+      <p>In Spring Cloud configuration, everything works off a hierarchy. Your application configuration is represented by the name of the application and then a property file for each environment you want to have configuration information for. In each of these environments, you&rsquo;ll set up two configuration properties:</p>
+
+      <ul class="manning-bullets">
+        <li>An example property that will be used directly by your licensing service</li>
+        <li>The database configuration for the Postgres database you&rsquo;ll use to store licensing service data</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

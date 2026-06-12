@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0465.html">← Prev</a>
+    <a href="page_0467.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">466</span>
+      </header>
+
+      <p class="no-indent">different CPUs at the same time and they will thus, be executed in parallel. Otherwise, the OS
+      will share the CPU with both the threads on a time sharing basis.</p>
+
+      <p>At the time of writing code, we cannot be certain of when and for how long a thread will actually
+      get to run, which is why I said the above output is most likely. Since the factorial of 100000
+      takes a lot longer (about 5 seconds on my machine) than the print statement in the main method
+      (only a few milliseconds at the most), it is very likely that the main thread will finish its
+      execution long before the thread that computes the factorial. But the important thing is that we
+      cannot assume this sequence of execution while writing the code. It is entirely possible that, at
+      run time, the OS allocates 10 seconds of CPU time to the factorial thread first and 10 seconds to
+      the main thread next. In that case, the output of the two print statements will be reversed. You
+      need to understand and remember this point very clearly because this is <strong>one of the two</strong> main
+      causes of bugs in multithreaded programs. You just can&rsquo;t base the logic of your program on the
+      timing of the threads. The OS can schedule any thread to run at any time.</p>
+
+      <p>Finally, when you run the above program, you will notice that the program doesn&rsquo;t terminate
+      even when the end of the main method is reached. You will see the cursor blinking for a while
+      after the print statement in the main method executes. It terminates only after the print
+      statement from the run method is executed. That is because a Java program is not composed of
+      just the main thread. A Java program comprises all the threads that we have started including
+      the main thread as well as the threads that the JVM starts for its housekeeping purpose (such as
+      for garbage collection) called <strong>daemon threads</strong>. The program does not terminate until all non-
+      daemon threads finish their execution. The distinction between daemon and non-daemon
+      threads is important because daemon threads exist only to support the non-daemon threads. If
+      there are no non-daemon threads running in the JVM, there is no need to keep the daemon
+      threads running. For example, if there is no business logic to execute, why would a program
+      keep performing garbage collection?</p>
+
+      <p>The above example isn&rsquo;t too exciting because the time taken by the program to finish is the same
+      as the time taken by a program that computes the factorial without using a thread.&nbsp; So, let me
+      modify the above program to show you the advantage of concurrent</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

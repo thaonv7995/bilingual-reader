@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Paging Through Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phân Trang Kết Quả</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Ngay cả khi các thông số chức năng chỉ yêu cầu sắp xếp &ldquo;theo ngày, mới nhất trước&rdquo;, chúng ta, với tư cách là các nhà phát triển, phải đảm bảo rằng điều kiện <code><strong>order by</strong></code> tạo ra một chuỗi hàng xác định. Để làm điều này, chúng ta có thể cần mở rộng điều kiện <code><strong>order by</strong></code> với các cột tùy ý chỉ để đảm bảo rằng chúng ta có một chuỗi hàng xác định. Nếu chỉ mục được sử dụng cho <code><strong>order by</strong></code> theo ống có các cột bổ sung, thì việc thêm chúng vào điều kiện <code><strong>order by</strong></code> là một khởi đầu tốt để chúng ta có thể tiếp tục sử dụng chỉ mục này cho <code><strong>order by</strong></code> theo ống. Nếu điều này vẫn không tạo ra một thứ tự sắp xếp xác định, chỉ cần thêm bất kỳ cột nào duy nhất và mở rộng chỉ mục cho phù hợp.</p>
+
+      <p>Trong ví dụ sau, chúng ta mở rộng điều kiện <code><strong>order by</strong></code> và chỉ mục với khóa chính <code>SALE_ID</code> để có được một chuỗi hàng xác định. Hơn nữa, chúng ta phải áp dụng logic &ldquo;đến sau&rdquo; cho cả hai cột <em>cùng nhau</em> để có được kết quả mong muốn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX sl_dtid ON sales (sale_date, sale_id);
+
+SELECT *
+  FROM sales
+<strong> WHERE (sale_date, sale_id) &lt; (?, ?)</strong>
+ ORDER BY sale_date DESC, <strong>sale_id DESC</strong>
+ FETCH FIRST 10 ROWS ONLY;</code></pre>
+      </figure>
+
+      <p>Điều kiện <code><strong>where</strong></code> sử dụng cú pháp &ldquo;giá trị hàng&rdquo; ít được biết đến (xem hộp có tiêu đề &ldquo;Giá Trị Hàng SQL&rdquo;). Nó kết hợp nhiều giá trị thành một đơn vị logic có thể áp dụng cho các toán tử so sánh thông thường. Giống như với các giá trị vô hướng, điều kiện nhỏ hơn tương ứng với &ldquo;đến sau&rdquo; khi sắp xếp theo thứ tự giảm dần. Điều đó có nghĩa là truy vấn chỉ xem xét các giao dịch bán hàng xảy ra sau cặp <code>SALE_DATE</code>, <code>SALE_ID</code> đã cho.</p>
+
+      <p>Mặc dù cú pháp giá trị hàng là một phần của tiêu chuẩn SQL, chỉ một vài cơ sở dữ liệu hỗ trợ nó. SQL Server 2012 (&ldquo;Denali&rdquo;) hoàn toàn không hỗ trợ giá trị hàng. Cơ sở dữ liệu Oracle về nguyên tắc hỗ trợ giá trị hàng, nhưng không thể áp dụng các toán tử phạm vi trên chúng (ORA-01796). MySQL đánh giá các biểu thức giá trị hàng một cách chính xác nhưng không thể sử dụng chúng như một điều kiện truy cập trong quá trình truy cập chỉ mục. Tuy nhiên, PostgreSQL hỗ trợ cú pháp giá trị hàng <em>và</em> sử dụng chúng để truy cập chỉ mục nếu có một chỉ mục tương ứng có sẵn.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">151</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 4: 4.2 Về service discovery trên đám mây</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0124.html">← Trước</a>
+    <a href="page_0126.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">100</span>
+        <span class="rh-center">CHƯƠNG 4 <em>Về service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">4.2 Về service discovery trên đám mây</h4>
+
+      <p>Giải pháp cho môi trường microservice dựa trên đám mây là dùng cơ chế service discovery</p>
+
+      <ul class="manning-bullets" aria-label="Yêu cầu service discovery trên đám mây">
+        <li><strong class="run-in">Khả dụng cao</strong>&mdash;Service discovery cần hỗ trợ môi trường cluster &ldquo;hot&rdquo; nơi việc tra cứu dịch vụ có thể được chia sẻ giữa nhiều node trong cụm service discovery. Nếu một node không còn khả dụng, các node khác trong cụm phải có thể tiếp quản.</li>
+        <li><strong class="run-in">Peer-to-peer</strong>&mdash;Mỗi node trong cụm service discovery chia sẻ trạng thái của một service instance.</li>
+        <li><strong class="run-in">Cân bằng tải</strong>&mdash;Service discovery cần cân bằng tải động các yêu cầu trên tất cả service instance để đảm bảo lời gọi dịch vụ được phân bổ đều trên mọi service instance do nó quản lý. Theo nhiều cách, service discovery thay thế các load balancer tĩnh hơn, được quản lý thủ công trong nhiều triển khai ứng dụng web thời kỳ đầu.</li>
+        <li><strong class="run-in">Khả năng phục hồi</strong>&mdash;Client của service discovery nên &ldquo;cache&rdquo; thông tin dịch vụ cục bộ. Cache cục bộ cho phép tính năng service discovery suy giảm dần dần, sao cho nếu dịch vụ service discovery không còn khả dụng, ứng dụng vẫn hoạt động và định vị dịch vụ dựa trên thông tin được duy trì trong cache cục bộ.</li>
+        <li><strong class="run-in">Chịu lỗi</strong>&mdash;Service discovery cần phát hiện khi một service instance không khỏe mạnh và gỡ instance đó khỏi danh sách dịch vụ khả dụng có thể nhận yêu cầu client. Nó phải phát hiện các lỗi này với dịch vụ và hành động mà không cần can thiệp của con người.</li>
+      </ul>
+
+      <p class="no-indent">Trong (các) phần tiếp theo, chúng ta sẽ</p>
+
+      <ul class="manning-bullets" aria-label="Các chủ đề được trình bày trong phần này">
+        <li>Trình bày kiến trúc khái niệm về cách một agent service discovery dựa trên đám mây hoạt động</li>
+        <li>Chỉ ra cách cache phía client và cân bằng tải cho phép dịch vụ tiếp tục hoạt động ngay cả khi agent service discovery không khả dụng</li>
+        <li>Xem cách triển khai service discovery bằng Spring Cloud và agent service discovery Eureka của Netflix</li>
+      </ul>
+
+      <h4 class="subsection-title">4.2.1 Kiến trúc của service discovery</h4>
+
+      <p>Để bắt đầu thảo luận về kiến trúc service discovery, chúng ta cần hiểu bốn khái niệm. Các khái niệm chung này được chia sẻ trong mọi triển khai service discovery:</p>
+
+      <ul class="manning-bullets" aria-label="Các khái niệm kiến trúc service discovery">
+        <li><strong class="run-in">Đăng ký dịch vụ</strong>&mdash;Một dịch vụ đăng ký với agent service discovery như thế nào?</li>
+        <li><strong class="run-in">Client tra cứu địa chỉ dịch vụ</strong>&mdash;Service client tra cứu thông tin dịch vụ bằng cách nào?</li>
+        <li><strong class="run-in">Chia sẻ thông tin</strong>&mdash;Thông tin dịch vụ được chia sẻ giữa các node như thế nào?</li>
+        <li><strong class="run-in">Giám sát sức khỏe</strong>&mdash;Dịch vụ truyền trạng thái sức khỏe về agent service discovery như thế nào?</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

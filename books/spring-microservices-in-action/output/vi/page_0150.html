@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Hình 5.3 circuit breaker</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0149.html">← Trước</a>
+    <a href="page_0151.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Tại sao khả năng phục hồi của client lại quan trọng</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">125</span>
+      </header>
+
+      <p class="no-indent">Circuit breaker đóng vai trò như một trung gian giữa ứng dụng và dịch vụ từ xa. Trong kịch bản trước đó, một triển khai circuit breaker có thể đã bảo vệ các Ứng dụng A, B và C khỏi việc sập hoàn toàn.</p>
+
+      <p>Trong hình 5.3, Service B (client) sẽ không bao giờ gọi trực tiếp Service C. Thay vào đó, khi cuộc gọi được thực hiện, Service B sẽ ủy quyền việc gọi dịch vụ thực tế cho circuit breaker, circuit breaker sẽ nhận cuộc gọi và bọc nó trong một thread (thường được quản lý bởi thread pool) độc lập với bên gọi ban đầu. Bằng cách bọc cuộc gọi trong một thread, client không còn phải chờ trực tiếp cho cuộc gọi hoàn tất. Thay vào đó, circuit breaker theo dõi thread và có thể hủy cuộc gọi nếu thread chạy quá lâu.</p>
+
+      <p>Hình 5.3 trình bày ba kịch bản. Trong kịch bản đầu tiên, happy path, circuit breaker sẽ duy trì một bộ đếm thời gian và nếu cuộc gọi tới dịch vụ từ xa hoàn tất trước khi bộ đếm thời gian hết hạn, mọi thứ đều ổn và Service B có thể tiếp tục công việc của mình. Trong kịch bản suy giảm một phần (partial degradation), Service B sẽ gọi Service C thông qua circuit breaker. Lần này, Service C đang chạy chậm và circuit breaker sẽ hủy kết nối tới dịch vụ từ xa nếu cuộc gọi không hoàn tất trước khi bộ đếm thời gian trên thread do circuit breaker duy trì hết hạn.</p>
+
+      <figure class="diagram" aria-label="Hình 5.3">
+        <img src="../assets/images/page_0150_fig_5_3.png" width="1313" height="848" alt="Hình 5.3 — Circuit breaker kích hoạt và cho phép cuộc gọi dịch vụ hoạt động sai lệch thất bại nhanh chóng và êm áo">
+        <figcaption><strong>Hình 5.3</strong><br>Circuit breaker kích hoạt và cho phép cuộc gọi dịch vụ hoạt động sai lệch thất bại nhanh chóng và êm áo.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

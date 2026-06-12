@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 9: Hình 9.2 và tổng hợp nhật ký</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page p + figure.diagram,
+    .prose-page.chapter-page p + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page p + ul.manning-bullets {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0287.html">← Trước</a>
+    <a href="page_0289.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Tổng hợp nhật ký và Spring Cloud Sleuth</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">263</span>
+      </header>
+
+      <figure class="diagram" aria-label="Hình 9.2">
+        <img src="../assets/images/page_0288_fig_9_2.png" width="1888" height="528" alt="Hình 9.2 — Khi có nhiều dịch vụ tham gia vào một giao dịch, bạn có thể thấy chúng chia sẻ cùng một trace ID.">
+        <figcaption><strong>Hình 9.2</strong><br>Khi có nhiều dịch vụ tham gia vào một giao dịch, bạn có thể thấy chúng chia sẻ cùng một trace ID.</figcaption>
+      </figure>
+
+      <p class="no-indent">Cho đến giờ, chúng ta chỉ xem dữ liệu ghi log do một lời gọi dịch vụ đơn lẻ tạo ra. Hãy xem điều gì xảy ra khi bạn gọi licensing service tại <code>GET http://localhost:5555/api/licensing/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/licenses/f3831f8c-c338-4ebe-a82a-e2fc1d1ff78a</code>. Hãy nhớ, licensing service cũng phải gọi ra organization service. Hình 9.2 cho thấy output ghi log từ hai lời gọi dịch vụ.</p>
+
+      <p>Nhìn vào hình 9.2, bạn có thể thấy cả licensing service và organization service đều có cùng trace ID <code>a9e3e1786b74d302</code>. Tuy nhiên, licensing service có span ID là <code>a9e3e1786b74d302</code> (cùng giá trị với transaction ID). Organization service có span ID là <code>3867263ed85ffbf4</code>.</p>
+
+      <p>Chỉ bằng cách thêm vài dependency POM, bạn đã thay thế toàn bộ hạ tầng correlation ID mà bạn xây dựng ở chương 5 và 6. Cá nhân tôi, không có gì khiến tôi vui hơn trên đời này hơn là thay thế code phức tạp kiểu hạ tầng bằng code của người khác.</p>
+
+      <h3 class="section-title">9.2 Tổng hợp nhật ký và Spring Cloud Sleuth</h3>
+
+      <p class="no-indent">Trong môi trường microservice quy mô lớn (đặc biệt trên cloud), dữ liệu ghi log là công cụ quan trọng để gỡ lỗi. Tuy nhiên, vì chức năng của ứng dụng dựa trên microservice được phân tách thành các dịch vụ nhỏ, chi tiết và bạn có thể có nhiều instance dịch vụ cho cùng một loại dịch vụ, việc liên kết dữ liệu log từ nhiều dịch vụ để giải quyết vấn đề của người dùng có thể cực kỳ khó khăn. Các developer cố gắng gỡ lỗi một vấn đề trên nhiều server thường phải thử những cách sau:</p>
+
+      <ul class="manning-bullets" aria-label="Các cách gỡ lỗi log thủ công">
+        <li>Đăng nhập vào nhiều server để kiểm tra log có trên từng server. Đây là việc cực kỳ tốn công, đặc biệt nếu các dịch vụ liên quan có khối lượng giao dịch khác nhau khiến log rollover ở tốc độ khác nhau.</li>
+        <li>Viết các script truy vấn tự phát triển để cố gắng phân tích log và xác định các mục log liên quan. Vì mỗi truy vấn có thể khác nhau, bạn thường kết thúc với sự bùng nổ lớn các script tùy chỉnh để truy vấn dữ liệu từ log của mình.</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

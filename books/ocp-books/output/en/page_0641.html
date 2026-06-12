@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 22: Date and Time API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page ul.format-letters {
+      margin: 0 0 3.2mm;
+      padding: 0 0 0 1.5em;
+      list-style: none;
+    }
+
+    .prose-page.ocp-chapter-page ul.format-letters li {
+      margin: 0 0 1.5mm;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0640.html">← Prev</a>
+    <a href="page_0642.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">641</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>LocalDate ld = LocalDate.parse("Oct/23/19", dtf);//assuming English/US
+System.out.println(ld);//prints 2019-10-23</code></pre>
+      </figure>
+
+      <p class="no-indent">Format specification uses predefined characters to denote various components of a date/time.
+      While a detailed understanding of this specification is not required, you should be aware of the
+      meaning of a few basic letters:</p>
+
+      <ul class="format-letters">
+        <li><code>y</code>&nbsp;is for year</li>
+        <li><code>M</code>&nbsp;is for month</li>
+        <li><code>d</code>&nbsp;is for day of month</li>
+        <li><code>H</code>&nbsp;is for hour of day</li>
+        <li><code>m</code>&nbsp;is for minute</li>
+        <li><code>s</code>&nbsp;is for second</li>
+        <li><code>n</code>&nbsp;is for nanosecond</li>
+      </ul>
+
+      <h3 class="section-title section-title--sub">Parsing a string to create a <code>Period</code>&nbsp;or a <code>Duration</code><span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The <code>Period</code>&nbsp;also has a parse method but the format of a&nbsp;period string is quite different from
+      date/time. It looks weird to be honest when you look at it for the first time but it actually makes
+      sense. It follows ISO-8601 period format and looks like this: <code>PnYnMnD</code>&nbsp;and <code>PnW</code>. Here, <code>n</code>
+      stands for a number and <code>P</code>, <code>Y</code>, <code>M</code>, <code>D</code>, and, <code>W</code>&nbsp;are letters that appear in the string. The case
+      of the letters is not important. For example, <code>P1Y10M3d</code>&nbsp;means 1 year, 10 months, and 3 days,
+      <code>P1Y3D</code>&nbsp;means 1 year and 3 days. <code>p1Y2w</code>&nbsp;means 1 year and 2 weeks.</p>
+
+      <p>It is now easy to create a <code>Period</code>&nbsp;by parsing a string. For example, <code>Period p =
+      Period.parse("p1Y2w");</code>&nbsp;creates a <code>Period</code>&nbsp;with 1 year and 2 weeks. You can create a
+      <code>Period</code>&nbsp;with negative values as well, for example, <code>"-P2m3d"</code>&nbsp;and <code>"P-2m-3d"</code>&nbsp;will be parsed
+      into the same Period representing -2 months and -3 days.</p>
+
+      <p>Parsing a <code>Duration</code>&nbsp;works similarly but it uses the character <code>T</code>&nbsp;to isolate the time
+      information in the input string:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>System.out.println(Duration.parse("P1DT3H4M"));</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

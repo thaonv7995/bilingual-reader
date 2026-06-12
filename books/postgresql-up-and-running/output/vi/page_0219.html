@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Phụ lục B: Các lệnh psql không tương tác</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .footnotes {
+      margin: 2mm 0 4mm;
+      padding-top: 0;
+      border-top: none;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .footnotes p {
+      margin: 0 0 2.5mm;
+      padding-left: 5.5mm;
+      text-indent: -5.5mm;
+    }
+    .prose-page.chapter-page .fn-markers {
+      display: inline-block;
+      min-width: 5mm;
+      font-size: 9pt;
+      line-height: 1;
+      vertical-align: baseline;
+    }
+    .prose-page.chapter-page .version-marker {
+      font-size: 9pt;
+      line-height: 1;
+      vertical-align: super;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0218.html">← Trước</a>
+    <a href="page_0220.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">219</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  \c[onnect] [DBNAME|- USER|- HOST|- PORT|-]
+                         kết nối đến cơ sở dữ liệu mới (hiện tại là "postgres")
+  \encoding [ENCODING]   hiển thị hoặc thiết lập mã hóa khách hàng
+  \password [USERNAME]   thay đổi mật khẩu cho người dùng một cách an toàn
+  \conninfo              hiển thị thông tin về kết nối hiện tại
+Hệ điều hành
+  \cd [DIR]              thay đổi thư mục làm việc hiện tại
+\setenv NAME [VALUE]   thiết lập hoặc hủy thiết lập biến môi trường <span class="version-marker" aria-label="PostgreSQL 9.3">⑧</span>
+  \timing [on|off]       bật hoặc tắt thời gian của các lệnh (hiện tại là tắt)
+  \! [COMMAND]           thực thi lệnh trong shell hoặc bắt đầu shell tương tác</code></pre>
+      </figure>
+
+      <div class="footnotes">
+        <p class="no-indent"><span class="fn-markers" aria-hidden="true">①②</span> Các tính năng mới được giới thiệu trong PostgreSQL 9.3.</p>
+        <p class="no-indent"><span class="fn-markers" aria-hidden="true">③⑥</span> Các tính năng mới được giới thiệu trong PostgreSQL 9.2.</p>
+        <p class="no-indent"><span class="fn-markers" aria-hidden="true">⑦</span> Tính năng mới được giới thiệu trong PostgreSQL 9.4. Bạn có thể sử dụng <code>\pset</code> mà không cần bất kỳ
+        tham số nào và nó sẽ xuất ra tất cả các tùy chọn bạn có thể thiết lập và giá trị hiện tại
+        được thiết lập là gì.</p>
+      </div>
+
+      <h3 class="section-title">Các lệnh psql không tương tác</h3>
+
+      <p class="no-indent">Ví dụ B-5 hiển thị màn hình trợ giúp cho các lệnh không tương tác. Các ví dụ về cách sử dụng
+      được đề cập trong <span class="accent-word">&ldquo;psql tương tác so với không tương tác&rdquo; trên trang 46</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ B-5.</strong> màn hình trợ giúp cơ bản của psql</figcaption>
+        <pre class="code-block"><code>psql --help
+
+psql là terminal tương tác của PostgreSQL.
+Cách sử dụng:
+psql [OPTION]... [DBNAME [USERNAME]]
+
+Các tùy chọn chung:
+-c, --command=COMMAND    chỉ chạy một lệnh đơn (SQL hoặc nội bộ) và thoát
+-d, --dbname=DBNAME      tên cơ sở dữ liệu để kết nối
+-f, --file=FILENAME      thực thi các lệnh từ tệp, sau đó thoát
+-l, --list               liệt kê các cơ sở dữ liệu có sẵn, sau đó thoát
+-v, --set=, --variable=NAME=VALUE
+thiết lập biến psql NAME thành VALUE
+-X, --no-psqlrc          không đọc tệp khởi động (~/.psqlrc)
+-1 ("one"), --single-transaction
+thực thi tệp lệnh như một giao dịch đơn
+--help                   hiển thị trợ giúp này, sau đó thoát
+--version                xuất thông tin phiên bản, sau đó thoát
+
+Các tùy chọn đầu vào và đầu ra:
+-a, --echo-all           phản hồi tất cả đầu vào từ kịch bản
+-e, --echo-queries       phản hồi các lệnh gửi đến máy chủ
+-E, --echo-hidden        hiển thị các truy vấn mà các lệnh nội bộ tạo ra</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các lệnh psql không tương tác<span class="sep">|</span>201</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

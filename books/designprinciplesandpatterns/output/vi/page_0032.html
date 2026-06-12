@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Trang 32 — Nguyên tắc thiết kế và Mẫu thiết kế</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 8mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      font-size: 9pt;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+    }
+    .prose-page figure.diagram svg {
+      display: block;
+      width: 100%;
+      max-width: 128mm;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page figure.diagram svg text {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Điều hướng trang">
+      <a href="page_0031.html">← Trước</a>
+      <a href="page_0033.html">Tiếp →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">32</span>
+      </header>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 360 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hình 2-35 Hệ phân cấp tách rời bằng Bridge">
+          <defs>
+            <marker id="fig235-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+            <marker id="fig235-assoc" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <!-- Music Synthesizer -->
+          <rect x="20" y="8" width="110" height="62" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="20" y1="28" x2="130" y2="28" stroke="black" stroke-width="1"/>
+          <line x1="20" y1="42" x2="130" y2="42" stroke="black" stroke-width="1"/>
+          <text x="75" y="20" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="75" y="30" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer</text>
+          <text x="75" y="38" text-anchor="middle" font-size="8">{abstract}</text>
+          <text x="28" y="54" font-size="8" font-style="italic">+ PlayMidi</text>
+          <text x="28" y="64" font-size="8">- EmitVoice</text>
+          <!-- Voice Emitter interface -->
+          <rect x="210" y="8" width="110" height="48" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="210" y1="28" x2="320" y2="28" stroke="black" stroke-width="1"/>
+          <text x="265" y="18" text-anchor="middle" font-size="8">«interface»</text>
+          <text x="265" y="26" text-anchor="middle" font-size="9" font-weight="bold">Voice Emitter</text>
+          <text x="218" y="40" font-size="8">+ EmitVoice</text>
+          <!-- Association -->
+          <line x1="130" y1="36" x2="210" y2="36" stroke="black" stroke-width="1" marker-end="url(#fig235-assoc)"/>
+          <!-- Music Synthesizer_I -->
+          <line x1="75" y1="70" x2="75" y2="108" stroke="black" stroke-width="1" marker-end="url(#fig235-inherit)"/>
+          <rect x="18" y="108" width="114" height="38" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="18" y1="126" x2="132" y2="126" stroke="black" stroke-width="1"/>
+          <text x="75" y="120" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="75" y="130" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer_I</text>
+          <text x="26" y="142" font-size="8">- PlayMidi</text>
+          <!-- Voice Emitter_I -->
+          <line x1="265" y1="56" x2="265" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig235-inherit)"/>
+          <rect x="218" y="118" width="94" height="28" fill="white" stroke="black" stroke-width="1"/>
+          <text x="265" y="130" text-anchor="middle" font-size="9" font-weight="bold">Voice</text>
+          <text x="265" y="140" text-anchor="middle" font-size="9" font-weight="bold">Emitter_I</text>
+        </svg>
+        <figcaption><strong>Hình 2-35</strong><br>Hệ phân cấp tách rời bằng Bridge</figcaption>
+      </figure>
+
+      <h3 class="section-title">Nhà máy trừu tượng (Abstract Factory)</h3>
+      <p class="no-indent">DIP khuyến nghị mạnh mẽ rằng các module không nên phụ thuộc vào lớp cụ thể. Tuy nhiên, để tạo một thể hiện của lớp, bạn phải phụ thuộc vào lớp cụ thể đó. ABSTRACT FACTORY là mẫu cho phép phụ thuộc vào lớp cụ thể chỉ tồn tại ở một — và chỉ một — nơi.</p>
+      <p>Hình 2-36 cho thấy cách thực hiện điều này cho ví dụ Modem. Tất cả người dùng muốn tạo modem dùng giao diện tên ModemFactory. Con trỏ tới giao diện này được giữ trong biến toàn cục tên GtheFactory. Người dùng gọi hàm Make, truyền vào một chuỗi định danh duy nhất lớp con Modem cụ thể mà họ muốn. Hàm Make trả về con trỏ tới giao diện Modem.</p>
+      <p>Giao diện ModemFactory được ModemFactory_I triển khai. Lớp này được main tạo, và con trỏ tới nó được nạp vào GtheFactory toàn cục. Do đó, không module nào trong hệ thống biết về các lớp modem cụ thể ngoại trừ ModemFactory_I, và không module nào biết về ModemFactory_I ngoại trừ main.</p>
+
+      <h3 class="section-title">Kết luận</h3>
+      <p class="no-indent">Chương này đã giới thiệu khái niệm kiến trúc hướng đối tượng và định nghĩa nó là cấu trúc các lớp và package giữ cho ứng dụng phần mềm linh hoạt, vững chắc, tái sử dụng được và dễ phát triển. Các nguyên tắc và mẫu trình bày ở đây hỗ trợ</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

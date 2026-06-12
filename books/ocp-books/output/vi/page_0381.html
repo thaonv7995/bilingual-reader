@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 12pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0380.html">← Trước</a>
+    <a href="page_0382.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">381</span>
+      </header>
+
+      <p><code>Comparator</code>&nbsp;chỉ có duy nhất một tham số kiểu (vì nó được dùng để so sánh hai đối tượng (Object) có
+      <strong>cùng kiểu</strong>). Do đó, các phương án <strong>C</strong> và <strong>D</strong>&nbsp;sẽ không biên dịch được.</p>
+
+      <h3 class="section-title section-title--sub">18.5.5 Sắp xếp và Tìm kiếm Danh sách<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Các Collection không tự động sắp xếp các phần tử theo mặc định như <code>ArrayList</code>, <code>LinkedList</code>,
+      <code>ArrayDeque</code>, <code>HashSet</code>, và <code>HashMap</code>, có thể được tìm kiếm một phần tử bằng cách sử dụng phương thức
+      <code>equals</code>&nbsp;để so sánh đối tượng (Object) cần tìm với các đối tượng (Object) trong Collection đó. Chính xác bao nhiêu
+      phép so sánh sẽ được thực hiện cho một lần tìm kiếm cụ thể phụ thuộc vào cách cấu trúc dữ liệu của
+      Collection quản lý các đối tượng (Object) bên trong. Ví dụ, trong trường hợp của <code>ArrayList</code>, đối tượng (Object)
+      đã cho sẽ được so sánh lần lượt với từng đối tượng (Object) trong danh sách cho đến khi tìm thấy kết quả khớp. Đây
+      được gọi là <strong>Tìm kiếm tuyến tính (Linear Search)</strong>. Về mặt thuật ngữ kỹ thuật, chúng ta nói rằng độ phức tạp thời gian của nó là <code>O(n)</code>. Nó được
+      coi là chậm.</p>
+
+      <p>Một <code>HashSet</code>&nbsp;thực hiện việc này hiệu quả hơn vì, như đã giải thích trước đó, đầu tiên nó thu hẹp không gian tìm kiếm
+      bằng cách sử dụng hash code và sau đó sử dụng phương thức <code>equals</code>&nbsp;để tìm kết quả khớp chính xác. Độ
+      phức tạp thời gian của nó là <code>O(1)</code>&nbsp;vì nếu sử dụng một hàm băm (hashing function) tốt, mỗi đối tượng (Object) sẽ có một
+      hash code khác nhau và chỉ cần một phép so sánh để tìm thấy kết quả khớp. Nó được coi là
+      rất nhanh. Nhưng các cấu trúc dữ liệu dựa trên bảng băm (hash-based) sử dụng nhiều không gian lưu trữ hơn vì chúng phải lưu trữ cả hash code
+      cùng với đối tượng (Object) và có thêm một hạn chế là bạn không thể lưu trữ các giá trị trùng lặp
+      trong một <code>Set</code>.</p>
+
+      <p>Nếu bạn vừa muốn lưu trữ các phần tử trùng lặp, vừa muốn tìm kiếm nhanh thì sao?
+      Khi đó, bạn có thể sử dụng một <code>List</code>&nbsp;đã được sắp xếp. Tìm kiếm thông qua một danh sách đã sắp xếp có thể được thực hiện bằng thuật toán <strong>Tìm kiếm nhị phân (Binary Search)</strong>,
+      thuật toán này nhanh hơn đáng kể so với tìm kiếm tuyến tính (Linear search). Độ phức tạp thời gian của nó là
+      <code>O(log n)</code>.</p>
+
+      <p>Lớp (Class) <code>java.util.Collections</code>&nbsp;là một lớp tiện ích cung cấp một vài phương thức static để
+      sắp xếp và tìm kiếm các đối tượng (Object) trong một <code>List</code>. Chúng ta hãy lần lượt xem xét từng phương thức.</p>
+
+      <h3 class="section-title section-title--sub">Các phương thức <code>Collections.sort</code><span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

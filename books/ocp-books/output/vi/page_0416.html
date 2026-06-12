@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0415.html">← Trước</a>
+    <a href="page_0417.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">416</span>
+      </header>
+
+      <p class="no-indent">nơi đặt tệp jar. Trên các phiên bản Windows và Java cũ hơn, thư mục hiện tại là
+      <code>c:\windows\system32</code>&nbsp;.</p>
+
+      <p>Việc biết thư mục hiện tại là rất quan trọng vì theo mặc định, tất cả các đường dẫn tương đối đều được phân giải dựa trên
+      thư mục hiện tại. Do đó, nếu chương trình của bạn cố gắng mở một tệp có đường dẫn tương đối là
+      <code>a\test.txt</code>&nbsp; và nếu thư mục hiện tại là <code>c:\temp</code>&nbsp;, thì JVM sẽ mong đợi tệp đó
+      nằm ở <code>c:\temp\a\test.txt</code>&nbsp;.</p>
+
+      <h3 class="section-title section-title--minor">Dấu chấm (.) và hai dấu chấm (..)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn cần lưu ý rằng tất cả các thư mục trong hệ thống tệp dựa trên Unix và DOS đều tự động có
+      hai mục con tên là <code>.</code>&nbsp; và <code>..</code>&nbsp;, trong đó <code>.</code>&nbsp; tham chiếu đến chính thư mục chứa nó
+      và <code>..</code>&nbsp; tham chiếu đến thư mục cha của nó. Ví dụ, nếu bạn thực thi lệnh &quot; dir . &quot;
+      (không có dấu ngoặc kép) trong <code>c:\temp</code>&nbsp;, bạn sẽ thấy danh sách các tệp hiện có trong <code>c:\temp</code>
+      và nếu bạn chạy lệnh &quot; dir .. &quot;, bạn sẽ thấy danh sách các tệp hiện có trong thư mục cha của
+      temp, tức là <code>c:\</code>&nbsp;. Bạn cũng sẽ quan sát thấy điều tương tự trên một máy tính Linux. Lý do và
+      mục đích tồn tại của chúng liên quan nhiều đến cách hệ điều hành quản lý hệ thống tệp, nhưng bạn
+      không cần phải học những chi tiết đó cho kỳ thi. Bạn chỉ cần biết chúng ảnh hưởng đến một
+      tên đường dẫn (pathname) như thế nào. Một dấu chấm nghĩa là ở lại cùng một thư mục, trong khi hai dấu chấm nghĩa là đi lên một cấp. Vì vậy,
+      ví dụ, <code>c:\temp\a\..</code>&nbsp; nghĩa là, bắt đầu từ <code>c:</code>&nbsp;, đi tới temp, rồi tới <code>a</code>&nbsp;, và sau đó quay lại
+      thư mục cha của <code>a</code>&nbsp;, nghĩa là bạn đã quay lại <code>c:\temp</code>&nbsp;. Tương tự, nếu bạn thực hiện <code>cd ..</code>&nbsp; khi đang ở
+      trong <code>c:\temp</code>&nbsp; trên cửa sổ dòng lệnh, bạn sẽ ở trong <code>c:</code>&nbsp;.</p>
+
+      <h3 class="section-title section-title--minor">Đường dẫn chuẩn (Canonical path)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một đường dẫn chuẩn (canonical path) là một đường dẫn tuyệt đối không chứa bất kỳ phân đoạn đường dẫn dư thừa nào. Ví dụ,
+      <code>c:\temp\a\..\test.txt</code>&nbsp; là một đường dẫn tuyệt đối nhưng nếu đi theo đường dẫn này, bạn sẽ đi
+      từ <code>c:</code>&nbsp; tới temp, rồi từ temp tới <code>a</code>&nbsp;, sau đó quay lại temp, và cuối cùng là tới <code>test.txt</code>&nbsp;.</p>
+
+      <p>Sự hiện diện của <code>..</code>&nbsp; triệt tiêu <code>a</code>&nbsp; xuất hiện trước nó. Vì vậy, <code>a\..</code>&nbsp; tạo thành một dạng
+      vòng lặp trong đường dẫn. Đường dẫn chuẩn sẽ loại bỏ tất cả các vòng lặp như vậy và cung cấp cho bạn một đường dẫn thẳng từ
+      thư mục gốc đến điểm đích.</p>
+
+      <p>Một số hệ điều hành cho phép bạn tạo các liên kết tượng trưng (symbolic link) tới các tệp khác trong hệ thống tệp. Một
+      đường dẫn chuẩn cũng phân giải các liên kết như vậy, nghĩa là nó hiển thị đường dẫn thực tế thay vì
+      liên kết tượng trưng.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

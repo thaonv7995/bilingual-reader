@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Nested Loops</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .code-intro {
+      margin: 0 0 1mm 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note .operation-label {
+      margin: 2.5mm 0 1mm;
+    }
+
+    .prose-page .sidebar-note figure.code-snippet {
+      margin: 1.5mm 0 2mm 4.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Vòng lặp lồng nhau</p>
+
+      <p class="code-intro">Doctrine 2.0.5 tạo ra các truy vấn chọn N+1:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT e0_.employee_id AS employee_id0 -- CÁC CỘT KHÁC
+  FROM employees e0_
+ WHERE UPPER(e0_.last_name) LIKE ?</code></pre>
+      </figure>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   SELECT t0.sale_id AS SALE_ID1 -- CÁC CỘT KHÁC
+     FROM sales t0
+    WHERE t0.subsidiary_id = ?
+      AND t0.employee_id = ?</code></pre>
+      </figure>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   SELECT t0.sale_id AS SALE_ID1 -- CÁC CỘT KHÁC
+     FROM sales t0
+    WHERE t0.subsidiary_id = ?
+      AND t0.employee_id = ?</code></pre>
+      </figure>
+
+      <aside class="sidebar-note">
+        <h3>Bật ghi lại SQL</h3>
+
+        <p>Bật ghi lại SQL trong quá trình phát triển và xem xét các câu lệnh SQL được tạo ra.</p>
+
+        <p class="operation-label">DBIx::Class</p>
+        <p><code>export DBIC_TRACE=1</code> trong shell của bạn.</p>
+
+        <p class="operation-label">Doctrine</p>
+        <p>Chỉ ở cấp mã nguồn&mdash;đừng quên tắt điều này cho môi trường sản xuất. Hãy xem xét việc xây dựng logger có thể cấu hình của riêng bạn.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>$logger = new \Doctrine\DBAL\Logging\EchoSqlLogger;
+$config-&gt;setSQLLogger($logger);</code></pre>
+        </figure>
+
+        <p class="operation-label">Hibernate (native)</p>
+        <p><code>&lt;property name="show_sql"&gt;true&lt;/property&gt;</code> trong App.config hoặc <code>hibernate.cfg.xml</code></p>
+
+        <p class="operation-label">JPA</p>
+        <p>Trong persistence.xml nhưng tùy thuộc vào nhà cung cấp JPA:</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>&lt;property name="eclipselink.logging.level" value="FINE"/&gt;
+&lt;property name="hibernate.show_sql" value="TRUE"/&gt;
+&lt;property name="openjpa.Log" value="SQL=TRACE"/&gt;</code></pre>
+        </figure>
+      </aside>
+
+      <p class="no-indent">Hầu hết các ORM cũng cung cấp một cách lập trình để bật ghi lại SQL. Điều này có nguy cơ vô tình triển khai cài đặt trong môi trường sản xuất.</p>
+
+      <p class="page-folio page-folio--left">95</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

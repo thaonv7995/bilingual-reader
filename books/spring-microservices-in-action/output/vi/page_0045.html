@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 1: Các mẫu định tuyến microservice</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .subsection-body {
+      margin-left: 9.5mm;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.8mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + .subsection-body > p:first-child {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.8mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0044.html">← Trước</a>
+    <a href="page_0046.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">20</span>
+        <span class="rh-center">CHƯƠNG 1 <em>Chào mừng đến với đám mây, Spring</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ul class="manning-bullets">
+        <li><strong class="run-in">Mức độ chi tiết của dịch vụ</strong>&mdash;Làm thế nào để bạn tiếp cận việc phân rã một miền nghiệp vụ thành các microservice sao cho mỗi microservice có mức trách nhiệm phù hợp? Khi một dịch vụ quá thô với các trách nhiệm chồng chéo sang các miền vấn đề nghiệp vụ khác nhau, dịch vụ đó trở nên khó bảo trì và thay đổi theo thời gian. Khi dịch vụ quá mịn, độ phức tạp tổng thể của ứng dụng tăng lên và biến dịch vụ thành một lớp trừu tượng dữ liệu &ldquo;ngu&rdquo; không có logic nào ngoài phần cần thiết để truy cập kho dữ liệu. Tôi sẽ trình bày mức độ chi tiết của dịch vụ ở chương 2.</li>
+        <li><strong class="run-in">Giao thức giao tiếp</strong>&mdash;Các nhà phát triển sẽ giao tiếp với dịch vụ của bạn như thế nào? Bạn có dùng XML (Extensible Markup Language), JSON (JavaScript Object Notation), hay một giao thức nhị phân như Thrift để gửi dữ liệu qua lại giữa các microservice không? Chúng ta sẽ tìm hiểu lý do JSON là lựa chọn lý tưởng cho microservice và đã trở thành lựa chọn phổ biến nhất để gửi và nhận dữ liệu đến/từ microservice. Tôi sẽ trình bày các giao thức giao tiếp ở chương 2.</li>
+        <li><strong class="run-in">Thiết kế giao diện</strong>&mdash;Cách tốt nhất để thiết kế các giao diện dịch vụ thực tế mà các nhà phát triển sẽ dùng để gọi dịch vụ của bạn là gì? Làm thế nào để cấu trúc URL dịch vụ để truyền tải ý định của dịch vụ? Còn việc phiên bản hóa dịch vụ thì sao? Một giao diện microservice được thiết kế tốt giúp việc sử dụng dịch vụ trở nên trực quan. Tôi sẽ trình bày thiết kế giao diện ở chương 2.</li>
+        <li><strong class="run-in">Quản lý cấu hình dịch vụ</strong>&mdash;Làm thế nào để quản lý cấu hình microservice để khi di chuyển giữa các môi trường khác nhau trên đám mây, bạn không bao giờ phải thay đổi mã ứng dụng lõi hoặc cấu hình? Tôi sẽ trình bày quản lý cấu hình dịch vụ ở chương 3.</li>
+        <li><strong class="run-in">Xử lý sự kiện giữa các dịch vụ</strong>&mdash;Làm thế nào để tách rời microservice bằng sự kiện để giảm thiểu các phụ thuộc cứng giữa các dịch vụ và tăng khả năng phục hồi của ứng dụng? Tôi sẽ trình bày xử lý sự kiện giữa các dịch vụ ở chương 8.</li>
+      </ul>
+
+      <h4 class="subsection-title">1.9.2 Các mẫu định tuyến microservice</h4>
+
+      <div class="subsection-body">
+        <p>Các mẫu định tuyến microservice đề cập đến cách một ứng dụng client muốn tiêu thụ microservice khám phá vị trí của dịch vụ và được định tuyến tới dịch vụ đó. Trong một ứng dụng dựa trên đám mây, bạn có thể có hàng trăm phiên bản microservice đang chạy. Bạn sẽ cần trừu tượng hóa địa chỉ IP vật lý của các dịch vụ này và có một điểm vào duy nhất cho các cuộc gọi dịch vụ để bạn có thể thực thi nhất quán các chính sách bảo mật và nội dung cho mọi cuộc gọi dịch vụ.</p>
+
+        <p>Khám phá dịch vụ và định tuyến trả lời câu hỏi: &ldquo;Làm thế nào để đưa yêu cầu dịch vụ của client tới một phiên bản cụ thể của dịch vụ?&rdquo;</p>
+
+        <ul class="manning-bullets">
+          <li><strong class="run-in">Khám phá dịch vụ</strong>&mdash;Làm thế nào để microservice có thể được khám phá để các ứng dụng client tìm thấy chúng mà không cần mã hóa cứng vị trí dịch vụ vào ứng dụng? Làm thế nào để đảm bảo các phiên bản microservice hoạt động sai cách được loại bỏ khỏi nhóm các phiên bản dịch vụ khả dụng? Tôi sẽ trình bày khám phá dịch vụ ở chương 4.</li>
+        </ul>
+      </div>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

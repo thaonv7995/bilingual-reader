@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục ASC, DESC và NULLS FIRST/LAST</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Chỉ mục ASC, DESC và NULLS FIRST/LAST</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;6.4.&nbsp;Chỉ mục Thứ tự Hỗn hợp</figcaption>
+        <img src="../assets/images/page_0147_fig_6_4.png" width="1027" height="529" alt="Hình 6.4. Chỉ mục Thứ tự Hỗn hợp">
+      </figure>
+
+      <p class="no-indent"><code>ASC</code>/<code>DESC</code> chỉ được cần thiết để sắp xếp các cột riêng lẻ theo hướng ngược lại. Không cần thiết phải đảo ngược thứ tự của tất cả các cột vì cơ sở dữ liệu vẫn có thể đọc chỉ mục theo thứ tự giảm dần nếu cần&mdash;chỉ mục phụ trên các bảng tổ chức chỉ mục là ngoại lệ duy nhất. Các chỉ mục phụ ngầm định thêm khóa phân cụm vào chỉ mục mà không cung cấp bất kỳ khả năng nào để chỉ định thứ tự sắp xếp. Nếu bạn cần sắp xếp khóa phân cụm theo thứ tự giảm dần, bạn không có lựa chọn nào khác ngoài việc sắp xếp tất cả các cột khác theo thứ tự giảm dần. Cơ sở dữ liệu sau đó có thể đọc chỉ mục theo hướng ngược lại để có được thứ tự mong muốn.</p>
+
+      <p>Bên cạnh <code>ASC</code> và <code>DESC</code>, tiêu chuẩn SQL định nghĩa hai bộ điều chỉnh ít được biết đến cho mệnh đề <code><strong>order by</strong></code>: <code>NULLS FIRST</code> và <code>NULLS LAST</code>. Kiểm soát rõ ràng về việc sắp xếp <code>NULL</code> đã được &ldquo;gần đây&rdquo; giới thiệu như một phần mở rộng tùy chọn với SQL:2003. Do đó, hỗ trợ từ cơ sở dữ liệu là rất ít. Điều này đặc biệt đáng lo ngại vì tiêu chuẩn không định nghĩa chính xác thứ tự sắp xếp của <code>NULL</code>. Nó chỉ tuyên bố rằng tất cả các <code>NULL</code> phải xuất hiện cùng nhau sau khi sắp xếp, nhưng không chỉ định xem chúng nên xuất hiện trước hay sau các mục khác. Nói một cách chính xác, bạn thực sự cần phải chỉ định việc sắp xếp <code>NULL</code> cho tất cả các cột có thể là null trong mệnh đề <code><strong>order by</strong></code> để có được hành vi được xác định rõ.</p>
+
+      <p>Tuy nhiên, thực tế là phần mở rộng tùy chọn này không được triển khai bởi SQL Server 2012 cũng như MySQL 5.6. Ngược lại, cơ sở dữ liệu Oracle đã hỗ trợ việc sắp xếp <code>NULLS</code> ngay cả trước khi nó được giới thiệu vào tiêu chuẩn, nhưng nó không chấp nhận điều này trong các định nghĩa chỉ mục kể từ phiên bản 11g. Do đó, cơ sở dữ liệu Oracle không thể thực hiện một <code><strong>order by</strong></code> theo ống khi sắp xếp với</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">137</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

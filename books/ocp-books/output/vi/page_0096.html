@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0095.html">← Trước</a>
+    <a href="page_0097.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">96</span>
+      </header>
+
+      <p class="no-indent">vẫn nên tìm hiểu thêm về pattern này vì nó thường được thảo luận trong các cuộc phỏng vấn kỹ thuật.</p>
+
+      <h3 class="section-title section-title--sub">Tạo các lớp sealed (sealed class)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Bạn có thể định nghĩa lớp (Class) <code>FinancialInstrument</code> của mình như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public abstract sealed class FinancialInstrument permits Stock, Bond{
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Hai từ khóa mới được sử dụng ở trên là <code>sealed</code> và <code>permits</code>. Bằng cách sử dụng hai từ khóa này, bạn đang báo cho trình biên dịch biết rằng không có lớp (Class) nào, ngoại trừ <code>Stock</code> và <code>Bond</code>, có thể kế thừa <code>FinancialInstrument</code>. Ngay khi bạn làm điều đó, trình biên dịch sẽ muốn đảm bảo rằng các lớp (Class) <code>Stock</code> và <code>Bond</code> thực sự tồn tại và chúng kế thừa <code>FinancialInstrument</code>. Không chỉ vậy, nó cũng muốn đảm bảo rằng các kiểu con (subtype) của chúng (nếu chúng có thể tồn tại) cũng được xác định tại thời điểm biên dịch (compile time). Vì vậy, bạn cũng sẽ cần phải tạo các lớp (Class) đó. Một khi đã làm điều đó, bạn có thể loại bỏ khối lệnh <code>default</code> khỏi đoạn mã <code>switch</code> được viết ở trên vì giờ đây trình biên dịch đã biết rằng chỉ có hai lớp con (Subclass) khả dĩ của <code>FinancialInstrument</code>. Vì cả hai đều đang được xử lý trong câu lệnh <code>switch</code>, câu lệnh <code>switch</code> đã bao quát toàn bộ trường hợp (exhaustive) mà không cần đến khối lệnh <code>default</code>.</p>
+
+      <p class="no-indent">Bây giờ, hãy để tôi điểm qua nhanh các quy tắc để tạo các lớp sealed (sealed class):</p>
+
+      <ol class="numbered">
+        <li>Chỉ các lớp (Class) và giao diện (Interface) mới có thể được sealed. Các Record luôn là <code>final</code>, vì vậy việc seal chúng là không có ý nghĩa. Các Enum cũng luôn là <code>final</code>, ngoại trừ khi một hằng số enum có phần thân lớp (class body) (không quan trọng cho kỳ thi), trong trường hợp đó chúng được ngầm định là sealed.</li>
+        <li>Tất cả các lớp con (Subclass) trực tiếp của một lớp sealed (sealed class) cũng phải tự được khai báo là <code>final</code>, <code>sealed</code>, hoặc <code>non-sealed</code>. Việc sử dụng <code>final</code> và <code>sealed</code> giới hạn hệ thống phân cấp tính kế thừa (Inheritance) ngay tại thời điểm phát triển và cho phép trình biên dịch đưa ra các giả định về nó, vì vậy rõ ràng lý do tại sao một kiểu con (subtype) phải là một trong hai từ khóa đó. Nhưng <code>non-sealed</code> thì hơi phức tạp một chút. Việc đánh dấu một lớp (Class) là <code>non-sealed</code> sẽ giải phóng nó khỏi sự ràng buộc của một hệ thống phân cấp lớp (Class) bị giới hạn, tức là đưa mọi thứ trở lại bình thường. Một khi</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

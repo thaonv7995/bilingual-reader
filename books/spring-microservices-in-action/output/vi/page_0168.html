@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Bảng 5.1 cấu hình HystrixCommand</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.table-caption {
+      margin: 0 0 1.5mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page table.data-table.hystrix-config-table {
+      margin: 0 0 3mm;
+      font-size: 9pt;
+      line-height: 1.22;
+    }
+    .prose-page.chapter-page table.hystrix-config-table th {
+      background: #d9d9d9;
+      font-weight: 700;
+      padding: 1mm 1.5mm;
+    }
+    .prose-page.chapter-page table.hystrix-config-table td {
+      padding: 1mm 1.5mm;
+      vertical-align: top;
+    }
+    .prose-page.chapter-page table.hystrix-config-table .property-name {
+      font-weight: 700;
+      width: 26%;
+    }
+    .prose-page.chapter-page table.hystrix-config-table .property-name.sub {
+      padding-left: 3mm;
+      font-weight: 400;
+    }
+    .prose-page.chapter-page table.hystrix-config-table .default-value {
+      width: 12%;
+    }
+    .prose-page.chapter-page table.hystrix-config-table .description {
+      width: 62%;
+    }
+    .prose-page.chapter-page table.hystrix-config-table + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0167.html">← Prev</a>
+    <a href="page_0169.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Vượt ra ngoài cơ bản; tinh chỉnh Hystrix</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">143</span>
+      </header>
+
+      <p class="no-indent">Đối với từng pool Hystrix riêng lẻ, tôi sẽ giữ cấu hình càng gần mã nguồn càng tốt và đặt cấu hình thread pool ngay trong annotation <code>@HystrixCommand</code>. Bảng 5.1 tóm tắt tất cả các giá trị cấu hình được dùng để thiết lập và cấu hình các annotation <code>@HystrixCommand</code> của chúng ta.</p>
+
+      <p class="table-caption no-indent"><strong>Bảng 5.1</strong><br>Các giá trị cấu hình cho annotation <code>@HystrixCommand</code></p>
+
+      <table class="data-table hystrix-config-table">
+        <thead>
+          <tr>
+            <th scope="col">Tên thuộc tính</th>
+            <th scope="col">Giá trị mặc định</th>
+            <th scope="col">Mô tả</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="property-name">fallbackMethod</td>
+            <td class="default-value">None</td>
+            <td class="description">Xác định phương thức trong lớp sẽ được gọi nếu lời gọi từ xa hết thời gian chờ. Phương thức callback phải nằm trong cùng lớp với annotation <code>@HystrixCommand</code> và phải có cùng chữ ký phương thức với lớp gọi. Nếu không có giá trị, Hystrix sẽ ném ra một ngoại lệ.</td>
+          </tr>
+          <tr>
+            <td class="property-name">threadPoolKey</td>
+            <td class="default-value">None</td>
+            <td class="description">Gán cho <code>@HystrixCommand</code> một tên duy nhất và tạo một thread pool độc lập với thread pool mặc định. Nếu không định nghĩa giá trị, thread pool Hystrix mặc định sẽ được sử dụng.</td>
+          </tr>
+          <tr>
+            <td class="property-name">threadPoolProperties</td>
+            <td class="default-value">None</td>
+            <td class="description">Thuộc tính annotation Hystrix cốt lõi dùng để cấu hình hành vi của một thread pool.</td>
+          </tr>
+          <tr>
+            <td class="property-name sub">coreSize</td>
+            <td class="default-value">10</td>
+            <td class="description">Thiết lập kích thước của thread pool.</td>
+          </tr>
+          <tr>
+            <td class="property-name sub">maxQueueSize</td>
+            <td class="default-value">-1</td>
+            <td class="description">Kích thước hàng đợi tối đa sẽ được đặt trước thread pool. Nếu đặt là -1, không dùng hàng đợi nào và thay vào đó Hystrix sẽ chặn cho đến khi có thread khả dụng để xử lý.</td>
+          </tr>
+          <tr>
+            <td class="property-name">circuitBreaker.requestVolumeThreshold</td>
+            <td class="default-value">20</td>
+            <td class="description">Thiết lập số lượng yêu cầu tối thiểu phải được xử lý trong cửa sổ trượt trước khi Hystrix thậm chí bắt đầu xem xét liệu circuit breaker có bị kích hoạt hay không.<br><strong>Lưu ý:</strong> Giá trị này chỉ có thể được thiết lập bằng thuộc tính <code>commandPoolProperties</code>.</td>
+          </tr>
+          <tr>
+            <td class="property-name">circuitBreaker.errorThresholdPercentage</td>
+            <td class="default-value">50</td>
+            <td class="description">Tỷ lệ phần trăm lỗi phải xảy ra trong cửa sổ trượt trước khi circuit breaker bị kích hoạt.<br><strong>Lưu ý:</strong> Giá trị này chỉ có thể được thiết lập bằng thuộc tính <code>commandPoolProperties</code>.</td>
+          </tr>
+          <tr>
+            <td class="property-name">circuitBreaker.sleepWindowInMilliseconds</td>
+            <td class="default-value">5,000</td>
+            <td class="description">Số mili giây Hystrix sẽ chờ trước khi thử một lời gọi dịch vụ sau khi circuit breaker đã bị kích hoạt.<br><strong>Lưu ý:</strong> Giá trị này chỉ có thể được thiết lập bằng thuộc tính <code>commandPoolProperties</code>.</td>
+          </tr>
+          <tr>
+            <td class="property-name">metricsRollingStats.timeInMilliseconds</td>
+            <td class="default-value">10,000</td>
+            <td class="description">Số mili giây Hystrix sẽ thu thập và giám sát thống kê về các lời gọi dịch vụ trong một cửa sổ.</td>
+          </tr>
+          <tr>
+            <td class="property-name">metricsRollingStats.numBuckets</td>
+            <td class="default-value">10</td>
+            <td class="description">Số lượng bucket metrics mà Hystrix sẽ duy trì trong cửa sổ giám sát của nó. Càng nhiều bucket trong cửa sổ giám sát, thời gian mức thấp hơn mà Hystrix sẽ giám sát lỗi trong cửa sổ.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

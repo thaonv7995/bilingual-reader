@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0496.html">← Trước</a>
+    <a href="page_0498.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">497</span>
+      </header>
+
+      <p class="no-indent">mà không cần phải đồng bộ hóa với nhau sẽ phải chờ đợi trên cùng một monitor. Việc này giống như một vị khách khóa toàn bộ khách sạn thay vì khóa phòng riêng của mình. Ví dụ, khóa (lock) trong đoạn mã sau đây quá hạn chế:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>void update(int id, String name){
+ synchronized(Student.class){
+  this.id = id; this.name = name;
+ }
+}</code></pre>
+      </figure>
+
+      <p>Trong đoạn mã trên, <code>Student.class</code>&nbsp;tham chiếu đến đối tượng <code>Class</code>&nbsp;duy nhất được tạo tự động bởi JVM khi nó tải lớp (Class) <code>Student</code>. Việc sử dụng monitor của đối tượng này là quá hạn chế vì nó sẽ ngăn cản các Thread (Luồng) cập nhật ngay cả các đối tượng (Object) <code>Student</code>&nbsp;khác nhau cùng một lúc, trong khi tất cả những gì chúng ta muốn là ngăn không cho cùng một đối tượng (Object) <code>Student</code>&nbsp;bị cập nhật bởi nhiều Thread (Luồng) cùng một lúc.</p>
+
+      <h3 class="section-title">20.3 Điều phối thực thi Thread (Luồng)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Việc chỉ đơn thuần thực thi hai Thread (Luồng) đồng thời mang lại rất ít lợi ích trừ khi quá trình thực thi của chúng được điều phối tốt. Thật vậy, một Thread (Luồng) consumer không thể làm được gì nhiều ngay cả khi nó có cơ hội thực thi trừ khi Thread (Luồng) producer đã sản xuất ra thứ gì đó. Do đó, điều quan trọng là phải biết về các kỹ thuật cơ bản để điều phối việc thực thi của các Thread (Luồng) trong một chương trình đa luồng.</p>
+
+      <p>Java cung cấp một số phương thức để điều phối việc thực thi của hai hoặc nhiều Thread (Luồng). Bạn đã thấy một số trong số chúng ở phần trước khi tìm hiểu cách chia sẻ bộ nhớ với nhiều Thread (Luồng). Hãy cùng điểm nhanh qua chúng.</p>
+
+      <h3 class="section-title section-title--sub">20.3.1 Sử dụng join<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn đã thấy cách sử dụng phương thức join. Đây là một cách tuyệt vời để</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

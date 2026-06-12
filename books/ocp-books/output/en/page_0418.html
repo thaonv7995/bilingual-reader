@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 0 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0417.html">← Prev</a>
+    <a href="page_0419.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">418</span>
+      </header>
+
+      <p class="no-indent"><code>java.nio.file.Files</code>&nbsp;class provides a more comprehensive way to do these operations.</p>
+
+      <h3 class="section-title section-title--minor">Listing a directory</h3>
+
+      <p>You may use a <code>File</code>&nbsp;object to list the contents of a directory if the <code>File</code>&nbsp;object corresponds to
+      a directory in the file system. For example, the following code prints names of all the files
+      present in <code>c:\temp</code>&nbsp;directory:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>File f = new File("c:\\temp");
+if(f.isDirectory()){
+String[] fileNames = f.list();
+for(String fn : fileNames){
+System.out.println(fn);
+}
+}</code></pre>
+      </figure>
+
+      <h3 class="section-title section-title--minor">Using platform independent name separators</h3>
+
+      <p>In the previous code examples, I used Windows specific paths to files such as
+      <code>"c:\temp\test1.txt"</code>&nbsp;and <code>"c:\temp"</code>. These path strings won't work on a Linux
+      machine because Linux uses forward slash ( <code>/</code> ) as the separator character. Furthermore, the
+      root of a file system in Linux is just <code>/</code>. Linux doesn't use drive letters such as <code>c:</code>. The <code>File</code>
+      class has two public static fields for this purpose:</p>
+
+      <ol class="numbered">
+        <li><code>public static char separatorChar</code>&nbsp;: It is the system-dependent default name-separator
+        character. On Windows it is back slash ( <code>'\\'</code> ) and on Linux, it is forward slash
+        ( <code>'/'</code> ).</li>
+        <li><code>public static String separator</code>&nbsp;: A <code>String</code>&nbsp;version of <code>separatorChar</code>&nbsp;for
+        convenience. It contains the same character as <code>separatorChar</code>.</li>
+      </ol>
+
+      <p>So, if I write the path string <code>"c:\temp\test.txt"</code>&nbsp;as <code>File.separator + "temp" +</code>
+      <code>File.separator + "test.txt"</code>, it will work on Windows as well as on Linux because it will
+      be translated to <code>\temp\test.txt</code>&nbsp;if the program is run on a Windows machine and to
+      <code>/temp/test.txt</code>&nbsp;if it is run on a Linux machine. Yes, the</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

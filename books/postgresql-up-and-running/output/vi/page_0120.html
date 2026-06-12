@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu — XML</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0119.html">← Trước</a>
+    <a href="page_0121.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">120</span>
+      </header>
+
+      <p class="no-indent">cách thêm dữ liệu XML vào một bảng, bằng cách khai báo một cột là <code>xml</code> và chèn vào
+      nó như bình thường.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-30.</strong> Điền trường XML</figcaption>
+        <pre class="code-block"><code>CREATE TABLE families (id serial PRIMARY KEY, profile xml);
+INSERT INTO families(profile)
+VALUES (
+    '&lt;family name="Gomez"&gt;
+        &lt;member&gt;&lt;relation&gt;padre&lt;/relation&gt;&lt;name&gt;Alex&lt;/name&gt;&lt;/member&gt;
+        &lt;member&gt;&lt;relation&gt;madre&lt;/relation&gt;&lt;name&gt;Sonia&lt;/name&gt;&lt;/member&gt;
+        &lt;member&gt;&lt;relation&gt;hijo&lt;/relation&gt;&lt;name&gt;Brandon&lt;/name&gt;&lt;/member&gt;
+        &lt;member&gt;&lt;relation&gt;hija&lt;/relation&gt;&lt;name&gt;Azaleah&lt;/name&gt;&lt;/member&gt;
+
+&lt;/family&gt;');</code></pre>
+      </figure>
+
+      <p>Mỗi giá trị XML có thể có một cấu trúc XML khác nhau. Để đảm bảo tính đồng nhất, bạn có thể
+      thêm một ràng buộc kiểm tra, được đề cập trong <span class="accent-word">“Ràng Buộc Kiểm Tra”</span> ở trang 111, vào cột XML.
+      <span class="accent-word">Ví dụ 5-31</span> đảm bảo rằng tất cả các gia đình có ít nhất một phần tử quan hệ. Cú pháp <code>'/family/
+      member/relation'</code> là cú pháp XPath, một cách cơ bản để tham chiếu đến các phần tử và các phần khác của
+      XML.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-31.</strong> Đảm bảo rằng tất cả các bản ghi có ít nhất một quan hệ thành viên</figcaption>
+        <pre class="code-block"><code>ALTER TABLE families ADD CONSTRAINT chk_has_relation
+CHECK (xpath_exists('/family/member/relation', profile));</code></pre>
+      </figure>
+
+      <p class="no-indent">Nếu chúng ta cố gắng chèn một cái gì đó như:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>INSERT INTO families (profile) VALUES ('&lt;family name="HsuObe"&gt;&lt;/family&gt;');</code></pre>
+      </figure>
+
+      <p class="no-indent">chúng ta sẽ nhận được lỗi này: ERROR: hàng mới cho quan hệ "families" vi phạm ràng buộc kiểm tra
+      "chk_has_relation".</p>
+
+      <p>Đối với các kiểm tra phức tạp hơn yêu cầu kiểm tra chống lại DTD hoặc XSD, bạn sẽ cần phải
+      viết các hàm và sử dụng chúng trong ràng buộc kiểm tra, vì PostgreSQL
+      không có các hàm tích hợp để xử lý những loại kiểm tra đó.</p>
+
+      <h3 class="subsection-title">Truy vấn Dữ Liệu XML</h3>
+      <p class="no-indent">Để truy vấn XML, hàm <code>xpath</code> thực sự hữu ích. Tham số đầu tiên là một truy vấn XPath,
+      và tham số thứ hai là một đối tượng <code>xml</code>. Đầu ra là một mảng các phần tử XML thỏa mãn
+      truy vấn XPath. <span class="accent-word">Ví dụ 5-32</span> kết hợp <code>xpath</code> với <code>unnest</code> để trả về tất cả các thành viên gia đình.
+      <code>unnest</code> giải nén mảng thành một tập hàng. Sau đó, chúng ta chuyển đổi đoạn XML thành văn bản.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-32.</strong> Truy vấn trường XML</figcaption>
+        <pre class="code-block"><code>SELECT family,
+    (xpath('/member/relation/text()', f))[1]::text As relation,
+    (xpath('/member/name/text()', f))[1]::text As mem_name
+FROM (SELECT (xpath('/family/@name', profile))[1]::text As family,</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">102<span class="sep">|</span>Chương 5: Kiểu Dữ Liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

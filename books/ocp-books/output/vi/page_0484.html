@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0483.html">← Trước</a>
+    <a href="page_0485.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">484</span>
+      </header>
+
+      <p class="no-indent">thậm chí quan sát các bộ nhớ đệm (cache) được sử dụng bởi nền tảng nằm bên dưới JVM. Cũng không có API nào để
+      ngăn chặn việc sắp xếp lại các câu lệnh. Thay vào đó, Java định nghĩa một &ldquo;mô hình bộ nhớ&rdquo;, được gọi là
+      <strong>Java Memory Model</strong>, giúp trừu tượng hóa vấn đề này thành một tập hợp các quy tắc mà nếu tuân thủ,
+      sẽ thiết lập một thứ tự thực thi các câu lệnh có thể dự đoán được, nhất quán và đáng tin cậy,
+      bất kể chúng được thực thi từ Thread (Luồng) nào. Về cơ bản, Java memory model
+      định nghĩa cách bộ nhớ dùng chung (shared memory) hoạt động khi được truy cập bởi nhiều Thread (Luồng). Cụ thể hơn,
+      nó xác định các điều kiện mà trong đó các cập nhật đối với một biến dùng chung bởi một Thread (Luồng) có thể được nhìn thấy bởi
+      một Thread (Luồng) khác. Ở đây, bộ nhớ dùng chung về cơ bản chỉ có nghĩa là các trường static và instance bởi vì
+      các biến cục bộ của phương thức luôn là cục bộ đối với một Thread (Luồng) và chúng không bao giờ được chia sẻ với bất kỳ Thread (Luồng)
+      nào khác.</p>
+
+      <p>Nhìn lại ví dụ tính giai thừa ở trên từ góc độ này, mặc dù Thread (Luồng) tính giai thừa
+      có thể đã thực thi câu lệnh gán, Thread (Luồng) chính đã không thể nhìn thấy cập nhật đối với
+      trường <code>result</code>&nbsp;bởi vì Java memory model không hứa hẹn rằng thao tác gán
+      được thực hiện bởi một Thread (Luồng), tức là Thread (Luồng) tính giai thừa, trên biến <code>result</code>&nbsp;sẽ thực sự được nhìn thấy
+      là đã thực thi từ một Thread (Luồng) khác, tức là Thread (Luồng) chính. Nói cách khác, vì Java memory
+      model không hứa hẹn rằng phép gán được thực hiện bởi Thread (Luồng) tính giai thừa sẽ xảy ra
+      <strong>trước khi</strong>&nbsp;Thread (Luồng) chính cố gắng đọc cùng một trường đó, Thread (Luồng) chính có thể không quan sát thấy
+      cập nhật được hoàn thành bởi Thread (Luồng) tính giai thừa ngay cả khi Thread (Luồng) chính tiếp tục kiểm tra biến <code>result</code>
+      mãi mãi. Vì về mặt lý thuyết, phép gán có thể xuất hiện để xảy ra&nbsp;<strong>sau</strong>&nbsp;một, hai, hoặc
+      bất kỳ số lần kiểm tra nào được thực hiện bởi Thread (Luồng) chính, Thread (Luồng) chính không thể phụ thuộc vào thực tế
+      là phép gán chắc chắn sẽ được thực thi trước bất kỳ số lần kiểm tra nào. Do đó, Thread (Luồng)
+      chính có thể không bao giờ thoát khỏi vòng lặp while.</p>
+
+      <p>Để đảm bảo rằng một hành động được nhìn thấy là xảy ra trước một hành động khác, cần phải tồn tại một
+      mối quan hệ &ldquo;happens before&rdquo; (xảy ra trước) giữa hai hành động đó. Java memory model định nghĩa các
+      điều kiện mà trong đó một mối quan hệ như vậy tồn tại và việc hiện thực hóa các mối quan hệ này như thế nào trong nội bộ là tùy thuộc
+      vào những nhà phát triển JVM. Với tư cách là lập trình viên Java, chúng ta chỉ cần tạo ra các
+      điều kiện như vậy trong mã nguồn của mình để có thể tin cậy vào các đảm bảo về tính hiển thị (visibility guarantees) do Java
+      memory model cung cấp.</p>
+
+      <p>Mặc dù có rất nhiều cách để thiết lập mối quan hệ happens-before, nhưng đừng</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

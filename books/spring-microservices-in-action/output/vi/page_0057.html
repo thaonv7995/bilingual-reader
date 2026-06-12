@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 1: Spring Cloud qua ví dụ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 2mm;
+      background: transparent;
+      border: none;
+      font-size: 9.5pt;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0056.html">← Trước</a>
+    <a href="page_0058.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">32</span>
+        <span class="rh-center">CHƯƠNG 1 <em>Chào mừng đến với đám mây, Spring</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">đăng ký chính nó với một tác nhân Khám phá Dịch vụ Eureka và rằng bạn sẽ sử dụng khám phá dịch vụ để tra cứu các endpoint dịch vụ REST từ xa trong code của bạn. Lưu ý rằng cấu hình được thực hiện trong một file thuộc tính sẽ cho microservice đơn giản biết vị trí và số cổng của một máy chủ Eureka để liên hệ. Bạn lần đầu thấy Hystrix được sử dụng khi khai báo phương thức hello của mình:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>@HystrixCommand(threadPoolKey = "helloThreadPool")
+public String helloRemoteServiceCall(String firstName, String lastName)</code></pre>
+      </figure>
+
+      <p>Annotation <code>@HystrixCommand</code> thực hiện hai việc. Thứ nhất, mỗi khi phương thức <code>helloRemoteServiceCall</code> được gọi, nó sẽ không được gọi trực tiếp. Thay vào đó, phương thức sẽ được ủy quyền cho một thread pool do Hystrix quản lý. Nếu cuộc gọi mất quá nhiều thời gian (mặc định là một giây), Hystrix sẽ can thiệp và ngắt cuộc gọi. Đây là triển khai mẫu ngắt mạch (circuit breaker). Việc thứ hai mà annotation này làm là tạo một thread pool có tên <code>helloThreadPool</code> do Hystrix quản lý. Tất cả các cuộc gọi tới phương thức <code>helloRemoteServiceCall</code> sẽ chỉ xảy ra trên thread pool này và được tách biệt khỏi bất kỳ cuộc gọi dịch vụ từ xa nào khác đang được thực hiện.</p>
+
+      <p>Điều cuối cùng cần lưu ý là những gì đang diễn ra bên trong phương thức <code>helloRemoteServiceCall</code>. Sự hiện diện của <code>@EnableEurekaClient</code> đã báo cho Spring Boot biết rằng bạn sẽ sử dụng một lớp <code>RestTemplate</code> đã được sửa đổi (đây không phải cách lớp <code>RestTemplate</code> tiêu chuẩn của Spring hoạt động ngay từ đầu) mỗi khi bạn thực hiện cuộc gọi dịch vụ REST. Lớp <code>RestTemplate</code> này sẽ cho phép bạn truyền vào một service ID logic cho dịch vụ mà bạn đang cố gắng gọi:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ResponseEntity&lt;String&gt; restExchange = restTemplate.exchange
+(http://logical-service-id/name/{firstName}/{lastName}</code></pre>
+      </figure>
+
+      <p>Ẩn bên trong, lớp <code>RestTemplate</code> sẽ liên hệ với dịch vụ Eureka và tra cứu vị trí vật lý của một hoặc nhiều instance dịch vụ &ldquo;name&rdquo;. Là người tiêu dùng dịch vụ, code của bạn không bao giờ phải biết dịch vụ đó nằm ở đâu.</p>
+
+      <p>Ngoài ra, lớp <code>RestTemplate</code> đang sử dụng thư viện Ribbon của Netflix. Ribbon sẽ truy xuất danh sách tất cả các endpoint vật lý liên kết với một dịch vụ. Mỗi khi client gọi dịch vụ, nó sẽ &ldquo;round-robin&rdquo; cuộc gọi tới các instance dịch vụ khác nhau trên client mà không cần phải đi qua một bộ cân bằng tải tập trung. Bằng cách loại bỏ bộ cân bằng tải tập trung và chuyển nó xuống client, bạn loại bỏ thêm một điểm lỗi (bộ cân bằng tải bị sập) trong hạ tầng ứng dụng của mình.</p>
+
+      <p>Tôi hy vọng rằng tại thời điểm này bạn đã ấn tượng, vì bạn đã thêm một số lượng đáng kể các khả năng vào microservice của mình chỉ với vài annotation. Đó mới thực sự là vẻ đẹp đằng sau Spring Cloud. Bạn với tư cách là một developer có thể tận dụng các khả năng microservice đã được kiểm chứng qua thực tế từ các công ty đám mây hàng đầu như Netflix và Consul. Những khả năng này, nếu được sử dụng bên ngoài Spring Cloud, có thể phức tạp và khó thiết lập. Spring Cloud đơn giản hóa việc sử dụng chúng thành không gì khác ngoài vài annotation Spring Cloud đơn giản và các mục cấu hình.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

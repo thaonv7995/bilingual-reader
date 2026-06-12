@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Các bước pipeline CI/CD 4–6 và các loại kiểm thử</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 3;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .highlight-panel {
+      margin: 0 0 2.5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #f7f5e8;
+    }
+    .prose-page.chapter-page .highlight-panel h3 {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: normal;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .highlight-panel p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .highlight-panel p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .highlight-panel .run-in {
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + .highlight-panel,
+    .prose-page.chapter-page .highlight-panel p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0331.html">← Trước</a>
+    <a href="page_0333.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">307</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">Kiến trúc của một pipeline build/triển khai</span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Tiếp tục các bước pipeline build và triển khai">
+        <li>Đây là nơi pipeline build/triển khai của bạn bắt đầu khác biệt so với quy trình CI build Java truyền thống. Sau khi JAR có thể thực thi được build, bạn sẽ &ldquo;nướng&rdquo; (bake) một image máy với microservice được triển khai lên đó. Quá trình nướng này về cơ bản sẽ tạo một image máy ảo hoặc container (Docker) và cài đặt dịch vụ của bạn lên đó. Khi image máy ảo được khởi động, dịch vụ của bạn sẽ được khởi động và sẵn sàng bắt đầu nhận request. Khác với quy trình CI build truyền thống, nơi bạn có thể (và tôi nhấn mạnh là có thể) triển khai JAR hoặc WAR đã biên dịch lên application server được quản lý độc lập (và thường bởi một team riêng) so với ứng dụng, với quy trình CI/CD bạn đang triển khai microservice, runtime engine cho dịch vụ và image máy như một đơn vị phụ thuộc lẫn nhau được quản lý bởi team phát triển đã viết phần mềm.</li>
+        <li>Trước khi bạn chính thức triển khai lên môi trường mới, image máy được khởi động và một loạt kiểm thử nền tảng được chạy đối với image đang chạy để xác định mọi thứ có hoạt động đúng không. Nếu các kiểm thử nền tảng vượt qua, image máy được promote lên môi trường mới và sẵn sàng sử dụng.</li>
+        <li>Trước khi một dịch vụ được promote lên môi trường tiếp theo, các kiểm thử nền tảng cho môi trường đó phải được chạy. Việc promote dịch vụ lên môi trường mới bao gồm khởi động chính xác image máy đã được dùng ở môi trường thấp hơn lên môi trường tiếp theo.</li>
+      </ol>
+
+      <p>Đây là bí quyết then chốt của toàn bộ quy trình. Toàn bộ image máy được triển khai. Không có thay đổi nào được thực hiện đối với bất kỳ phần mềm đã cài đặt nào (bao gồm hệ điều hành) sau khi máy chủ được tạo. Bằng cách promote và luôn dùng cùng một image máy, bạn đảm bảo tính bất biến của máy chủ khi nó được promote từ môi trường này sang môi trường khác.</p>
+
+      <aside class="highlight-panel" aria-labelledby="testing-types-heading">
+        <h3 id="testing-types-heading">Kiểm thử đơn vị so với kiểm thử tích hợp so với kiểm thử nền tảng</h3>
+        <p>Bạn sẽ thấy từ hình 10.15 rằng tôi thực hiện nhiều loại kiểm thử (đơn vị, tích hợp và nền tảng) trong quá trình build và triển khai một dịch vụ. Ba loại kiểm thử là điển hình trong pipeline build và triển khai:</p>
+        <p class="no-indent"><strong class="run-in">Kiểm thử đơn vị—</strong>Kiểm thử đơn vị được chạy ngay trước khi biên dịch mã dịch vụ, nhưng trước khi nó được triển khai lên một môi trường. Chúng được thiết kế để chạy hoàn toàn cô lập, với mỗi kiểm thử đơn vị nhỏ và hẹp về phạm vi. Một kiểm thử đơn vị không nên có phụ thuộc vào cơ sở dữ liệu, dịch vụ cơ sở hạ tầng bên thứ ba, v.v. Thông thường phạm vi của một kiểm thử đơn vị sẽ bao gồm việc kiểm thử một phương thức hoặc hàm duy nhất.</p>
+        <p class="no-indent"><strong class="run-in">Kiểm thử tích hợp—</strong>Kiểm thử tích hợp được chạy ngay sau khi đóng gói mã dịch vụ. Các kiểm thử này được thiết kế để kiểm thử toàn bộ workflow và stub hoặc mock các dịch vụ hoặc thành phần chính cần được gọi bên ngoài. Trong quá trình kiểm thử tích hợp, bạn có thể chạy cơ sở dữ liệu trong bộ nhớ để lưu trữ dữ liệu, mock các lệnh gọi dịch vụ bên thứ ba, v.v. Kiểm thử tích hợp kiểm thử toàn bộ workflow hoặc đường code. Đối với kiểm thử tích hợp, các phụ thuộc bên thứ ba được mock hoặc stub để mọi</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

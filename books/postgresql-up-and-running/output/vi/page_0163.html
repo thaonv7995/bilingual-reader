@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 8: Viết Hàm — Triggers và Trigger Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p.qual-term {
+      margin: 1.5mm 0 0.5mm 6mm;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.qual-desc {
+      margin: 0 0 2mm 12mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0162.html">← Trước</a>
+    <a href="page_0164.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">163</span>
+      </header>
+
+      <p class="qual-desc no-indent">Càng cao bạn đặt chi phí, càng nhiều tính toán mà trình lập kế hoạch sẽ giả định rằng
+      hàm cần.</p>
+
+      <p class="qual-term">ROWS</p>
+      <p class="qual-desc">Chỉ áp dụng cho các hàm trả về tập hợp bản ghi. Giá trị này cung cấp một ước lượng
+      về số lượng hàng sẽ được trả về. Trình lập kế hoạch sẽ xem xét giá trị này
+      khi đưa ra chiến lược tốt nhất.</p>
+
+      <p class="qual-term">SECURITY DEFINER</p>
+      <p class="qual-desc">Điều này khiến việc thực thi diễn ra trong ngữ cảnh bảo mật của chủ sở hữu hàm.
+      Nếu bị bỏ qua, hàm sẽ thực thi dưới ngữ cảnh của người gọi hàm.
+      Từ khóa này hữu ích để cấp quyền cho người dùng cập nhật một bảng thông qua một
+      hàm khi họ không có quyền cập nhật trực tiếp.</p>
+
+      <h3 class="subsection-title">Triggers và Trigger Functions</h3>
+      <p class="no-indent">Không có cơ sở dữ liệu nào có giá trị mà thiếu triggers, tự động phát hiện và xử lý
+      thay đổi trong dữ liệu. PostgreSQL cho phép bạn gán triggers cho cả bảng và view.</p>
+
+      <p>Triggers có thể kích hoạt ở cả cấp độ câu lệnh và cấp độ hàng. Triggers cấp câu lệnh
+      chạy một lần cho mỗi câu lệnh SQL, trong khi triggers cấp hàng chạy cho mỗi hàng bị ảnh hưởng bởi SQL.
+      Ví dụ, nếu bạn thực thi một câu lệnh UPDATE ảnh hưởng đến 1.500 hàng, một trigger cập nhật cấp câu lệnh
+      sẽ chỉ kích hoạt một lần, trong khi trigger cấp hàng có thể kích hoạt lên đến 1.500
+      lần.</p>
+
+      <p>Bạn cũng có thể tinh chỉnh thời gian của trigger bằng cách phân biệt giữa <strong>BEFORE</strong>,
+      <strong>AFTER</strong>, và <strong>INSTEAD OF</strong> triggers. Một trigger <strong>BEFORE</strong> kích hoạt trước khi thực thi
+      câu lệnh, cho bạn cơ hội để hủy bỏ hoặc sao lưu dữ liệu trước khi thay đổi. Một trigger <strong>AFTER</strong>
+      kích hoạt sau khi thực thi câu lệnh, cho bạn cơ hội để lấy lại các giá trị dữ liệu mới.
+      <strong>AFTER</strong> triggers thường được sử dụng cho mục đích ghi log hoặc sao chép. <strong>INSTEAD OF</strong>
+      triggers thực thi thay cho câu lệnh. Bạn có thể gán <strong>BEFORE</strong> và <strong>AFTER</strong> triggers chỉ
+      cho bảng, và <strong>INSTEAD OF</strong> triggers chỉ cho view.</p>
+
+      <p>Bạn cũng có thể trang trí một trigger với điều kiện <strong>WHEN</strong> để kiểm soát hàng nào đang được cập nhật
+      sẽ kích hoạt trigger, hoặc một điều khoản <strong>UPDATE OF</strong> <code>columns_list</code> để trigger chỉ kích hoạt
+      nếu một số cột nhất định được cập nhật. Để có được hiểu biết sâu sắc hơn về sự tương tác
+      giữa triggers và câu lệnh cơ sở, hãy xem tài liệu chính thức: <span class="accent-word">Tổng quan
+      về Hành vi của Trigger</span>. Chúng tôi cũng đã trình bày một trigger dựa trên view trong <span class="accent-word">Ví dụ 7-4</span>.</p>
+
+      <p>PostgreSQL cung cấp các hàm chuyên biệt để xử lý triggers. Những hàm này được gọi là trigger functions
+      và hoạt động giống như bất kỳ hàm nào khác và có cùng cấu trúc cơ bản. Nơi mà chúng
+      khác nhau là ở tham số đầu vào và loại đầu ra. Một trigger function không bao giờ nhận một
+      đối số, vì bên trong hàm đã có quyền truy cập vào dữ liệu và có thể sửa đổi
+      nó.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Cấu trúc của Hàm PostgreSQL<span class="sep">|</span>145</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

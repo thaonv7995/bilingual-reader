@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 17: Lambda Expressions and Method References</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 12pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0328.html">← Prev</a>
+    <a href="page_0330.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">329</span>
+      </header>
+
+      <p class="no-indent">for example, you can invoke the above method like this:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>List&lt;Car&gt; cars = //get a list of cars somehow
+List&lt;String&gt; companyNames = getCarPropertyList(cars, c-&gt;c.getCompany());//observe that the type of c will be Car</code></pre>
+      </figure>
+
+      <p>Besides the <code>apply</code> method, <code>Function</code> has two default methods, namely, <code>andThen</code> and
+      <code>compose</code>. I will not talk about them here because they are not required for the exam. However,
+      it would be a good idea to go through their JavaDoc API descriptions and to try to use them by
+      modifying the above code.</p>
+
+      <h3 class="section-title section-title--sub">java.util.function.BiFunction<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>A <code>BiFunction&lt;T,U,R&gt;</code>&nbsp;is similar to (but does not extend) <code>Function</code>, except that it takes two
+      arguments of type <code>T</code> and <code>U</code>&nbsp; respectively, and returns a result of type <code>R</code>. Its functional
+      method is <code>R apply(T t, U u)</code>. Here is an example that illustrates its usage:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public List&lt;Double&gt; getDeliveryCharges(Car car, List&lt;String&gt; cities,
+BiFunction&lt;Car, String, Double&gt; costBiF){
+List&lt;Double&gt; deliveryChargesList = new ArrayList&lt;&gt;();
+for(String city : cities) deliveryChargesList.add(costBiF.apply(car, city));
+return deliveryChargesList;
+}</code></pre>
+      </figure>
+
+      <p>The above method takes a car and a list of cities and returns a the amounts required to deliver
+      that car to each of the given cities. The <code>costBiF</code> parameter refers to a <code>BiFunction</code> that
+      implements the logic to determine the cost based on the car and the city. The following is a
+      simple implementation that returns a value based on car&apos;s price irrespective of the city:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

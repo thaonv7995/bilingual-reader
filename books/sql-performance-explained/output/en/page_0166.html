@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 7: Partial Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chapter 7: Partial Results</p>
+
+      <h3 class="section-title">Using Window Functions for Pagination</h3>
+
+      <p class="no-indent">Window functions offer yet another way to implement pagination in SQL. This is a flexible, and above all, standards-compliant method. However, only SQL Server and the Oracle database can use them for a pipelined top-N query. PostgreSQL does not abort the index scan after fetching enough rows and therefore executes these queries very inefficiently. MySQL does not support window functions at all.</p>
+
+      <p>The following example uses the window function <code>ROW_NUMBER</code> for a pagination query:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM ( SELECT sales.*
+              , <strong>ROW_NUMBER() OVER (ORDER BY sale_date DESC
+                                          , sale_id   DESC) rn</strong>
+           FROM sales
+       ) tmp
+ <strong>WHERE rn between 11 and 20</strong>
+ ORDER BY sale_date DESC, sale_id DESC;</code></pre>
+      </figure>
+
+      <p>The <code>ROW_NUMBER</code> function enumerates the rows according to the sort order defined in the <code><strong>over</strong></code> clause. The outer <code><strong>where</strong></code> clause uses this enumeration to limit the result to the second page (rows 11 through 20).</p>
+
+      <p>The Oracle database recognizes the abort condition and uses the index on <code>SALE_DATE</code> and <code>SALE_ID</code> to produce a pipelined top-N behavior:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id | Operation                      | Name    | Rows | Cost |
+---------------------------------------------------------------
+| 0 | SELECT STATEMENT               |         | 1004K| 36877 |
+|*1 |  VIEW                           |         | 1004K| 36877 |
+|*2 |   <strong>WINDOW NOSORT STOPKEY</strong>          |         | 1004K| 36877 |
+| 3 |    TABLE ACCESS BY INDEX ROWID | SALES   | 1004K| 36877 |
+| 4 |     <strong>INDEX FULL SCAN DESCENDING</strong> | SL_DTID | 1004K|  2955 |
+---------------------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - filter("RN">=11 AND "RN"<=20)
+   2 - filter(ROW_NUMBER() OVER (
+              ORDER BY "SALE_DATE" DESC, "SALE_ID" DESC )<=20)</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">156</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: @RestController và JSON</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .code-annotated {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .code-annotated figure.code-snippet {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page .code-annotated figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .code-callouts-row {
+      display: grid;
+      grid-template-columns: minmax(0, 48%) minmax(0, 52%);
+      gap: 0 2mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .topic-box {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .topic-box h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .topic-box p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .topic-box p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0074.html">← Trước</a>
+    <a href="page_0076.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">50</span>
+        <span class="rh-center">CHƯƠNG 2 <em>Xây dựng microservice với Spring Boot</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="code-annotated">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>@RestController
+@RequestMapping(value="/v1/organizations/{organizationId}/licenses")
+public class LicenseServiceController {
+  //Body of the class removed for conciseness
+}</code></pre>
+        </figure>
+        <div class="code-callouts-row" aria-label="Chú thích đoạn code">
+          <p class="listing-callout"><code>@RestController</code> báo cho Spring Boot biết đây là dịch vụ dựa trên REST và sẽ tự động serialize/deserialize request/response của dịch vụ sang JSON.</p>
+          <p class="listing-callout">Mở tất cả các HTTP endpoint trong lớp này với tiền tố <code>/v1/organizations/{organizationId}/licenses</code></p>
+        </div>
+      </div>
+
+      <p class="no-indent">Chúng ta sẽ bắt đầu tìm hiểu bằng cách xem xét annotation <code>@RestController</code>. <code>@RestController</code> là annotation cấp lớp trong Java và báo cho Spring Container biết lớp Java này sẽ được dùng cho dịch vụ dựa trên REST. Annotation này tự động xử lý việc serialize dữ liệu truyền vào dịch vụ dưới dạng JSON hoặc XML (mặc định, lớp <code>@RestController</code> sẽ serialize dữ liệu trả về thành JSON). Khác với annotation <code>@Controller</code> truyền thống của Spring, annotation <code>@RestController</code> không yêu cầu bạn — với vai trò nhà phát triển — phải trả về lớp <code>ResponseBody</code> từ lớp controller. Tất cả đều được xử lý nhờ sự hiện diện của annotation <code>@RestController</code>, annotation này bao gồm cả annotation <code>@ResponseBody</code>.</p>
+
+      <aside class="topic-box" aria-label="Tại sao dùng JSON cho microservice?">
+        <h3>Tại sao dùng JSON cho microservice?</h3>
+        <p>Có thể dùng nhiều giao thức để gửi dữ liệu qua lại giữa các microservice dựa trên HTTP. JSON đã trở thành chuẩn de facto vì một số lý do.</p>
+        <p>Thứ nhất, so với các giao thức khác như SOAP (Simple Object Access Protocol) dựa trên XML, JSON cực kỳ nhẹ — bạn có thể biểu diễn dữ liệu mà không cần quá nhiều phần văn bản thừa.</p>
+        <p>Thứ hai, con người dễ đọc và tiêu thụ JSON. Đây là một phẩm chất bị đánh giá thấp khi chọn giao thức serialize. Khi sự cố xảy ra, việc nhà phát triển nhìn vào một khối JSON và nhanh chóng xử lý trực quan nội dung bên trong là rất quan trọng. Sự đơn giản của giao thức khiến việc này trở nên cực kỳ dễ dàng.</p>
+        <p>Thứ ba, JSON là giao thức serialize mặc định được dùng trong JavaScript. Với sự bùng nổ mạnh mẽ của JavaScript như một ngôn ngữ lập trình và sự trỗi dậy không kém phần ấn tượng của Single Page Internet Applications (SPIA) — những ứng dụng phụ thuộc nhiều vào JavaScript — JSON trở thành lựa chọn tự nhiên để xây dựng ứng dụng dựa trên REST vì đây chính là định dạng mà client web phía front-end dùng để gọi dịch vụ.</p>
+        <p>Các cơ chế và giao thức khác hiệu quả hơn JSON khi giao tiếp giữa các dịch vụ. Framework Apache Thrift (<a href="http://thrift.apache.org">http://thrift.apache.org</a>) cho phép bạn xây dựng dịch vụ đa ngôn ngữ có thể giao tiếp với nhau bằng giao thức nhị phân. Giao thức Apache Avro (<a href="http://avro.apache.org">http://avro.apache.org</a>) là giao thức serialize dữ liệu chuyển đổi dữ liệu qua lại sang định dạng nhị phân giữa các lần gọi client và server.</p>
+        <p>Nếu bạn cần giảm thiểu kích thước dữ liệu gửi qua mạng, tôi khuyên bạn nên xem xét các giao thức này. Nhưng theo kinh nghiệm của tôi, dùng JSON thuần trong microservice hoạt động hiệu quả và không chèn thêm một lớp giao tiếp khác cần debug giữa consumer dịch vụ và client dịch vụ.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

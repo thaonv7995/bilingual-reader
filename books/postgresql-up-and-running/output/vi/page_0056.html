@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị Cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0055.html">← Trang trước</a>
+    <a href="page_0057.html">Trang tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">56</span>
+      </header>
+
+      <p class="no-indent">chứa các chức năng không có trong lõi. Cụ thể, bạn cần tiện ích mở rộng này nếu bạn dựa vào hàm xlst_process để xử lý các mẫu XSL. Cũng có một vài hàm XPath cũ chỉ có trong xml2.</p>
+
+      <h3 class="section-title">Sao lưu và Khôi phục</h3>
+      <p class="no-indent">PostgreSQL đi kèm với hai tiện ích cho việc sao lưu: <code>pg_dump</code> và <code>pg_dumpall</code>. Bạn sẽ tìm thấy cả hai trong thư mục bin. Sử dụng <code>pg_dump</code> để sao lưu các cơ sở dữ liệu cụ thể và <code>pg_dumpall</code> để sao lưu tất cả các cơ sở dữ liệu và các biến toàn cục của máy chủ. <code>pg_dumpall</code> cần phải chạy dưới tài khoản siêu người dùng để có quyền truy cập sao lưu tất cả các cơ sở dữ liệu. Hầu hết các tùy chọn dòng lệnh cho các công cụ này tồn tại cả trong kiểu GNU (hai dấu gạch ngang cộng với từ) và kiểu chữ cái truyền thống (một dấu gạch ngang cộng với ký tự chữ cái). Bạn có thể sử dụng chúng thay thế cho nhau, ngay cả trong cùng một lệnh. Chúng tôi sẽ chỉ đề cập đến những điều cơ bản ở đây; để có một cuộc thảo luận sâu hơn, hãy xem tài liệu PostgreSQL <span class="accent-word">Sao lưu và Khôi phục</span>.</p>
+
+      <p>Khi bạn lướt qua phần này, bạn sẽ thấy rằng chúng tôi thường chỉ định cổng và máy chủ trong các ví dụ của chúng tôi. Điều này là vì chúng tôi thường chạy chúng qua các công việc theo lịch (<code>pg_agent</code>) trên một máy khác hoặc chúng tôi có nhiều phiên bản PostgreSQL chạy trên cùng một máy, mỗi phiên bản chạy trên một cổng khác nhau. Đôi khi việc chỉ định tùy chọn <code>-h</code> (<code>--host</code>) có thể gây ra vấn đề nếu dịch vụ của bạn được thiết lập để chỉ lắng nghe trên localhost. Bạn có thể an toàn bỏ qua máy chủ nếu bạn đang chạy các ví dụ trực tiếp trên máy chủ.</p>
+
+      <p>Bạn cũng có thể muốn tạo một tệp <code>~/.pgpass</code> để lưu trữ tất cả mật khẩu. <code>pg_dump</code> và <code>pg_dumpall</code> không có tùy chọn mật khẩu. Ngoài ra, bạn có thể thiết lập một mật khẩu trong biến môi trường <code>PGPASSWORD</code>.</p>
+
+      <h3 class="section-title">Sao lưu Chọn lọc Sử dụng pg_dump</h3>
+      <p class="no-indent">Đối với việc sao lưu hàng ngày, <code>pg_dump</code> nhanh hơn <code>pg_dumpall</code> vì nó có thể sao lưu chọn lọc các bảng, lược đồ và cơ sở dữ liệu. <code>pg_dump</code> sao lưu dưới dạng SQL thuần, nhưng cũng có định dạng nén và TAR. Các bản sao lưu nén và TAR có thể tận dụng tính năng khôi phục song song được giới thiệu trong phiên bản 8.4. Bởi vì chúng tôi tin rằng bạn sẽ sử dụng <code>pg_dump</code> như một phần của thói quen hàng ngày của bạn, chúng tôi đã bao gồm một bản sao đầy đủ của trợ giúp trong <span class="accent-word">“Sao lưu Cơ sở dữ liệu Sử dụng pg_dump” trên trang 195</span> để bạn có thể thấy hàng triệu tùy chọn trong một cái nhìn duy nhất.</p>
+
+      <p>Ví dụ tiếp theo cho thấy một vài kịch bản sao lưu phổ biến và các tùy chọn <code>pg_dump</code> tương ứng. Chúng nên hoạt động cho bất kỳ phiên bản nào của PostgreSQL.</p>
+
+      <p class="no-indent">Để tạo một bản sao lưu cơ sở dữ liệu đơn nén:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -F c -b -v -f mydb.backup mydb</code></pre>
+      </figure>
+
+      <p class="no-indent">Để tạo một bản sao lưu cơ sở dữ liệu đơn dưới dạng văn bản thuần, bao gồm một câu lệnh CREATE DATABASE:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_dump -h localhost -p 5432 -U someuser -C -F p -b -v -f mydb.backup mydb</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">38<span class="sep">|</span>Chương 2: Quản trị Cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

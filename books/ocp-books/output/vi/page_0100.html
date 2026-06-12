@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option {
+      margin: 0 0 2mm;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option-label {
+      margin: 0 0 0.8mm;
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option figure.code-snippet {
+      margin: 0 0 0;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-prompt {
+      margin: 0 0 2.5mm;
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-answer-label {
+      margin: 3mm 0 1.5mm;
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0099.html">← Trước</a>
+    <a href="page_0101.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">100</span>
+      </header>
+
+      <p class="no-indent quiz-prompt">Chọn 2 đáp án đúng</p>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">A.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>non-sealed interface SerialReader extends Reader{ }
+final record Data(String s) implements Reader{ }</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">B.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>sealed interface SerialReader extends Reader{ }
+enum Data implements Reader{ STREAM, FILE}</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">C.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>sealed interface SerialReader extends Reader{ }
+final class Data implements SerialReader{ }</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">D.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>interface SerialReader extends Reader{ }
+interface Data extends Reader{ }</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">E.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>non-sealed interface SerialReader extends Reader{ }
+class Data implements Reader{ }</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">F.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>non-sealed interface SerialReader extends Reader{ }
+non-sealed interface Data extends Reader{ }</code></pre>
+        </figure>
+      </div>
+
+      <p class="no-indent quiz-answer-label">Đáp án</p>
+
+      <p class="no-indent">Đáp án đúng là&nbsp;<strong>A</strong>,&nbsp;<strong>F</strong>.</p>
+
+      <p>Theo định nghĩa đã cho, <code>Reader</code> là một Interface (Giao diện). Do đó, <code>SerialReader</code> và <code>Data</code> có thể là các Interface (Giao diện), Lớp (Class), record, hoặc enum vì tất cả chúng đều được phép triển khai các Interface (Giao diện). <strong>Lựa chọn A</strong>&nbsp;là hợp lệ. Các record ngầm định là final và điều này được cho phép.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

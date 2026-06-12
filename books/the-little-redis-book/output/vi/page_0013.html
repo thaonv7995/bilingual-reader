@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Cuốn sách Redis nhỏ — Trang 13</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Điều hướng trang">
+      <a href="page_0012.html">← Trước</a>
+      <span>Trang 13 / 30</span>
+      <a href="page_0014.html">Tiếp →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<p class="lead">Nhìn hash qua object có cấu trúc (user) là chìa khóa. Chương sau: hash tổ chức dữ liệu, truy vấn thực tế hơn — đó là điểm hash tỏa sáng.</p><h3 class="section-title">Lists</h3><p>List lưu và thao tác mảng value theo key — thêm, lấy đầu/cuối, index. Ví dụ list <code>newusers</code>:</p><figure class="code-snippet"><pre class="code-block"><code>lpush newusers goku
+ltrim newusers 0 50</code></pre></figure><p>Push user mới rồi <code>ltrim</code> giữ 50 user — pattern phổ biến. <code>ltrim</code> O(N) phần tử bị xóa; trim sau mỗi insert → O(1).</p><p>Lần đầu value một key tham chiếu key khác. Lấy 10 user mới nhất:</p><figure class="code-snippet"><pre class="code-block"><code>keys = redis.lrange('newusers', 0, 10)
+redis.mget(*keys.map {|u| "users:#{u}"})</code></pre></figure><p>Ví dụ Ruby — nhiều round trip như đã nói.</p><p>List còn dùng cho log, đường đi user trên site, hàng đợi hành động trong game.</p><h3 class="section-title">Sets</h3><p>Set lưu giá trị duy nhất, phép toán tập hợp. Ví dụ danh sách bạn:</p><figure class="code-snippet"><pre class="code-block"><code>sadd friends:leto ghanima paul chani jessica
+sadd friends:duncan paul jessica alia</code></pre></figure><p>Kiểm tra bạn O(1):</p><figure class="code-snippet"><pre class="code-block"><code>sismember friends:leto jessica
+sismember friends:leto vladimir</code></pre></figure><p>Xem bạn chung:</p><figure class="code-snippet"><pre class="code-block"><code>sinter friends:leto friends:duncan</code></pre></figure>
+      <p class="page-folio">12</p>
+    </article>
+  </main>
+</body>
+</html>

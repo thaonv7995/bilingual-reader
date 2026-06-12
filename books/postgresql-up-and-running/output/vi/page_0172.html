@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 8: Viết Hàm — Hàm Python Cơ Bản</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0171.html">← Trước</a>
+    <a href="page_0173.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">172</span>
+      </header>
+
+      <p class="no-indent">Các tiện ích mở rộng được biên dịch chống lại một phiên bản nhỏ cụ thể của Python. Bạn nên
+      cài đặt phiên bản nhỏ của Python phù hợp với những gì mà các tiện ích mở rộng plpythonu của bạn đã
+      được biên dịch. Ví dụ, nếu plpython2u của bạn được biên dịch chống lại Python 2.7,
+      bạn nên cài đặt Python 2.7.</p>
+
+      <h3 class="subsection-title">Hàm Python Cơ Bản</h3>
+
+      <p class="no-indent">PostgreSQL tự động chuyển đổi các kiểu dữ liệu PostgreSQL sang các kiểu dữ liệu Python và
+      ngược lại. PL/Python có khả năng trả về các mảng và kiểu tổng hợp. Bạn có thể sử dụng PL/
+      Python để viết các trigger và tạo các hàm tổng hợp. Chúng tôi đã trình bày một số
+      trong số này trong Tạp chí Postgres OnLine, trong <span class="accent-word">Ví dụ PL/Python</span>.</p>
+
+      <p>Python cho phép bạn thực hiện những điều mà không thể thực hiện trong PL/pgSQL. Trong <span class="accent-word">Ví dụ 8-12</span>,
+      chúng tôi trình bày cách viết một hàm PL/Python để thực hiện tìm kiếm văn bản trên trang tài liệu
+      trực tuyến của PostgreSQL.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 8-12.</strong> Tìm kiếm tài liệu PostgreSQL bằng PL/Python</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION postgresql_help_search(param_search text)
+RETURNS text AS
+$$
+import urllib, re ①
+response = urllib.urlopen(
+  'http://www.postgresql.org/search/?u=%2Fdocs%2Fcurrent%2F&amp;q=' + param_search
+) ②
+raw_html = response.read() ③
+result = raw_html[raw_html.find("&lt;!-- docbot goes here --&gt;") : raw_html.find("&lt;!--
+pgContentWrap --&gt;") - 1] ④
+result = re.sub('&lt;[^&lt;]+?&gt;', '', result).strip() ⑤
+return result ⑥
+$$
+LANGUAGE plpython2u SECURITY DEFINER STABLE;</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> Nhập các thư viện mà chúng tôi sẽ sử dụng.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> Thực hiện tìm kiếm sau khi nối chuỗi từ tìm kiếm.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> Đọc phản hồi và lưu HTML đã lấy vào một biến gọi là <code>raw_html</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">④</span> Lưu phần của <code>raw_html</code> bắt đầu với <code>&lt;!-- docbot goes here --&gt;</code> và
+      kết thúc ngay trước khi bắt đầu của <code>&lt;!-- pgContentWrap --&gt;</code> vào một biến mới
+      gọi là <code>result</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">⑤</span> Loại bỏ các ký hiệu HTML ở đầu và cuối và khoảng trắng.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">⑥</span> Trả về <code>result</code>.</p>
+
+      <p>Gọi các hàm Python không khác gì so với gọi các hàm được viết bằng các ngôn ngữ khác.
+      Trong <span class="accent-word">Ví dụ 8-13</span>, chúng tôi sử dụng hàm mà chúng tôi đã tạo trong <span class="accent-word">Ví dụ 8-12</span> để xuất ra
+      kết quả với ba từ tìm kiếm.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">154<span class="sep">|</span>Chương 8: Viết Hàm</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

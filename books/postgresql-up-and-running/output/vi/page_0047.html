@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0046.html">← Trước</a>
+    <a href="page_0048.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">máy chủ. Nếu tất cả chúng đều đổ vào lược đồ công cộng, nó sẽ trở nên lộn xộn. Ví dụ, toàn bộ
+      bộ mở rộng PostGIS sẽ cùng nhau thêm hơn một nghìn hàm. Nếu bạn đã
+      tạo một vài bảng và hàm của riêng mình trong lược đồ công cộng, hãy tưởng tượng
+      việc quét một danh sách các bảng và hàm để tìm hàm của bạn giữa hàng ngàn cái sẽ khó chịu như thế nào.</p>
+
+      <p class="no-indent">Để tạo ra một cấu trúc hữu ích, trước khi bạn cài đặt bất kỳ mở rộng nào, hãy tạo một lược đồ mới:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>CREATE SCHEMA</strong> my_extensions;</code></pre>
+      </figure>
+
+      <p class="no-indent">Sau đó thêm lược đồ mới của bạn vào đường dẫn tìm kiếm:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>ALTER DATABASE</strong> mydb <strong>SET</strong> search_path='"$user", public, my_extensions';</code></pre>
+      </figure>
+
+      <p>Khi bạn cài đặt các mở rộng, hãy chắc chắn chỉ định lược đồ mới của bạn là nơi ở mới của chúng.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0047_icon_warning.png" width="92" height="87" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Thay đổi <code>SET search_path</code> sẽ không có hiệu lực đối với các kết nối hiện có. Bạn sẽ cần phải kết nối lại để trải nghiệm sự thay đổi.</p>
+      </div>
+
+      <h3 class="section-title">Quyền</h3>
+      <p class="no-indent">Quyền (thường được gọi là quyền truy cập) có thể khó quản lý trong PostgreSQL vì
+      sự kiểm soát chi tiết mà bạn có. Bảo mật có thể đi sâu đến mức đối tượng.
+      Bạn có thể gán các quyền khác nhau cho mỗi cột của bảng, nếu điều đó trở nên
+      cần thiết. Việc dạy bạn tất cả những gì cần biết về quyền có thể mất vài chương.
+      Thay vào đó, mục tiêu của chúng tôi trong phần này là cung cấp cho bạn đủ thông tin để bắt đầu
+      và hướng dẫn bạn xung quanh một số cạm bẫy không trực quan hơn mà
+      có thể khóa bạn hoàn toàn hoặc phơi bày máy chủ của bạn không đúng cách.</p>
+
+      <p class="no-indent">Xem <span class="accent-word">Quyền</span> để có cái nhìn tổng quan về quyền.</p>
+
+      <p>Quản lý quyền trong PostgreSQL không phải là điều dễ dàng. Công cụ quản lý đồ họa pgAdmin
+      có thể giảm bớt một số nhiệm vụ hoặc, ít nhất, vẽ cho bạn một bức tranh về cài đặt quyền của bạn.
+      Bạn có thể hoàn thành hầu hết, nếu không muốn nói là tất cả, các nhiệm vụ gán quyền của bạn
+      trong pgAdmin. Nếu bạn phải đảm nhận nhiệm vụ quản lý quyền và mới với
+      PostgreSQL, hãy bắt đầu với pgAdmin. Nhảy đến <span class="accent-word">“Tạo Tài sản Cơ sở dữ liệu và Đặt Quyền” trên trang 62</span> nếu bạn không thể chờ đợi.</p>
+
+      <h3 class="section-title">Các loại Quyền</h3>
+      <p class="no-indent">Một số quyền cấp đối tượng mà bạn tìm thấy trong PostgreSQL là SELECT, INSERT, UPDATE, ALTER, EXECUTE, TRUNCATE, và một định nghĩa bổ sung cho những quyền đó gọi là WITH GRANT. Bạn có thể
+      suy ra quyền từ tên một mình ngoại trừ GRANT, mà chúng tôi đề cập trong
+      <span class="accent-word">“GRANT” trên trang 30</span>. Lưu ý rằng quyền chỉ có liên quan đến một</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Quyền<span class="sep">|</span>29</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

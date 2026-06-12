@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Constraints</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0128.html">← Prev</a>
+    <a href="page_0130.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">129</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Example 6-5.</strong> Building foreign key constraints and covering indexes</figcaption>
+        <pre class="code-block"><code>set search_path=census, public;
+ALTER TABLE facts ADD CONSTRAINT fk_facts_1 FOREIGN KEY (fact_type_id)
+REFERENCES lu_fact_types (fact_type_id) ①
+ON UPDATE CASCADE ON DELETE RESTRICT; ②
+CREATE INDEX fki_facts_1 ON facts (fact_type_id); ③</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> We define a foreign key relationship between our <code>facts</code> and <code>fact_types</code> tables.
+      This prevents us from introducing fact types into facts unless they are already
+      present in the fact types lookup table.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> We add a cascade rule that automatically updates the <code>fact_type_id</code> in our <code>facts</code>
+      table should we renumber our fact types. We restrict deletes from our lookup
+      table so fact types in use cannot be removed. <code>RESTRICT</code> is the default behavior,
+      but we suggest stating it for clarity.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> Unlike for primary key and unique constraints, PostgreSQL doesn&rsquo;t
+      automatically create an index for foreign key constraints; you should add this
+      yourself to speed up queries.</p>
+
+      <h3 class="subsection-title">Unique Constraints</h3>
+      <p class="no-indent">Each table can have no more than a single primary key. If you need to enforce uniqueness
+      on other columns, you must resort to unique constraints or unique indexes. Adding a
+      unique constraint automatically creates an associated unique index. Similar to primary
+      keys, unique key constraints can participate in <code>REFERENCES</code> part of foreign key con‐
+      straints and cannot have <code>NULL</code> values. A unique index without a unique key constraint
+      does allow <code>NULL</code> values. The following example shows how to add a unique index:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE logs_2011 ADD CONSTRAINT uq UNIQUE (user_name,log_ts);</code></pre>
+      </figure>
+
+      <p>Often you&rsquo;ll find yourself needing to ensure uniqueness for only a subset of your rows.
+      PostgreSQL does not offer conditional unique constraints, but you can achieve the same
+      effect by using a partial uniqueness index. See <span class="accent-word">&ldquo;Partial Indexes&rdquo; on page 116</span>.</p>
+
+      <h3 class="subsection-title">Check Constraints</h3>
+      <p class="no-indent">Check constraints are conditions that must be met for a field or a set of fields for each
+      row. The query planner can also take advantage of check constraints and abandon
+      queries that don&rsquo;t meet the check constraint outright. We saw an example of a check
+      constraint in <span class="accent-word">Example 6-2</span>. That particular example prevents the planner from having
+      to scan rows failing to satisfy the date range specified in a query. You can exercise some
+      creativity in your check constraints, because you can use functions and Boolean ex‐
+      pressions to build complicated matching conditions. For example, the following con‐
+      straint requires all user names in the logs tables to be lowercase:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE logs ADD CONSTRAINT chk CHECK (user_name = lower(user_name));</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Constraints<span class="sep">|</span>111</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

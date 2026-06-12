@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0414.html">← Trước</a>
+    <a href="page_0416.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">415</span>
+      </header>
+
+      <p class="no-indent">trong khi trên Linux và MacOS, đó là dấu gạch chéo xuôi (<code>/</code>). Một đường dẫn trừu tượng không nhất thiết phải tham chiếu đến một tệp thực tế trong hệ thống tệp, nhưng nếu bạn muốn có thể chuyển đổi nó thành một đường dẫn thực tế, mọi thành phần ngoại trừ thành phần cuối cùng của một đường dẫn trừu tượng phải tương ứng với một thư mục. Điều này là hợp lý vì một tệp không thể chứa các tệp khác, chỉ có thư mục mới có thể.</p>
+
+      <p>Lý tưởng nhất là bạn nên sử dụng ký tự phân tách đặc trưng của nền tảng khi viết các đường dẫn trong mã nguồn (nếu bạn thực sự muốn ghi cứng chúng trong mã nguồn), nhưng trên Windows, JVM sẽ tự động chuyển đổi dấu gạch chéo xuôi thành dấu gạch chéo ngược, vì vậy nếu bạn sử dụng dấu gạch chéo xuôi trong mã nguồn của mình, đường dẫn vẫn sẽ được chấp nhận trên Windows cũng như trên các máy giống Unix. Bạn sẽ sớm tìm hiểu những cách tốt hơn để làm việc với các đường dẫn theo cách độc lập với nền tảng.</p>
+
+      <h3 class="section-title section-title--minor">Đường dẫn tuyệt đối và đường dẫn tương đối<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Để truy cập một tệp trong một hệ thống tệp phân cấp, chúng ta không chỉ cần biết tên của tệp mà còn phải biết tên của các thư mục chứa nó, đi ngược lên tận thư mục gốc. Vì vậy, nếu một đường dẫn bao gồm tất cả các tên bắt đầu từ thư mục gốc xuống đến tệp mà bạn muốn truy cập, thì đó là một đường dẫn tuyệt đối.</p>
+
+      <p>Ví dụ, <code>c:\a\b\c\test.txt</code>&nbsp;là một đường dẫn tuyệt đối vì chúng ta có thể bắt đầu từ thư mục gốc <code>c:\</code>&nbsp;và đi vào trong thư mục tên là <code>a</code>, sau đó là <code>b</code>, và <code>c</code>&nbsp;để tìm đến tệp <code>test.txt</code>.</p>
+
+      <p>Tương tự, trên Linux, vì thư mục gốc được ký hiệu bằng <code>/</code>, nên <code>/a/b/c/test.txt</code>&nbsp;sẽ là một đường dẫn tuyệt đối.</p>
+
+      <p>Mặt khác, bản thân một đường dẫn tương đối không đủ để xác định một tệp trong hệ thống tệp. Nó chỉ có thể xác định một tệp khi được sử dụng tương quan với một đường dẫn khác đã biết trước vị trí.</p>
+
+      <p>Ví dụ, bản thân <code>b\c\test.txt</code>&nbsp;không đủ để định vị tệp <code>test.txt</code>. Tuy nhiên, nếu biết rằng đường dẫn này là tương đối so với <code>c:\a</code>, chúng ta có thể xác định được vị trí chính xác của nó. Do đó, bất kỳ đường dẫn nào không bắt đầu bằng thư mục gốc đều là đường dẫn tương đối.</p>
+
+      <h3 class="section-title section-title--minor">Thư mục hiện tại<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Thư mục hiện tại là đường dẫn nơi một chương trình được chạy. Ví dụ, nếu bạn chạy chương trình Java của mình từ <code>c:\temp</code>, thì <code>c:\temp</code>&nbsp;sẽ là thư mục hiện tại bất kể tệp class đang được thực thi nằm ở đâu. Khi bạn thực thi trực tiếp một tệp Jar bằng cách nhấp đúp vào nó, Windows sẽ đặt thư mục hiện tại là thư mục trong</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

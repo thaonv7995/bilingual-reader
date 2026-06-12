@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 10: Replication and External Data — Querying Flat Files</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0 0 0 5mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page code.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0202.html">← Prev</a>
+    <a href="page_0204.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">203</span>
+      </header>
+
+      <p class="no-indent">At this time, the FDW extension automatically installs two wrappers by default:
+      <code class="accent-word">file_fdw</code> and <code class="accent-word">postgres_fdw</code>. If you need to to wrap foreign data sources, start by visiting
+      these two links to see whether someone has already done the work of creating wrappers.
+      If not, try creating one yourself. If you succeed, be sure to share it with others.</p>
+
+      <p>In PostgreSQL 9.1 and 9.2, you&rsquo;re limited to SELECT queries against the FDW. Post&shy;greSQL 9.3 introduced an API feature to update foreign tables. <code>postgres_fdw</code> is the only
+      FDW shipped with PostgreSQL that supports this new feature.</p>
+
+      <p>In this section, we&rsquo;ll demonstrate how to register foreign servers, foreign users, and
+      foreign tables, and finally, how to query foreign tables. Although we use SQL to create
+      and delete objects in our examples, you can perform the exact same commands using
+      pgAdmin III.</p>
+
+      <h3 class="subsection-title">Querying Flat Files</h3>
+
+      <p class="no-indent">The <code>file_fdw</code> wrapper is packaged as an extension. To install, use the SQL:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE EXTENSION file_fdw;</code></pre>
+      </figure>
+
+      <p>Although <code>file_fdw</code> can read only from file paths accessible by your local server, you
+      still need to define a server for it for the sake of consistency. Issue the following command
+      to create a &ldquo;faux&rdquo; foreign server in your database:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE SERVER my_server FOREIGN DATA WRAPPER file_fdw;</code></pre>
+      </figure>
+
+      <p>Next, you must register the tables. You can place foreign tables in any schema you want.
+      We usually create a separate schema to house foreign data. For this example, we&rsquo;ll use
+      our staging schema, as shown in <span class="accent-word">Example 10-1</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 10-1.</strong> Make a foreign table from a delimited file</figcaption>
+        <pre class="code-block"><code>CREATE FOREIGN TABLE staging.devs (developer VARCHAR(150), company VARCHAR(150))
+SERVER my_server
+OPTIONS (format 'csv', header 'true', filename '/postgresql_book/ch10/devs.psv',
+    delimiter '|', null ''
+);</code></pre>
+      </figure>
+
+      <p>In our example, even though we&rsquo;re registering a pipe-delimited file, we still use the csv
+      option. A CSV file, as far as FDW is concerned, represents any file delimited by specified
+      characters, regardless of delimiter.</p>
+
+      <p>When the setup is finished, you can finally query your pipe-delimited file directly:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM staging.devs WHERE developer LIKE 'T%';</code></pre>
+      </figure>
+
+      <p>Once you no longer need our foreign table, you can drop it:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>DROP FOREIGN TABLE staging.devs;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Foreign Data Wrappers<span class="sep">|</span>185</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

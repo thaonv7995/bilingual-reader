@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tinh chỉnh hiệu suất truy vấn — Chi phí trang ngẫu nhiên và chất lượng ổ đĩa</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0187.html">← Trước</a>
+    <a href="page_0189.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">188</span>
+      </header>
+
+      <p class="no-indent">Để hiểu những gì trình lập kế hoạch sử dụng, hãy truy vấn bảng <code>pg_stats</code>, như được minh họa trong
+      <span class="accent-word">Ví dụ 9-10</span>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT
+    attname As colname,
+    n_distinct,
+    most_common_vals AS common_vals,
+    most_common_freqs As dist_freq
+FROM pg_stats
+WHERE tablename = 'facts'
+ORDER BY schemaname, tablename, attname;</code></pre>
+      </figure>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-10.</strong> Biểu đồ phân phối dữ liệu</figcaption>
+        <pre class="code-block"><code>colname      | n_distinct | common_vals      | dist_freq
+-------------+------------+------------------+-----------------
+fact_type_id |         68 | {135,113...      | {0.0157,0.0156333,...
+perc         |        985 | {0.00,...        | {0.1845,0.0579333,0.056...
+tract_id     |       1478 | {25025090300...  | {0.00116667,0.00106667,0.0...
+val          |       3391 | {0.000,1.000,2...| {0.2116,0.0681333,0...
+yr           |          2 | {2011,2010}      | {0.748933,0.251067}</code></pre>
+      </figure>
+
+      <p class="no-indent"><code>pg_stats</code> cung cấp cho trình lập kế hoạch một cảm giác về cách các giá trị thực tế được phân tán trong một
+      cột nhất định và cho phép nó lập kế hoạch tương ứng. Bảng <code>pg_stats</code> được cập nhật liên tục như một
+      quy trình nền. Sau khi tải dữ liệu lớn hoặc xóa lớn, bạn nên cập nhật thủ công các thống kê bằng cách thực hiện <code>VACUUM ANALYZE</code>. <code>VACUUM</code> loại bỏ vĩnh viễn các hàng đã xóa
+      khỏi các bảng; <code>ANALYZE</code> cập nhật các thống kê.</p>
+
+      <p>Đối với các cột thường tham gia vào các phép nối và được sử dụng nhiều trong các câu lệnh WHERE, bạn
+      nên xem xét việc tăng số hàng mẫu.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE census.facts ALTER COLUMN fact_type_id SET STATISTICS 1000;</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Chi phí trang ngẫu nhiên và chất lượng ổ đĩa</h3>
+
+      <p class="no-indent">Một cài đặt khác ảnh hưởng đến trình lập kế hoạch là tỷ lệ <code>random_page_cost</code> (RPC), đây là
+      chi phí tương đối của đĩa trong việc truy xuất một bản ghi bằng cách sử dụng đọc tuần tự so với việc sử dụng
+      truy cập ngẫu nhiên. Thông thường, đĩa vật lý càng nhanh (và đắt tiền) thì tỷ lệ càng thấp. Giá trị mặc định cho RPC là 4, điều này hoạt động tốt cho hầu hết các ổ đĩa cứng cơ khí trên thị trường hiện nay. Việc sử dụng ổ đĩa thể rắn (SSD), mạng lưu trữ cao cấp (SAN), hoặc lưu trữ đám mây khiến việc điều chỉnh giá trị này trở nên đáng giá.</p>
+
+      <p>Bạn có thể thiết lập tỷ lệ RPC theo cơ sở dữ liệu, theo máy chủ hoặc theo không gian bảng. Ở cấp độ máy chủ,
+      việc thiết lập tỷ lệ trong tệp <code>postgresql.conf</code> là hợp lý nhất. Nếu bạn có các loại đĩa khác nhau,
+      bạn có thể thiết lập các giá trị ở cấp độ không gian bảng bằng cách sử dụng lệnh <code>ALTER TABLESPACE</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLESPACE pg_default SET (random_page_cost=2);</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">170<span class="sep">|</span>Chương 9: Tinh chỉnh hiệu suất truy vấn</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

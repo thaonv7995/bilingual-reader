@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      line-height: 1.2;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0141.html">← Prev</a>
+    <a href="page_0143.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">142</span>
+      </header>
+
+      <ol class="numbered" start="5">
+        <li><code>a.mash(la)</code> : The compiler notices that the declared type of <code>a</code> is <code>Apple</code> . It will
+        therefore, consider only the methods available in class Apple to bind this invocation. It
+        also notices that the declared type of the argument <code>la</code> is <code>List</code> . Apple class has two
+        methods that can accept a <code>List</code> - <code>mash(Collection )</code> and <code>mash(List )</code> . Since the
+        declared type of argument <code>la</code> matches exactly with <code>mash(List )</code> , it binds the call to
+        Apple&rsquo;s <code>mash(List )</code> method.<br><br>
+        At run time, the JVM notices that <code>a</code> points to an object of class Apple and so, it invokes
+        Apple&rsquo;s <code>mash(List )</code> . Thus, it prints In Apple&rsquo;s <code>mash(List )</code> .</li>
+        <li><code>a.mash(ca)</code> : The compiler notices that the declared type of <code>a</code> is <code>Apple</code> . It will
+        therefore, consider only the methods available in class Apple to bind this invocation. It
+        also notices that the declared type of the argument <code>ca</code> is <code>Collection</code> . Apple class has
+        only one method that can accept a <code>Collection</code> - <code>mash(Collection )</code> . Therefore, it
+        binds the call to Apple&rsquo;s <code>mash(Collection )</code> method.<br><br>
+        At run time, the JVM notices that <code>a</code> points to an object of class Apple and so, it invokes
+        Apple&rsquo;s <code>mash(Collection )</code> . Thus, it prints In Apple&rsquo;s <code>mash(Collection )</code> .</li>
+      </ol>
+
+      <h3 class="section-title">13.7 Exercise<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">1. You are developing an application that allows a user to compare automobiles. Use abstract
+      classes, classes, and interfaces to model <code>Car</code> , <code>Truck</code> , <code>Vehicle</code> , and <code>Drivable</code>
+      entities. Declare and define a method named <code>drive()</code> in appropriate places.</p>
+
+      <p class="no-indent">2. Every vehicle must have a make and model. What can you do to ensure that a method
+      named <code>getMakeAndModel()</code> can be invoked on every vehicle.</p>
+
+      <p class="no-indent">3. You need to be able to get the Vehicle Identification Number (VIN) of a vehicle</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

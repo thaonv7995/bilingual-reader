@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 24: Triển khai Bản địa hóa (Localization)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 12pt;
+      margin: 6mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0738.html">← Trước</a>
+    <a href="page_0740.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">739</span>
+      </header>
+
+      <p class="no-indent">sẽ có nếu, ví dụ, chúng ta muốn bản địa hóa (localize) ứng dụng của mình cho những người nói tiếng Pháp ở Canada?</p>
+
+      <p class="no-indent">Đúng vậy, thực sự là <code>hellopapp_fr_CA</code>. Nhưng hãy nhớ rằng các giá trị từ bundle này sẽ không được sử dụng cho người nói tiếng Pháp ở Pháp vì locale của họ sẽ là <code>fr_FR</code> và họ sẽ tìm kiếm các key trong <code>helloapp_fr_FR</code>. Nếu bạn kiểm tra biểu đồ trên, <code>helloapp_fr_CA</code> là một bundle cùng cấp (sibling) chứ không phải bundle cha (parent) của <code>helloapp_fr_FR</code>. Tuy nhiên, nếu chúng ta có resource bundle tên là <code>helloapp_fr</code> <strong>thay vì</strong> <code>helloapp_fr_CA</code>, thì các giá trị từ bundle này có thể được sử dụng cho tất cả các locale nói tiếng Pháp vì <code>helloapp_fr</code> là cha (parent) của <code>helloapp_fr_CA</code> cũng như <code>helloapp_fr_FR</code>.</p>
+
+      <h3 class="section-title">24.3.3 Tạo các resource bundle bằng cách sử dụng tệp properties<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Lớp (Class) <code>ResourceBundle</code> có một vài phương thức <code>getBundle</code> <strong>static</strong> nạp chồng (overloaded), trong đó hai phương thức đặc biệt quan trọng là <code>getBundle(String baseName)</code> và <code>getBundle(String baseName, Locale locale)</code>. Phương thức trước trả về một <code>ResourceBundle</code> cho locale mặc định của người dùng, trong khi phương thức sau trả về một <code>ResourceBundle</code> cho locale được chỉ định. <code>baseName</code> là tên chung của tất cả các resource bundle trong một họ như đã giải thích trước đó.</p>
+
+      <h3 class="section-title section-title--sub">Yêu cầu một resource bundle cho locale mặc định<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Các phương thức <code>getBundle</code> tự động đọc một tệp properties có tên khớp với tên của resource bundle được yêu cầu (với điều kiện tệp properties nằm trên classpath) và tạo một instance <code>PropertyResourceBundle</code> chứa các mục được định nghĩa trong tệp properties đó. Ví dụ, giả sử locale mặc định của người dùng là <code>en_US</code>, lời gọi <code>ResourceBundle.getBundle("helloapp")</code> sẽ tìm kiếm một tệp properties có tên <code>helloapp_en_US.properties</code> trong classpath và tải các mục vào bundle <code>helloapp_en_US</code>. Hãy nhớ rằng vì các resource bundle có tính phân cấp, việc tạo một <code>ResourceBundle</code> cũng kích hoạt việc tạo bundle cha (parent bundle) của nó. Do đó, một khi bundle <code>helloapp_en_US</code> được tạo, bundle cha của nó là <code>helloapp_en</code> cũng sẽ tự động được tạo trong một</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

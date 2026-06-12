@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ol.numbered > li figure.code-snippet {
+      margin: 1.5mm 0 0;
+      padding-left: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ul.bullets > li figure.code-snippet {
+      margin: 1.5mm 0 0;
+      padding-left: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0047.html">← Trước</a>
+    <a href="page_0049.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">48</span>
+      </header>
+
+      <p class="no-indent">tài sản cơ sở dữ liệu. Ví dụ, TRUNCATE cho các hàm và EXECUTE cho các bảng không có
+      ý nghĩa.</p>
+
+      <h3 class="section-title">Bắt đầu</h3>
+      <p class="no-indent">Vậy là bạn đã cài đặt thành công PostgreSQL; bạn nên có một siêu người dùng, mật khẩu của người mà bạn biết thuộc lòng. Bây giờ bạn nên thực hiện các bước bổ sung sau để thiết lập
+      các vai trò bổ sung và phân quyền:</p>
+
+      <ol class="numbered">
+        <li>PostgreSQL tạo một siêu người dùng và một cơ sở dữ liệu cho bạn khi cài đặt, cả hai đều
+        có tên là postgres. Đăng nhập vào máy chủ của bạn với tư cách là postgres.</li>
+        <li>Trước khi tạo cơ sở dữ liệu đầu tiên của bạn, hãy tạo một vai trò sẽ sở hữu cơ sở dữ liệu và có thể
+        đăng nhập, chẳng hạn như:
+          <figure class="code-snippet">
+            <pre class="code-block"><code><strong>CREATE ROLE</strong> mydb_admin <strong>LOGIN PASSWORD</strong> <em>'something'</em>;</code></pre>
+          </figure>
+        </li>
+        <li>Tạo cơ sở dữ liệu và đặt chủ sở hữu:
+          <figure class="code-snippet">
+            <pre class="code-block"><code><strong>CREATE DATABASE</strong> mydb <strong>WITH</strong> owner = mydb_admin;</code></pre>
+          </figure>
+        </li>
+        <li>Bây giờ hãy đăng nhập với tư cách người dùng mydb_admin và bắt đầu thiết lập các lược đồ và
+        bảng bổ sung.</li>
+      </ol>
+
+      <h3 class="section-title">GRANT</h3>
+      <p class="no-indent">Lệnh GRANT phân quyền cho người khác. Cách sử dụng cơ bản là:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>GRANT</strong> some_privilege <strong>TO</strong> some_role;</code></pre>
+      </figure>
+
+      <p>Một vài điều cần lưu ý khi nói đến GRANT:</p>
+
+      <ul class="bullets">
+        <li>Bạn cần phải là người nắm giữ quyền mà bạn đang cấp và bạn phải có
+        quyền cấp quyền cho chính mình. Bạn không thể cho đi những gì bạn không có.</li>
+        <li>Một số quyền luôn thuộc về chủ sở hữu của một đối tượng và không bao giờ có thể được cấp
+        đi. Những quyền này bao gồm DROP và ALTER.</li>
+        <li>Chủ sở hữu của một đối tượng đã có tất cả các quyền. Việc cấp quyền cho một chủ sở hữu trong
+        những gì họ đã sở hữu là không cần thiết.</li>
+        <li>Khi cấp quyền, bạn có thể thêm WITH GRANT OPTION. Điều này có nghĩa là người nhận có thể cấp quyền tiếp:
+          <figure class="code-snippet">
+            <pre class="code-block"><code><strong>GRANT ALL ON ALL TABLES IN SCHEMA</strong> public <strong>TO</strong> mydb_admin <strong>WITH GRANT OPTION</strong>;</code></pre>
+          </figure>
+        </li>
+        <li>Để cấp tất cả các quyền liên quan trên một đối tượng, hãy sử dụng ALL thay vì quyền cụ thể:
+          <figure class="code-snippet">
+            <pre class="code-block"><code><strong>GRANT SELECT, REFERENCES, TRIGGER ON ALL TABLES IN SCHEMA</strong> my_schema <strong>TO</strong> PUBLIC;</code></pre>
+          </figure>
+        </li>
+        <li>Đại diện ALL cũng có thể được sử dụng để cấp cho tất cả các đối tượng trong một cơ sở dữ liệu hoặc lược đồ:</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">30<span class="sep">|</span>Chương 2: Quản trị cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

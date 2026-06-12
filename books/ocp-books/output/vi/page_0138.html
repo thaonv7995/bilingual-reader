@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa (Implementing Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      line-height: 1.2;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0137.html">← Trước</a>
+    <a href="page_0139.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">138</span>
+      </header>
+
+      <p class="no-indent">Hãy lưu ý rằng tôi đã sử dụng phép ép kiểu (cast) để truy cập phiên bản được cung cấp bởi lớp cha (superclass). Kiểu khai báo của
+      biến <code>cic</code> là <code>CompoundInterestCalculator</code> nhưng tôi đã ép kiểu nó thành <code>InterestCalculator</code> để
+      đi vào phía sau <code>CompoundInterestCalculator</code> và truy cập các phiên bản được cung cấp bởi
+      <code>InterestCalculator</code>. Phép ép kiểu này thông báo cho trình biên dịch xử lý một biến như thể kiểu khai báo của nó là
+      kiểu được đề cập trong phép ép kiểu.</p>
+
+      <p>Như đã thảo luận trong các quy tắc về ép kiểu (casting) trước đó, điểm cần hiểu ở đây là các phương thức static,
+      biến static và biến thực thể (instance variable) được truy cập theo kiểu khai báo của biến
+      thông qua đó chúng được truy cập, chứ không phải theo kiểu thực tế của đối tượng (object) mà
+      biến đó tham chiếu tới.</p>
+
+      <p>Hãy đối chiếu điều này với ghi đè (overriding), nơi mà kiểu của biến không ảnh hưởng đến phiên bản của
+      phương thức thực thể (instance method) được gọi.</p>
+
+      <h3 class="section-title section-title--sub">13.6.2 Nạp chồng (Overloading)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Vì chúng ta đã thảo luận chi tiết về nạp chồng (overloading) trong Mục 10.2, tôi sẽ chỉ tóm tắt lại ở
+      đây bằng cách nói rằng nạp chồng xảy ra khi hai (hoặc nhiều hơn) phương thức của một lớp (class) có cùng
+      tên nhưng khác danh sách tham số. Nói cách khác, các phương thức nạp chồng có chữ ký (signature) khác nhau
+      nhưng có cùng tên.&nbsp;</p>
+
+      <p>Không nhất thiết các phương thức nạp chồng phải được định nghĩa trong cùng một lớp (class). Miễn là một lớp (class)
+      có nhiều hơn một phương thức có cùng tên, dù được kế thừa hay được định nghĩa, nó vẫn được xem là
+      phương thức nạp chồng (overloaded method) trong lớp (class) đó. Ví dụ: nếu bạn có một phương thức có thể kế thừa trong
+      lớp cha (superclass) và một phương thức khác cùng tên được định nghĩa trong lớp con (subclass), nó vẫn được
+      coi là một nạp chồng (overload) hợp lệ trong lớp con (subclass) vì về mặt hiệu quả, lớp con (subclass) có hai phương thức
+      có cùng tên - một được kế thừa và một được định nghĩa.</p>
+
+      <p>Hãy lưu ý rằng tôi đã sử dụng từ &ldquo;có thể kế thừa&rdquo; ở trên. Như bạn đã biết, các phương thức private không bao giờ
+      được kế thừa và các phương thức package-private không được kế thừa bởi một lớp con (subclass) thuộc về
+      một package khác. Do đó, các phương thức như vậy sẽ không cấu thành một nạp chồng (overload) hợp lệ trong lớp con (subclass).</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

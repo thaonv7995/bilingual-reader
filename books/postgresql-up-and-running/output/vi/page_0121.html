@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu — XML / Kiểu Tùy Chỉnh</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0120.html">← Trước</a>
+    <a href="page_0122.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">121</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  unnest(xpath('/family/member', profile)
+  ) As f FROM families) x; ③
+ family | relation | mem_name
+--------+----------+----------
+ Gomez  | padre    | Alex
+ Gomez  | madre    | Sonia
+ Gomez  | hijo     | Brandon
+ Gomez  | hija     | Azaleah</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> Lấy phần tử văn bản trong các thẻ <code>relation</code> và <code>name</code> của mỗi phần tử <code>member</code>. Chúng ta
+      cần sử dụng chỉ mục mảng vì <code>xpath</code> luôn trả về một mảng, ngay cả khi
+      chỉ có một phần tử được trả về.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> Lấy thuộc tính name từ nút gốc <code>family</code>. Để làm điều này, chúng ta sử dụng <code>@<em>attribute_name</em></code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> Phân tách thành các phần tử con <code>&lt;member&gt;</code>, <code>&lt;relation&gt;</code>, <code>&lt;/relation&gt;</code>, <code>&lt;name&gt;</code>, <code>&lt;/
+      name&gt;</code>, và <code>&lt;/member&gt;</code>. Dấu gạch chéo là cách để truy cập các phần tử con. Ví dụ, <code>xpath('/family/member', 'profile')</code> sẽ trả về một mảng của tất cả
+      các thành viên trong mỗi gia đình được định nghĩa trong một hồ sơ. Dấu @ được sử dụng để chọn
+      các thuộc tính của một phần tử. Vì vậy, ví dụ, <code>family/@name</code> trả về thuộc tính name
+      của một <code>family</code>. Theo mặc định, <code>xpath</code> luôn trả về một phần tử, bao gồm cả
+      phần thẻ. Hàm <code>text()</code> buộc trả về chỉ phần văn bản của một phần tử.</p>
+
+      <h3 class="section-title">Kiểu Dữ Liệu Tùy Chỉnh và Tổ Hợp</h3>
+      <p class="no-indent">Phần này minh họa cách định nghĩa và sử dụng một kiểu tùy chỉnh. Kiểu đối tượng <code>composite</code> (còn gọi là
+      <code>record</code>, <code>row</code>) thường được sử dụng để xây dựng một đối tượng sau đó được ép kiểu thành một kiểu tùy chỉnh,
+      hoặc như một kiểu trả về cho các hàm cần trả về nhiều cột.</p>
+
+      <h3 class="subsection-title">Tất Cả Các Bảng Đều Là Kiểu Dữ Liệu Tùy Chỉnh</h3>
+      <p class="no-indent">PostgreSQL tự động tạo các kiểu tùy chỉnh cho tất cả các bảng. Về mọi mặt, bạn có thể sử dụng các kiểu tùy chỉnh giống như bạn sử dụng bất kỳ kiểu tích hợp nào khác. Vì vậy, chúng ta có thể
+      tạo ra một bảng có kiểu cột là kiểu tùy chỉnh của một bảng khác, và
+      chúng ta có thể đi xa hơn và tạo một mảng của kiểu đó. Chúng tôi minh họa “turducken” này
+      trong <span class="accent-word">Ví dụ 5-33</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-33.</strong> Turducken</figcaption>
+        <pre class="code-block"><code>CREATE TABLE chickens (id integer PRIMARY KEY);
+CREATE TABLE ducks (id integer PRIMARY KEY, chickens chickens[]);
+CREATE TABLE turkeys (id integer PRIMARY KEY, ducks ducks[]);
+
+INSERT INTO ducks VALUES (1, ARRAY[ROW(1)::chickens, ROW(1)::chickens]);
+INSERT INTO turkeys VALUES (1, array(SELECT d FROM ducks d));</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Kiểu Dữ Liệu Tùy Chỉnh và Tổ Hợp<span class="sep">|</span>103</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

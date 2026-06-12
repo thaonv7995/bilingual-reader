@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Listing 8.11 Logic cache OrganizationRestTemplateClient</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--811 .listing-callouts-right {
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-annotated--811 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 28mm;
+    }
+    .prose-page.chapter-page .listing-annotated--811 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 75mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0278.html">← Trước</a>
+    <a href="page_0280.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">254</span>
+        <span class="rh-center">CHƯƠNG 8 <em>Kiến trúc hướng sự kiện với Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--811" aria-label="Tiếp theo Listing 8.11">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>public class OrganizationRestTemplateClient {
+    @Autowired
+    RestTemplate restTemplate;
+
+    @Autowired
+    OrganizationRedisRepository orgRedisRepo;
+
+    private static final Logger logger =
+     LoggerFactory.getLogger(OrganizationRestTemplateClient.class);
+
+    private Organization checkRedisCache(
+       String organizationId) {
+        try {
+ return orgRedisRepo.findOrganization(organizationId);
+  }
+  catch (Exception ex){
+ logger.error("Error encountered while trying to
+     ➥ retrieve organization {} check Redis Cache.
+     ➥ Exception {}", organizationId, ex);
+            return null;
+  }
+}
+
+private void cacheOrganizationObject(Organization org) {
+  try {
+ orgRedisRepo.saveOrganization(org);
+  }catch (Exception ex){
+  logger.error("Unable to cache organization {} in Redis.
+    ➥ Exception {}" org.getId(), ex);
+  }
+}
+
+public Organization getOrganization(String organizationId){
+  logger.debug("In Licensing Service
+     ➥ .getOrganization: {}",
+     ➥ UserContext.getCorrelationId());
+
+  Organization org = checkRedisCache(organizationId);
+
+  if (org!=null){
+    logger.debug("I have successfully
+       ➥ retrieved an organization {}
+       ➥ from the redis cache: {}", organizationId, org);
+    return org;
+  }
+
+  logger.debug("Unable to locate
+     ➥ organization from the
+     ➥ redis cache: {}.", organizationId);
+
+  ResponseEntity&lt;Organization&gt; restExchange =
+     restTemplate.exchange(
+        "http://zuulservice/api/organization
+        ➥ /v1/organizations/{organizationId}",
+           HttpMethod.GET,
+           null,</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 8.11">
+          <p class="listing-callout">Lớp <code>OrganizationRedisRepository</code> được auto-wired trong <code>OrganizationRestTemplateClient</code>.</p>
+          <p class="listing-callout">Thử truy xuất lớp <code>Organization</code> với organization ID của nó từ Redis</p>
+          <p class="listing-callout">Nếu bạn không thể truy xuất dữ liệu từ Redis, bạn sẽ gọi organization service để lấy dữ liệu từ cơ sở dữ liệu nguồn.</p>
+        </div>
+      </div>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

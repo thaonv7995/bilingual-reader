@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 5: Hystrix configuration revisited</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + .sidebar-note {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0166.html">← Prev</a>
+    <a href="page_0168.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">142</span>
+        <span class="rh-center">CHAPTER 5 <em>When bad things happen: client resiliency patterns with Spring Cloud and Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h4 class="subsection-title">5.8.1 Hystrix configuration revisited</h4>
+
+      <p>The Hystrix library is extremely configurable and lets you tightly control the behavior of the circuit breaker and bulkhead patterns you define with it. By modifying the configuration of a Hystrix circuit breaker, you can control the amount of time Hystrix will wait before timing out a remote call. You can also control the behavior of when a Hystrix circuit breaker will trip and when Hystrix tries to reset the circuit breaker.</p>
+
+      <p>With Hystrix you can also fine-tune your bulkhead implementations by defining individual thread groups for each remote service call and then configure the number of threads associated with each thread group. This allows you to fine-tune your remote service calls because certain calls will have higher volumes then others, while other remote resource calls will have higher volumes.</p>
+
+      <p>The key thing to remember as you look at configuring your Hystrix environment is that you have three levels of configuration with Hystrix:</p>
+
+      <ol class="manning-numbered" aria-label="Three levels of Hystrix configuration">
+        <li>Default for the entire application</li>
+        <li>Default for the class</li>
+        <li>Thread-pool level defined within the class</li>
+      </ol>
+
+      <p>Every Hystrix property has values set by default that will be used by every <code>@HystrixCommand</code> annotation in the application unless they&rsquo;re set at the Java class level or overridden for individual Hystrix thread pools within a class.</p>
+
+      <p>Hystrix does let you set default parameters at the class level so that all Hystrix commands within a specific class share the same configurations. The class-level properties are set via a class-level annotation called <code>@DefaultProperties</code>. For example, if you wanted all the resources within a specific class to have a timeout of 10 seconds, you could set the <code>@DefaultProperties</code> in the following manner:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>@DefaultProperties(
+  commandProperties = {
+   @HystrixProperty(
+   ➥ name = "execution.isolation.thread.timeoutInMilliseconds",
+   value = "10000")}
+class MyService { ... }</code></pre>
+      </figure>
+
+      <p class="no-indent">Unless explicitly overridden at a thread-pool level, all thread pools will inherit either the default properties at the application level or the default properties defined in the class. The Hystrix <code>threadPoolProperties</code> and <code>commandProperties</code> are also tied to the defined command key.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>For the coding examples, I&rsquo;ve hard-coded all the Hystrix values in the application code. In a production system, the Hystrix data that&rsquo;s most likely to need to be tweaked (timeout parameters, thread pool counts) would be externalized to Spring Cloud Config. This way if you need to change the parameter values, you could change the values and then restart the service instances without having to recompile and redeploy the application.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

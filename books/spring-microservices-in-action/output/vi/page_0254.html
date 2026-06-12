@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Lý do cho messaging, EDA và microservice</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0253.html">← Trước</a>
+    <a href="page_0255.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">229</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">Lý do cho messaging, EDA và microservice</span>
+      </header>
+
+      <p class="no-indent">bạn đã đạt được giác ngộ, là con người tốt hơn tôi, và nên dừng những gì bạn đang làm vì giờ bạn có thể trả lời câu hỏi cổ xưa: &ldquo;Tiếng vỗ tay của một vật thể là gì?&rdquo; Ngoài ra, tôi nghi ngờ bạn không có con.</p>
+
+      <p>Thực tế là con người luôn trong trạng thái chuyển động, tương tác với môi trường xung quanh, đồng thời gửi và nhận thông tin từ mọi thứ quanh họ. Trong nhà tôi, một cuộc trò chuyện điển hình có thể như thế này. Tôi đang bận rửa bát trong khi nói chuyện với vợ. Tôi kể cho cô ấy về ngày của mình. Cô ấy đang nhìn điện thoại, lắng nghe, xử lý những gì tôi nói, và thỉnh thoảng đáp lại. Khi tôi đang rửa bát, tôi nghe thấy tiếng ồn ào ở phòng bên cạnh. Tôi dừng việc đang làm, lao vào phòng bên cạnh để xem chuyện gì xảy ra và thấy chú chó con khá lớn chín tháng tuổi của chúng tôi, Vader, đã lấy chiếc giày của con trai ba tuổi, và đang chạy quanh phòng khách mang chiếc giày như một chiếc cúp. Con trai ba tuổi của tôi không vui về điều này. Tôi chạy khắp nhà, đuổi theo con chó cho đến khi lấy lại được chiếc giày. Sau đó tôi quay lại rửa bát và cuộc trò chuyện với vợ.</p>
+
+      <p>Điểm tôi muốn nói ở đây không phải để kể về một ngày điển hình trong đời tôi, mà là để chỉ ra rằng cách chúng ta tương tác với thế giới không đồng bộ, tuyến tính, và bị giới hạn chặt chẽ trong mô hình request-response. Nó hướng thông điệp (message-driven), trong đó chúng ta liên tục gửi và nhận thông điệp. Khi nhận được thông điệp, chúng ta phản ứng với chúng, đồng thời thường làm gián đoạn tác vụ chính mà chúng ta đang thực hiện.</p>
+
+      <p>Chương này nói về cách thiết kế và triển khai các microservice dựa trên Spring để giao tiếp với các microservice khác bằng thông điệp bất đồng bộ. Dùng thông điệp bất đồng bộ để giao tiếp giữa các ứng dụng không phải là mới. Điều mới là khái niệm dùng thông điệp để truyền đạt các sự kiện biểu diễn thay đổi trạng thái. Khái niệm này được gọi là Event Driven Architecture (EDA). Nó còn được gọi là Message Driven Architecture (MDA). Cách tiếp cận dựa trên EDA cho phép bạn xây dựng các hệ thống tách rời cao có thể phản ứng với thay đổi mà không bị ràng buộc chặt chẽ với các thư viện hoặc dịch vụ cụ thể. Khi kết hợp với microservice, EDA cho phép bạn nhanh chóng thêm chức năng mới vào ứng dụng chỉ bằng cách để dịch vụ lắng nghe luồng sự kiện (thông điệp) mà ứng dụng của bạn phát ra.</p>
+
+      <p>Dự án Spring Cloud đã khiến việc xây dựng các giải pháp dựa trên messaging trở nên đơn giản thông qua sub-project Spring Cloud Stream. Spring Cloud Stream cho phép bạn dễ dàng triển khai xuất bản và tiêu thụ thông điệp, đồng thời che giấu dịch vụ của bạn khỏi chi tiết triển khai liên quan đến nền tảng messaging bên dưới.</p>
+
+      <h3 class="section-title">8.1 Lý do cho messaging, EDA và microservice</h3>
+
+      <p>Tại sao messaging lại quan trọng khi xây dựng ứng dụng dựa trên microservice? Để trả lời câu hỏi đó, hãy bắt đầu với một ví dụ. Chúng ta sẽ dùng hai dịch vụ đã sử dụng xuyên suốt cuốn sách: dịch vụ licensing và organization của bạn. Hãy tưởng tượng sau khi các dịch vụ này được triển khai lên production, bạn phát hiện các lời gọi tới dịch vụ licensing mất thời gian cực kỳ lâu khi tra cứu organization</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

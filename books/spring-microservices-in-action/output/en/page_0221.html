@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: OAuth2 authentication service setup and Listing 7.1</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--71 .listing-callouts-right {
+      padding-top: 11.5mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets + h4.subsection-title,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0220.html">← Prev</a>
+    <a href="page_0222.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">196</span>
+        <span class="rh-center">CHAPTER 7 <em>Securing your microservices</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ul class="manning-bullets" aria-label="Chapter 7 objectives (continued)">
+        <li>Use OAuth2 password grant to protect your EagleEye services. You&rsquo;re not going to build a UI for EagleEye, so instead you&rsquo;ll simulate a user logging in to use POSTMAN to authenticate against your EagleEye OAuth2 service.</li>
+        <li>Protect the licensing and organization service so that they can only be called by an authenticated user.</li>
+      </ul>
+
+      <h4 class="subsection-title">7.2.1 Setting up the EagleEye OAuth2 authentication service</h4>
+
+      <p class="no-indent">Like all the examples in this book&rsquo;s chapters, your OAuth2 authentication service is going to be another Spring Boot service. The authentication service will authenticate the user credentials and issue a token. Every time the user tries to access a service protected by the authentication service, the authentication service will validate that the OAuth2 token was issued by it and that it hasn&rsquo;t expired. The authentication service will be the equivalent of the authentication service in figure 7.1.</p>
+
+      <p class="block-indent">To get started, you&rsquo;re going to set up two things:</p>
+
+      <ol class="manning-numbered" aria-label="OAuth2 authentication service setup steps">
+        <li>The appropriate Maven build dependencies needed for your bootstrap class</li>
+        <li>A bootstrap class that will act as an entry point to the service</li>
+      </ol>
+
+      <p>You can find all code examples for the authentication service in the <code>authentication-service</code> directory. To set up an OAuth2 authentication server, you need the following Spring Cloud dependencies in the <code>authentication-service/pom.xml</code> file:</p>
+
+      <figure class="code-snippet" aria-label="Maven dependencies for authentication-service">
+        <pre class="code-block"><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-cloud-security&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <p class="no-indent">The first dependency, <code>spring-cloud-security</code>, brings in the general Spring and Spring Cloud security libraries. The second dependency, <code>spring-security-oauth2</code>, pulls in the Spring OAuth2 libraries.</p>
+
+      <p>Now that the Maven dependencies are defined, you can work on the bootstrap class. This class can be found in the <code>authentication-service/src/main/java/com/thoughtmechanix/authentication/Application.java</code> class. The following listing shows the code for the <code>Application.java</code> class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.1</strong><br>The <code>authentication-service</code> bootstrap class</figcaption>
+        <div class="listing-annotated listing-annotated--71" aria-label="Listing 7.1 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>//Imports removed for conciseness
+
+@SpringBootApplication
+@RestController
+@EnableResourceServer
+@EnableAuthorizationServer
+public class Application {</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 7.1 right callout">
+            <p class="listing-callout">Used to tell Spring Cloud that this service is going to act as an OAuth2 service</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Nested Loops</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .language-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .code-intro {
+      margin: 0 0 1mm 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Nested Loops</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="language-label">Perl</p>
+
+      <p>The following example uses Perl&rsquo;s DBIx::Class framework:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>my @employees =
+   $schema->resultset('Employees')
+          ->search({ 'UPPER(last_name)' => {-like => 'WIN%'}
+                   , <strong>{prefetch => ['sales']}</strong>
+                   });</code></pre>
+      </figure>
+
+      <p class="code-intro">DBIx::Class 0.08192 generates the following SQL statement:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT me.employee_id, me.subsidiary_id, me.last_name
+       -- MORE COLUMNS
+  <strong>FROM employees</strong> me
+  <strong>LEFT JOIN sales</strong> sales
+         ON (sales.employee_id   = me.employee_id
+        AND  sales.subsidiary_id = me.subsidiary_id)
+ WHERE ( UPPER(last_name) LIKE ? )
+<strong>ORDER BY sales.employee_id, sales.subsidiary_id</strong></code></pre>
+      </figure>
+
+      <p>Note the <strong>order by</strong> clause&mdash;it was not requested by the application. The database has to sort the result set accordingly, and that might take a while.</p>
+
+      <p class="language-label">PHP</p>
+
+      <p>The following example uses PHP&rsquo;s Doctrine framework:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>$qb = $em->createQueryBuilder();
+$qb-><strong>select('e,s')</strong>
+   ->from('Employees', 'e')
+   -><strong>leftJoin('e.sales', 's')</strong>
+   ->where("upper(e.last_name) like :last_name")
+   ->setParameter('last_name', 'WIN%');
+$r = $qb->getQuery()->getResult();</code></pre>
+      </figure>
+
+      <p class="code-intro">Doctrine 2.0.5 generates the following SQL statement:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT e0_.employee_id AS employee_id0
+       -- MORE COLUMNS
+  <strong>FROM employees</strong> e0_
+  <strong>LEFT JOIN sales</strong> s1_
+         ON e0_.subsidiary_id = s1_.subsidiary_id
+        AND e0_.employee_id = s1_.employee_id
+ WHERE UPPER(e0_.last_name) LIKE ?</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">99</p>
+    </article>
+  </main>
+</body>
+</html>

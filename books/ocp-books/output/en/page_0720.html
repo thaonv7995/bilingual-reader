@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 23: Using Modules</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--major {
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0719.html">← Prev</a>
+    <a href="page_0721.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">720</span>
+      </header>
+
+      <p class="no-indent">modules. Their names start with <code>java</code>. For example, <code>java.base</code>, <code>java.sql</code>,
+      and <code>java.logging</code> are standard modules. All other modules that are specific to a JDK are
+      called non-standard modules. Their names start with <code>jdk</code>. For example, <code>jdk.jdeps</code>,
+      <code>jdk.rmic</code>, and <code>jdk.javadoc</code> are non-standard modules.</p>
+
+      <p>Similarly, standard packages have names starting with <code>java</code> or <code>javax</code> such as <code>java.lang</code>,
+      <code>java.sql</code>, <code>javax.crypto</code>, and <code>javax.net</code>, and the JDK specific non-standard packages,
+      generally, have names starting with <code>jdk</code> such as <code>jdk.internal.perf</code>,
+      <code>jdk.internal.logger</code>, and <code>jdk.internal.util</code>. Depending on the provider of the JDK, it
+      may have packages reflecting the company name as well such as <code>sun.net</code> or
+      <code>sun.utils.resource</code>.</p>
+
+      <p>Note that a standard module may contain non-standard packages but a non-standard module
+      does not contain any standard package.</p>
+
+      <p>The standard and non-standard modules are then combined to make a variety of Java
+      configurations such as the full Java SE Platform, the full JRE, and the full JDK.</p>
+
+      <h3 class="section-title section-title--minor">The Java SE Platform<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The Java Platform, Standard Edition (Java SE) is the core Java platform for general-purpose
+      computing. It is composed only of the standard modules (i.e. whose names start with <code>java</code>)
+      and is required to be supported by all Java implementations. You do not need to remember all
+      the modules available in this platform but some of the most commonly used modules in this
+      platform are <code>java.base</code>, <code>java.desktop</code>, <code>java.logging</code>, <code>java.sql</code>, <code>java.prefs</code>, and
+      <code>java.net.http</code>. All of the programs that you have written or will write for preparing for the
+      Java certification exam will require just this platform.</p>
+
+      <p>Note that this does not imply that the Java SE platform includes all of the standard modules.
+      For example, <code>java.cardio</code> is a standard module (it is governed by the JCP) but is not a part of
+      the Java SE Platform. Neither does it imply that this platform itself will not make use of classes
+      from non-standard packages or modules. As I mentioned before, a standard module may
+      contain non-standard packages. All it means is that none of the modules included in the Java SE
+      Platform &ldquo;export&rdquo; any non-</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

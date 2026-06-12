@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị Cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0061.html">← Trước</a>
+    <a href="page_0063.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h3 class="subsection-title">Đừng Cấp Quyền Quản Trị Toàn Quyền cho Tài Khoản Hệ Thống Postgres (postgres)</h3>
+      <p>Nhiều người có quan niệm sai lầm rằng tài khoản postgres cần có quyền quản trị toàn quyền trên máy chủ. Thực tế, tùy thuộc vào phiên bản PostgreSQL của bạn, nếu bạn cấp quyền quản trị toàn quyền cho tài khoản postgres, máy chủ cơ sở dữ liệu của bạn có thể không khởi động được.</p>
+
+      <p>Tài khoản postgres luôn nên được tạo ra như một người dùng hệ thống thông thường trong hệ điều hành với quyền chỉ cho cụm dữ liệu và các thư mục tablespace bổ sung. Hầu hết các trình cài đặt sẽ thiết lập các quyền đúng mà không cần bạn phải lo lắng. Đừng cố gắng làm ơn cho postgres bằng cách cấp cho nó nhiều quyền hơn mức cần thiết. Cấp quyền không cần thiết sẽ khiến hệ thống của bạn dễ bị tổn thương nếu bạn rơi vào một cuộc tấn công SQL injection.</p>
+
+      <p>Có những trường hợp bạn sẽ cần cấp quyền ghi/xóa/đọc cho tài khoản postgres đối với các thư mục hoặc tệp thực thi bên ngoài cụm dữ liệu. Với các công việc theo lịch thực thi các tệp lô, nhu cầu này thường xuất hiện. Chúng tôi khuyên bạn nên thực hành kiềm chế và chỉ cấp những quyền tối thiểu cần thiết để hoàn thành công việc.</p>
+
+      <h3 class="subsection-title">Đừng Đặt <code>shared_buffers</code> Quá Cao</h3>
+      <p>Tải RAM lên máy chủ của bạn không có nghĩa là bạn có thể đặt <code>shared_buffers</code> cao như RAM vật lý của bạn. Hãy thử và máy chủ của bạn có thể bị treo hoặc từ chối khởi động. Nếu bạn đang chạy PostgreSQL trên Windows 32-bit, việc đặt nó cao hơn 512 MB thường dẫn đến sự không ổn định. Với Windows 64-bit, bạn có thể đẩy giới hạn cao hơn một chút và thậm chí có thể vượt quá 1 GB mà không gặp vấn đề gì. Trên một số hệ thống Linux, <code>shared_buffers</code> không thể được đặt cao hơn biến SHMMAX đã biên dịch, thường khá thấp. PostgreSQL 9.3 đã thay đổi cách sử dụng bộ nhớ kernel, vì vậy nhiều vấn đề mà mọi người gặp phải với các giới hạn của kernel trong các phiên bản trước không còn là vấn đề trong phiên bản 9.3. Bạn có thể tìm thêm chi tiết trong <span class="accent-word">Tài nguyên Kernel</span>.</p>
+
+      <h3 class="subsection-title">Đừng Cố Gắng Khởi Động PostgreSQL Trên Một Cổng Đã Được Sử Dụng</h3>
+      <p>Nếu bạn cố gắng khởi động PostgreSQL trên một cổng đã được sử dụng, bạn sẽ thấy lỗi trong các tệp <code>pg_log</code> của bạn dưới dạng: <code>đảm bảo rằng PostgreSQL không đang chạy</code>. Dưới đây là những lý do phổ biến khiến điều này xảy ra:</p>
+
+      <ul class="bullets">
+        <li>Bạn đã khởi động dịch vụ postgres.</li>
+        <li>Bạn đang cố gắng chạy PostgreSQL trên một cổng đã được sử dụng bởi một dịch vụ khác.</li>
+        <li>Dịch vụ postgres của bạn đã bị tắt đột ngột và bạn có một tệp mồ côi <code>postgresql.pid</code> trong thư mục dữ liệu. Chỉ cần xóa tệp đó và thử lại.</li>
+        <li>Bạn có một tiến trình PostgreSQL mồ côi. Khi mọi thứ khác thất bại, hãy giết tất cả các tiến trình PostgreSQL đang chạy và sau đó thử khởi động lại.</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">44<span class="sep">|</span>Chương 2: Quản trị Cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

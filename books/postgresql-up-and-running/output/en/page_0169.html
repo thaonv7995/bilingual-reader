@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 8: Writing Functions — Geometric Mean Examples</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0168.html">← Prev</a>
+    <a href="page_0170.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">169</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>INITCOND='{0,0}'
+);</code></pre>
+      </figure>
+
+      <p class="no-indent">Let&rsquo;s take our geom_mean function for a test drive. In <span class="accent-word">Example 8-8</span>, we compute a heuristic
+      rating for racial diversity and list the top five most racially diverse counties in Massa&shy;chusetts.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-8.</strong> Top five most racially diverse counties using geometric mean</figcaption>
+        <pre class="code-block"><code>SELECT left(tract_id,5) As county, geom_mean(val) As div_county
+FROM census.vw_facts
+WHERE category = 'Population' AND short_name != 'white_alone'
+GROUP BY county
+ORDER BY div_county DESC LIMIT 5;
+
+county |     div_county
+-------+---------------------
+25025  | 85.1549046212833364
+25013  | 79.5972921427888918
+25017  | 74.7697097102419689
+25021  | 73.8824162064128504
+25027  | 73.5955049035237656</code></pre>
+      </figure>
+
+      <p>Let&rsquo;s put things into overdrive and try our new aggregate function as a window aggregate,
+      as shown in <span class="accent-word">Example 8-9</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-9.</strong> Top five most racially diverse census tracts with averages</figcaption>
+        <pre class="code-block"><code>WITH X AS (SELECT
+  tract_id,
+  left(tract_id,5) As county,
+  geom_mean(val) OVER (PARTITION BY tract_id) As div_tract,
+  ROW_NUMBER() OVER (PARTITION BY tract_id) As rn,
+  geom_mean(val) OVER(PARTITION BY left(tract_id,5)) As div_county
+FROM census.vw_facts WHERE category = 'Population' AND short_name != 'white_alone'
+)
+SELECT tract_id, county, div_tract, div_county
+FROM X
+WHERE rn = 1
+ORDER BY div_tract DESC, div_county DESC LIMIT 5;
+
+tract_id    | county |      div_tract       |     div_county
+------------+--------+----------------------+---------------------
+25025160101 | 25025  | 302.6815688785928786 | 85.1549046212833364
+25027731900 | 25027  | 265.6136902148147729 | 73.5955049035237656
+25021416200 | 25021  | 261.9351057509603296 | 73.8824162064128504
+25025130406 | 25025  | 260.3241378371627137 | 85.1549046212833364
+25017342500 | 25017  | 257.4671462282508267 | 74.7697097102419689</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">Writing Functions with SQL<span class="sep">|</span>151</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Listing 8.15 (tiếp theo) và Tóm tắt</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + ul.manning-bullets {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 3mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--815-cont .listing-callouts-right {
+      padding-top: 5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--815-cont .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 24mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + h4.subsection-title {
+      margin-top: 1mm;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0282.html">← Trước</a>
+    <a href="page_0284.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">258</span>
+        <span class="rh-center">CHƯƠNG 8 <em>Kiến trúc hướng sự kiện với Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--815-cont" aria-label="Code có chú thích Listing 8.15 (tiếp theo)">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>    @StreamListener("inboundOrgChanges")
+    public void loggerSink(OrganizationChangeModel orgChange) {
+        switch(orgChange.getAction()){
+             //Removed for conciseness
+  case "UPDATE":
+     logger.debug("Received a UPDATE event
+       ➥ from the organization service for
+       ➥ organization id {}",
+       ➥ orgChange.getOrganizationId());
+     organizationRedisRepository
+       .deleteOrganization(orgChange.getOrganizationId());
+     break;
+  case "DELETE":
+    logger.debug("Received a DELETE event
+      ➥ from the organization service for organization id {}",
+      ➥ orgChange.getOrganizationId());
+    organizationRedisRepository
+      .deleteOrganization(orgChange.getOrganizationId());
+      break;
+ default:
+   logger.error("Received an UNKNOWN event
+      ➥ from the organization service of type {}",
+      ➥ orgChange.getType());
+      break;
+}
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 8.15 (tiếp theo)">
+          <p class="listing-callout">Khi nhận được message, hãy kiểm tra hành động đã thực hiện với dữ liệu, rồi phản ứng tương ứng.</p>
+          <p class="listing-callout">Nếu dữ liệu organization được cập nhật hoặc xóa, hãy vô hiệu hóa dữ liệu organization khỏi Redis thông qua lớp <code>OrganizationRedisRepository</code>.</p>
+        </div>
+      </div>
+
+      <h4 class="subsection-title">8.5 Tóm tắt</h4>
+
+      <ul class="manning-bullets" aria-label="Tóm tắt chương 8">
+        <li>Giao tiếp bất đồng bộ bằng messaging là phần then chốt của kiến trúc microservice.</li>
+        <li>Dùng messaging trong ứng dụng giúp các dịch vụ của bạn mở rộng quy mô và trở nên chịu lỗi hơn.</li>
+        <li>Spring Cloud Stream đơn giản hóa việc tạo và tiêu thụ message bằng cách dùng các annotation đơn giản và trừu tượng hóa các chi tiết đặc thù nền tảng của message platform bên dưới.</li>
+        <li>Spring Cloud Stream message source là một phương thức Java có annotation dùng để publish message tới queue của message broker.</li>
+        <li>Spring Cloud Stream message sink là một phương thức Java có annotation nhận message từ queue của message broker.</li>
+        <li>Redis là kho lưu trữ key-value có thể dùng vừa làm cơ sở dữ liệu vừa làm bộ nhớ đệm.</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

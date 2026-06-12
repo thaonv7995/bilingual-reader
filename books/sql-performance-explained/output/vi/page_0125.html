@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Các điều kiện lọc chỉ mục được sử dụng có chủ đích</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Các điều kiện lọc chỉ mục được sử dụng có chủ đích</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Sự khác biệt giữa hai kế hoạch thực thi rõ ràng được thể hiện trong cột &ldquo;Rows&rdquo;. Theo ước lượng của bộ tối ưu hóa, truy vấn cuối cùng khớp với 17 bản ghi. Tuy nhiên, quét chỉ mục trong kế hoạch thực thi đầu tiên cung cấp 333 hàng. Cơ sở dữ liệu sau đó phải tải 333 hàng này từ bảng để áp dụng bộ lọc LIKE, điều này giảm kết quả xuống còn 17 hàng. Trong kế hoạch thực thi thứ hai, truy cập chỉ mục không cung cấp những hàng đó ngay từ đầu, vì vậy cơ sở dữ liệu chỉ cần thực hiện thao tác <code>TABLE ACCESS BY INDEX ROWID</code> 17 lần.</p>
+
+      <p>Bạn cũng nên lưu ý rằng giá trị chi phí của thao tác <code>INDEX RANGE SCAN</code> đã tăng từ hai lên ba vì cột bổ sung làm cho chỉ mục lớn hơn. Xét về lợi ích hiệu suất, đây là một thỏa hiệp chấp nhận được.</p>
+
+      <aside class="sidebar-note">
+        <h3>Cảnh báo</h3>
+        <p>Đừng giới thiệu một chỉ mục mới chỉ với mục đích của các điều kiện lọc. Thay vào đó, hãy mở rộng một chỉ mục hiện có và giữ cho nỗ lực bảo trì thấp. Với một số cơ sở dữ liệu, bạn thậm chí có thể thêm các cột vào chỉ mục cho khóa chính mà không phải là một phần của khóa chính.</p>
+      </aside>
+
+      <p>Ví dụ tầm thường này dường như xác nhận tri thức phổ biến rằng nên lập chỉ mục cho mọi cột trong mệnh đề where. Tuy nhiên, &ldquo;tri thức&rdquo; này bỏ qua sự liên quan của thứ tự cột, điều này xác định các điều kiện nào có thể được sử dụng làm điều kiện truy cập và do đó có ảnh hưởng lớn đến hiệu suất. Quyết định về thứ tự cột do đó không bao giờ nên được để cho ngẫu nhiên.</p>
+
+      <p>Kích thước chỉ mục tăng lên với số lượng cột—đặc biệt khi thêm các cột văn bản. Tất nhiên, hiệu suất không cải thiện cho một chỉ mục lớn hơn mặc dù khả năng mở rộng logarithmic hạn chế ảnh hưởng một cách đáng kể. Bạn không nên thêm tất cả các cột được đề cập trong mệnh đề where vào một chỉ mục mà chỉ nên sử dụng các điều kiện lọc chỉ mục có chủ đích để giảm khối lượng dữ liệu trong một bước thực thi trước đó.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">115</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: Listing 4.10 and Netflix Feign client</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet pre.code-block {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--org-rest .listing-callouts {
+      padding-top: 28mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0140.html">← Prev</a>
+    <a href="page_0142.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">116</span>
+        <span class="rh-center">CHAPTER 4 <em>On service discovery</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--org-rest" aria-label="Listing 4.10 (continued)">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>public class OrganizationRestTemplateClient {
+  @Autowired
+  RestTemplate restTemplate;
+
+  public Organization getOrganization(String organizationId){
+    ResponseEntity&lt;Organization&gt; restExchange =
+        restTemplate.exchange(
+            "http://organizationservice/v1/organizations/{organizationId}",
+            HttpMethod.GET,
+            null, Organization.class, organizationId);
+
+    return restExchange.getBody();
+  }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Listing 4.10 annotation callout">
+          <p class="listing-callout">When using a Ribbon-back RestTemplate, you build the target URL with the Eureka service ID.</p>
+        </div>
+      </div>
+
+      <p class="no-indent">This code should look somewhat similar to the previous example, except for two key differences. First, the Spring Cloud DiscoveryClient is nowhere in sight. Second, the URL being used in the <code>restTemplate.exchange()</code> call should look odd to you:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>restTemplate.exchange(
+  "http://organizationservice/v1/organizations/{organizationId}",
+   HttpMethod.GET,
+ null, Organization.class, organizationId);</code></pre>
+      </figure>
+
+      <p class="no-indent">The server name in the URL matches the application ID of the organizationservice key that you registered the organization service with in Eureka:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>http://{applicationid}/v1/organizations/{organizationId}</code></pre>
+      </figure>
+
+      <p class="no-indent">The Ribbon-enabled RestTemplate will parse the URL passed into it and use whatever is passed in as the server name as the key to query Ribbon for an instance of a service. The actual service location and port are completely abstracted from the developer.</p>
+
+      <p>In addition, by using the RestTemplate class, Ribbon will round-robin load balance all requests among all the service instances.</p>
+
+      <h4 class="subsection-title">4.5.3 Invoking services with Netflix Feign client</h4>
+
+      <p>An alternative to the Spring Ribbon-enabled RestTemplate class is Netflix&rsquo;s Feign client library. The Feign library takes a different approach to calling a REST service by having the developer first define a Java interface and then annotating that interface with Spring Cloud annotations to map what Eureka-based service Ribbon will invoke. The Spring Cloud framework will dynamically generate a proxy class that will be used to invoke the targeted REST service. There&rsquo;s no code being written for calling the service other than an interface definition.</p>
+
+      <p>To enable the Feign client for use in your licensing service, you need to add a new annotation, <code>@EnableFeignClients</code>, to the licensing service&rsquo;s <code>src/main/java/com/thoughtmechanix/licenses/Application.java</code> class. The following listing shows this code.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

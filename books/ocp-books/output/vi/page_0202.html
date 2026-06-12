@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="7"] {
+      counter-reset: init-step 6;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0201.html">← Trước</a>
+    <a href="page_0203.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">202</span>
+      </header>
+
+      <ol class="numbered" start="7">
+        <li>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>but the exception is not caught here
+}
+}</code></pre>
+          </figure>
+        </li>
+        <li>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>void process() throws Throwable{
+if(true) throw new Exception();
+else return;
+}</code></pre>
+          </figure>
+          <p>Như bạn đã biết, <code>Throwable</code>&nbsp;là gốc của tất cả các lớp Exception (Ngoại lệ), và do đó, nếu bạn khai báo
+          <code>Throwable</code>&nbsp;trong mệnh đề throws, bạn có thể throw bất kỳ Exception (Ngoại lệ) nào trong phương thức.</p>
+          <p>Mặc dù không quan trọng cho kỳ thi, việc quyết định Exception (Ngoại lệ) nào cần throw và Exception (Ngoại lệ) nào cần khai báo là
+          một vấn đề quan trọng.</p>
+        </li>
+      </ol>
+
+      <h3 class="section-title section-title--sub">Khai báo Exception (Ngoại lệ)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Như đã chỉ ra ở mục số 8 ở trên, việc khai báo một lớp Exception (Ngoại lệ) chung chung trong mệnh đề throws là một
+      cách dễ dàng để loại bỏ mọi lỗi biên dịch đối với phương thức nếu phương thức đó throw các loại
+      Exception (Ngoại lệ) khác nhau từ các phần khác nhau trong mã nguồn của nó. Tuy nhiên, điều này được coi là một thực hành không tốt (bad practice)
+      bởi vì nó gây thêm gánh nặng cho người sử dụng phương thức khi phải xử lý một loạt các Exception (Ngoại lệ) chung chung.</p>
+
+      <p>Mặt khác, việc liệt kê chi tiết từng lớp Exception (Ngoại lệ) cụ thể sẽ hạn chế khả năng
+      chỉnh sửa phương thức trong tương lai bởi vì việc throw các Exception (Ngoại lệ) mới sau này sẽ làm hỏng mã nguồn của người khác.</p>
+
+      <p>Bạn nên có một cách tiếp cận cân bằng trong việc liệt kê các Exception (Ngoại lệ) trong mệnh đề throws.
+      Bạn nên cố gắng chỉ khai báo cụ thể ở mức tối đa có thể mà không làm ảnh hưởng đến khả năng
+      chỉnh sửa của phương thức. Ví dụ, các phương thức liên quan đến Vào/Ra (I/O) có thể gặp các loại
+      sự cố khác nhau khi đọc một file. Nó có thể không</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

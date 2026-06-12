@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tinh chỉnh hiệu suất truy vấn — Hướng dẫn lập kế hoạch truy vấn</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page ul.bullets code,
+    .prose-page.chapter-page ol.numbered code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0184.html">← Trước</a>
+    <a href="page_0186.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">185</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>pg_stat_statements.max = 10000
+pg_stat_statements.track = all</code></pre>
+      </figure>
+
+      <ol class="numbered" start="3">
+        <li>Khởi động lại dịch vụ postgresql của bạn.</li>
+        <li>Trong bất kỳ cơ sở dữ liệu nào bạn muốn sử dụng để giám sát, nhập <code>CREATE EXTENSION
+        pg_stat_statements;</code>.</li>
+      </ol>
+
+      <p class="no-indent">Tiện ích mở rộng cung cấp hai tính năng chính:</p>
+
+      <ul class="bullets">
+        <li>Một chế độ xem gọi là <code>pg_stat_statements</code>, hiển thị tất cả các cơ sở dữ liệu mà người dùng hiện tại có quyền truy cập.</li>
+        <li>Một hàm gọi là <code>pg_stat_statements_reset</code>, xóa nhật ký truy vấn. Hàm này chỉ có thể được chạy bởi các siêu người dùng.</li>
+      </ul>
+
+      <p>Truy vấn trong <span class="accent-word">Ví dụ 9-7</span> liệt kê năm truy vấn tốn kém nhất trong cơ sở dữ liệu postgresql_book.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-7.</strong> Các truy vấn tốn kém trong cơ sở dữ liệu cụ thể</figcaption>
+        <pre class="code-block"><code>SELECT
+    query, calls, total_time, rows,
+    100.0*shared_blks_hit/nullif(shared_blks_hit+shared_blks_read,0) AS hit_percent
+FROM pg_stat_statements As s INNER JOIN pg_database As d On d.oid = s.dbid
+WHERE d.datname = 'postgresql_book'
+ORDER BY total_time DESC LIMIT 5;</code></pre>
+      </figure>
+
+      <h3 class="section-title">Hướng dẫn lập kế hoạch truy vấn</h3>
+
+      <p class="no-indent">Hành vi của lập kế hoạch được điều khiển bởi sự hiện diện của các chỉ mục, cài đặt chi phí, cài đặt chiến lược,
+      và nhận thức chung của nó về sự phân phối dữ liệu. Trong phần này, chúng ta sẽ xem xét
+      các phương pháp khác nhau để tối ưu hóa hành vi của lập kế hoạch.</p>
+
+      <h3 class="subsection-title">Cài đặt chiến lược</h3>
+
+      <p class="no-indent">Mặc dù lập kế hoạch truy vấn PostgreSQL không chấp nhận các gợi ý chỉ mục như một số sản phẩm cơ sở dữ liệu khác,
+      bạn có thể vô hiệu hóa các cài đặt chiến lược khác nhau theo từng truy vấn hoặc vĩnh viễn
+      để ngăn chặn lập kế hoạch đi vào một con đường không hiệu quả. Tất cả các cài đặt tối ưu hóa lập kế hoạch
+      được tài liệu hóa trong phần Cấu hình phương pháp lập kế hoạch của tài liệu. Theo mặc định, tất cả các cài đặt chiến lược đều được bật,
+      trang bị cho lập kế hoạch khả năng linh hoạt tối đa. Bạn có thể vô hiệu hóa các chiến lược khác nhau nếu bạn có một số kiến thức trước về dữ liệu. Hãy nhớ rằng
+      việc vô hiệu hóa không nhất thiết có nghĩa là lập kế hoạch sẽ bị cấm sử dụng
+      chiến lược. Bạn chỉ đang đưa ra một yêu cầu lịch sự với lập kế hoạch để tránh nó.</p>
+
+      <p>Hai cài đặt mà chúng tôi thỉnh thoảng vô hiệu hóa là <code>enable_nestloop</code> và <code>enable_seqscan</code>.
+      Lý do là hai chiến lược này thường là chậm nhất và nên được sử dụng</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">Hướng dẫn lập kế hoạch truy vấn<span class="sep">|</span>167</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

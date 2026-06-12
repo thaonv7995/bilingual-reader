@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 7: SQL: Cách PostgreSQL — Các loại tổng hợp trong truy vấn</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0146.html">← Trước</a>
+    <a href="page_0148.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">147</span>
+      </header>
+
+      <p class="no-indent">Thực tế, bạn có thể tình cờ gặp phải tính linh hoạt của chúng khi mắc lỗi chính tả trong một câu lệnh SQL. Hãy thử truy vấn sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT x FROM census.lu_fact_types As x LIMIT 2;</code></pre>
+      </figure>
+
+      <p>Nhìn thoáng qua, bạn có thể nghĩ rằng chúng tôi đã vô tình bỏ sót một <code>.*</code>, nhưng hãy kiểm tra kết quả:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>x
+------------------------------------------------------------------
+(86,Dân số,"{D001,Tổng:}",d001)
+(87,Dân số,"{D002,Tổng:,""Không phải người gốc Tây Ban Nha hoặc Latino:""}",d002)</code></pre>
+      </figure>
+
+      <p>Thay vì báo lỗi, ví dụ trước đó trả về đại diện chính thức của một kiểu dữ liệu <code>lu_fact_type</code>. Nhìn vào bản ghi đầu tiên: 86 là <code>fact_type_id</code>, Dân số là <code>category</code>, và <code>{D001,Tổng:}</code> là thuộc tính <code>fact_subcats</code>, mà thực tế là một mảng. Các kiểu tổng hợp có thể phục vụ như đầu vào cho nhiều hàm hữu ích, trong đó có <code>array_agg</code> và <code>hstore</code> (một hàm đi kèm với tiện ích mở rộng hstore chuyển đổi một hàng thành một đối tượng hstore dạng khóa-giá trị).</p>
+
+      <p>Nếu bạn đang sử dụng phiên bản 9.2 hoặc cao hơn và đang xây dựng các ứng dụng Ajax, bạn có thể tận dụng hỗ trợ JSON tích hợp sẵn và sử dụng sự kết hợp của <code>array_agg</code> và <code>array_to_json</code> để xuất một truy vấn dưới dạng một đối tượng JSON duy nhất. Chúng tôi minh họa điều này trong <span class="accent-word">Ví dụ 7-16</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 7-16.</strong> Truy vấn để xuất JSON</figcaption>
+        <pre class="code-block"><code>SELECT array_to_json(array_agg(f)) As cat ①
+FROM (
+    SELECT MAX(fact_type_id) As max_type, category ②
+    FROM census.lu_fact_types
+    GROUP BY category
+) As f;</code></pre>
+      </figure>
+
+      <p>Điều này sẽ cho bạn một đầu ra như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>cats
+----------------------------------------------------
+[{"max_type":102,"category":"Dân số"},
+{"max_type":153,"category":"Nhà ở"}]</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> Thu thập tất cả các hàng <code>f</code> này vào một mảng tổng hợp của các <code>f</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> Định nghĩa một truy vấn con với tên <code>f</code>. <code>f</code> sau đó có thể được sử dụng để tham chiếu đến từng hàng trong truy vấn con.</p>
+
+      <p>Trong phiên bản 9.3, hàm <code>json_agg</code> kết nối <code>array_to_json</code> và <code>array_agg</code>, cung cấp cả sự tiện lợi và tốc độ. Trong <span class="accent-word">Ví dụ 7-17</span>, chúng tôi lặp lại <span class="accent-word">Ví dụ 7-16</span> bằng cách sử dụng <code>json_agg</code>. <span class="accent-word">Ví dụ 7-17</span> sẽ có đầu ra giống như <span class="accent-word">Ví dụ 7-16</span>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các cấu trúc hữu ích<span class="sep">|</span>129</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0612.html">← Trước</a>
+    <a href="page_0614.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">613</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>[1, 2, 3, 4]</code></pre>
+      </figure>
+
+      <p class="no-indent">Những điểm sau đây được thể hiện rõ ràng từ kết quả đầu ra trên:</p>
+
+      <ol class="numbered">
+        <li>Stream được chia thành bốn phân đoạn và hàm <code>Supplier</code> được gọi cho mỗi phân đoạn.</li>
+        <li>Các Thread (Luồng) khác nhau nhận được các đối tượng <code>ArrayList</code> khác nhau và hàm accumulator được thực thi song song bằng cách sử dụng các đối tượng <code>ArrayList</code> khác nhau. Các kết quả trung gian cũng được kết hợp song song bằng các Thread (Luồng) khác nhau.</li>
+        <li>Thứ tự thực hiện việc tích lũy và kết hợp không giống với thứ tự của các phần tử trong stream. Mặc dù vậy, thứ tự trong kết quả cuối cùng vẫn giống nhau vì stream có tính thứ tự (ordered).</li>
+        <li>Các hàm accumulator và combiner không có trạng thái nhưng chúng có sửa đổi container chứa kết quả (result container).</li>
+      </ol>
+
+      <p>Do đó, chìa khóa để đảm bảo an toàn thread (thread safety) của một phép thu gọn khả biến (mutable reduction) là sử dụng một hàm <code>Supplier</code> trả về một container chứa kết quả khả biến mới, và phần còn lại sẽ do framework stream tự động xử lý.&nbsp;</p>
+
+      <h3 class="section-title">An toàn thread khi sử dụng một Collector<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Thực hiện phép thu gọn khả biến (mutable reduction) bằng cách sử dụng bất kỳ collector có sẵn nào được cung cấp bởi lớp <code>Collectors</code> cũng đảm bảo an toàn thread. Bạn không cần phải viết bất kỳ mã nguồn nào để đảm bảo an toàn thread cho thao tác đó. Ví dụ, đoạn mã sau đây là an toàn thread:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>List&lt;String&gt; result = List.of(1, 2, 3, 4).stream().parallel().map(i-&gt;""+i).collect(Collectors.toList());</code></pre>
+      </figure>
+
+      <p>Tuy nhiên, nếu bạn truyền các lambda có trạng thái (stateful lambdas) làm tham số cho các thao tác stream, bạn phải chịu trách nhiệm về tính an toàn thread của trạng thái đó.</p>
+
+      <h3 class="section-title">Sử dụng các collector đồng thời<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Đạt được an toàn thread cho phép thu gọn khả biến (mutable reduction) bằng cách sử dụng nhiều thực thể của thread-</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Listing 7.2 OAuth2Config</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p.continued-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-style: italic;
+      color: #476b85;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.25;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--72 .listing-callouts-right {
+      padding-top: 1.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--72 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 19mm;
+    }
+    .prose-page.chapter-page .listing-annotated--72 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 11mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0222.html">← Trước</a>
+    <a href="page_0224.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">198</span>
+        <span class="rh-center">CHƯƠNG 7 <em>Bảo mật microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="Về xác thực và phân quyền (tiếp theo)">
+        <p class="no-indent continued-label">(tiếp theo)</p>
+        <p class="no-indent">họ đang cố làm. Ví dụ, người dùng Jim có thể chứng minh danh tính bằng cách cung cấp user ID và mật khẩu, nhưng anh ấy có thể không được phép xem dữ liệu nhạy cảm như dữ liệu lương. Trong phạm vi thảo luận của chúng ta, người dùng phải được xác thực trước khi phân quyền diễn ra.</p>
+      </aside>
+
+      <p class="no-indent">Lớp <code>OAuth2Config</code> định nghĩa những ứng dụng và thông tin đăng nhập người dùng mà dịch vụ OAuth2 biết đến. Trong listing sau đây, bạn có thể xem code <code>OAuth2Config.java</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.2</strong><br>Dịch vụ OAuth2Config định nghĩa những ứng dụng nào có thể sử dụng dịch vụ của bạn</figcaption>
+        <div class="listing-annotated listing-annotated--72" aria-label="Listing 7.2 code có chú thích">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>//Imports removed for conciseness
+@Configuration
+public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
+
+  @Autowired
+  private AuthenticationManager authenticationManager;
+  @Autowired
+  private UserDetailsService userDetailsService;
+
+  @Override
+  public void configure(ClientDetailsServiceConfigurer clients) throws
+     Exception {
+    clients.inMemory()
+        .withClient("eagleeye")
+        .secret("thisissecret")
+        .authorizedGrantTypes(
+            "refresh_token",
+            "password",
+            "client_credentials")
+        .scopes("webclient","mobileclient");
+  }
+
+  @Override
+  public void configure(
+     AuthorizationServerEndpointsConfigurer endpoints)
+       throws Exception {
+    endpoints
+        .authenticationManager(authenticationManager)
+        .userDetailsService(userDetailsService);
+  }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 7.2 chú thích bên phải">
+            <p class="listing-callout">Kế thừa lớp AuthenticationServerConfigurer và đánh dấu lớp bằng annotation @Configuration</p>
+            <p class="listing-callout">Ghi đè phương thức configure(). Phương thức này định nghĩa những client nào sẽ được đăng ký với dịch vụ của bạn.</p>
+            <p class="listing-callout">Phương thức này định nghĩa các thành phần khác nhau được sử dụng trong AuthenticationServerConfigurer. Đoạn code này yêu cầu Spring sử dụng authentication manager và user details service mặc định đi kèm với Spring.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>Điều đầu tiên cần chú ý trong code là bạn đang kế thừa lớp <code>AuthenticationServerConfigurer</code> của Spring và sau đó đánh dấu lớp bằng</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

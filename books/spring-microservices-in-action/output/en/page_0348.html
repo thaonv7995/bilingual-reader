@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: Listing 10.7 ECS deployment</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left,
+    .prose-page.chapter-page .running-head .rh-right {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      padding-left: 1.25em;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + .sidebar-note {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0347.html">← Prev</a>
+    <a href="page_0349.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Enabling your service to build in Travis CI</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">323</span>
+      </header>
+
+      <p class="no-indent">In the previous command you tell the Docker command line tool to push to the Docker hub (which is the default hub that the Docker command line tools use) to the johncarnell account. The image being pushed will be the tmx-confsvr image with the tag name of the value from the <code>$BUILD_NAME</code> environment variable.</p>
+
+      <h4 class="subsection-title">10.6.7 Starting the services in Amazon ECS</h4>
+
+      <p class="no-indent">At this point, all of the code has been built and tagged and a Docker image has been created. You&rsquo;re now ready to deploy your services to the Amazon ECS container you created back in section 10.1.3. The work to do this deployment is found in <code>travis_scripts/deploy_to_amazon_ecs.sh</code>. The following listing shows the code from this script.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 10.7</strong><br>Deploying Docker Images to EC2</figcaption>
+        <pre class="code-block"><code>echo "Launching $BUILD_NAME IN AMAZON ECS"
+ecs-cli configure --region us-west-1 \
+                  --access-key $AWS_ACCESS_KEY \
+                  --secret-key $AWS_SECRET_KEY \
+                  --cluster spmia-tmx-dev
+ecs-cli compose --file docker/common/docker-compose.yml up
+rm –rf ~/.ecs</code></pre>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>In the Amazon console, Amazon only shows the name of the state/city/country the region is in and not the actual region name (us-west-1, us-east-1, and so on). For example, if you were to look in the Amazon console and wanted to see the Northern California region, there would be no indication that the region name is us-west-1. For a list of all the Amazon regions (and endpoints for each service), please refer to <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html">http://docs.aws.amazon.com/general/latest/gr/rande.html</a>.</p>
+      </aside>
+
+      <p>Because a new build virtual machine is kicked off by Travis with every build, you need to configure your build environment&rsquo;s <code>ecs-cli</code> client with your AWS access and secret key. Once that&rsquo;s complete, you can then kick off a deploy to your ECS cluster using the <code>ecs-cli compose</code> command and a <code>docker-compose.yml</code> file. Your <code>docker-compose.yml</code> is parameterized to use the build name (contained in the environment variable <code>$BUILD_NAME</code>).</p>
+
+      <h4 class="subsection-title">10.6.8 Kicking off the platform tests</h4>
+
+      <p class="no-indent">You have one last step to your build process: kicking off a platform test. After every deployment to a new environment, you kick off a set of platform tests that check to make sure all your services are functioning properly. The goal of the platform tests is to call the microservices in the deployed build and ensure that the services are functioning properly.</p>
+
+      <p>I&rsquo;ve separated the platform test job from the main build so that it can be invoked independently of the main build. To do this, I use the Travis CI REST API to programmatically invoke the platform tests. The <code>travis_scripts/trigger_platform_tests.sh</code> script does this work. The following listing shows the code from this script.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

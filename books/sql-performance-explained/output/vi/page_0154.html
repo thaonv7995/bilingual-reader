@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 7: Partial Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 7: Kết quả một phần</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Thông báo cho cơ sở dữ liệu bất cứ khi nào bạn không cần tất cả các hàng.</p>
+      </aside>
+
+      <p class="no-indent">Tiêu chuẩn SQL đã loại trừ yêu cầu này trong một thời gian dài. Mở rộng tương ứng (lấy trước) chỉ mới được giới thiệu với SQL:2008 và hiện chỉ có sẵn trong IBM DB2, PostgreSQL và SQL Server 2012.</p>
+
+      <p>Một mặt, điều này là do tính năng này là một mở rộng không cốt lõi, và mặt khác, mỗi cơ sở dữ liệu đã cung cấp giải pháp độc quyền của riêng mình trong nhiều năm.</p>
+
+      <p>Các ví dụ sau đây cho thấy việc sử dụng những mở rộng quen thuộc này bằng cách truy vấn mười giao dịch bán hàng gần đây nhất. Cơ sở luôn giống nhau: lấy tất cả các giao dịch bán hàng, bắt đầu với giao dịch gần đây nhất. Cú pháp top-N tương ứng chỉ dừng thực thi sau khi lấy mười hàng.</p>
+
+      <p class="operation-label">MySQL</p>
+
+      <p class="no-indent">MySQL và PostgreSQL sử dụng <code><strong>limit</strong></code> để hạn chế số lượng hàng được lấy.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM sales
+ <strong>ORDER BY</strong> sale_date DESC
+ <strong>LIMIT</strong> 10;</code></pre>
+      </figure>
+
+      <p class="operation-label">Oracle Database</p>
+
+      <p class="no-indent">Cơ sở dữ liệu Oracle cung cấp cột giả <code>ROWNUM</code> tự động đánh số các hàng trong tập kết quả. Để sử dụng cột này trong bộ lọc, chúng ta phải bọc truy vấn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM (
+       SELECT *
+         FROM sales
+        <strong>ORDER BY</strong> sale_date DESC
+       )
+ <strong>WHERE</strong> rownum &lt;= 10;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">144</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0104.html">← Trước</a>
+    <a href="page_0106.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">105</span>
+      </header>
+
+      <p>Hãy tưởng tượng bạn sẽ phải viết bao nhiêu phương thức eat!</p>
+
+      <p>Nhưng đó không phải là vấn đề duy nhất. Giả sử bạn lập trình một phương thức cho mỗi loại trái cây mà bạn biết trong lớp <code>Person</code> và bàn giao lớp này cho người khác sử dụng. Điều gì sẽ xảy ra nếu bạn hoặc ai đó biết về một loại trái cây hoàn toàn mới và muốn cho một đối tượng <code>Person</code> ăn loại trái cây đó? Bạn không thể thay đổi mã nguồn của lớp <code>Person</code> ở giai đoạn này bởi vì khi đó bạn sẽ phải yêu cầu tất cả những người đang sử dụng lớp cũ nhận phiên bản mới này của lớp <code>Person</code> từ bạn. Tùy thuộc vào sự đa dạng của các thành viên trong các dự án khác nhau, điều này có thể trở thành một cơn ác mộng mỗi khi một loại trái cây mới được phát hiện.</p>
+
+      <p>Nếu suy nghĩ một cách logic, việc một loại trái cây mới được phát hiện không quan trọng đối với một <code>Person</code>. Miễn là nó là một loại trái cây, một <code>Person</code> sẽ có thể chấp nhận nó. Đây chính là nơi Tính đa hình (Polymorphism) tỏa sáng. Trong thiết kế đầu tiên của chúng ta, phương thức eat của <code>Person</code> chỉ chấp nhận một <code>Fruit</code>. Nếu bạn tìm thấy một loại trái cây mới, ví dụ như Custard Apple (một loại quả tuyệt vời), tất cả những gì bạn phải làm là định nghĩa một lớp <code>CustardApple</code> extends <code>Fruit</code> và truyền các đối tượng của lớp này vào phương thức <code>eatFruit(Fruit)</code> của <code>Person</code>. Không cần bất kỳ thay đổi nào trong lớp <code>Person</code>. Điều này chỉ khả thi vì <code>CustardApple</code> tôn trọng hợp đồng được định nghĩa bởi <code>Fruit</code> bằng cách khai báo rằng nó extends <code>Fruit</code>.</p>
+
+      <p>Một điểm quan trọng khác về Tính đa hình (Polymorphism) là nó cho phép hoán đổi các thành phần không chỉ tại thời điểm biên dịch (compile time) mà còn cả ở <strong>run time</strong>. Bạn thực sự có thể đưa các lớp hoàn toàn mới kế thừa các lớp hiện có (hoặc triển khai các Interface (Giao diện) hiện có) vào một ứng dụng đang chạy. Một lớp hoặc Interface (Giao diện) hiện có đóng vai trò như một hợp đồng cho một hành vi cụ thể, và nếu một lớp mới cam kết tôn trọng hợp đồng này bằng cách kế thừa lớp đó hoặc triển khai Interface (Giao diện) đó, thì bất kỳ mã nguồn nào cũng có thể sử dụng các instance của lớp mới này ở những nơi yêu cầu các instance của lớp hoặc Interface (Giao diện) hiện có.</p>
+
+      <p>Hãy luôn nhớ rằng toàn bộ mục tiêu của Tính đa hình (Polymorphism) là giúp các lớp trở thành các thành phần tiêu chuẩn hóa có thể dễ dàng hoán đổi cho nhau mà không gây ảnh hưởng đến các thành phần khác. Nhiều quy tắc có vẻ khó hiểu mà bạn sẽ sớm thấy dưới đây chỉ tồn tại để đạt được mục tiêu này. Nếu bạn từng bối rối về một quy tắc cụ thể nào đó, hãy luôn nghĩ về việc nó ảnh hưởng như thế nào đến khả năng tương tác giữa thành phần này với thành phần khác.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

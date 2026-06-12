@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Smart Logic</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">83</span>
+      </header>
+      <p class="chapter-running-head">Logic Thông Minh</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, subsidiary_id, employee_id
+  FROM employees
+ WHERE ( subsidiary_id    = :sub_id OR :sub_id IS NULL )
+   AND ( employee_id      = :emp_id OR :emp_id IS NULL )
+   AND ( UPPER(last_name) = :name   OR :name   IS NULL )</code></pre>
+      </figure>
+
+      <p class="no-indent">Truy vấn sử dụng các biến ràng buộc có tên để dễ đọc hơn. Tất cả các biểu thức lọc có thể đều được mã hóa tĩnh trong câu lệnh. Bất cứ khi nào một bộ lọc không cần thiết, bạn chỉ cần sử dụng <code>NULL</code> thay vì một thuật ngữ tìm kiếm: điều này vô hiệu hóa điều kiện thông qua logic <code>OR</code>.</p>
+
+      <p>Đây là một câu lệnh SQL hoàn toàn hợp lý. Việc sử dụng <code>NULL</code> thậm chí còn phù hợp với định nghĩa của nó theo logic ba giá trị của SQL. Tuy nhiên, đây là một trong những mẫu chống hiệu suất tồi tệ nhất.</p>
+
+      <p>Cơ sở dữ liệu không thể tối ưu hóa kế hoạch thực thi cho một bộ lọc cụ thể vì bất kỳ bộ lọc nào cũng có thể bị hủy bỏ tại thời gian chạy. Cơ sở dữ liệu cần chuẩn bị cho trường hợp xấu nhất—nếu tất cả các bộ lọc đều bị vô hiệu hóa:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>----------------------------------------------------
+| Id | Operation         | Name      | Rows | Cost |
+----------------------------------------------------
+|  0 | SELECT STATEMENT  |           |    2 |  478 |
+|* 1 |  TABLE ACCESS FULL| EMPLOYEES |    2 |  478 |
+----------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+1 - filter((:NAME   IS NULL OR UPPER("LAST_NAME")=:NAME)
+       AND (:EMP_ID IS NULL OR "EMPLOYEE_ID"=:EMP_ID)
+       AND (:SUB_ID IS NULL OR "SUBSIDIARY_ID"=:SUB_ID))</code></pre>
+      </figure>
+
+      <p>Do đó, cơ sở dữ liệu sử dụng quét bảng đầy đủ ngay cả khi có một chỉ mục cho mỗi cột.</p>
+
+      <p>Không phải là cơ sở dữ liệu không thể giải quyết logic “thông minh”. Nó tạo ra kế hoạch thực thi chung do việc sử dụng các tham số ràng buộc để có thể được lưu vào bộ nhớ cache và sử dụng lại với các giá trị khác sau này. Nếu chúng ta không sử dụng các tham số ràng buộc mà viết các giá trị thực tế trong câu lệnh SQL, bộ tối ưu sẽ chọn chỉ mục phù hợp cho bộ lọc đang hoạt động:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, subsidiary_id, employee_id
+  FROM employees
+ WHERE( subsidiary_id    = NULL     OR NULL IS NULL )
+   AND( employee_id      = NULL     OR NULL IS NULL )
+   AND( UPPER(last_name) = 'WINAND' OR 'WINAND' IS NULL )</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">73</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Page 31 — Design Principles and Patterns</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 8mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      font-size: 9pt;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+    }
+    .prose-page figure.diagram svg {
+      display: block;
+      width: 100%;
+      max-width: 95mm;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page figure.diagram svg text {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0030.html">← Prev</a>
+      <a href="page_0032.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">31</span>
+      </header>
+
+      <p class="no-indent">For example, consider a music synthesizer class. The base class translates MIDI input into a set of primitive EmitVoice calls that are implemented by a derived class. Note that the EmitVoice function of the derived class would be useful, in and of itself. Unforunately it is inextricably bound to the MusicSynthesizer class and the PlayMidi function. There is no way to get at the PlayVoice method without dragging the base class around with it. Also, there is no way to create different implementations of the PlayMidi function that use the same EmitVoice function. In short, the hiearchy is just to coupled.</p>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Figure 2-34 Badly coupled hierarchy">
+          <defs>
+            <marker id="fig234-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <rect x="65" y="8" width="90" height="62" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="65" y1="28" x2="155" y2="28" stroke="black" stroke-width="1"/>
+          <line x1="65" y1="42" x2="155" y2="42" stroke="black" stroke-width="1"/>
+          <text x="110" y="20" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="110" y="30" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer</text>
+          <text x="110" y="38" text-anchor="middle" font-size="8">{abstract}</text>
+          <text x="72" y="54" font-size="8">+ PlayMidi</text>
+          <text x="72" y="64" font-size="8" font-style="italic">- EmitVoice</text>
+          <line x1="110" y1="70" x2="110" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig234-inherit)"/>
+          <rect x="58" y="118" width="104" height="38" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="58" y1="136" x2="162" y2="136" stroke="black" stroke-width="1"/>
+          <text x="110" y="130" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="110" y="140" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer_I</text>
+          <text x="66" y="152" font-size="8">+ EmitVoice</text>
+        </svg>
+        <figcaption><strong>Figure 2-34</strong><br>Badly coupled hierarchy</figcaption>
+      </figure>
+
+      <p>The BRIDGE pattern solves this problem by creating a strong seperation between the interface and implementation. Figure 2-35 shows how this works. The MusicSynthesizer class contains an abstract PlayMidi function which is implemented by MusicSynthesizer_I. It calls the EmitVoice function that is implemented in MusicSynthesizer to delegate to the VoiceEmitter interface. This interface is implemented by VoiceEmitter_I and emits the necessary sounds.</p>
+      <p>Now it is possible to implement both EmitVoice and PlayMidi separately from each other. The two functions have been decoupled. EmitVoice can be called without bringing along all the MusicSynthesizer baggage, and PlayMidi can be implemented any number of different ways, while still using the same EmitVoice function.</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

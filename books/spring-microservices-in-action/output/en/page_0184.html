@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Listing 6.2 and configuring routes in Zuul</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + h3.section-title,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + ul.manning-bullets {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0183.html">← Prev</a>
+    <a href="page_0185.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Configuring routes in Zuul</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">159</span>
+      </header>
+
+      <p class="no-indent">configuration in the listing should look familiar because it&rsquo;s the same configuration we walked through in chapter 4.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.2</strong><br>Configuring the Zuul server to talk to Eureka</figcaption>
+        <pre class="code-block"><code>eureka:
+ instance:
+  preferIpAddress: true
+ client:
+  registerWithEureka: true
+  fetchRegistry: true
+  serviceUrl:
+    defaultZone: http://localhost:8761/eureka/</code></pre>
+      </figure>
+
+      <h3 class="section-title">6.3 Configuring routes in Zuul</h3>
+
+      <p>Zuul at its heart is a reverse proxy. A reverse proxy is an intermediate server that sits between the client trying to reach a resource and the resource itself. The client has no idea it&rsquo;s even communicating to a server other than a proxy. The reverse proxy takes care of capturing the client&rsquo;s request and then calls the remote resource on the client&rsquo;s behalf.</p>
+
+      <p>In the case of a microservices architecture, Zuul (your reverse proxy) takes a microservice call from a client and forwards it onto the downstream service. The service client thinks it&rsquo;s only communicating with Zuul. For Zuul to communicate with the downstream clients, Zuul has to know how to <em>map</em> the incoming call to a downstream route. Zuul has several mechanisms to do this, including</p>
+
+      <ul class="manning-bullets" aria-label="Zuul route mapping mechanisms">
+        <li>Automated mapping of routes via service discovery</li>
+        <li>Manual mapping of routes using service discovery</li>
+        <li>Manual mapping of routes using static URLs</li>
+      </ul>
+
+      <h4 class="subsection-title">6.3.1 Automated mapping routes via service discovery</h4>
+
+      <p>All route mappings for Zuul are done by defining the routes in the <code>zuulsvr/src/main/resources/application.yml</code> file. However, Zuul can automatically route requests based on their service IDs with zero configuration. If you don&rsquo;t specify any routes, Zuul will automatically use the Eureka service ID of the service being called and map it to a downstream service instance. For instance, if you wanted to call your <code>organizationservice</code> and used automated routing via Zuul, you would have your client call the Zuul service instance, using the following <em>URL</em> as the endpoint:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>http://localhost:5555/<strong>organizationservice</strong>/v1/organizations/e254f8c-c442-4ebe-
+a82a-e2fc1d1ff78a</code></pre>
+      </figure>
+
+      <p>Your Zuul server is accessed via <code>http://localhost:5555.</code> The service you&rsquo;re trying (<code>organizationservice</code>) to invoke is represented by the first part of the endpoint path in the service.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

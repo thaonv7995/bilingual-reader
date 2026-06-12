@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — How Useful Is Your Index?</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0185.html">← Prev</a>
+    <a href="page_0187.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">186</span>
+      </header>
+
+      <p class="no-indent">only as a last resort. Although you can disable them, the planner can still use them when
+      it has no viable alternative. When you do see them being used, it&rsquo;s a good idea to double-
+      check that the planner is using them out of necessity, not out of ignorance. One quick
+      way to check is to disable them.</p>
+
+      <h3 class="subsection-title">How Useful Is Your Index?</h3>
+
+      <p class="no-indent">When the planner decides to perform a sequential scan, it plans to loop through all the
+      rows of a table. It opts for this route when it finds no index that could satisfy a query
+      condition, or it concludes that using an index is more costly than scanning the table. If
+      you disable the sequential scan strategy, and the planner still insists on using it, this
+      means that indexes are missing or that the planner thinks that the indexes you have in
+      place won&rsquo;t be helpful for the particular query. Two common mistakes people make are
+      to leave useful indexes out of their tables or to put in indexes that can&rsquo;t be used by their
+      queries. An easy way to check whether your indexes are used is to query the
+      <code>pg_stat_user_indexes</code> and <code>pg_stat_user_tables</code> views using the <code>pg_stat_statements</code>
+      extension described in <span class="accent-word">&ldquo;Gathering Statistics on Statements&rdquo; on page 166</span>.</p>
+
+      <p>Let&rsquo;s start off with a query against the table we created in <span class="accent-word">Example 7-18</span>. We&rsquo;ll add a GIN
+      index on the array column. GIN indexes are among the few indexes you can use to index
+      arrays:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx_lu_fact_types ON census.lu_fact_types USING gin (fact_subcats);</code></pre>
+      </figure>
+
+      <p>To test our index, we&rsquo;ll execute a query to find all rows with subcats containing &ldquo;White
+      alone&rdquo; or &ldquo;Asian alone.&rdquo; We explicitly enabled sequential scan even though it&rsquo;s the default
+      setting, just to be sure. The accompanying EXPLAIN output is shown in <span class="accent-word">Example 9-8</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-8.</strong> Allow planner choose sequential scan</figcaption>
+        <pre class="code-block"><code>set enable_seqscan = true;
+EXPLAIN (ANALYZE)
+SELECT *
+FROM census.lu_fact_types
+WHERE fact_subcats &amp;&amp; '{White alone, Black alone}'::varchar[];
+Seq Scan on lu_fact_types
+     (cost=0.00..2.85 rows=2 width=200) (actual time=0.066..0.076 rows=2 loops=1)
+Filter: (fact_subcats &amp;&amp; '{&quot;White alone&quot;,&quot;Black alone&quot;}'::character varying[]) Rows
+Removed by Filter: 66
+Planning time: 0.182 ms
+Execution time: 0.108 ms</code></pre>
+      </figure>
+
+      <p>Observe that when <code>enable_seqscan</code> is enabled, our index is not being used and the
+      planner has chosen to do a sequential scan. This could be because our table is so small
+      or because the index we have is no good for this query. If we repeat the query but turn
+      off sequential scan beforehand, as shown in <span class="accent-word">Example 9-9</span>, we can see that we have suc-
+      ceeded in forcing the planner to use the index.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">168<span class="sep">|</span>Chapter 9: Query Performance Tuning</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

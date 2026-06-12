@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Hình 10.14 trạng thái triển khai ecs-cli</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.diagram,
+    .prose-page.chapter-page figure.diagram + figure.diagram.fig-caption-only,
+    .prose-page.chapter-page figure.diagram.fig-caption-only + p,
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0328.html">← Trước</a>
+    <a href="page_0330.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">304</span>
+        <span class="rh-center">CHƯƠNG 10 <em>Triển khai microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Lệnh này sẽ thực thi bản build Maven bằng parent POM nằm ở thư mục gốc của project. File pom.xml cha được thiết lập để build tất cả các service bạn sẽ triển khai trong chương này. Sau khi Maven chạy xong, bạn có thể triển khai các Docker image lên instance ECS mà bạn đã thiết lập trước đó ở mục 10.1.3. Để triển khai, hãy chạy lệnh sau:</p>
+
+      <figure class="code-snippet" aria-label="Lệnh triển khai ecs-cli compose">
+        <pre class="code-block"><code>ecs-cli compose --file docker/common/docker-compose.yml up</code></pre>
+      </figure>
+
+      <p>Client dòng lệnh ECS cho phép bạn triển khai container bằng file Docker-compose. Nhờ cho phép tái sử dụng file Docker-compose từ môi trường phát triển trên desktop, Amazon đã đơn giản hóa đáng kể việc triển khai service lên Amazon ECS. Sau khi client ECS chạy xong, bạn có thể xác minh các service đang chạy và tìm địa chỉ IP của server bằng lệnh sau:</p>
+
+      <figure class="code-snippet" aria-label="Lệnh kiểm tra trạng thái ecs-cli ps">
+        <pre class="code-block"><code>ecs-cli ps</code></pre>
+      </figure>
+
+      <p>Hình 10.14 hiển thị kết quả của lệnh <code>ecs-cli ps</code>.</p>
+
+      <figure class="diagram" aria-label="Hình 10.14 kết quả terminal ecs-cli ps">
+        <img src="../assets/images/page_0329_fig_10_14.png" width="1313" height="545" alt="Hình 10.14 — Kết quả ecs-cli ps liệt kê bảy microservice Docker đang chạy cùng ánh xạ cổng">
+      </figure>
+
+      <figure class="diagram fig-caption-only" aria-label="Chú thích Hình 10.14">
+        <figcaption><strong>Hình 10.14</strong><br>Kiểm tra trạng thái các service đã triển khai</figcaption>
+      </figure>
+
+      <p>Hãy chú ý ba điểm từ kết quả trong hình 10.14:</p>
+
+      <ol class="manning-numbered" aria-label="Quan sát kết quả Hình 10.14">
+        <li>Bạn có thể thấy bảy container Docker đã được triển khai, mỗi container chạy một service của bạn.</li>
+        <li>Bạn có thể thấy địa chỉ IP của cụm ECS (54.153.122.116).</li>
+        <li>Có vẻ như bạn đã mở các cổng khác ngoài cổng 5555. Thực tế không phải vậy. Các mã cổng trong hình 10.14 là ánh xạ cổng cho container Docker. Tuy nhiên, cổng duy nhất mở ra bên ngoài là cổng 5555. Hãy nhớ rằng khi thiết lập cụm ECS, trình hướng dẫn thiết lập ECS đã tạo security group Amazon chỉ cho phép lưu lượng qua cổng 5555.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

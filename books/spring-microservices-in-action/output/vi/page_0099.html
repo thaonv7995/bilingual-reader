@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Listing 3.2 Bootstrap Spring Cloud Config</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 24%) minmax(0, 46%) minmax(0, 30%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      grid-column: 2;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts-left {
+      grid-column: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding-bottom: 2mm;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 8mm;
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0098.html">← Trước</a>
+    <a href="page_0100.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">74</span>
+        <span class="rh-center">CHƯƠNG 3 <em>Kiểm soát cấu hình với Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>spring.datasource.password: "p0stgr@s"
+spring.datasource.testWhileIdle: "true"
+spring.datasource.validationQuery: "SELECT 1"
+spring.jpa.properties.hibernate.dialect:
+  "org.hibernate.dialect.PostgreSQLDialect"</code></pre>
+      </figure>
+
+      <aside class="sidebar-note" aria-label="Suy nghĩ trước khi triển khai">
+        <h3>Suy nghĩ trước khi triển khai</h3>
+        <p>Tôi khuyên không nên dùng giải pháp dựa trên filesystem cho các ứng dụng cloud quy mô trung bình đến lớn. Cách tiếp cận filesystem có nghĩa là bạn phải triển khai một mount point tệp dùng chung cho tất cả máy chủ cấu hình cloud muốn truy cập dữ liệu cấu hình ứng dụng. Thiết lập máy chủ filesystem dùng chung trên cloud là khả thi, nhưng trách nhiệm duy trì môi trường này thuộc về bạn.</p>
+        <p>Tôi trình bày cách tiếp cận filesystem như ví dụ dễ nhất để làm quen với Spring Cloud configuration server. Ở phần sau, tôi sẽ hướng dẫn cách cấu hình Spring Cloud configuration server để dùng nhà cung cấp Git trên cloud như Bitbucket hoặc GitHub để lưu trữ cấu hình ứng dụng của bạn.</p>
+      </aside>
+
+      <h4 class="subsection-title">3.2.1 Thiết lập class Bootstrap Spring Cloud Config</h4>
+
+      <p>Mọi dịch vụ Spring Cloud được đề cập trong cuốn sách này đều cần một class bootstrap dùng để khởi chạy dịch vụ. Class bootstrap này gồm hai thành phần: một phương thức <code>main()</code> Java đóng vai trò điểm vào để khởi động dịch vụ, và một tập annotation Spring Cloud cho dịch vụ biết loại hành vi Spring Cloud nào sẽ được kích hoạt khi khởi động.</p>
+
+      <p>Listing sau đây trình bày lớp <code>confsvr/src/main/java/com/thoughtmechanix/confsvr/Application.java</code> được dùng làm class bootstrap cho dịch vụ cấu hình của bạn.</p>
+
+      <div class="listing-annotated">
+        <figure class="listing">
+          <figcaption><strong>Listing 3.2</strong><br>Lớp bootstrap cho Spring Cloud Config server của bạn</figcaption>
+          <pre class="code-block"><code>package com.thoughtmechanix.confsvr;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.config.server.EnableConfigServer;
+
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServerApplication.class, args);
+    }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-left" aria-label="Chú thích bên trái Listing 3.2">
+          <p class="listing-callout">Phương thức main khởi chạy dịch vụ và khởi động Spring container.</p>
+        </div>
+        <div class="listing-callouts-right" aria-label="Chú thích Listing 3.2">
+          <p class="listing-callout">Dịch vụ Spring Cloud Config của bạn là một Spring Boot Application, nên bạn đánh dấu nó bằng <code>@SpringBootApplication</code>.</p>
+          <p class="listing-callout">Annotation <code>@EnableConfigServer</code> bật dịch vụ như một dịch vụ Spring Cloud Config.</p>
+        </div>
+      </div>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

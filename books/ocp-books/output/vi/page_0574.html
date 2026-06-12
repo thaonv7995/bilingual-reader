@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--output pre.code-block {
+      background: #e2e8f0;
+      border-left: none;
+      font-size: 9.75pt;
+      line-height: 1.4;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-code-item {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-code-item pre.code-block.ocp-code-line {
+      margin: 0;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0573.html">← Trước</a>
+    <a href="page_0575.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">574</span>
+      </header>
+
+      <p class="no-indent">1. Hãy nhớ rằng <code>sorted</code> là một phép toán trung gian (intermediate operation). Nó không kích hoạt việc thực thi pipeline của stream cho đến khi một phép toán đầu cuối (terminal operation) được áp dụng ở cuối pipeline. Do đó, nó sẽ chỉ in ra một chuỗi tương tự như <code>java.util.stream.SortedOps$OfRef@3a71f4dd</code>. Để in các phần tử của stream, bạn có thể thực hiện <code>marks.sorted().forEach(System.out::println);</code>.</p>
+
+      <p class="no-indent">2. Phép toán <code>map</code> chuyển đổi stream của các <code>Integer</code> đầu vào thành một stream của các <code>String</code>. Khác với <code>sorted</code>, <code>max</code> là một phép toán đầu cuối (terminal operation), và vì vậy, nó sẽ kích hoạt việc thực thi pipeline của stream. Tuy nhiên, cũng khác với <code>sorted</code>, <code>max</code> và <code>min</code> yêu cầu một Đối tượng (Object) Comparator phải được truyền vào làm đối số. Do đó, câu lệnh này sẽ không biên dịch. Bạn có thể truyền <code>String::compareTo</code> vào <code>max</code> và khi đó nó sẽ in ra <code>Optional[80]</code>. Hãy nhớ rằng <code>max</code> và <code>min</code> trả về một <code>Optional</code>.</p>
+
+      <p class="no-indent">3. Nếu bạn mong đợi các phép toán <code>peek</code> của pipeline đã cho tạo ra bất kỳ kết quả đầu ra nào, bạn sẽ phải ngạc nhiên đấy. Việc thực thi stream đủ thông minh để nhận ra rằng không có phép toán trung gian nào trong pipeline đã cho làm thay đổi số lượng phần tử trong stream, và do đó, nó sẽ bỏ qua (short-circuit) tất cả chúng và trả về số lượng dựa trên chính stream ban đầu. Vì vậy, nó sẽ chỉ in ra <code>5</code>. Hãy lưu ý rằng <code>count()</code> không trả về một <code>Optional</code>.</p>
+
+      <p class="no-indent">4. Điều này cũng gặp vấn đề tương tự như câu lệnh trước nhưng có một chút khác biệt. Thay vì tối ưu hóa bỏ qua hoàn toàn các phép toán trung gian, ở đây, việc thực thi pipeline của stream tối ưu hóa bằng cách bỏ qua việc xử lý tất cả ngoại trừ phần tử đầu tiên của stream, bởi vì để tạo ra kết quả của <code>findAny</code>, nó chỉ cần xử lý một phần tử duy nhất. Do đó, chỉ có một phần tử đi qua pipeline. Vì vậy, <code>peek</code> in ra <code>55</code> và <code>findAny</code> cho kết quả là <code>Optional[55]</code>.</p>
+
+      <p>Hai câu lệnh này làm nổi bật tính không đáng tin cậy của phép toán <code>peek</code>. Nó chỉ tốt cho mục đích gỡ lỗi (debugging) và không được tin cậy để tạo ra bất kỳ tác dụng phụ (side effect) nào.</p>
+
+      <p class="no-indent">5. Phép toán <code>sorted</code> yêu cầu tất cả các phần tử phải được xử lý trước khi nó có thể tạo ra phần tử đầu tiên của stream đầu ra. Do đó, tất cả các phần tử sẽ đi qua <code>peek</code> trước, sau đó mới qua <code>sorted</code>. Phép toán <code>findFirst</code> sẽ trả về <code>Optional[55]</code> ở cuối.</p>
+
+      <p class="no-indent">6. Ở đây, số lượng phần tử trong stream đầu ra cuối cùng không thể được xác định nếu không thực hiện phép toán <code>filter</code> cho từng phần tử đầu vào. Do đó,</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

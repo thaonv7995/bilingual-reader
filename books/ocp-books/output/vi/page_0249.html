@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0248.html">← Trước</a>
+    <a href="page_0250.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">249</span>
+      </header>
+
+      <p class="no-indent"><code>Integer</code>. Một <code>Integer</code>&nbsp;là một&nbsp;<code>Number</code>, do đó, các tùy chọn&nbsp;A&nbsp;và B là đúng. Kiểu khai báo
+      của <code>listN</code>&nbsp;là <code>List</code>&lt;<code>Number</code>&gt;&nbsp;và vì vậy, trình biên dịch sẽ giả định rằng phương thức <code>get</code>&nbsp;của nó sẽ
+      trả về một tham chiếu đến một <code>Number</code>. Bạn không thể gán một <code>Number</code>&nbsp;cho một biến <code>Integer</code>&nbsp;
+      bởi vì một tham chiếu <code>Number</code>&nbsp;thực tế có thể trỏ đến một thứ khác ngoài <code>Integer</code>
+      tại run time. Ví dụ, nó cũng có thể trỏ đến một <code>Double</code>&nbsp;, và việc gán một đối tượng (Object) <code>Double</code>&nbsp;
+      cho một biến <code>Integer</code>&nbsp;chính xác là những gì trình biên dịch muốn ngăn chặn
+      xảy ra. Do đó, tùy chọn&nbsp;<strong>C</strong> là sai. Tùy chọn&nbsp;<strong>D</strong> cũng sai vì lý do tương tự.</p>
+
+      <h3 class="section-title section-title--sub">16.1.3 Tạo các kiểu generic<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Toàn bộ mục đích của việc đưa generics vào Java là để tăng cường tính an toàn kiểu (type safety) của mã nguồn. Tính
+      an toàn kiểu (type safety) rất quan trọng vì nó giúp ngăn ngừa một nhóm các lỗi xảy ra do giả định
+      sai về kiểu của các đối tượng (Object) tại run time. Ví dụ, nếu lập trình viên giả định rằng một
+      đối tượng (Object) được trỏ bởi một biến sẽ có kiểu CheckingAccount và viết mã nguồn theo giả định đó,
+      và nếu tại run time hóa ra đối tượng (Object) đó thực chất có kiểu SavingsAccount, chương trình sẽ
+      bị lỗi. Nếu trình biên dịch cảnh báo lập trình viên rằng giả định của họ sẽ bị sai tại
+      run time, lập trình viên đã có thể sửa mã nguồn ngay lập tức.</p>
+
+      <p>Ở đây, &ldquo;việc đưa ra giả định&rdquo; về bản chất có nghĩa là ép kiểu một biến được khai báo từ
+      kiểu này sang kiểu khác. Bạn đã thấy những trường hợp trình biên dịch sẽ không cho phép bạn thực hiện
+      việc ép kiểu như vậy. Ví dụ, trình biên dịch sẽ từ chối biên dịch việc ép kiểu trong đoạn mã nguồn này -
+      <code>Integer i = 10; String s = (String) i;</code>. Trình biên dịch biết rằng kiểu khai báo của <code>i</code>&nbsp;là
+      <code>Integer</code>&nbsp;và vì các lớp (Class) <code>String</code>&nbsp;và <code>Integer</code>&nbsp;không có quan hệ cha-con,
+      không có cách nào <code>i</code>&nbsp;có thể trỏ đến một đối tượng (Object) kiểu <code>String</code>. Trình biên dịch chỉ ra một
+      cách chính xác rằng việc ép kiểu này là một lỗi lập trình. Tuy nhiên, như bạn đã thấy với đoạn mã nguồn liên quan
+      đến một&nbsp;<code>ArrayList</code>&nbsp;ở phần trước, có những tình huống trình biên dịch không có
+      đủ thông tin để ngăn cản lập trình viên đưa ra các giả định sai lầm như vậy. Trong đoạn mã nguồn
+      đó, trình biên dịch không có thông tin về kiểu của các đối tượng (Object) chứa trong danh sách và do đó, nó
+      không có lựa chọn nào khác ngoài việc cho phép quá trình biên dịch thành công. Nó đành chấp nhận</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

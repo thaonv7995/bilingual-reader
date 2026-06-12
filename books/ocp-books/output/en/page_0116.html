@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0115.html">← Prev</a>
+    <a href="page_0117.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">116</span>
+      </header>
+
+      <p class="no-indent">variable is defined at compile time itself and it cannot be changed once defined. This means, the
+      compiler must make sure that the code does not assign an object of one type to a variable of
+      another type. It must not allow the code to invoke methods that are not supported by the type of
+      the variable. However, relying only on the type information available at compile time will
+      impose too many restrictions on the code. For example, if you define a reference variable of type
+      <code>java.util.List</code>, the compiler must not allow the code to invoke methods defined in some
+      other class using that variable. However, this rigidity will make polymorphism impossible
+      because the whole premise of polymorphism is that an object may behave differently at run time
+      than what was promised at compile time.</p>
+
+      <p>You can see that there are two contradictory requirements that the compiler needs to fulfill. On
+      one hand, you want the compiler to type check the code to make sure the code doesn&rsquo;t invoke
+      random methods using a reference and on the other hand you want the compiler to let code
+      violate type checking in some cases. Java tries to meet both the objectives by letting the compiler
+      make certain assumptions and by letting the programmer give guarantees to the compiler that it
+      is not trying to do anything fishy.</p>
+
+      <p>Let us now see how these two things are done in practice.</p>
+
+      <h3 class="section-title section-title--minor">The &ldquo;is a&rdquo; test<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">The <strong>is-a</strong> test is an intuitive test to determine the relationship between two reference types. It
+      allows you to check whether there is a parent child relationship between two reference types and
+      if there is, which one of the two types is the parent class, and which one is the child class. For
+      example, it makes sense if you say that a Dog is a Pet or a Cat is a Pet but not if you say that a
+      Dog is a Cat. A similar relationship exists between an Apple and a Fruit or a Mango and a Fruit.</p>
+
+      <p>An Apple is a Fruit, A Mango is a Fruit, but an Apple is not a Mango. If you were to model Apple,
+      Mango, and Fruit as classes, you would put all common features of fruits in a <code>Fruit</code> class and
+      you would make <code>Apple</code> and <code>Mango</code> classes extend <code>Fruit</code>. The importance of establishing
+      this relationship is that it allows you to use a subclass object anywhere in place of a superclass
+      object. Indeed, if you promised to give someone a fruit, you can certainly give them an apple
+      because an apple is a fruit. The reverse is obviously not true. If you</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

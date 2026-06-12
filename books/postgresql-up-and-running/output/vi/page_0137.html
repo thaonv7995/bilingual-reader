@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 7: SQL: Cách PostgreSQL</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0136.html">← Trước</a>
+    <a href="page_0138.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">137</span>
+      </header>
+
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHƯƠNG 7</p>
+        <h1 class="chapter-title no-indent">SQL: Cách PostgreSQL</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="no-indent">PostgreSQL đã vượt trội hơn các sản phẩm cơ sở dữ liệu khác khi nói đến sự tuân thủ ANSI SQL. Nó củng cố vị thế của mình bằng cách thêm các cấu trúc từ cú pháp ngắn gọn tiện lợi đến các tính năng tiên tiến phá vỡ ranh giới của SQL truyền thống. Trong chương này, chúng ta sẽ đề cập đến một số thông tin SQL không thường thấy trong các cơ sở dữ liệu khác. Đối với chương này, bạn nên có kiến thức làm việc về SQL; nếu không, bạn có thể không đánh giá cao những tiện ích tiết kiệm lao động mà PostgreSQL mang lại.</p>
+
+      <h3 class="section-title">Views</h3>
+      <p class="no-indent">Trong một cơ sở dữ liệu quan hệ, các bảng lưu trữ dữ liệu đã được chuẩn hóa. Để truy cập các bảng dữ liệu phân tán này, bạn viết các truy vấn kết hợp các bảng cơ sở. Khi bạn thấy mình viết cùng một truy vấn lặp đi lặp lại, hãy xem xét việc tạo một view. Nói một cách đơn giản, một view chỉ là một truy vấn được lưu trữ vĩnh viễn trong cơ sở dữ liệu.</p>
+
+      <p>Một số người theo chủ nghĩa thuần túy đã lập luận rằng không nên truy vấn trực tiếp một bảng cơ sở ngoại trừ thông qua các view. Điều này có nghĩa là bạn sẽ tạo một view cho mỗi bảng mà bạn dự định truy vấn trực tiếp. Lợi ích là lớp gián tiếp bổ sung hữu ích cho việc kiểm soát quyền và trừu tượng hóa logic. Chúng tôi thấy đây là lời khuyên hợp lý, nhưng sự lười biếng đã chiếm ưu thế.</p>
+
+      <p>Các view đã phát triển qua nhiều năm. Trước phiên bản 9.1, cách duy nhất để cập nhật dữ liệu trong một view là sử dụng các quy tắc. Bạn có thể thấy một ví dụ trong <span class="accent-word">Database Abstraction with Updatable Views</span>. Mặc dù bạn vẫn có thể sử dụng các quy tắc để cập nhật dữ liệu view, cách ưa thích là sử dụng các trigger INSTEAD OF. Cách tiếp cận trigger tuân thủ các tiêu chuẩn và là những gì bạn sẽ thấy trong các sản phẩm cơ sở dữ liệu khác.</p>
+
+      <p>Phiên bản 9.3 đã công bố các view tự động có thể cập nhật. Nếu view của bạn lấy dữ liệu từ một bảng duy nhất và bạn bao gồm khóa chính như một cột đầu ra, bạn có thể phát hành một lệnh UPDATE trực tiếp vào view của mình. Bảng cơ sở sẽ lưu trữ bản cập nhật.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">119</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

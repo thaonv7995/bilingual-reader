@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0485.html">← Prev</a>
+    <a href="page_0487.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">486</span>
+      </header>
+
+      <p class="no-indent"><strong class="run-in">3. Observing the termination of a thread&mdash;</strong> All actions in a thread happen before any
+      other thread observes that this thread has terminated. A thread can observe the
+      termination of another thread by calling the <code>join</code>&nbsp;or the <code>isAlive</code>&nbsp;methods on that
+      thread.</p>
+
+      <p>Calling the <code>join()</code>&nbsp;method makes the calling thread wait until the other thread
+      terminates. Thus, this rule ensures that if a thread joins on another thread then the calling
+      thread will see all the updates made to the shared variables by the other thread when the
+      call to <code>join()</code>&nbsp;returns. For example, this rule can be used to fix our factorial program:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//while(f.result == null){ } //no need to busy wait
+t.join(); //can throw an InterruptedException, which is a
+checked exception, so declare it in the throws clause
+System.out.println("Factorial is : "+f.result); //will print the
+result correctly</code></pre>
+      </figure>
+
+      <p>Observe that calling <code>t.join()</code>&nbsp;allows us to get rid of the busy-waiting while loop.
+      Calling <code>isAlive</code>&nbsp;provides the same guarantee as <code>join</code>&nbsp;, but only if it returns <code>true</code>&nbsp;.
+      Since it returns immediately with the status of the other thread, you need to use this
+      method in a busy-waiting loop:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>while(f.isAlive()){ } //not a great option but better than
+checking for result == null
+System.out.println("Factorial is : "+f.result); //will print the
+result correctly</code></pre>
+      </figure>
+
+      <p>Unlike <code>join</code>&nbsp;, <code>isAlive</code>&nbsp;doesn&rsquo;t throw any exception.</p>
+
+      <p class="no-indent"><strong class="run-in">4. Observing the interrupted status of a thread&mdash;</strong> If thread T1 interrupts thread T2, all
+      actions performed by T1 just before interrupting T2 happen before any other thread
+      (including T2) determines that T2 has been interrupted (by</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

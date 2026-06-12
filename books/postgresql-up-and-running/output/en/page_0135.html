@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Partial Indexes</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0134.html">← Prev</a>
+    <a href="page_0136.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">135</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE subscribers (
+ id serial PRIMARY KEY,
+ name varchar(50) NOT NULL, type varchar(50),
+ is_active boolean);</code></pre>
+      </figure>
+
+      <p class="no-indent">We add a partial index to guarantee uniqueness only for current subscribers:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE UNIQUE INDEX uq ON subscribers USING btree(lower(name)) WHERE is_active;</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0135_icon_tip.png" width="50" height="48" alt="Tip">
+        </figure>
+        <p class="callout-text">Functions used in index <code>WHERE</code> condition must be immutable. This
+        means you can&rsquo;t use time functions like <code>CURRENT_DATE</code> or data from
+        other tables (or other rows of indexed table) to determine whether
+        a record should be indexed.</p>
+      </div>
+
+      <p>One warning we stress is that when you query the data using a <code>SELECT</code> statement, the
+      conditions used when creating the index must be a subset of your <code>WHERE</code> condition. An
+      easy way to not have to worry about this is to use a view as a proxy. Back to our sub‐
+      scribers example, create a view as follows:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE OR REPLACE VIEW vw_subscribers_current AS
+SELECT id, lower(name) As name FROM subscribers WHERE is_active = true;</code></pre>
+      </figure>
+
+      <p>Then always query the view instead of the table (many purists advocate never querying
+      tables directly anyway):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM vw_active_subscribers WHERE user_name = 'sandy';</code></pre>
+      </figure>
+
+      <p>You can open up the planner and double-check that the planner indeed used your index.</p>
+
+      <h3 class="subsection-title">Multicolumn Indexes</h3>
+      <p class="no-indent">You&rsquo;ve already seen many examples of compound (aka multicolumn) indexes in this
+      chapter. On top of that, you can create functional indexes using more than one under‐
+      lying column. Here is an example of a multicolumn index:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx ON subscribers USING btree (type, upper(name) varchar_pattern_ops);</code></pre>
+      </figure>
+
+      <p>The PostgreSQL planner uses a strategy called bitmap index scan that automatically tries
+      to combine indexes on the fly, often from single-column indexes, to achieve the same
+      goal as a multicolumn index. If you&rsquo;re unable to predict how you&rsquo;ll be querying com‐
+      pound fields in the future, you may be better off creating single-column indexes and let
+      the planner decide how to combine them during search.</p>
+
+      <p>If you have a compound B-Tree index on <code>type, upper(name) ..</code>, then there is no need
+      for an index on just <code>type</code>, because the planner can happily use the compound index for
+      cases in which you just need to filter by <code>type</code>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Indexes<span class="sep">|</span>117</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0258.html">← Prev</a>
+    <a href="page_0260.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">259</span>
+      </header>
+
+      <p class="no-indent">return type.</p>
+
+      <h3 class="section-title section-title--sub">16.1.4 Runtime behavior of generics<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>I explained in the Arrays chapter that arrays are reified and are covariant. I also alluded to the
+      fact that generics are diametrically opposite to arrays in this respect. Let me show you how.</p>
+
+      <h3 class="section-title section-title--sub">Generics and Type Erasure<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Generics were added quite late to Java (in version 1.5) and so, backward compatibility was an
+      important concern. Furthermore, since it was a fairly complicated feature, it was expected that
+      their wide spread usage will take some time. Thus, it was deemed necessary that code that uses
+      Generics must work with code that doesn&rsquo;t use Generics. Basically, there are two scenarios that
+      had to be supported. Generic aware Java source code should be able use preexisting classes that
+      did not use generics and non-generics source code should be able to use new generic aware
+      libraries.</p>
+
+      <p>To achieve this design goal, the mechanism of <strong>type erasure</strong> was used, where all of the generic
+      information is conceptually stripped away from a class. In other words, even though the generic
+      type information written in Java code is present in the class file, the JVM does not make use of
+      any of that information. It is as if this type information does not exist in the class file as far as
+      the JVM is concerned. This information is used only by the compiler for analyzing type safety of
+      the source code. Thus, even if you write <code>ArrayList&lt;String&gt; al = new ArrayList&lt;&gt;();</code> in
+      your code, the JVM will only see <code>ArrayList al = new ArrayList();</code>. This implies that the
+      Java code <code>String str = al.get(0);</code> gets translated to <code>String str = (String) al.get(0);</code> in
+      the class file. Type erasure happens for the generic class definition as well. For
+      example, the type parameter <code>E</code> used in the <code>DataHolder</code> class defined earlier is replaced by
+      <code>Object</code>. As you will soon learn, if the type parameters have a bound, they are replaced by
+      those bounds in the class file.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

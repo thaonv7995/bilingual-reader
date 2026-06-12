@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 12pt;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: equals-points;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: equals-points;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(equals-points) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0382.html">← Prev</a>
+    <a href="page_0384.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">383</span>
+      </header>
+
+      <ol class="numbered" start="2">
+        <li>Since <code>String</code>&nbsp;implements <code>Comparable</code>, I am able to sort the list without passing in a
+        <code>Comparator</code>.</li>
+        <li>Although the number <code>10</code>&nbsp;is larger than the number <code>9</code>, it appears before <code>9</code>&nbsp;in the
+        output because the array being sorted is not of numbers but of strings. Since <code>String</code>&rsquo;s
+        <code>compareTo</code>&nbsp;method compares strings lexicographically, <code>&quot;10&quot;</code>&nbsp;is considered smaller
+        than <code>&quot;9&quot;</code>. Furthermore, as characters, arabic numerals appear before English upper case
+        letters and the English upper case letters appear before English lower case letters, which
+        means, 1&lt;9&lt;B&lt;a.</li>
+        <li>In the second sort, I am using a lambda to create a <code>Comparator</code>&nbsp;that compares two
+        strings on their lengths. Further observe that the order of elements <code>9</code>, <code>B</code>, and <code>a</code>&nbsp;does
+        not change during the second sort because the sort is guaranteed to be stable.</li>
+      </ol>
+
+      <p>The <code>java.util.Collections</code>&nbsp;class has been around since Java 1.2 and it has had the sort
+      methods since then. However, after default methods in interfaces were introduced in Java 1.8,
+      the logic of sorting a list was moved into <code>List</code>&rsquo;s default <code>sort(Comparator)</code>&nbsp;method and
+      <code>Collection</code>&rsquo;s sort methods were made to just delegate the call to <code>List</code>&rsquo;s <code>sort</code>&nbsp;method,
+      which means, you can sort a <code>List</code>&nbsp;directly without using the <code>Collections</code>&nbsp;class. For
+      example,</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>names.sort(null); //passing null Comparator, Comparable's compareTo will be used
+names.sort((s1, s2) -&gt; s1.length()-s2.length()); //passing non null Comparator</code></pre>
+      </figure>
+
+      <h3 class="section-title section-title--sub">The <code>Collections.binarySearch</code>&nbsp;methods<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">There are two variants of this method as well:</p>
+
+      <p class="no-indent"><code>static &lt;T&gt; int binarySearch(List&lt;? extends Comparable&lt;? super T&gt;&gt; list, T key)</code>&nbsp; and</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

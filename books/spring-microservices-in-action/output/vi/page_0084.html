@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Đăng ký và khám phá dịch vụ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0083.html">← Trước</a>
+    <a href="page_0085.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Câu chuyện DevOps: xây dựng cho những thử thách của runtime</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">59</span>
+      </header>
+
+      <p class="no-indent">hàng trăm thậm chí hàng nghìn instance microservice đang chạy. Điều càng phức tạp thêm là các dịch vụ có thể được phân tán trên toàn cầu. Với số lượng lớn các dịch vụ phân tán theo địa lý, việc triển khai lại dịch vụ để lấy dữ liệu cấu hình mới trở nên không khả thi.</p>
+
+      <p>Lưu trữ dữ liệu trong một kho dữ liệu bên ngoài dịch vụ giải quyết được vấn đề này, nhưng các microservice trên đám mây đặt ra một tập hợp thách thức riêng:</p>
+
+      <ol class="manning-numbered">
+        <li>Dữ liệu cấu hình thường có cấu trúc đơn giản và thường được đọc thường xuyên, ghi không thường xuyên. Cơ sở dữ liệu quan hệ là quá mức trong tình huống này vì chúng được thiết kế để quản lý các mô hình dữ liệu phức tạp hơn nhiều so với một tập hợp cặp khóa-giá trị đơn giản.</li>
+        <li>Vì dữ liệu được truy cập thường xuyên nhưng thay đổi không thường xuyên, dữ liệu phải có thể đọc với mức độ trễ thấp.</li>
+        <li>Kho dữ liệu phải có tính sẵn sàng cao và nằm gần các dịch vụ đọc dữ liệu. Một kho dữ liệu cấu hình không thể bị sập hoàn toàn, vì nó sẽ trở thành điểm lỗi duy nhất cho ứng dụng của bạn.</li>
+      </ol>
+
+      <p>Ở chương 3, tôi trình bày cách quản lý dữ liệu cấu hình ứng dụng microservice bằng các giải pháp như một kho dữ liệu dạng key-value đơn giản.</p>
+
+      <h4 class="subsection-title">2.4.3 Đăng ký và khám phá dịch vụ: cách client giao tiếp với microservice của bạn</h4>
+
+      <p>Từ góc nhìn của người tiêu dùng microservice, một microservice nên trong suốt về vị trí, vì trong môi trường dựa trên đám mây, các máy chủ là tạm thời (ephemeral). Ephemeral nghĩa là các máy chủ mà dịch vụ được lưu trữ thường có vòng đời ngắn hơn so với dịch vụ chạy trong trung tâm dữ liệu doanh nghiệp. Các dịch vụ trên đám mây có thể được khởi động và gỡ bỏ nhanh chóng với một địa chỉ IP hoàn toàn mới được gán cho máy chủ mà các dịch vụ đang chạy.</p>
+
+      <p>Bằng cách coi các dịch vụ là các đối tượng dùng một lần, sống ngắn hạn, kiến trúc microservice có thể đạt mức độ mở rộng và tính sẵn sàng cao bằng cách có nhiều instance của một dịch vụ đang chạy. Nhu cầu dịch vụ và khả năng phục hồi có thể được quản lý nhanh chóng tùy theo tình hình. Mỗi dịch vụ có một địa chỉ IP duy nhất và không cố định được gán cho nó. Nhược điểm của các dịch vụ tạm thời là khi dịch vụ liên tục lên xuống, việc quản lý một pool lớn các dịch vụ tạm thời bằng tay là con đường dẫn tới sự cố.</p>
+
+      <p>Một instance microservice cần tự đăng ký với agent bên thứ ba. Quy trình đăng ký này được gọi là service discovery (xem bước 3, service discovery, trong hình 2.6; xem hình 2.9 để biết chi tiết về quy trình này). Khi một instance microservice đăng ký với agent service discovery, nó sẽ báo cho agent khám phá hai thông tin: địa chỉ IP vật lý hoặc địa chỉ domain của instance dịch vụ, và một tên logic mà ứng dụng có thể dùng để tra cứu dịch vụ. Một số agent service discovery cũng sẽ yêu cầu</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

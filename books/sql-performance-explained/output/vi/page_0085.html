@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Smart Logic</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label {
+      margin: 4mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page .indented-block {
+      margin: 0 0 3.2mm 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">85</span>
+      </header>
+      <p class="chapter-running-head">Smart Logic</p>
+
+      <p class="operation-label">MySQL</p>
+      <p class="indented-block">MySQL không gặp phải vấn đề này vì nó hoàn toàn không có bộ nhớ đệm kế hoạch thực thi. Một yêu cầu tính năng từ năm 2009 đã thảo luận về tác động của việc lưu trữ kế hoạch thực thi. Có vẻ như bộ tối ưu hóa của MySQL đủ đơn giản để việc lưu trữ kế hoạch thực thi không mang lại lợi ích.</p>
+
+      <p class="operation-label">Oracle Database</p>
+      <p class="indented-block">Cơ sở dữ liệu Oracle sử dụng bộ nhớ đệm kế hoạch thực thi chia sẻ (“khu vực SQL”) và hoàn toàn bị ảnh hưởng bởi vấn đề được mô tả trong phần này.</p>
+      <p class="indented-block">Oracle đã giới thiệu cái gọi là bind peeking với phiên bản 9i. Bind peeking cho phép bộ tối ưu hóa sử dụng các giá trị bind thực tế của lần thực thi đầu tiên khi chuẩn bị một kế hoạch thực thi. Vấn đề với cách tiếp cận này là hành vi không xác định của nó: các giá trị từ lần thực thi đầu tiên ảnh hưởng đến tất cả các lần thực thi. Kế hoạch thực thi có thể thay đổi bất cứ khi nào cơ sở dữ liệu được khởi động lại hoặc, ít dự đoán hơn, khi kế hoạch được lưu trữ hết hạn và bộ tối ưu hóa tái tạo nó bằng cách sử dụng các giá trị khác trong lần thực thi tiếp theo của câu lệnh.</p>
+      <p class="indented-block">Phiên bản 11g đã giới thiệu chia sẻ con trỏ thích ứng để cải thiện tình hình hơn nữa. Tính năng này cho phép cơ sở dữ liệu lưu trữ nhiều kế hoạch thực thi cho cùng một câu lệnh SQL. Hơn nữa, bộ tối ưu hóa xem xét các tham số bind và lưu trữ độ chọn lọc ước tính của chúng cùng với kế hoạch thực thi. Khi bộ nhớ đệm được truy cập sau đó, độ chọn lọc của các giá trị bind hiện tại phải nằm trong các khoảng độ chọn lọc của một kế hoạch thực thi đã được lưu trữ để được tái sử dụng. Nếu không, bộ tối ưu hóa tạo ra một kế hoạch thực thi mới và so sánh nó với các kế hoạch thực thi đã được lưu trữ cho truy vấn này. Nếu đã có một kế hoạch thực thi như vậy, cơ sở dữ liệu thay thế nó bằng một kế hoạch thực thi mới cũng bao gồm các ước tính độ chọn lọc của các giá trị bind hiện tại. Nếu không, nó lưu trữ một biến thể kế hoạch thực thi mới cho truy vấn này—cùng với các ước tính độ chọn lọc, tất nhiên.</p>
+
+      <p class="operation-label">PostgreSQL</p>
+      <p class="indented-block">Bộ nhớ đệm kế hoạch truy vấn của PostgreSQL chỉ hoạt động cho các câu lệnh đang mở—tức là miễn là bạn giữ PreparedStatement mở. Vấn đề được mô tả ở trên chỉ xảy ra khi tái sử dụng một handle câu lệnh. Lưu ý rằng trình điều khiển JDBC của PostgresSQL chỉ kích hoạt bộ nhớ đệm sau lần thực thi thứ năm.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">75</p>
+    </article>
+  </main>
+</body>
+</html>

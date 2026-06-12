@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Listing 6.18 forwardToSpecialRoute</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--618 .listing-callouts-right {
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--618 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 16mm;
+    }
+    .prose-page.chapter-page .listing-annotated--618 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 4mm;
+    }
+    .prose-page.chapter-page .listing-annotated--618 .listing-callouts-right .listing-callout:nth-child(4) {
+      margin-top: 6mm;
+    }
+    .prose-page.chapter-page .listing-annotated--618 .listing-callouts-right .listing-callout:nth-child(5) {
+      margin-top: 22mm;
+    }
+    .prose-page.chapter-page .listing-annotated--618 .listing-callouts-right .listing-callout:nth-child(6) {
+      margin-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0213.html">← Trước</a>
+    <a href="page_0215.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Xây dựng bộ lọc route động</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">189</span>
+      </header>
+
+      <p class="no-indent">class SimpleHostRoutingFilter. Mặc dù chúng ta sẽ không đi qua tất cả các hàm helper được gọi trong phương thức <code>forwardToSpecialRoute()</code>, chúng ta sẽ lần lượt xem xét code trong phương thức này, như trình bày trong listing sau đây.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.18</strong><br><code>forwardToSpecialRoute</code> gọi dịch vụ thay thế</figcaption>
+        <div class="listing-annotated listing-annotated--618" aria-label="Listing 6.18 code có chú thích">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>private ProxyRequestHelper helper
+    = new ProxyRequestHelper ();
+private void forwardToSpecialRoute(String route) {
+ RequestContext context
+     = RequestContext.getCurrentContext();
+ HttpServletRequest request = context.getRequest();
+ MultiValueMap&lt;String, String&gt;headers =
+ ➥ helper.buildZuulRequestHeaders(request);
+ MultiValueMap&lt;String, String&gt; params =
+ ➥ helper.buildZuulRequestQueryParams(request);
+
+ String verb = getVerb(request);
+ InputStream requestEntity = getRequestBody(request);
+ if (request.getContentLength() &lt; 0)
+    context.setChunkedRequestBody();
+ this.helper.addIgnoredHeaders();
+ CloseableHttpClient httpClient = null;
+ HttpResponse response = null;
+ try {
+  httpClient = HttpClients.createDefault();
+   response = forward(
+                httpClient,
+                ➥ verb,
+                route,
+                request,
+                headers,
+                params,
+                requestEntity);
+   setResponse(response);
+  }
+  catch (Exception ex ) {//Removed for conciseness}
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 6.18 chú thích bên phải">
+            <p class="listing-callout">Biến helper là biến instance thuộc class <code>ProxyRequestHelper</code>. Đây là class Spring Cloud với các hàm helper để proxy các yêu cầu dịch vụ.</p>
+            <p class="listing-callout">Tạo bản sao của tất cả HTTP request header sẽ được gửi tới dịch vụ</p>
+            <p class="listing-callout">Tạo bản sao của tất cả tham số HTTP request</p>
+            <p class="listing-callout">Tạo bản sao HTTP Body sẽ được chuyển tiếp tới dịch vụ thay thế</p>
+            <p class="listing-callout">Gọi dịch vụ thay thế bằng phương thức helper forward (không hiển thị)</p>
+            <p class="listing-callout">Kết quả của lời gọi dịch vụ được lưu trở lại máy chủ Zuul thông qua phương thức helper <code>setResponse()</code>.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>Điểm then chốt từ code trong listing 6.18 là bạn đang sao chép tất cả các giá trị từ HTTP request đến (các tham số header, HTTP verb và body) vào một yêu cầu mới sẽ được gọi trên dịch vụ đích. Phương thức <code>forwardToSpecialRoute()</code> sau đó nhận phản hồi từ dịch vụ đích và gán vào HTTP request context mà Zuul sử dụng. Việc này được thực hiện qua phương thức helper <code>setResponse()</code> (không hiển thị). Zuul dùng HTTP request context để trả phản hồi về cho client dịch vụ gọi.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

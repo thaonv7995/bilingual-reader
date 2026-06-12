@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Listing 7.14 JWT organizationId parsing</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--714 .listing-callouts-right {
+      padding-top: 11mm;
+    }
+    .prose-page.chapter-page .listing-annotated--714 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 12mm;
+    }
+    .prose-page.chapter-page .listing-annotated--714 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 22mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0247.html">← Prev</a>
+    <a href="page_0249.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">223</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">JavaScript Web Tokens and OAuth2</span>
+      </header>
+
+      <p class="no-indent">(<a href="https://github.com/jwtk/jjwt">https://github.com/jwtk/jjwt</a>) to do the parsing. The Maven dependency for the library is</p>
+
+      <figure class="code-snippet" aria-label="JJWT Maven dependency">
+        <pre class="code-block"><code>&lt;dependency&gt;
+  &lt;groupId&gt;io.jsonwebtoken&lt;/groupId&gt;
+  &lt;artifactId&gt;jjwt&lt;/artifactId&gt;
+  &lt;version&gt;0.7.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <p>Once the JJWT library is added, you can add a new method to your <code>zuulsvr/src/main/java/com/thoughtmechanix/zuulsvr/filters/TrackingFilter.java</code> class called <code>getOrganizationId()</code>. The following listing shows this new method.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.14</strong><br>Parsing the organizationId out of your JWT Token</figcaption>
+        <div class="listing-annotated listing-annotated--714" aria-label="Listing 7.14 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>private String getOrganizationId(){
+  String result="";
+if (filterUtils.getAuthToken()!=null){
+     String authToken = filterUtils
+                         .getAuthToken()
+                         .replace("Bearer ","");
+  try {
+    Claims claims =
+       Jwts.parser()
+
+➥ .setSigningKey(
+                      ➥ serviceConfig
+                      .getJwtSigningKey()
+➥
+                      .getBytes("UTF-8"))
+             .parseClaimsJws(authToken)
+             .getBody();
+    result = (String) claims.get("organizationId");
+  }
+  catch (Exception e){
+    e.printStackTrace();
+  }
+}
+return result;
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 7.14 annotation callouts">
+            <p class="listing-callout">Parse out the token out of the Authorization HTTP header.</p>
+            <p class="listing-callout">Use JWTS class to parse out the token, passing in the signing key used to sign the token.</p>
+            <p class="listing-callout">Pull the organizationId out of the JavaScript token.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>Once the <code>getOrganizationId()</code> function is implemented, you added a <code>System.out.println</code> to the <code>run()</code> method on the <code>TrackingFilter</code> to print out the organizationId parsed from your JWT token that&rsquo;s flowing through the Zuul gateway, so you call any gateway-enabled REST endpoint. I used <code>GET http://localhost:5555/api/licensing/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/licenses/f3831f8c-c338-4ebe-a82a-e2fc1d1ff78a</code>. Remember, when you make this call, you still need to set up all the HTTP form parameters and the HTTP authorization header to include the Authorization header and the JWT token.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

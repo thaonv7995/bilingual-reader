@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0037.html">← Prev</a>
+    <a href="page_0039.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="object-term">effective_cache_size</p>
+      <p class="object-def">An estimate of how much memory you expect to be available in the OS and Post‐
+      greSQL buffer caches. This setting has no effect on actual allocation, but query
+      planner figures in this setting to guess whether intermediate steps and query output
+      would fit in RAM. If you set this much lower than available RAM, the planner may
+      forgo using indexes. With a dedicated server, setting <code>effective_cache_size</code> to half
+      or more of your onboard memory would be a good start. Changes require at least
+      a reload.</p>
+
+      <p class="object-term">work_mem</p>
+      <p class="object-def">Controls the maximum amount of memory allocated for operations such as sorting,
+      hash join, and table scans. The optimal setting depends on how you’re using the
+      database, how much memory you have to spare, and whether your server is dedi‐
+      cated to PostgreSQL or not. If you have many users running simple queries, you
+      want this setting to be relatively low. How high you set this also depends on how
+      much RAM you have to begin with. A good article to read on work_mem is <a href="http://bit.ly/15SWsHh" class="accent-word">Under‐
+      standing work_mem</a>. Changes require at least a reload.</p>
+
+      <p class="object-term">maintenance_work_mem</p>
+      <p class="object-def">The total memory allocated for housekeeping activities such as vacuuming (prun‐
+      ing records marked for delete). You shouldn’t set it higher than about 1 GB. Reload
+      after changes.</p>
+
+      <p>These settings can also be set at the database, users, and function levels. For example,
+      you might want to set <code>work_mem</code> higher for an SQL whiz running sophisticated queries.</p>
+
+      <p>Similarly, if you have one function that is sort-intensive, you could raise the <code>work_mem</code>
+      setting just for it.</p>
+
+      <p>New in PostgreSQL 9.4 is ability to change settings using the new <code>ALTER SYSTEM</code> SQL
+      command. For example, to set the <code>work_mem</code> globally, enter the following:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>ALTER</strong> <strong>SYSTEM</strong> <strong>set</strong> <strong>work_mem</strong> = 8192;</code></pre>
+      </figure>
+
+      <p>Depending on the particular setting changed, you may need to restart the service. If just
+      need to reload it, here’s a convenient command:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_reload_conf();</code></pre>
+      </figure>
+
+      <p>PostgreSQL records changes made through <code>ALTER SYSTEM</code> in an override file called
+      <code>postgresql.auto.conf</code>, not directly into <code>postgresql.conf</code>.</p>
+
+      <p class="no-indent"><strong class="run-in">“I edited my postgresql.conf and now my server is broken.”</strong> The easiest way to figure out what you screwed up is to look at the log file, located at
+      the root of the data folder, or in the <code>pg_log</code> subfolder. Open the latest file and read what
+      the last line says. The raised error is usually self-explanatory.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">20<span class="sep">|</span>Chapter 2: Database Administration</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Introduction to OAuth2</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page p + ol.manning-numbered {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0217.html">← Prev</a>
+    <a href="page_0219.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Introduction to OAuth2</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">193</span>
+      </header>
+
+      <ul class="manning-bullets" aria-label="Security layers (continued)">
+        <li>Implementing network access controls so that a service is only accessible through well-defined ports and accessible to a small number of authorized servers</li>
+      </ul>
+
+      <p class="no-indent">This chapter is only going to deal with the first bullet point in this list: how to <em>authenticate</em> that the user calling your microservice is who they say they are and determine whether they&rsquo;re authorized to carry out the action they&rsquo;re requesting from your microservice. The other two topics are extremely broad security topics that are outside the scope of this book.</p>
+
+      <p>To implement authorization and authentication controls, you&rsquo;re going to use Spring Cloud security and the OAuth2 (Open Authentication) standard to secure your Spring-based services. OAuth2 is a token-based security framework that allows a user to authenticate themselves with a third-party authentication service. If the user successfully authenticates, they will be presented a token that must be sent with every request. The token can then be validated back to the authentication service. The main goal behind OAuth2 is that when multiple services are called to fulfill a user&rsquo;s request, the user can be authenticated by each service without having to present their credentials to each service processing their request. Spring Boot and Spring Cloud each provide an out-of-the-box implementation of an OAuth2 service and make it extremely easy to integrate OAuth2 security into your service.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>In this chapter, we&rsquo;ll show you how to protect your microservices using OAuth2; however, a full-blown OAuth2 implementation also requires a front-web application to enter your user credentials. We won&rsquo;t be going through how to set up the front-end application because that&rsquo;s out of scope for a book on microservices. Instead, we&rsquo;ll use a REST client, like POSTMAN, to simulate the presentation of credentials. For a good tutorial on how to configure your front-end application, I recommend you look at the following Spring tutorial: <a href="https://spring.io/blog/2015/02/03/sso-with-oauth2-angular-js-and-spring-security-part-v">https://spring.io/blog/2015/02/03/sso-with-oauth2-angular-js-and-spring-security-part-v</a>.</p>
+      </aside>
+
+      <p>The real power behind OAuth2 is that it allows application developers to easily integrate with third-party cloud providers and do user authentication and authorization with those services without having to constantly pass the user&rsquo;s credentials to the third-party service. Cloud providers such as Facebook, GitHub, and Salesforce all support OAuth2 as a standard.</p>
+
+      <p>Before we get into the technical details of protecting our services with OAuth2, let&rsquo;s walk through the OAuth2 architecture.</p>
+
+      <h4 class="subsection-title">7.1 Introduction to OAuth2</h4>
+
+      <p>OAuth2 is a token-based security authentication and authorization framework that breaks security down into four components. These four components are</p>
+
+      <ol class="manning-numbered" aria-label="OAuth2 four components">
+        <li><em>A protected resource</em>&mdash;This is the resource (in our case, a microservice) you want to protect and ensure that only authenticated users who have the proper authorization can access.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

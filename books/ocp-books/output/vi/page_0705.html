@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0704.html">← Trước</a>
+    <a href="page_0706.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">705</span>
+      </header>
+
+      <p class="no-indent">các dịch vụ.</p>
+
+      <p>Một nhà cung cấp dịch vụ (service provider) là một lớp (class) thực thi dịch vụ đó. Nếu dịch vụ là một interface (giao diện) thì nhà cung cấp dịch vụ sẽ thực thi interface đó, và nếu dịch vụ là một lớp (class) thì nhà cung cấp dịch vụ có thể là một lớp con (subclass). Trong trường hợp của chúng ta, <code>simpleinterest.SimpleInterestCalculator</code>&nbsp;sẽ là một nhà cung cấp dịch vụ thực thi dịch vụ được biểu diễn bởi interface <code>InterestCalculator</code>&nbsp;. Một lớp (class) phải tuân theo các quy tắc nhất định để trở thành một nhà cung cấp dịch vụ. Tôi sẽ sớm liệt kê chúng.</p>
+
+      <p>Bây giờ khi đã có một dịch vụ và một nhà cung cấp dịch vụ, tất cả những gì chúng ta cần là một cách để ứng dụng tiêu dùng (consumer application) sử dụng dịch vụ đó có thể lấy được một nhà cung cấp dịch vụ. Lưu ý rằng ứng dụng tiêu dùng không hề biết về các nhà cung cấp dịch vụ. Nó chỉ biết về dịch vụ. Điều này được thực hiện thông qua ba bước:</p>
+
+      <p class="no-indent"><strong class="run-in">Bước 1:</strong> Liên kết dịch vụ và nhà cung cấp dịch vụ lại với nhau trong <code>module-info</code>&nbsp;của module chứa nhà cung cấp dịch vụ bằng cách sử dụng chỉ thị <code>provides-with</code>&nbsp;. Ví dụ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>module simpleinterest{
+  requires calculators;
+  provides calculators.InterestCalculator with
+simpleinterest.SimpleInterestCalculator;
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Bạn cần lưu ý hai điểm sau đây về <code>module-info</code>&nbsp;ở trên:</p>
+
+      <ol class="numbered">
+        <li>Module này <strong>requires</strong> (yêu cầu) module <code>calculators</code>&nbsp;. Điều này là cần thiết vì nó thực thi interface <code>InterestCalculator</code>&nbsp;, vốn được định nghĩa trong module <code>calculators</code>.</li>
+        <li>Module này <strong>không export</strong> package <code>simpleinterest</code>&nbsp;. Không có quy định cấm export bất kỳ package nào từ module nhà cung cấp dịch vụ, nhưng khuyến nghị là không nên làm vậy để tránh các phụ thuộc vô tình vào nó. Sau cùng thì chúng ta không muốn các client bị ràng buộc chặt chẽ (tightly coupled) với nhà cung cấp dịch vụ, nghĩa là chúng ta không muốn bất kỳ ai tham chiếu trực tiếp đến lớp (class) <code>SimpleInterestCalculator</code>&nbsp;.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

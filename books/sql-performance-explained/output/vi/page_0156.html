@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 7: Partial Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 7: Kết quả một phần</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Phụ lục&nbsp;A, &ldquo;Kế hoạch thực thi&rdquo;, tóm tắt các thao tác tương ứng cho MySQL, Oracle, PostgreSQL và SQL Server.</p>
+      </aside>
+
+      <p class="no-indent">Sử dụng cú pháp đúng chỉ là một nửa câu chuyện vì việc kết thúc thực thi một cách hiệu quả yêu cầu các thao tác cơ bản phải được thực hiện theo cách ống dẫn. Điều đó có nghĩa là điều kiện <code><strong>order by</strong></code> phải được bao phủ bởi một chỉ mục&mdash;chỉ mục <code>SALE_DT_PR</code> trên <code>SALE_DATE</code> và <code>PRODUCT_ID</code> trong ví dụ này. Bằng cách sử dụng chỉ mục này, cơ sở dữ liệu có thể tránh một thao tác sắp xếp rõ ràng và do đó có thể ngay lập tức gửi các hàng đến ứng dụng như đã đọc từ chỉ mục. Việc thực thi bị hủy sau khi lấy mười hàng để cơ sở dữ liệu không đọc nhiều hàng hơn so với đã chọn.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Một truy vấn top-N theo ống dẫn không cần phải đọc và sắp xếp toàn bộ tập kết quả.</p>
+      </aside>
+
+      <p>Nếu không có chỉ mục phù hợp trên <code>SALE_DATE</code> cho một <code><strong>order by</strong></code> theo ống dẫn, cơ sở dữ liệu phải đọc và sắp xếp toàn bộ bảng. Hàng đầu tiên chỉ được cung cấp sau khi đọc hàng cuối cùng từ bảng.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------
+| Thao tác                | Tên   | Hàng |  Chi phí |
+--------------------------------------------------
+| CÂU LỆNH CHỌN          |       |   10 | 59558 |
+|  ĐẾM STOPKEY           |       |      |       |
+|   XEM                   |       | 1004K| 59558 |
+|    SẮP XẾP THEO STOPKEY |       | 1004K| 59558 |
+|     TRUY CẬP BẢNG TOÀN BỘ| SALES | 1004K|  9246 |
+--------------------------------------------------</code></pre>
+      </figure>
+
+      <p>Kế hoạch thực thi này không có <code><strong>order by</strong></code> theo ống dẫn và gần như chậm như việc hủy thực thi từ phía khách hàng. Sử dụng cú pháp top-N vẫn tốt hơn vì cơ sở dữ liệu không cần phải hiện thực hóa toàn bộ kết quả mà chỉ cần mười hàng gần đây nhất. Điều này yêu cầu ít bộ nhớ hơn rất nhiều. Kế hoạch thực thi của Oracle chỉ ra tối ưu hóa này với bộ điều chỉnh <code>STOPKEY</code> trên thao tác <code>SẮP XẾP THEO</code>.</p>
+
+      <p>Các lợi ích của một truy vấn top-N theo ống dẫn không chỉ bao gồm việc tăng hiệu suất ngay lập tức mà còn cải thiện khả năng mở rộng. Nếu không sử dụng thực thi theo ống dẫn, thời gian phản hồi của truy vấn top-N này tăng lên theo kích thước bảng. Tuy nhiên, thời gian phản hồi khi sử dụng thực thi theo ống dẫn chỉ tăng</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">146</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

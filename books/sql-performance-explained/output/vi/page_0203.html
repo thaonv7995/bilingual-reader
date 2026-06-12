@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 9pt;
+      line-height: 1.35;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .index-title {
+      margin: 0 0 6mm;
+      font-family: var(--font-ui);
+      font-size: 20.7pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+    }
+
+    .prose-page .index-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 8mm;
+    }
+
+    .prose-page .index-letter {
+      margin: 4.5mm 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 14.4pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .prose-page .index-col > .index-letter:first-child {
+      margin-top: 0;
+    }
+
+    .prose-page .index-entry {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+
+    .prose-page .index-entry--sub1 {
+      padding-left: 4.2mm;
+    }
+
+    .prose-page .index-entry--sub2 {
+      padding-left: 8.5mm;
+    }
+
+    .prose-page .index-entry code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9pt;
+      font-weight: 400;
+    }
+
+    .prose-page .index-entry code.index-term--bold {
+      font-weight: 700;
+    }
+
+    .prose-page .index-page {
+      font-style: italic;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <h1 class="index-title">Chỉ mục</h1>
+
+      <div class="index-columns">
+        <div class="index-col index-col--left">
+          <h2 class="index-letter">Biểu tượng</h2>
+          <p class="index-entry">2PC, <span class="index-page">89</span></p>
+          <p class="index-entry">?, :var, @var (xem tham số ràng buộc)</p>
+
+          <h2 class="index-letter">A</h2>
+          <p class="index-entry">Access Predicate, <span class="index-page">44</span></p>
+          <p class="index-entry">các predicate truy cập</p>
+          <p class="index-entry index-entry--sub1">nhận diện trong các kế hoạch thực thi</p>
+          <p class="index-entry index-entry--sub2">Oracle, <span class="index-page">170</span></p>
+          <p class="index-entry index-entry--sub2">PostgreSQL, <span class="index-page">177</span></p>
+          <p class="index-entry index-entry--sub2">SQL Server, <span class="index-page">185</span></p>
+          <p class="index-entry">chia sẻ con trỏ thích ứng (Oracle), <span class="index-page">75</span></p>
+          <p class="index-entry">tự động tham số hóa (SQL Server), <span class="index-page">39</span></p>
+
+          <h2 class="index-letter">B</h2>
+          <p class="index-entry">B-tree (cây tìm kiếm cân bằng), <span class="index-page">4</span></p>
+          <p class="index-entry"><code class="index-term--bold">between</code>, <span class="index-page">44</span></p>
+          <p class="index-entry">tham số ràng buộc, <span class="index-page">32</span></p>
+          <p class="index-entry index-entry--sub1">các chống chỉ định</p>
+          <p class="index-entry index-entry--sub2">biểu đồ, <span class="index-page">34</span></p>
+          <p class="index-entry index-entry--sub2"><code>LIKE</code> bộ lọc, <span class="index-page">47</span></p>
+          <p class="index-entry index-entry--sub2">phân vùng, <span class="index-page">35</span></p>
+          <p class="index-entry index-entry--sub1">cho việc lưu trữ kế hoạch thực thi, <span class="index-page">32</span></p>
+          <p class="index-entry index-entry--sub1">an toàn kiểu, <span class="index-page">66</span></p>
+          <p class="index-entry">nhìn vào tham số ràng buộc (Oracle), <span class="index-page">75</span></p>
+          <p class="index-entry">chỉ mục bitmap, <span class="index-page">50</span></p>
+          <p class="index-entry"><code>Bitmap Index Scan</code> (PostgreSQL), <span class="index-page">175</span></p>
+          <p class="index-entry">định lý CAP của Brewer, <span class="index-page">89</span></p>
+
+          <h2 class="index-letter">C</h2>
+          <p class="index-entry">định lý CAP, <span class="index-page">89</span></p>
+          <p class="index-entry">ước lượng độ cardinality, <span class="index-page">27</span></p>
+          <p class="index-entry">CBO (xem bộ tối ưu, dựa trên chi phí)</p>
+          <p class="index-entry">chỉ mục cụm, <span class="index-page">122</span></p>
+          <p class="index-entry index-entry--sub1">chuyển đổi thành bảng heap SQL Server,</p>
+          <p class="index-entry index-entry--sub1"><span class="index-page">127</span></p>
+          <p class="index-entry">hệ số cụm, <span class="index-page">21</span>, <span class="index-page">114</span></p>
+          <p class="index-entry index-entry--sub1">tối ưu hóa tự động, <span class="index-page">133</span></p>
+          <p class="index-entry">khóa cụm, <span class="index-page">123</span></p>
+          <p class="index-entry">sắp xếp, <span class="index-page">24</span></p>
+          <p class="index-entry"><code class="index-term--bold">commit</code></p>
+          <p class="index-entry index-entry--sub1">ràng buộc có thể trì hoãn, <span class="index-page">11</span></p>
+          <p class="index-entry index-entry--sub1">ngầm định cho <code class="index-term--bold">truncate table</code>, <span class="index-page">163</span></p>
+          <p class="index-entry index-entry--sub1">hai pha, <span class="index-page">89</span></p>
+          <p class="index-entry">biên dịch, <span class="index-page">18</span></p>
+          <p class="index-entry">các cột tính toán (SQL Server), <span class="index-page">27</span></p>
+          <p class="index-entry">ràng buộc</p>
+          <p class="index-entry index-entry--sub1">có thể trì hoãn, <span class="index-page">11</span></p>
+          <p class="index-entry index-entry--sub1"><code>NOT NULL</code>, <span class="index-page">56</span></p>
+          <p class="index-entry">giá trị chi phí, <span class="index-page">18</span></p>
+        </div>
+
+        <div class="index-col index-col--right">
+          <p class="index-entry"><code>count(*)</code></p>
+          <p class="index-entry index-entry--sub1">thường là quét chỉ mục duy nhất, <span class="index-page">120</span></p>
+          <p class="index-entry index-entry--sub1">Oracle yêu cầu ràng buộc <code>NOT NULL</code>, <span class="index-page">57</span></p>
+          <p class="index-entry"><code>COUNT STOPKEY</code>, <span class="index-page">145</span></p>
+          <p class="index-entry">chia sẻ con trỏ (Oracle), <span class="index-page">39</span></p>
+
+          <h2 class="index-letter">D</h2>
+          <p class="index-entry">đối tượng vận chuyển dữ liệu (DTO), <span class="index-page">105</span></p>
+          <p class="index-entry"><code>DATE</code></p>
+          <p class="index-entry index-entry--sub1">làm việc hiệu quả với, <span class="index-page">62</span></p>
+          <p class="index-entry"><code>DBMS_XPLAN</code>, <span class="index-page">167</span></p>
+          <p class="index-entry"><code>DEALLOCATE</code>, <span class="index-page">174</span></p>
+          <p class="index-entry"><code>DEFERRABLE</code> ràng buộc, <span class="index-page">11</span></p>
+          <p class="index-entry"><code>DETERMINISTIC</code> (Oracle), <span class="index-page">30</span></p>
+          <p class="index-entry"><code class="index-term--bold">distinct</code>, <span class="index-page">97</span></p>
+          <p class="index-entry"><code>distinct()</code></p>
+          <p class="index-entry index-entry--sub1">trong JPA và Hibernate, <span class="index-page">97</span></p>
+          <p class="index-entry">DML, <span class="index-page">159</span></p>
+          <p class="index-entry">danh sách liên kết đôi, <span class="index-page">2</span></p>
+          <p class="index-entry">cập nhật động (Hibernate), <span class="index-page">164</span></p>
+
+          <h2 class="index-letter">E</h2>
+          <p class="index-entry">lấy dữ liệu kịp thời, <span class="index-page">96</span></p>
+          <p class="index-entry">tính nhất quán cuối cùng, <span class="index-page">89</span></p>
+          <p class="index-entry">kế hoạch thực thi, <span class="index-page">10</span>, <span class="index-page">165</span></p>
+          <p class="index-entry index-entry--sub1">bộ nhớ đệm, <span class="index-page">32</span>, <span class="index-page">75</span></p>
+          <p class="index-entry index-entry--sub1">tạo ra</p>
+          <p class="index-entry index-entry--sub2">MySQL, <span class="index-page">188</span></p>
+          <p class="index-entry index-entry--sub2">Oracle, <span class="index-page">166</span></p>
+          <p class="index-entry index-entry--sub2">PostgreSQL, <span class="index-page">172</span></p>
+          <p class="index-entry index-entry--sub2">SQL Server, <span class="index-page">180</span></p>
+          <p class="index-entry index-entry--sub1">các hoạt động</p>
+          <p class="index-entry index-entry--sub2">MySQL, <span class="index-page">188</span></p>
+          <p class="index-entry index-entry--sub2">Oracle, <span class="index-page">167</span></p>
+          <p class="index-entry index-entry--sub2">PostgreSQL, <span class="index-page">174</span></p>
+          <p class="index-entry index-entry--sub2">SQL Server, <span class="index-page">182</span></p>
+          <p class="index-entry"><code class="index-term--bold">explain</code></p>
+          <p class="index-entry index-entry--sub1">MySQL, <span class="index-page">188</span></p>
+          <p class="index-entry index-entry--sub1">Oracle, <span class="index-page">166</span></p>
+          <p class="index-entry index-entry--sub1">PostgreSQL, <span class="index-page">172</span></p>
+
+          <h2 class="index-letter">F</h2>
+          <p class="index-entry">FBI (xem chỉ mục, dựa trên hàm)</p>
+          <p class="index-entry"><code>FETCH ALL PROPERTIES</code> (HQL), <span class="index-page">105</span></p>
+          <p class="index-entry"><code class="index-term--bold">fetch first</code>, <span class="index-page">144</span></p>
+          <p class="index-entry">các predicate lọc</p>
+          <p class="index-entry index-entry--sub1">tác động (biểu đồ), <span class="index-page">81</span></p>
+          <p class="index-entry index-entry--sub1">nhận diện trong các kế hoạch thực thi</p>
+          <p class="index-entry index-entry--sub2">Oracle, <span class="index-page">170</span></p>
+          <p class="index-entry index-entry--sub2">PostgreSQL, <span class="index-page">177</span></p>
+          <p class="index-entry index-entry--sub2">SQL Server, <span class="index-page">185</span></p>
+        </div>
+      </div>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">193</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

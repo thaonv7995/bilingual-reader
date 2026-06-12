@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 10: Replication and External Data — Setting Up Replication</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code,
+    .prose-page.chapter-page ol.numbered code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word,
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0199.html">← Prev</a>
+    <a href="page_0201.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">200</span>
+      </header>
+
+      <p class="no-indent">new tables, installing extensions, and so on. This makes them more invasive than merely
+      shipping logs.</p>
+
+      <p><a href="http://postgres-xc.sourceforge.net" class="accent-word">Postgres-XC</a>, still in beta, is starting to gain an audience. The raison d&rsquo;&ecirc;tre of Postgres-
+      XC is not replication but distributed query processing. It is designed with scalability in
+      mind rather than high availability. Postgres-XC is not an add-on to PostgreSQL but a
+      completely separate fork focused on providing a write-scalable, multimaster symmetric
+      cluster very similar in purpose to <a href="http://bit.ly/1z3iT6S" class="accent-word">Oracle RAC</a>.</p>
+
+      <p>We urge you to consult a <a href="http://bit.ly/1vUu5AP" class="accent-word">comparison matrix of popular third-party options</a> before
+      deciding what to use.</p>
+
+      <h3 class="section-title">Setting Up Replication</h3>
+
+      <p class="no-indent">Let&rsquo;s go over the steps to set up replication. We&rsquo;ll take advantage of streaming introduced
+      in version 9.0, which requires connections only at the PostgreSQL database level be&shy;tween
+      the master and slaves. We will also use features introduced in version 9.1 that
+      allow you to easily set up authentication accounts specifically for replication.</p>
+
+      <h3 class="subsection-title">Configuring the Master</h3>
+
+      <p class="no-indent">The basic steps for setting up the master server are:</p>
+
+      <ol class="numbered">
+        <li>Create a replication account:</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE ROLE pgrepuser REPLICATION LOGIN PASSWORD 'woohoo';</code></pre>
+      </figure>
+
+      <ol class="numbered" start="2">
+        <li>Alter the following configuration settings in <code>postgresql.conf</code>:</li>
+      </ol>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>listen_addresses = *
+wal_level = hot_standby
+archive_mode = on
+max_wal_senders = 2
+wal_keep_segments = 10</code></pre>
+      </figure>
+
+      <p>These settings are described in <a href="http://bit.ly/1z3iXUq" class="accent-word">Server Configuration: Replication</a>.</p>
+
+      <ol class="numbered" start="3">
+        <li>Add the <code>archive_command</code> configuration directive to <code>postgresql.conf</code> to indicate
+        where the WAL will be saved. With streaming, you&rsquo;re free to choose any directory.</li>
+      </ol>
+
+      <p>More details on this setting can be found at the <a href="http://bit.ly/1yxbOvw" class="accent-word">PostgreSQL PGStandby</a> documen&shy;tation.</p>
+
+      <p>On Linux/Unix, your <code>archive_command</code> line should look something like:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>archive_command = 'cp %p ../archive/%f'</code></pre>
+      </figure>
+
+      <p>You can also use <code>rsync</code> instead of <code>cp</code> if you want to archive to a different server:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>archive_command = 'rsync -av %p postgres@192.168.0.10:archive/%f'</code></pre>
+      </figure>
+
+      <p>On Windows:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">182<span class="sep">|</span>Chapter 10: Replication and External Data</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

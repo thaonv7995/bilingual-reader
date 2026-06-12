@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 6: Bảng, Ràng buộc và Chỉ mục — Chỉ mục một phần</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0134.html">← Trước</a>
+    <a href="page_0136.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">135</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE subscribers (
+ id serial PRIMARY KEY,
+ name varchar(50) NOT NULL, type varchar(50),
+ is_active boolean);</code></pre>
+      </figure>
+
+      <p class="no-indent">Chúng tôi thêm một chỉ mục một phần để đảm bảo tính duy nhất chỉ cho những người đăng ký hiện tại:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE UNIQUE INDEX uq ON subscribers USING btree(lower(name)) WHERE is_active;</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0135_icon_tip.png" width="50" height="48" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Các hàm được sử dụng trong điều kiện <code>WHERE</code> của chỉ mục phải là bất biến. Điều này có nghĩa là bạn không thể sử dụng các hàm thời gian như <code>CURRENT_DATE</code> hoặc dữ liệu từ các bảng khác (hoặc các hàng khác của bảng đã chỉ mục) để xác định xem một bản ghi có nên được chỉ mục hay không.</p>
+      </div>
+
+      <p>Một cảnh báo mà chúng tôi nhấn mạnh là khi bạn truy vấn dữ liệu bằng câu lệnh <code>SELECT</code>, các điều kiện được sử dụng khi tạo chỉ mục phải là một tập con của điều kiện <code>WHERE</code> của bạn. Một cách dễ dàng để không phải lo lắng về điều này là sử dụng một view như một proxy. Quay lại ví dụ về những người đăng ký của chúng tôi, hãy tạo một view như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE OR REPLACE VIEW vw_subscribers_current AS
+SELECT id, lower(name) As name FROM subscribers WHERE is_active = true;</code></pre>
+      </figure>
+
+      <p>Rồi luôn truy vấn view thay vì bảng (nhiều người theo chủ nghĩa thuần túy khuyên không bao giờ truy vấn bảng trực tiếp):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM vw_active_subscribers WHERE user_name = 'sandy';</code></pre>
+      </figure>
+
+      <p>Bạn có thể mở trình lập kế hoạch và kiểm tra lại rằng trình lập kế hoạch thực sự đã sử dụng chỉ mục của bạn.</p>
+
+      <h3 class="subsection-title">Chỉ mục nhiều cột</h3>
+      <p class="no-indent">Bạn đã thấy nhiều ví dụ về chỉ mục hợp thành (hay còn gọi là chỉ mục nhiều cột) trong chương này. Ngoài ra, bạn có thể tạo các chỉ mục chức năng sử dụng nhiều hơn một cột cơ sở. Đây là một ví dụ về chỉ mục nhiều cột:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx ON subscribers USING btree (type, upper(name) varchar_pattern_ops);</code></pre>
+      </figure>
+
+      <p>Trình lập kế hoạch PostgreSQL sử dụng một chiến lược gọi là quét chỉ mục bitmap mà tự động cố gắng kết hợp các chỉ mục trên đường đi, thường từ các chỉ mục cột đơn, để đạt được cùng một mục tiêu như một chỉ mục nhiều cột. Nếu bạn không thể dự đoán cách bạn sẽ truy vấn các trường hợp hợp thành trong tương lai, bạn có thể tốt hơn là tạo các chỉ mục cột đơn và để trình lập kế hoạch quyết định cách kết hợp chúng trong quá trình tìm kiếm.</p>
+
+      <p>Nếu bạn có một chỉ mục B-Tree hợp thành trên <code>type, upper(name) ..</code>, thì không cần thiết phải có một chỉ mục chỉ trên <code>type</code>, vì trình lập kế hoạch có thể vui vẻ sử dụng chỉ mục hợp thành cho các trường hợp mà bạn chỉ cần lọc theo <code>type</code>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Chỉ mục<span class="sep">|</span>117</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

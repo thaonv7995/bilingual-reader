@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 6: Listings 6.16–6.17 useSpecialRoute()</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--616cont .listing-callouts-right {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--617 .listing-callouts-right {
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-annotated--617 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + h4.subsection-title {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0212.html">← Prev</a>
+    <a href="page_0214.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">188</span>
+        <span class="rh-center">CHAPTER 6 <em>Service routing with Spring Cloud and Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--616cont" aria-label="Listing 6.16 (continued)">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>catch(HttpClientErrorException ex){
+  if (ex.getStatusCode()== HttpStatus.NOT_FOUND){
+    return null;
+  }
+  throw ex;
+}
+return restExchange.getBody();
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Listing 6.16 annotation callout">
+          <p class="listing-callout">If the routes services doesn&rsquo;t find a record (it will return a 404 HTTP Status Code), the method will return null.</p>
+        </div>
+      </div>
+
+      <p class="no-indent">Once you&rsquo;ve determined that there&rsquo;s a routing record present for the target service, you need to determine whether you should route the target service request to the alternative service location or to the default service location statically managed by the Zuul route maps. To make this determination, you call the useSpecialRoute() method. The following listing shows this method.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.17</strong><br>Determining whether to use the alternative service route</figcaption>
+        <div class="listing-annotated listing-annotated--617" aria-label="Listing 6.17 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>public boolean useSpecialRoute(AbTestingRoute testRoute){
+  Random random = new Random();
+
+  if (testRoute.getActive().equals("N"))
+    return false;
+
+  int value =
+      random.nextInt((10 - 1) + 1) + 1;
+
+  if (testRoute.getWeight()&lt;value)
+    return true;
+
+  return false;
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 6.17 right callouts">
+            <p class="listing-callout">Checks to see if the route is even active</p>
+            <p class="listing-callout">Determines whether you should use the alternative service route</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>This method does two things. First, the method checks the active field on the AbTestingRoute record returned from the SpecialRoutes service. If the record is set to &ldquo;N,&rdquo; useSpecialRoute() method shouldn&rsquo;t do anything because you don&rsquo;t want to do any routing at this moment. Second, the method generates a random number between 1 and 10. The method will then check to see if the weight of the return route is less than the randomly generated number. If the condition is true, the useSpecialRoute method returns true indicating you do want to use the route.</p>
+
+      <p>Once you&rsquo;ve determined that you do want to route the service request coming into the SpecialRoutesFilter, you&rsquo;re going to forward the request onto the target service.</p>
+
+      <h4 class="subsection-title">6.7.3 Forwarding the route</h4>
+
+      <p>The actual forwarding of the route to the downstream service is where the majority of the work occurs in the SpecialRoutesFilter. While Zuul does provide helper functions to make this task easier, the majority of the work still lies with the developer. The forwardToSpecialRoute() method does the forwarding work for you. The code in this method borrows heavily from the source code for the Spring Cloud</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Listing 2.2 @SpringBootApplication</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5mm;
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0072.html">← Trước</a>
+    <a href="page_0074.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">48</span>
+        <span class="rh-center">CHƯƠNG 2 <em>Xây dựng microservice với Spring Boot</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>Như bạn sẽ thấy ngay sau đây, Spring Boot dùng annotation để đơn giản hóa việc thiết lập và cấu hình dịch vụ. Điều này trở nên rõ ràng khi bạn xem lớp bootstrap trong listing sau. Lớp bootstrap này nằm trong file <code>src/main/java/com/thoughtmechanix/licenses/Application.java</code>.</p>
+
+      <div class="listing-annotated">
+        <figure class="listing">
+          <figcaption><strong>Listing 2.2</strong><br>Giới thiệu annotation @SpringBootApplication</figcaption>
+          <pre class="code-block"><code>package com.thoughtmechanix.licenses;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Chú thích listing 2.2">
+          <p class="listing-callout">@SpringBootApplication cho framework Spring Boot biết đây là lớp bootstrap của dự án</p>
+          <p class="listing-callout">Lệnh gọi để khởi động toàn bộ dịch vụ Spring Boot</p>
+        </div>
+      </div>
+
+      <p class="no-indent">Điều đầu tiên cần lưu ý trong đoạn code này là việc dùng annotation <code>@SpringBootApplication</code>. Spring Boot dùng annotation này để báo cho Spring container rằng lớp này là nguồn định nghĩa bean dùng trong Spring. Trong ứng dụng Spring Boot, bạn có thể định nghĩa Spring Bean bằng cách</p>
+
+      <ol class="manning-numbered">
+        <li>Gắn annotation <code>@Component</code>, <code>@Service</code> hoặc <code>@Repository</code> cho một lớp Java</li>
+        <li>Gắn annotation <code>@Configuration</code> cho một lớp, sau đó định nghĩa phương thức constructor cho mỗi Spring Bean bạn muốn tạo bằng annotation <code>@Bean</code>.</li>
+      </ol>
+
+      <p>Bên trong, annotation <code>@SpringBootApplication</code> đánh dấu lớp Application trong listing 2.2 là lớp cấu hình, rồi bắt đầu tự động quét tất cả các lớp trên Java class path để tìm các Spring Bean khác.</p>
+
+      <p>Điều thứ hai cần lưu ý là phương thức <code>main()</code> của lớp Application. Trong phương thức <code>main()</code>, lệnh gọi <code>SpringApplication.run(Application.class, args)</code> khởi động Spring container và trả về một đối tượng Spring ApplicationContext. (Bạn không làm gì với ApplicationContext, nên nó không được hiển thị trong code.)</p>
+
+      <p>Điều dễ nhớ nhất về annotation <code>@SpringBootApplication</code> và lớp Application tương ứng là đây là lớp bootstrap cho toàn bộ microservice. Logic khởi tạo cốt lõi của dịch vụ nên được đặt trong lớp này.</p>
+
+      <h4 class="subsection-title">2.3.3 Xây dựng cổng vào microservice: Spring Boot controller</h4>
+
+      <p>Giờ bạn đã hoàn tất script build và triển khai một lớp Spring Boot Bootstrap đơn giản, bạn có thể bắt đầu viết code đầu tiên thực sự làm việc gì đó. Code này sẽ là lớp Controller của bạn. Trong ứng dụng Spring Boot, một</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

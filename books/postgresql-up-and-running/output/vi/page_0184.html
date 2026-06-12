@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tinh chỉnh hiệu suất truy vấn — Giải thích theo bảng và pg_stat_statements</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 1mm auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 0.5mm;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0183.html">← Trước</a>
+    <a href="page_0185.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">184</span>
+      </header>
+
+      <p class="no-indent">thời gian độc quyền (thời gian tiêu tốn bởi bước cha) và thời gian bao gồm (thời gian của bước cha cộng với các bước con của nó).</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0184_fig_9_3.png" width="1246" height="380" alt="Hình 9-3. Kết quả giải thích theo bảng">
+        <figcaption>Hình 9-3. Kết quả giải thích theo bảng</figcaption>
+      </figure>
+
+      <p>Mặc dù bảng HTML trong <span class="accent-word">Hình 9-3</span> cung cấp thông tin tương tự như đầu ra văn bản thuần, nhưng mã màu và phân tách các con số giúp dễ dàng nhận thấy nơi mà các ước lượng của chúng ta không chính xác. Ví dụ, màu vàng, nâu và đỏ làm nổi bật các khu vực mà bạn nên tập trung.</p>
+
+      <p>Cột số hàng x là số hàng dự kiến, trong khi cột số hàng cho thấy số hàng thực tế. Điều này cho thấy rằng mặc dù bước cuối cùng của chúng tôi dự kiến 192 bản ghi, nhưng nó chỉ nhận được một bản, và quét bitmap đã trả về 203 kết quả dương giả bị bắt bởi việc kiểm tra lại. Các ước lượng hàng không chính xác thường xuất phát từ thống kê bảng đã lỗi thời. Luôn là một ý tưởng tốt để chạy phân tích trên các bảng trước một truy vấn dài để cập nhật thống kê.</p>
+
+      <h3 class="subsection-title">Thu thập thống kê về các câu lệnh</h3>
+
+      <p class="no-indent">Bước đầu tiên trong việc tối ưu hóa hiệu suất là xác định các truy vấn nào là nút thắt cổ chai. Một tiện ích mở rộng giám sát hữu ích để nắm bắt các truy vấn tốn kém nhất của bạn là <code>pg_stat_statements</code>. Tiện ích mở rộng này cung cấp các chỉ số về các truy vấn đang chạy: truy vấn nào được chạy thường xuyên nhất và mỗi truy vấn mất bao lâu. Nghiên cứu các chỉ số này sẽ giúp bạn xác định nơi bạn cần tập trung nỗ lực tối ưu hóa truy vấn của mình.</p>
+
+      <p><code>pg_stat_statements</code> được đóng gói với hầu hết các bản phân phối PostgreSQL nhưng phải được nạp trước khi khởi động để khởi động quá trình thu thập dữ liệu của nó:</p>
+
+      <ol class="numbered">
+        <li>Trong <code>postgresql.conf</code>, thay đổi <code>shared_preload_libraries = ''</code> thành <code>shared_preload_libraries = 'pg_stat_statements'</code>.</li>
+        <li>Trong phần tùy chọn tùy chỉnh của <code>postgresql.conf</code>, thêm các dòng:</li>
+      </ol>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">166<span class="sep">|</span>Chương 9: Tinh chỉnh hiệu suất truy vấn</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

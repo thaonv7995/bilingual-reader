@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Hash Join</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .doc-quote {
+      margin: 0 0 3mm 4.5mm;
+      padding: 3mm 4mm;
+      background: #dcdedf;
+      border: 0.35pt solid var(--book-rule);
+      text-indent: 0;
+    }
+
+    .prose-page .doc-quote p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+    }
+
+    .prose-page .doc-quote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Hash Join</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>Các nhà cung cấp JPA có thể tự do bỏ qua điều này:</p>
+
+      <blockquote class="doc-quote">
+        <p>Chiến lược LAZY là một gợi ý cho thời gian chạy của nhà cung cấp lưu trữ rằng dữ liệu nên được lấy một cách lười biếng khi nó được truy cập lần đầu. Việc triển khai được phép lấy dữ liệu một cách chủ động cho những dữ liệu mà gợi ý chiến lược LAZY đã được chỉ định.</p>
+        <p>&mdash;EJB 3.0 JPA, đoạn 9.1.18</p>
+      </blockquote>
+
+      <p>Hibernate 3.6 triển khai việc lấy thuộc tính lười biếng thông qua việc chèn mã bytecode tại thời điểm biên dịch. Việc chèn mã thêm mã vào các lớp đã biên dịch mà không lấy các thuộc tính <code>LAZY</code> cho đến khi được truy cập. Cách tiếp cận này hoàn toàn minh bạch với ứng dụng nhưng nó mở ra một chiều hướng mới của các vấn đề N+1: một <code><strong>select</strong></code> cho mỗi bản ghi <i>và thuộc tính</i>. Điều này đặc biệt nguy hiểm vì JPA không cung cấp điều khiển thời gian chạy để lấy dữ liệu một cách chủ động nếu cần.</p>
+
+      <p>Ngôn ngữ truy vấn gốc của Hibernate HQL giải quyết vấn đề với mệnh đề <code>FETCH ALL PROPERTIES</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>select s from Sales s <strong>FETCH ALL PROPERTIES</strong>
+ inner join fetch s.employee e <strong>FETCH ALL PROPERTIES</strong>
+ where s.saleDate &gt;:dt</code></pre>
+      </figure>
+
+      <p>Mệnh đề <code>FETCH ALL PROPERTIES</code> buộc Hibernate phải lấy dữ liệu của thực thể một cách chủ động&mdash;ngay cả khi sử dụng mã đã được chèn và chú thích <code>LAZY</code>.</p>
+
+      <p>Một tùy chọn khác để chỉ tải các cột được chọn là sử dụng các đối tượng truyền tải dữ liệu (DTOs) thay vì các thực thể. Phương pháp này hoạt động giống nhau trong HQL và JPQL, tức là bạn khởi tạo một đối tượng trong truy vấn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>select <strong>new SalesHeadDTO(s.saleDate , s.eurValue
+                       ,e.firstName, e.lastName)</strong>
+  from Sales s
+  join s.employee e
+ where s.saleDate &gt; :dt</code></pre>
+      </figure>
+
+      <p>Truy vấn chỉ chọn dữ liệu được yêu cầu và trả về một đối tượng <code>SalesHeadDTO</code>&mdash;một đối tượng Java đơn giản (POJO), không phải là một thực thể.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">105</p>
+    </article>
+  </main>
+</body>
+</html>

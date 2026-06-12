@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 4: The Join Operation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-label {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .chapter-title {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 20.7pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+    }
+
+    .prose-page .epigraph {
+      margin: 0 0 4mm 9mm;
+      padding: 0;
+      border: none;
+      font-style: italic;
+      text-indent: 0;
+    }
+
+    .prose-page .epigraph p {
+      margin: 0;
+      text-indent: 0;
+    }
+
+    .prose-page .epigraph-attribution {
+      margin-top: 1.5mm;
+      text-align: right;
+      font-style: normal;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">101</span>
+      </header>
+
+      <p class="chapter-label">Chương 4</p>
+      <h1 class="chapter-title">Phép Tổ Hợp</h1>
+
+      <blockquote class="epigraph">
+        <p>Một truy vấn SQL bước vào quán bar và thấy hai bảng.<br>
+        Anh ta tiến lại gần và hỏi &rsquo;Tôi có thể tham gia cùng bạn không?&rsquo;</p>
+        <p class="epigraph-attribution">&mdash;Nguồn: Không rõ</p>
+      </blockquote>
+
+      <p class="no-indent">Phép tổ hợp biến đổi dữ liệu từ một mô hình chuẩn hóa thành một dạng phi chuẩn hóa phù hợp với một mục đích xử lý cụ thể. Việc tổ hợp đặc biệt nhạy cảm với độ trễ tìm kiếm đĩa vì nó kết hợp các mảnh dữ liệu rải rác. Việc lập chỉ mục đúng lại là giải pháp tốt nhất để giảm thời gian phản hồi. Tuy nhiên, chỉ mục chính xác phụ thuộc vào việc sử dụng thuật toán tổ hợp nào trong ba thuật toán tổ hợp phổ biến.</p>
+
+      <p>Tuy nhiên, có một điều chung cho tất cả các thuật toán tổ hợp: chúng chỉ xử lý hai bảng tại một thời điểm. Một truy vấn SQL với nhiều bảng yêu cầu nhiều bước: đầu tiên xây dựng một tập kết quả trung gian bằng cách tổ hợp hai bảng, sau đó tổ hợp kết quả với bảng tiếp theo và cứ thế tiếp tục.</p>
+
+      <p>Mặc dù thứ tự tổ hợp không ảnh hưởng đến kết quả cuối cùng, nhưng nó vẫn ảnh hưởng đến hiệu suất. Do đó, bộ tối ưu hóa sẽ đánh giá tất cả các hoán vị thứ tự tổ hợp có thể và chọn ra cái tốt nhất. Điều đó có nghĩa là chỉ tối ưu hóa một câu lệnh phức tạp có thể trở thành một vấn đề về hiệu suất. Càng nhiều bảng cần tổ hợp, càng nhiều biến thể kế hoạch thực thi cần đánh giá&mdash;nói một cách toán học: <i>n</i>! (tăng trưởng giai thừa), mặc dù đây không phải là vấn đề khi sử dụng tham số ràng buộc.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Câu lệnh càng phức tạp thì việc sử dụng tham số ràng buộc càng quan trọng.</p>
+        <p>Không sử dụng tham số ràng buộc giống như biên dịch lại một chương trình mỗi lần.</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">91</p>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Thiết lập dịch vụ xác thực OAuth2 và Listing 7.1</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--71 .listing-callouts-right {
+      padding-top: 11.5mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets + h4.subsection-title,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0220.html">← Trước</a>
+    <a href="page_0222.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">196</span>
+        <span class="rh-center">CHƯƠNG 7 <em>Bảo mật microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ul class="manning-bullets" aria-label="Mục tiêu chương 7 (tiếp theo)">
+        <li>Dùng OAuth2 password grant để bảo vệ các dịch vụ EagleEye của bạn. Bạn sẽ không xây dựng UI cho EagleEye, thay vào đó bạn sẽ mô phỏng người dùng đăng nhập để dùng POSTMAN xác thực với dịch vụ OAuth2 EagleEye của bạn.</li>
+        <li>Bảo vệ licensing service và organization service để chúng chỉ có thể được gọi bởi người dùng đã xác thực.</li>
+      </ul>
+
+      <h4 class="subsection-title">7.2.1 Thiết lập dịch vụ xác thực OAuth2 EagleEye</h4>
+
+      <p class="no-indent">Giống như tất cả ví dụ trong các chương của cuốn sách này, dịch vụ xác thực OAuth2 của bạn sẽ là một dịch vụ Spring Boot khác. Dịch vụ xác thực sẽ xác thực thông tin đăng nhập của người dùng và cấp một token. Mỗi khi người dùng cố truy cập một dịch vụ được bảo vệ bởi dịch vụ xác thực, dịch vụ xác thực sẽ xác minh rằng token OAuth2 do chính nó cấp và token chưa hết hạn. Dịch vụ xác thực sẽ tương đương với dịch vụ xác thực trong hình 7.1.</p>
+
+      <p class="block-indent">Để bắt đầu, bạn sẽ thiết lập hai thứ:</p>
+
+      <ol class="manning-numbered" aria-label="Các bước thiết lập dịch vụ xác thực OAuth2">
+        <li>Các dependency build Maven phù hợp cần thiết cho lớp bootstrap của bạn</li>
+        <li>Một lớp bootstrap đóng vai trò điểm vào cho dịch vụ</li>
+      </ol>
+
+      <p>Bạn có thể tìm tất cả ví dụ mã cho dịch vụ xác thực trong thư mục <code>authentication-service</code>. Để thiết lập máy chủ xác thực OAuth2, bạn cần các dependency Spring Cloud sau trong tệp <code>authentication-service/pom.xml</code>:</p>
+
+      <figure class="code-snippet" aria-label="Các dependency Maven cho authentication-service">
+        <pre class="code-block"><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-cloud-security&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.security.oauth&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-security-oauth2&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <p class="no-indent">Dependency đầu tiên, <code>spring-cloud-security</code>, đưa vào các thư viện bảo mật Spring và Spring Cloud tổng quát. Dependency thứ hai, <code>spring-security-oauth2</code>, đưa vào các thư viện Spring OAuth2.</p>
+
+      <p>Sau khi các dependency Maven đã được định nghĩa, bạn có thể làm việc với lớp bootstrap. Lớp này nằm trong lớp <code>authentication-service/src/main/java/com/thoughtmechanix/authentication/Application.java</code>. Listing sau đây trình bày mã cho lớp <code>Application.java</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.1</strong><br>Lớp bootstrap <code>authentication-service</code></figcaption>
+        <div class="listing-annotated listing-annotated--71" aria-label="Mã có chú thích Listing 7.1">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>//Imports removed for conciseness
+
+@SpringBootApplication
+@RestController
+@EnableResourceServer
+@EnableAuthorizationServer
+public class Application {</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích bên phải Listing 7.1">
+            <p class="listing-callout">Dùng để báo cho Spring Cloud biết dịch vụ này sẽ đóng vai trò là dịch vụ OAuth2</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

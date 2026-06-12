@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 2: @RestController and JSON</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .code-annotated {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .code-annotated figure.code-snippet {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page .code-annotated figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .code-callouts-row {
+      display: grid;
+      grid-template-columns: minmax(0, 48%) minmax(0, 52%);
+      gap: 0 2mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .topic-box {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .topic-box h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .topic-box p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .topic-box p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0074.html">← Prev</a>
+    <a href="page_0076.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">50</span>
+        <span class="rh-center">CHAPTER 2 <em>Building microservices with Spring Boot</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="code-annotated">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>@RestController
+@RequestMapping(value="/v1/organizations/{organizationId}/licenses")
+public class LicenseServiceController {
+  //Body of the class removed for conciseness
+}</code></pre>
+        </figure>
+        <div class="code-callouts-row" aria-label="Code annotation callouts">
+          <p class="listing-callout"><code>@RestController</code> tells Spring Boot this is a REST-based services and will automatically serialize/deserialize service request/response to JSON.</p>
+          <p class="listing-callout">Exposes all the HTTP endpoints in this class with a prefix of <code>/v1/organizations/{organizationId}/licenses</code></p>
+        </div>
+      </div>
+
+      <p class="no-indent">We&rsquo;ll begin our exploration by looking at the <code>@RestController</code> annotation. The <code>@RestController</code> is a class-level Java annotation and tells the Spring Container that this Java class is going to be used for a REST-based service. This annotation automatically handles the serialization of data passed into the services as JSON or XML (by default the <code>@RestController</code> class will serialize returned data into JSON). Unlike the traditional Spring <code>@Controller</code> annotation, the <code>@RestController</code> annotation doesn&rsquo;t require you as the developer to return a <code>ResponseBody</code> class from your controller class. This is all handled by the presence of the <code>@RestController</code> annotation, which includes the <code>@ResponseBody</code> annotation.</p>
+
+      <aside class="topic-box" aria-label="Why JSON for microservices?">
+        <h3>Why JSON for microservices?</h3>
+        <p>Multiple protocols can be used to send data back and forth between HTTP-based microservices. JSON has emerged as the de facto standard for several reasons.</p>
+        <p>First, compared to other protocols such as the XML-based SOAP (Simple Object Access Protocol), it&rsquo;s extremely lightweight in that you can express your data without having much textual overhead.</p>
+        <p>Second, it&rsquo;s easily read and consumed by a human being. This is an underrated quality for choosing a serialization protocol. When a problem arises, it&rsquo;s critical for developers to look at a chunk of JSON and quickly, visually process what&rsquo;s in it. The simplicity of the protocol makes this incredibly easy to do.</p>
+        <p>Third, JSON is the default serialization protocol used in JavaScript. Since the dramatic rise of JavaScript as a programming language and the equally dramatic rise of Single Page Internet Applications (SPIA) that rely heavily on JavaScript, JSON has become a natural fit for building REST-based applications because it&rsquo;s what the front-end web clients use to call services.</p>
+        <p>Other mechanisms and protocols are more efficient than JSON for communicating between services. The Apache Thrift (<a href="http://thrift.apache.org">http://thrift.apache.org</a>) framework allows you to build multi-language services that can communicate with one another using a binary protocol. The Apache Avro protocol (<a href="http://avro.apache.org">http://avro.apache.org</a>) is a data serialization protocol that converts data back and forth to a binary format between client and server calls.</p>
+        <p>If you need to minimize the size of the data you&rsquo;re sending across the wire, I recommend you look at these protocols. But it has been my experience that using straight-up JSON in your microservices works effectively and doesn&rsquo;t interpose another layer of communication to debug between your service consumers and service clients.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types — Custom Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0122.html">← Prev</a>
+    <a href="page_0124.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">123</span>
+      </header>
+
+      <p class="no-indent">or an equivalent:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT circuit_id, (ac_volt).r, (ac_volt).i FROM circuits;</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0123_icon_tip.png" width="50" height="48" alt="Tip">
+        </figure>
+        <p class="callout-text">Puzzled by the parentheses surrounding <code>ac_volt</code>? If you leave them
+        out, PostgreSQL will raise the error <code>missing FROM-clause entry
+        for table &ldquo;ac_volt&rdquo;</code>, because it assumes <code>ac_volt</code> without paren‐
+        theses refers to a table.</p>
+      </div>
+
+      <h3 class="section-title">Building Operators and Functions for Custom Types</h3>
+      <p class="no-indent">After you build a custom type such as a complex number, naturally you&rsquo;ll want to create
+      functions and operators for it. We&rsquo;ll demonstrate building a <code>+</code> operator for the <code>com
+      plex_number</code> we created. For more details about building functions, see <span class="accent-word">Chapter 8</span>. As
+      stated earlier, an operator is a symbol alias for a function that takes one or two arguments.
+      You can find more details about what symbols and set of symbols are allowed in <span class="accent-word">CREATE
+      OPERATOR</span>.</p>
+
+      <p>In addition to being an alias, an operator contains optimization information that can
+      be used by the query optimizer to decide how indexes should be used, how best to
+      navigate the data, and which operator expressions are equivalent. More details about
+      these optimizations and how each can help the optimizer are in <span class="accent-word">Operator Optimization</span>.</p>
+
+      <p>The first step to creating an operator is to create a function, as shown in <span class="accent-word">Example 5-34</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-34.</strong> Add function for complex number</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION add(complex_number, complex_number) RETURNS complex_num
+ber AS
+$$
+ SELECT ( (COALESCE(($1).r,0) + COALESCE(($2).r,0)),
+    (COALESCE(($1).i,0) + COALESCE(($2).i,0)) )::complex_number;
+$$
+language sql;</code></pre>
+      </figure>
+
+      <p>The next step is to create a symbolic operator to wrap the function, as in <span class="accent-word">Example 5-35</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-35.</strong> + operator for complex number</figcaption>
+        <pre class="code-block"><code>CREATE OPERATOR +(
+  PROCEDURE = add,
+  LEFTARG = complex_number,
+  RIGHTARG = complex_number,
+  COMMUTATOR = +);</code></pre>
+      </figure>
+
+      <p>We can then test our new <code>+</code> operator:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT (1,2)::complex_number + (3,-10)::complex_number;</code></pre>
+      </figure>
+
+      <p>which outputs <code>(4,-8)</code>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Custom and Composite Data Types<span class="sep">|</span>105</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

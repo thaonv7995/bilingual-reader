@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 10: Biến môi trường build</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.subsequent-point {
+      margin-left: 4mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-checks {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-checks > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-checks > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-checks > li::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-checks code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ul.manning-checks + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + .sidebar-note--topic {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0343.html">← Trước</a>
+    <a href="page_0345.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Cho phép dịch vụ của bạn xây dựng trong Travis CI</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">319</span>
+      </header>
+
+      <ul class="manning-checks" aria-label="Biến môi trường build">
+        <li><code>BUILD_NAME</code></li>
+        <li><code>CONTAINER_IP</code></li>
+        <li><code>PLATFORM_TEST_NAME</code></li>
+      </ul>
+
+      <p class="no-indent">Các giá trị thực tế được đặt trong các biến môi trường này là</p>
+
+      <figure class="code-snippet" aria-label="Các lệnh export biến môi trường build">
+        <pre class="code-block"><code>- export BUILD_NAME=chapter10-$TRAVIS_BRANCH-
+  ➥ $(date -u "+%Y%m%d%H%M%S")-$TRAVIS_BUILD_NUMBER
+- export CONTAINER_IP=52.53.169.60
+- export PLATFORM_TEST_NAME="chapter10-platform-tests"</code></pre>
+      </figure>
+
+      <p class="no-indent">Biến môi trường đầu tiên, <code>BUILD_NAME</code>, tạo ra một tên build duy nhất chứa tên của build, tiếp theo là ngày và giờ (chính xác đến trường giây) rồi đến số build trong Travis. <code>BUILD_NAME</code> này sẽ được dùng để gắn thẻ mã nguồn của bạn trên GitHub và image Docker khi nó được đẩy lên kho lưu trữ Docker hub.</p>
+
+      <p class="subsequent-point">Biến môi trường thứ hai, <code>CONTAINER_IP</code>, chứa địa chỉ IP của máy ảo Amazon ECS mà các container Docker của bạn sẽ chạy trên đó. <code>CONTAINER_IP</code> này sẽ được truyền sau đó cho một job Travis CI khác sẽ thực thi các kiểm thử nền tảng của bạn.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Tôi không gán địa chỉ IP tĩnh cho máy chủ Amazon ECS được khởi tạo. Nếu tôi dỡ bỏ hoàn toàn container, tôi sẽ được cấp một IP mới. Trong môi trường sản xuất thực tế, các máy chủ trong cụm ECS của bạn có lẽ sẽ được gán IP tĩnh (không thay đổi), và cụm sẽ có Amazon Enterprise Load Balancer (ELB) cùng tên DNS Amazon Route 53 để địa chỉ IP thực tế của máy chủ ECS trở nên trong suốt đối với các dịch vụ. Tuy nhiên, thiết lập nhiều hạ tầng như vậy nằm ngoài phạm vi ví dụ tôi đang cố gắng minh họa trong chương này.</p>
+      </aside>
+
+      <p>Biến môi trường thứ ba, <code>PLATFORM_TEST_NAME</code>, chứa tên của job build đang được thực thi. Chúng ta sẽ khám phá cách sử dụng của nó ở phần sau trong chương.</p>
+
+      <aside class="sidebar-note sidebar-note--topic" aria-labelledby="auditing-heading">
+        <h3 id="auditing-heading">Về kiểm toán và tính truy vết</h3>
+        <p>Một yêu cầu phổ biến ở nhiều công ty dịch vụ tài chính và y tế là họ phải chứng minh tính truy vết của phần mềm được triển khai trong production, quay ngược lại qua tất cả các môi trường thấp hơn, về job build đã build phần mềm, rồi về thời điểm mã được check in vào kho mã nguồn. Mẫu máy chủ bất biến thực sự nổi bật trong việc giúp các tổ chức đáp ứng yêu cầu này. Như bạn đã thấy trong ví dụ build của chúng ta, bạn đã gắn thẻ kho mã nguồn và image container sẽ được triển khai bằng cùng một tên build. Tên build đó là duy nhất và gắn với số build Travis. Vì bạn chỉ promote image container qua từng môi trường và mỗi image container được dán nhãn bằng tên build, bạn đã thiết lập tính truy vết của image container đó về mã nguồn liên quan. Vì các container không bao giờ bị thay đổi sau khi được gắn thẻ, bạn có một lập trường kiểm toán vững chắc để chứng minh rằng mã được triển khai khớp với</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

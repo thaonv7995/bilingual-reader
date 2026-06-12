@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: psql</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .chapter-header {
+      margin: 0 0 4mm;
+      text-align: right;
+      font-family: var(--font-ui);
+    }
+    .prose-page.chapter-page .chapter-number {
+      margin: 0;
+      font-size: 16.8pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-title {
+      margin: 1mm 0 0;
+      font-size: 25.2pt;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-top-rule {
+      margin: 0 0 12mm;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.config-name {
+      margin: 2.5mm 0 0;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.config-name + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0062.html">← Trước</a>
+    <a href="page_0064.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="chapter-header">
+        <p class="chapter-number no-indent">CHƯƠNG 3</p>
+        <h1 class="chapter-title no-indent">psql</h1>
+      </header>
+      <hr class="chapter-top-rule" aria-hidden="true">
+
+      <p class="no-indent">psql là tiện ích dòng lệnh bắt buộc đi kèm với PostgreSQL. Ngoài việc sử dụng phổ biến nhất là chạy các truy vấn, bạn có thể sử dụng psql như một công cụ kịch bản tự động; như một công cụ để nhập hoặc xuất dữ liệu, khôi phục bảng và quản trị cơ sở dữ liệu; và thậm chí như một công cụ báo cáo tối giản. Giống như các công cụ dòng lệnh khác, bạn phải quen thuộc với vô số tùy chọn. Nếu bạn chỉ có quyền truy cập vào dòng lệnh của máy chủ mà không có GUI, psql gần như là lựa chọn duy nhất của bạn để truy vấn và quản lý PostgreSQL. Nếu bạn thuộc vào loại này, chúng tôi đề nghị bạn in ra bản sao của trợ giúp psql từ <span class="accent-word">“Các lệnh tương tác psql” trên trang 199</span> và treo nó ngay trên bàn làm việc của bạn.</p>
+
+      <h3 class="section-title">Biến Môi Trường</h3>
+      <p>Như trong các công cụ dòng lệnh khác đi kèm với PostgreSQL, bạn có thể bỏ qua việc chỉ định rõ ràng máy chủ, cổng và người dùng của bạn bằng cách thiết lập các biến môi trường <code>PGHOST</code>, <code>PGPORT</code>, và <code>PGUSER</code> như đã mô tả trong <span class="accent-word">Biến Môi Trường</span>. Bạn cũng có thể thiết lập mật khẩu của mình trong <code>PGPASSWORD</code> hoặc sử dụng một tệp mật khẩu như đã mô tả trong <span class="accent-word">Tệp Mật Khẩu</span>. psql kể từ phiên bản 9.2 chấp nhận hai biến môi trường mới:</p>
+
+      <p class="config-name no-indent">PSQL_HISTORY</p>
+      <p>Thiết lập tên của tệp lịch sử psql liệt kê tất cả các lệnh đã thực thi trong quá khứ gần đây. Mặc định là <code>~/.psql_history</code>.</p>
+
+      <p class="config-name no-indent">PSQLRC</p>
+      <p>Thiết lập vị trí và tên của tệp cấu hình.</p>
+
+      <p>Nếu bạn bỏ qua các tham số mà không thiết lập các biến môi trường, psql sẽ sử dụng các giá trị mặc định tiêu chuẩn. Trong các ví dụ trong chương này, chúng tôi sẽ giả định rằng bạn đang sử dụng các giá trị mặc định hoặc đã thiết lập các biến này. Nếu bạn cũng đang sử dụng pgAdmin, bạn có thể nhảy ngay vào psql bằng giao diện plug-in (xem <span class="accent-word">“Truy cập psql từ pgAdmin” trên trang 61</span>). A</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">45</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

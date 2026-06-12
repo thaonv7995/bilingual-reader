@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 4: Eureka REST API và Hình 4.5</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .topic-box {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .topic-box h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .topic-box p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .topic-box p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .footnotes {
+      margin: 0 0 2.5mm;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+    .prose-page.chapter-page .footnotes p {
+      text-indent: 0;
+      margin: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0133.html">← Trước</a>
+    <a href="page_0135.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">109</span>
+        <span class="rh-center">Đăng ký dịch vụ với Spring Eureka</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Thuộc tính cuối cùng, thuộc tính <code>eureka.serviceUrl.defaultZone</code>, chứa danh sách các dịch vụ Eureka phân tách bằng dấu phẩy mà client sẽ dùng để phân giải vị trí dịch vụ. Với mục đích của chúng ta, bạn chỉ cần một dịch vụ Eureka.</p>
+
+      <aside class="topic-box" aria-label="Tính khả dụng cao của Eureka">
+        <h3>Tính khả dụng cao của Eureka</h3>
+        <p>Chỉ thiết lập nhiều dịch vụ URL là chưa đủ cho tính khả dụng cao. Thuộc tính <code>eureka.serviceUrl.defaultZone</code> chỉ cung cấp danh sách các dịch vụ Eureka để client giao tiếp. Bạn cũng cần thiết lập các dịch vụ Eureka sao cho chúng sao chép nội dung registry của nhau.</p>
+        <p>Một nhóm registry Eureka giao tiếp với nhau bằng mô hình peer-to-peer, trong đó mỗi dịch vụ Eureka phải được cấu hình để biết về các node khác trong cluster. Thiết lập cluster Eureka nằm ngoài phạm vi cuốn sách này. Nếu bạn muốn thiết lập cluster Eureka, hãy truy cập website của dự án Spring Cloud để biết thêm thông tin.<sup>a</sup></p>
+      </aside>
+
+      <div class="footnotes">
+        <p><sup>a</sup> <a href="http://projects.spring.io/spring-cloud/spring-cloud.html">http://projects.spring.io/spring-cloud/spring-cloud.html</a></p>
+      </div>
+
+      <p>Tại thời điểm này, bạn sẽ có một dịch vụ duy nhất được đăng ký với dịch vụ Eureka của bạn.</p>
+
+      <p>Bạn có thể dùng REST API của Eureka để xem nội dung registry. Để xem tất cả các instance của một dịch vụ, hãy gọi endpoint GET sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>http://&lt;eureka service&gt;:8761/eureka/apps/&lt;APPID&gt;</code></pre>
+      </figure>
+
+      <p>Ví dụ, để xem organization service trong registry, bạn có thể gọi <code>http://localhost:8761/eureka/apps/organizationservice</code>.</p>
+
+      <figure class="diagram" aria-label="Hình 4.5">
+        <img src="../assets/images/page_0134_fig_4_5.png" width="1313" height="548" alt="Hình 4.5 — Gọi Eureka REST API để xem instance organization service đã đăng ký trong Eureka">
+        <figcaption><strong>Hình 4.5</strong><br>Gọi Eureka REST API để xem organization service sẽ hiển thị địa chỉ IP của các instance dịch vụ đã đăng ký trong Eureka, cùng với trạng thái dịch vụ.</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

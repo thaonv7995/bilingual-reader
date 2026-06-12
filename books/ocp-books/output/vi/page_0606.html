@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0605.html">← Trước</a>
+    <a href="page_0607.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">606</span>
+      </header>
+
+      <p class="no-indent">dành cho nhà phát triển của một lớp <code>Collection</code>&nbsp;để họ có thể tùy chỉnh việc chia tách các nội dung của collection.</p>
+
+      <p>Bạn sẽ thấy cả hai phương thức này được sử dụng trong kỳ thi. Không có sự khác biệt nào giữa hai phương thức xét về kết quả cuối cùng.</p>
+
+      <h3 class="section-title">Số lượng Thread (Luồng) được sử dụng bởi một parallel stream<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Stream framework sử dụng số lượng Thread (Luồng) tối ưu dựa trên số lượng nhân xử lý có sẵn trên máy. Số lượng này không thể tùy chỉnh bằng Stream API nhưng có thể được cấu hình bằng một tham số dòng lệnh khi khởi động JVM. Vì điều này nằm ngoài phạm vi kỳ thi, tôi sẽ dừng ở đó.</p>
+
+      <h3 class="section-title">Chia tách các phần tử stream giữa các Thread (Luồng)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Stream framework sử dụng <code>Spliterator</code>&nbsp;được cung cấp bởi nguồn stream bên dưới để chia tách các phần tử thành nhiều nhóm nếu thấy phù hợp. Nhìn chung, bạn không nên đưa ra bất kỳ giả định nào về cách các phần tử được chia tách.</p>
+
+      <h3 class="section-title">Thứ tự các phần tử trong một parallel stream<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Đối với một stream có thứ tự (ordered stream), cả việc thực thi tuần tự và song song của một stream pipeline đều được đảm bảo sẽ tạo ra cùng một kết quả cuối cùng. Tuy nhiên, không có gì đảm bảo về thứ tự thực thi của các hoạt động stream riêng lẻ trong pipeline. Điều này có nghĩa là nhiều Thread (Luồng) có thể thực thi một hoạt động stream cụ thể cho một phần tử stream cụ thể theo bất kỳ thứ tự nào, miễn là nó tạo ra cùng một kết quả cuối cùng. Parallel stream pipeline sẽ kết hợp các kết quả thực thi của nó sao cho kết quả cuối cùng sẽ giống với kết quả được tạo ra bởi một stream tuần tự. Hãy xem xét đoạn mã sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   Stream&lt;Integer&gt; strm = Stream.of(1, 2, 3, 4, 5).parallel();
+   strm
+     .peek(i-&gt;{ System.out.println("Peeking before map "+i);} )
+     .map(i-&gt;{ System.out.println("Mapping "+i); return i+1; } )</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

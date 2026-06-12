@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Greater, Less and BETWEEN</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">50</span>
+      </header>
+      <p class="chapter-running-head">Chương 2: Câu lệnh Where</p>
+
+      <p class="no-indent">Câu hỏi này dễ trả lời nếu câu lệnh SQL đề cập rõ ràng đến các điều kiện bắt đầu và kết thúc:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, date_of_birth
+  FROM employees
+ WHERE date_of_birth &gt;= TO_DATE(?, 'YYYY-MM-DD')
+   AND date_of_birth &lt;= TO_DATE(?, 'YYYY-MM-DD')</code></pre>
+      </figure>
+
+      <p>Một chỉ mục trên <code>DATE_OF_BIRTH</code> chỉ được quét trong khoảng đã chỉ định. Việc quét bắt đầu từ ngày đầu tiên và kết thúc ở ngày thứ hai. Chúng ta không thể thu hẹp khoảng quét chỉ mục thêm nữa.</p>
+
+      <p>Các điều kiện bắt đầu và kết thúc ít rõ ràng hơn nếu một cột thứ hai được liên quan:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, date_of_birth
+  FROM employees
+ WHERE date_of_birth &gt;= TO_DATE(?, 'YYYY-MM-DD')
+   AND date_of_birth &lt;= TO_DATE(?, 'YYYY-MM-DD')
+   AND subsidiary_id  = ?</code></pre>
+      </figure>
+
+      <p>Tất nhiên, một chỉ mục lý tưởng phải bao phủ cả hai cột, nhưng câu hỏi là theo thứ tự nào?</p>
+
+      <p>Các hình sau đây cho thấy ảnh hưởng của thứ tự cột đến khoảng quét chỉ mục. Để minh họa, chúng ta tìm tất cả nhân viên của công ty con 27, những người sinh ra giữa ngày 1 tháng 1 và ngày 9 tháng 1 năm 1971.</p>
+
+      <p>Hình&nbsp;2.2 minh họa một chi tiết của chỉ mục trên <code>DATE_OF_BIRTH</code> và <code>SUBSIDIARY_ID</code>&mdash;theo thứ tự đó. Cơ sở dữ liệu sẽ bắt đầu theo dõi chuỗi nút lá ở đâu, hoặc nói cách khác: việc duyệt cây sẽ kết thúc ở đâu?</p>
+
+      <p>Chỉ mục được sắp xếp theo ngày sinh trước. Chỉ khi hai nhân viên sinh ra vào cùng một ngày thì <code>SUBSIDIARY_ID</code> mới được sử dụng để sắp xếp các bản ghi này. Tuy nhiên, truy vấn bao phủ một khoảng thời gian. Do đó, việc sắp xếp <code>SUBSIDIARY_ID</code> là vô dụng trong quá trình duyệt cây. Điều này trở nên rõ ràng nếu bạn nhận ra rằng không có mục nào cho công ty con 27 trong các nút nhánh&mdash;mặc dù có một mục trong các nút lá. Bộ lọc trên <code>DATE_OF_BIRTH</code> do đó là điều kiện duy nhất giới hạn khoảng quét chỉ mục. Nó bắt đầu từ mục đầu tiên phù hợp với khoảng thời gian và kết thúc ở mục cuối cùng&mdash;tất cả năm nút lá được hiển thị trong Hình&nbsp;2.2.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">40</p>
+    </article>
+  </main>
+</body>
+</html>

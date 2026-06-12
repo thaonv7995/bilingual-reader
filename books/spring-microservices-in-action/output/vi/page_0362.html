@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Phụ lục B: B.1 Password grant</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated ol.manning-numbered {
+      grid-column: 1;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets,
+    .prose-page.chapter-page ul.manning-bullets + p,
+    .prose-page.chapter-page p + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page p + .listing-annotated {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0361.html">← Prev</a>
+    <a href="page_0363.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">337</span>
+        <span class="rh-center"></span>
+        <span class="rh-right"><em>Password grant</em></span>
+      </header>
+
+      <p>May mắn thay, OAuth2 là một framework ủy quyền linh hoạt cung cấp nhiều cơ chế để ứng dụng xác thực và phân quyền người dùng mà không buộc họ chia sẻ thông tin đăng nhập. Không may thay, đó cũng là một trong những lý do khiến OAuth2 được coi là phức tạp. Các cơ chế xác thực này được gọi là grant xác thực. OAuth2 có bốn dạng grant xác thực mà ứng dụng client có thể dùng để xác thực người dùng, nhận token truy cập, rồi xác thực token đó. Các grant này là</p>
+
+      <ul class="manning-bullets" aria-label="Các loại grant xác thực OAuth2">
+        <li>Password</li>
+        <li>Client credential</li>
+        <li>Authorization code</li>
+        <li>Implicit</li>
+      </ul>
+
+      <p>Trong các phần tiếp theo, tôi sẽ đi qua các hoạt động diễn ra trong quá trình thực thi từng luồng grant OAuth2 này. Tôi cũng sẽ nói về khi nào nên dùng loại grant này thay vì loại khác.</p>
+
+      <h3 class="section-title">B.1 Password grant</h3>
+
+      <p class="no-indent">Grant password OAuth2 có lẽ là loại grant dễ hiểu nhất. Loại grant này được dùng khi cả ứng dụng và các dịch vụ đều tin tưởng lẫn nhau một cách rõ ràng. Ví dụ, ứng dụng web EagleEye và các dịch vụ web EagleEye (licensing và organization) đều thuộc sở hữu của ThoughtMechanix, nên có mối quan hệ tin cậy tự nhiên giữa chúng.</p>
+
+      <aside class="sidebar-note" aria-label="LƯU Ý">
+        <h3>LƯU Ý</h3>
+        <p>Để nói rõ, khi tôi đề cập đến &ldquo;mối quan hệ tin cậy tự nhiên&rdquo;, tôi có nghĩa là ứng dụng và các dịch vụ hoàn toàn thuộc sở hữu của cùng một tổ chức. Chúng được quản lý theo cùng chính sách và quy trình.</p>
+      </aside>
+
+      <p>Khi có mối quan hệ tin cậy tự nhiên, gần như không lo ngại việc lộ token truy cập OAuth2 cho ứng dụng gọi. Ví dụ, ứng dụng web EagleEye có thể dùng grant password OAuth2 để thu thập thông tin đăng nhập của người dùng và xác thực trực tiếp với dịch vụ OAuth2 EagleEye. Hình B.1 minh họa grant password đang hoạt động giữa EagleEye và các dịch vụ downstream.</p>
+
+      <p class="no-indent">Trong hình B.1, các hành động sau đang diễn ra:</p>
+
+      <div class="listing-annotated listing-annotated--B1step1" aria-label="Hình B.1 password grant bước 1">
+        <ol class="manning-numbered" aria-label="Các hành động trong hình B.1 password grant">
+          <li>Trước khi ứng dụng EagleEye có thể dùng một tài nguyên được bảo vệ, nó cần được xác định duy nhất trong dịch vụ OAuth2. Thông thường, chủ sở hữu ứng dụng đăng ký với dịch vụ ứng dụng OAuth2 và cung cấp tên duy nhất cho ứng dụng của họ. Dịch vụ OAuth2 sau đó cung cấp khóa bí mật cho ứng dụng đã đăng ký.</li>
+        </ol>
+        <div class="listing-callouts-right" aria-label="Chú thích bước 1 hình B.1">
+          <p class="listing-callout">Tên ứng dụng và khóa bí mật do dịch vụ OAuth2 cung cấp xác định duy nhất ứng dụng đang cố truy cập bất kỳ tài nguyên được bảo vệ nào.</p>
+        </div>
+      </div>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

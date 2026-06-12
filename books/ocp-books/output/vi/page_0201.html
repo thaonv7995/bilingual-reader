@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="6"] {
+      counter-reset: init-step 5;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0200.html">← Trước</a>
+    <a href="page_0202.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">201</span>
+      </header>
+
+      <ol class="numbered" start="6">
+        <li>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>}</code></pre>
+          </figure>
+          <p>Một phương thức có thể khai báo bất kỳ Exception (Ngoại lệ) nào trong mệnh đề throws của nó mà không phụ thuộc vào việc phương thức đó có thực sự throw Exception (Ngoại lệ) đó hay không. Đôi khi việc &ldquo;chuẩn bị cho tương lai&rdquo; (future-proof) cho một phương thức là hữu ích bằng cách khai báo <code>Exception</code> trong mệnh đề throws nếu bạn tin rằng triển khai của phương thức có thể thay đổi sau này. Bằng cách khai báo <code>Exception</code> trong mệnh đề throws, người dùng của phương thức sẽ không phải thay đổi mã nguồn của họ nếu sau này phương thức thực sự bắt đầu throw <code>Exception</code> hoặc bất kỳ lớp con (Subclass) nào của <code>Exception</code> sau này.</p>
+        </li>
+        <li>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>void process1() {
+try{
+if(someCondition) throw new Exception(); //will be caught by
+the catch block
+else return;
+}catch(Exception e){
+
+}
+}</code></pre>
+          </figure>
+          <p>Yêu cầu liệt kê một Exception (Ngoại lệ) trong mệnh đề throws chỉ áp dụng khi một Exception (Ngoại lệ) được throw ra ngoài phương thức cho bên gọi. Nếu mã nguồn bên trong một phương thức throw một Exception (Ngoại lệ) nhưng Exception (Ngoại lệ) đó được catch ngay trong chính phương thức đó, thì không cần phải khai báo nó trong mệnh đề throws của phương thức.</p>
+          <p>Hãy nhớ rằng một Exception (Ngoại lệ) chỉ có thể được catch bởi một khối catch chứ không phải bởi một khối finally. Do đó, mệnh đề throws là cần thiết trong phương thức sau:</p>
+          <figure class="code-snippet">
+            <pre class="code-block"><code>void process2() throws Exception{
+try{
+if(someCondition) throw new Exception();
+else return;
+}finally {
+System.out.println("in finally"); //will be executed</code></pre>
+          </figure>
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

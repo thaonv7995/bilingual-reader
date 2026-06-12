@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0190.html">← Trước</a>
+    <a href="page_0192.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">191</span>
+      </header>
+
+      <p class="no-indent">chỉ biết được sự xảy ra của tình huống dẫn đến một RuntimeException khi
+      chương trình được chạy, tức là trong thời gian chạy (run time). Nếu lập trình viên lường trước được sự xảy ra của
+      tình huống đó trong thời gian biên dịch (compile time), họ đã sửa mã nguồn, và trong trường hợp đó,
+      Exception (Ngoại lệ) đã không bị ném ra khi chạy chương trình. Vì lý do tương tự,
+      các Ngoại lệ runtime (Runtime Exception) thường không bị ném ra một cách tường minh bằng cách sử dụng câu lệnh <code>throw</code>&nbsp;. Thật vậy, tại sao
+      bạn lại viết mã nguồn để ném ra một Exception (Ngoại lệ) nếu bạn thậm chí không mong đợi tình huống đó xảy ra.</p>
+
+      <p>JVM tự ném ra các Ngoại lệ runtime (Runtime Exception) khi nó gặp phải một tình huống ngoài dự kiến. Ví
+      dụ, nếu bạn cố gắng truy cập một tham chiếu null, JVM sẽ ném ra một <code>NullPointerException</code>, hoặc
+      nếu bạn cố gắng truy cập một mảng vượt quá kích thước của nó, JVM sẽ ném ra một
+      <code>ArrayIndexOutOfBoundsException</code>. Có thể khôi phục từ các Ngoại lệ runtime (Runtime Exception) nhưng
+      lý tưởng nhất là, vì chúng biểu thị các lỗi (bug) trong mã nguồn, bạn không nên cố gắng bắt (catch) chúng và khôi phục
+      từ chúng. Một chương trình được viết tốt không nên khiến JVM ném ra các Ngoại lệ runtime (Runtime Exception).</p>
+
+      <p>Trường hợp của các <strong>Lỗi hệ thống (Error)</strong> cũng tương tự như các <strong>Ngoại lệ runtime (Runtime Exception)</strong>. Sự khác biệt là các Lỗi hệ thống (Error) được dành riêng
+      cho các tình huống mà hoạt động của chính JVM bị đe dọa. Ví dụ, một đoạn
+      mã nguồn viết kém có thể tiêu thụ nhiều bộ nhớ đến mức không còn bộ nhớ trống. Một khi điều đó xảy ra,
+      JVM có thể sẽ ném ra <code>OutOfMemoryError</code>. Tương tự như vậy, một đệ quy không tốt có thể gây ra
+      <code>StackOverflowError</code>&nbsp;mà từ đó không thể khôi phục được. Các Lỗi hệ thống (Error) biểu thị những vấn đề nghiêm trọng trong
+      sự tương tác giữa mã nguồn và JVM, và chỉ được ném ra bởi JVM. Không bao giờ là một ý
+      kiến hay nếu ném chúng ra một cách tường minh hoặc cố gắng khôi phục từ chúng bởi vì dù sao mã nguồn cũng có khả năng không
+      hoạt động như mong đợi một khi JVM bắt đầu ném ra các Lỗi hệ thống (Error).</p>
+
+      <p>Mặc dù kỳ thi không tập trung vào lý do phân loại Exception (Ngoại lệ) giữa
+      Ngoại lệ checked (Checked Exception) và Ngoại lệ unchecked (Unchecked Exception), nhưng đây thực sự là một chủ đề rất quan trọng cần hiểu đối với một
+      lập trình viên chuyên nghiệp. Bạn cũng nên so sánh cách xử lý Exception (Ngoại lệ) của Java với C#.</p>
+
+      <h3 class="section-title section-title--sub">Xác định Exception (Ngoại lệ) là checked hay unchecked<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Java tuân theo một quy ước trong việc đặt tên cho các lớp Exception (Ngoại lệ). Quy ước này đôi khi</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

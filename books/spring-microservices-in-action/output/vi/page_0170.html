@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Listing 5.8 UserContextFilter</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--58 .listing-callouts {
+      padding-top: 50mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0169.html">← Prev</a>
+    <a href="page_0171.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Ngữ cảnh thread và Hystrix</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">145</span>
+      </header>
+
+      <p class="no-indent">có một định danh duy nhất có thể được theo dõi qua nhiều lời gọi dịch vụ trong cùng một giao dịch.</p>
+
+      <p>Để giá trị này có sẵn ở bất kỳ đâu trong lời gọi dịch vụ của bạn, bạn có thể dùng lớp Spring Filter để chặn mọi lời gọi vào dịch vụ REST của bạn, lấy thông tin này từ HTTP request đến và lưu thông tin ngữ cảnh vào đối tượng <code>UserContext</code> tùy chỉnh. Sau đó, bất cứ khi nào mã của bạn cần truy cập giá trị này trong lời gọi dịch vụ REST, mã của bạn có thể lấy <code>UserContext</code> từ biến lưu trữ <code>ThreadLocal</code> và đọc giá trị. Listing sau đây cho thấy ví dụ Spring Filter mà bạn có thể dùng trong dịch vụ licensing của mình. Bạn có thể tìm mã tại <code>licensingservice/src/main/java/com/thoughtmechanix/licenses/utils/UserContextFilter.java</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.8</strong><br><code>UserContextFilter</code> phân tích HTTP header và lấy dữ liệu</figcaption>
+        <div class="listing-annotated listing-annotated--58" aria-label="Mã có chú thích của Listing 5.8">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.utils;
+//Some code removed for conciseness
+@Component
+public class UserContextFilter implements Filter {
+  private static final
+  ➥ Logger logger =
+  ➥ LoggerFactory.getLogger(UserContextFilter.class);
+ @Override
+ public void doFilter(
+ServletRequest servletRequest,
+➥ ServletResponse servletResponse,
+➥ FilterChain filterChain)
+     throws IOException, ServletException {
+     HttpServletRequest httpServletRequest =
+(HttpServletRequest) servletRequest;
+     UserContextHolder
+  .getContext()
+  .setCorrelationId(
+  ➥ httpServletRequest.getHeader(UserContext.CORRELATION_ID) );
+
+UserContextHolder
+  .getContext()
+  .setUserId(
+          httpServletRequest.getHeader(UserContext.USER_ID));
+    UserContextHolder
+       .getContext()
+  .setAuthToken(
+          httpServletRequest.getHeader(UserContext.AUTH_TOKEN));
+    UserContextHolder
+       .getContext()
+       .setOrgId(
+          httpServletRequest.getHeader(UserContext.ORG_ID));
+    filterChain.doFilter(httpServletRequest, servletResponse);
+  }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích annotation của Listing 5.8">
+            <p class="listing-callout">Lấy các giá trị được đặt trong HTTP header của lời gọi vào <code>UserContext</code>, được lưu trong <code>UserContextHolder</code></p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

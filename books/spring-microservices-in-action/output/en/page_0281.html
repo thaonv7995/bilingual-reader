@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 8: Listing 8.12 custom channels and Listing 8.13</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--812 .listing-callouts-right {
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-annotated--812 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0280.html">← Prev</a>
+    <a href="page_0282.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">256</span>
+        <span class="rh-center">CHAPTER 8 <em>Event-driven architecture with Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">data. The second line that was printed from the console shows that when you hit the licensing service endpoint a second time, the organization record is now cached.</p>
+
+      <h4 class="subsection-title">8.4.2 Defining custom channels</h4>
+
+      <p class="no-indent">Previously you built your messaging integration between the licensing and organization services to use the default output and input channels that come packaged with the Source and Sink interfaces in the Spring Cloud Stream project. However, if you want to define more than one channel for your application or you want to customize the names of your channels, you can define your own interface and expose as many input and output channels as your application needs.</p>
+
+      <p>To create a custom channel, call <code>inboundOrgChanges</code> in the licensing service. You can define the channel in the <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/events/CustomChannels.java</code> interface, as shown in the following listing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.12</strong><br>Defining a custom input channel for the licensing service</figcaption>
+        <div class="listing-annotated listing-annotated--812" aria-label="Listing 8.12 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.events;
+
+import org.springframework.cloud.stream.annotation.Input;
+import org.springframework.messaging.SubscribableChannel;
+
+public interface CustomChannels {
+    @Input("inboundOrgChanges")
+    SubscribableChannel orgs();
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 8.12 annotation callouts">
+            <p class="listing-callout">The <code>@Input</code> annotation is a method-level annotation that defines the name of the channel.</p>
+            <p class="listing-callout">Each channel exposed through the <code>@Input</code> annotation must return a <code>SubscribableChannel</code> class.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">The key takeaway from listing 8.12 is that for each custom input channel you want to expose, you mark a method that returns a <code>SubscribableChannel</code> class with the <code>@Input</code> annotation. If you want to define output channels for publishing messages, you&rsquo;d use the <code>@OutputChannel</code> above the method that will be called. In the case of an output channel, the defined method will return a <code>MessageChannel</code> class instead of the <code>SubscribableChannel</code> class used with the input channel:</p>
+
+      <figure class="code-snippet" aria-label="Output channel example">
+        <pre class="code-block"><code>@OutputChannel(&ldquo;outboundOrg&rdquo;)
+MessageChannel outboundOrg();</code></pre>
+      </figure>
+
+      <p>Now that you have a custom input channel defined, you need to modify two more things to use it in the licensing service. First, you need to modify the licensing service to map your custom input channel name to your Kafka topic. The following listing shows this.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.13</strong><br>Modifying the licensing service to use your custom input channel</figcaption>
+        <pre class="code-block"><code>spring:
+...
+  cloud:</code></pre>
+      </figure>
+
+      <p class="license-watermark no-indent">Licensed to Jianjun Shou &lt;seanshou@gmail.com&gt;</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

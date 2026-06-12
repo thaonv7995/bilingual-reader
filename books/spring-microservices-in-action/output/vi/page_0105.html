@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Listing 3.5 bootstrap.yml licensing service</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(1) {
+      margin-bottom: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(2) {
+      margin-bottom: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(3) {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0104.html">← Trước</a>
+    <a href="page_0106.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">80</span>
+        <span class="rh-center">CHƯƠNG 3 <em>Kiểm soát cấu hình với Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p>Để licensing service giao tiếp với dịch vụ Spring Cloud Config của bạn, bạn cần thêm tệp <code>licensing-service/src/main/resources/bootstrap.yml</code> và thiết lập ba thuộc tính: <code>spring.application.name</code>, <code>spring.profiles.active</code> và <code>spring.cloud.config.uri</code>.</p>
+
+      <p>Tệp <code>bootstrap.yml</code> của licensing service được trình bày trong listing sau.</p>
+
+      <div class="listing-annotated">
+        <figure class="listing">
+          <figcaption><strong>Listing 3.5</strong><br>Cấu hình <code>bootstrap.yml</code> của licensing service</figcaption>
+          <pre class="code-block"><code>spring:
+ application:
+    name: licensingservice
+  profiles:
+    active:
+      default
+  cloud:
+    config:
+      uri: http://localhost:8888</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Chú thích cho Listing 3.5">
+          <p class="listing-callout">Chỉ định tên licensing service để Spring Cloud Config client biết dịch vụ nào đang được tra cứu.</p>
+          <p class="listing-callout">Chỉ định profile mặc định mà dịch vụ nên chạy. Profile tương ứng với môi trường.</p>
+          <p class="listing-callout">Chỉ định vị trí máy chủ Spring Cloud Config.</p>
+        </div>
+      </div>
+
+      <aside class="sidebar-note" aria-label="Lưu ý">
+        <h3>LƯU Ý</h3>
+        <p>Các ứng dụng Spring Boot hỗ trợ hai cơ chế để định nghĩa thuộc tính: YAML (Yet Another Markup Language) và tên thuộc tính phân tách bằng dấu &ldquo;.&rdquo;. Chúng tôi chọn YAML (Yet Another Markup Language) làm cách để cấu hình ứng dụng của mình. Định dạng phân cấp của các giá trị thuộc tính YAML ánh xạ trực tiếp tới các tên <code>spring.application.name</code>, <code>spring.profiles.active</code> và <code>spring.cloud.config.uri</code>.</p>
+      </aside>
+
+      <p class="no-indent"><code>spring.application.name</code> là tên ứng dụng của bạn (ví dụ <code>licensingservice</code>) và phải ánh xạ trực tiếp tới tên thư mục trong máy chủ cấu hình Spring Cloud của bạn. Với licensing service, bạn cần một thư mục trên máy chủ cấu hình Spring Cloud tên là <code>licensingservice</code>.</p>
+
+      <p>Thuộc tính thứ hai, <code>spring.profiles.active</code>, dùng để báo cho Spring Boot biết ứng dụng nên chạy với profile nào. Profile là cơ chế để phân biệt dữ liệu cấu hình mà ứng dụng Spring Boot tiêu thụ. Với profile của licensing service, bạn sẽ hỗ trợ môi trường mà dịch vụ sẽ ánh xạ trực tiếp tới trong môi trường cấu hình cloud của bạn. Ví dụ, khi truyền <code>dev</code> làm profile, máy chủ Spring Cloud config sẽ dùng các thuộc tính <code>dev</code>. Nếu bạn không thiết lập profile, licensing service sẽ dùng profile mặc định.</p>
+
+      <p>Thuộc tính thứ ba và cuối cùng, <code>spring.cloud.config.uri</code>, là vị trí mà licensing service nên tìm endpoint máy chủ cấu hình Spring Cloud. Theo mặc định, licensing service sẽ tìm máy chủ cấu hình tại <code>http://localhost:8888</code>. Ở phần sau của chương, bạn sẽ thấy cách ghi đè các thuộc tính khác nhau được định nghĩa trong các tệp <code>boostrap.yml</code> và <code>application.yml</code> khi ứng dụng khởi động. Điều này cho phép bạn chỉ cho licensing microservice biết nó nên chạy trong môi trường nào.</p>
+
+      <p>Giờ đây, nếu bạn khởi chạy dịch vụ cấu hình Spring Cloud, với cơ sở dữ liệu Postgres tương ứng đang chạy trên máy cục bộ của bạn, bạn có thể khởi chạy licensing</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

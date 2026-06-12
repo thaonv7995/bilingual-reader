@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0413.html">← Trước</a>
+    <a href="page_0415.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">414</span>
+      </header>
+
+      <p class="no-indent">từ lâu và bạn không cần một tài liệu hướng dẫn ở cấp độ cơ bản về cách tổ chức các tệp và
+      thư mục (còn gọi là directory). Mặc dù vậy, hãy để tôi nói về một vài thuật ngữ sẽ được sử dụng rộng rãi
+      khi tìm hiểu về Path API ở phần tiếp theo.</p>
+
+      <h3 class="section-title section-title--minor">Tệp, Thư mục (Directory) và Thư mục (Folder)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Khi bạn nhìn vào hệ thống tệp của mình thông qua trình khám phá tệp, bạn sẽ thấy các thư mục (folder) và các tệp. Thư mục
+      chứa các tệp và/hoặc các thư mục khác, trong khi các tệp chứa dữ liệu. Hãy lưu ý rằng một thư mục có thể chứa
+      nhiều tệp và thư mục nhưng một tệp hoặc một thư mục chỉ có thể được chứa trong đúng một thư mục duy nhất. Đây là
+      điều tạo nên một hệ thống tệp phân cấp. Nếu bạn sử dụng dòng lệnh (hoặc shell), bạn có thể
+      quan sát cấu trúc phân cấp tương tự của các tệp và thư mục (directory) bằng cách sử dụng lệnh <code>dir</code>
+      trên Windows (or <code>ls</code>&nbsp;trên Linux). Ở đỉnh của một hệ thống tệp phân cấp là gốc (root) của
+      hệ thống tệp đó. Trong Windows, gốc được biểu thị bằng một ký tự ổ đĩa như <code>c:</code>&nbsp;và trong Linux, nó được
+      biểu thị chỉ bằng một dấu gạch chéo xuôi (<code>/</code>).</p>
+
+      <p>Tuy nhiên, trong thế giới Java, có một sự trừu tượng duy nhất gọi là &quot;file&quot; cho cả tệp cũng như
+      thư mục. Một file có thể là một tệp thông thường hoặc nó có thể là một thư mục (còn gọi là folder). Bạn có thể kiểm tra
+      xem nó là gì bằng cách truy vấn các &quot;thuộc tính&quot; (attributes) của nó. Vì vậy, nếu một file là một thư mục, bạn có thể gọi các thao tác liên quan đến thư mục
+      trên đó chẳng hạn như lấy tên của các tệp mà nó chứa và nếu nó là một tệp thông thường,
+      bạn có thể đọc/ghi dữ liệu từ/vào tệp đó bằng cách sử dụng các loại stream khác nhau mà bạn đã thấy trước đó.</p>
+
+      <h3 class="section-title section-title--minor">Tên tệp (File name)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Tên của một tệp chỉ là một chuỗi ký tự định danh tệp đó bên trong thư mục cha của nó.
+      Theo quy ước, tên của các tệp thông thường kết thúc bằng một dấu chấm và phần mở rộng gồm nhiều chữ cái như
+      <code>.txt</code>&nbsp;hoặc <code>.java</code>&nbsp;trong khi tên của các thư mục thì không.</p>
+
+      <h3 class="section-title section-title--minor">Đường dẫn (Pathname) và Đường dẫn trừu tượng (Abstract pathname)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Hệ điều hành sử dụng một đường dẫn (pathname) để định danh một tệp, trong khi Java sử dụng một đường dẫn trừu tượng (abstract pathname) cho
+      cùng mục đích đó. JVM chuyển đổi một đường dẫn trừu tượng thành đường dẫn thực tế và ngược lại bất cứ khi nào
+      cần thiết. Logic chuyển đổi phụ thuộc vào hệ điều hành.</p>
+
+      <p>Một đường dẫn trừu tượng (abstract pathname) là một chuỗi gồm không hoặc nhiều tên tệp được phân tách bằng một ký tự
+      phân tách đặc trưng của hệ thống. Trên Windows, ký tự phân tách là dấu gạch chéo ngược (<code>\</code>),</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

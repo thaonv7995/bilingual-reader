@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 4: 4.1 Dịch vụ của tôi ở đâu?</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0121.html">← Trước</a>
+    <a href="page_0123.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Dịch vụ của tôi ở đâu?</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">97</span>
+      </header>
+
+      <p>Khám phá dịch vụ rất quan trọng đối với các ứng dụng microservice, chạy trên cloud vì hai lý do chính. Thứ nhất, nó mang lại cho nhóm ứng dụng khả năng nhanh chóng mở rộng hoặc thu hẹp theo chiều ngang số instance dịch vụ đang chạy trong một môi trường. Nhờ khám phá dịch vụ, người tiêu thụ dịch vụ được tách khỏi vị trí vật lý của dịch vụ. Vì người tiêu thụ dịch vụ không biết vị trí vật lý của các instance dịch vụ thực tế, các instance dịch vụ mới có thể được thêm vào hoặc loại bỏ khỏi pool các dịch vụ khả dụng.</p>
+
+      <p>Khả năng nhanh chóng mở rộng dịch vụ mà không làm gián đoạn người tiêu thụ dịch vụ là một khái niệm cực kỳ mạnh mẽ, vì nó đưa nhóm phát triển quen xây dựng ứng dụng monolithic, đơn tenant (ví dụ, một khách hàng) ra khỏi tư duy chỉ mở rộng bằng cách thêm phần cứng lớn hơn, tốt hơn (mở rộng theo chiều dọc — vertical scaling) sang cách tiếp cận mạnh mẽ hơn là mở rộng bằng cách thêm nhiều máy chủ hơn (mở rộng theo chiều ngang — horizontal scaling).</p>
+
+      <p>Cách tiếp cận monolithic thường đẩy các nhóm phát triển theo hướng mua dư công suất. Nhu cầu công suất tăng theo từng đợt và đột biến, hiếm khi là một quỹ đạo ổn định, đều đặn. Microservice cho phép chúng ta mở rộng hoặc thu hẹp các instance dịch vụ mới. Khám phá dịch vụ giúp che giấu việc các lần triển khai này đang diễn ra khỏi người tiêu thụ dịch vụ.</p>
+
+      <p>Lợi ích thứ hai của khám phá dịch vụ là nó giúp tăng khả năng phục hồi của ứng dụng. Khi một instance microservice trở nên không khỏe mạnh hoặc không khả dụng, hầu hết engine khám phá dịch vụ sẽ gỡ instance đó khỏi danh sách nội bộ các dịch vụ khả dụng. Thiệt hại do một dịch vụ bị sập gây ra sẽ được giảm thiểu vì engine khám phá dịch vụ sẽ định tuyến các dịch vụ đi vòng qua dịch vụ không khả dụng.</p>
+
+      <p>Chúng ta đã xem qua các lợi ích của khám phá dịch vụ, nhưng điều đó có gì đáng chú ý? Rốt cuộc, chúng ta không thể dùng các phương pháp đã được kiểm chứng như DNS (Domain Name Service) hoặc load balancer để hỗ trợ khám phá dịch vụ sao? Hãy cùng xem vì sao cách đó không hiệu quả với ứng dụng dựa trên microservice, đặc biệt là khi chạy trên cloud.</p>
+
+      <h4 class="subsection-title">4.1 Dịch vụ của tôi ở đâu?</h4>
+
+      <p>Bất cứ khi nào bạn có ứng dụng gọi các tài nguyên trải rộng trên nhiều máy chủ, nó cần xác định vị trí vật lý của những tài nguyên đó. Trong thế giới không phải cloud, việc phân giải vị trí dịch vụ này thường được giải quyết bằng kết hợp DNS và network load balancer. Hình 4.1 minh họa mô hình này.</p>
+
+      <p>Một ứng dụng cần gọi một dịch vụ nằm ở phần khác của tổ chức. Nó cố gắng gọi dịch vụ bằng cách dùng tên DNS chung cùng với một path biểu thị duy nhất dịch vụ mà ứng dụng đang cố gọi. Tên DNS sẽ được phân giải tới một load balancer thương mại, chẳng hạn load balancer F5 phổ biến (<a href="http://f5.com">http://f5.com</a>) hoặc load balancer mã nguồn mở như HAProxy (<a href="http://haproxy.org">http://haproxy.org</a>).</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

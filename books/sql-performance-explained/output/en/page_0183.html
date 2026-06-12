@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — PostgreSQL Getting an Execution Plan</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">PostgreSQL Getting an Execution Plan</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">The explain plan output is as follows:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>                QUERY PLAN
+------------------------------------------
+ Result  (cost=0.00..0.01 rows=1 width=0)</code></pre>
+      </figure>
+
+      <p>The output has similar information as the Oracle execution plans shown throughout the book: the operation name (&ldquo;Result&rdquo;), the related cost, the row count estimate, and the expected row width.</p>
+
+      <p>Note that PostgreSQL shows two cost values. The first is the cost for the startup, the second is the total cost for the execution if all rows are retrieved. The Oracle database&rsquo;s execution plan only shows the second value.</p>
+
+      <p>The PostgreSQL explain command has two options. The <code>VERBOSE</code> option provides additional information like fully qualified table names&mdash;<code>VERBOSE</code> is usually not very valuable.</p>
+
+      <p>The second explain option is <code>ANALYZE</code>. Although it is widely used, I recommend not getting into the habit of using it automatically because it actually executes the statement. That is mostly harmless for select statements but it modifies your data when using it for insert, update or delete. To avoid the risk of accidentally modifying your data, you can enclose it in a transaction and perform a rollback afterwards.</p>
+
+      <p>The <code>ANALYZE</code> option executes the statement and records actual timing and row counts. That is valuable in finding the cause of incorrect cardinality estimates (row count estimates):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>BEGIN;
+EXPLAIN ANALYZE EXECUTE stmt(1);
+                   QUERY PLAN
+--------------------------------------------------
+ Result  (cost=0.00..0.01 rows=1 width=0)
+         (actual time=0.002..0.002 rows=1 loops=1)
+ Total runtime: 0.020 ms
+ROLLBACK;</code></pre>
+      </figure>
+
+      <p>Note that the plan is formatted for a better fit on the page. PostgreSQL prints the &ldquo;actual&rdquo; values on the same line as the estimated values.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">173</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

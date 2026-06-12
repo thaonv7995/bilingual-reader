@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: psql (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.22;
+    }
+    .prose-page.chapter-page ol.listing-annotations {
+      margin: 0 0 3mm 6mm;
+      padding: 0;
+      list-style: none;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page ol.listing-annotations li {
+      margin: 0 0 1.5mm;
+      padding: 0 0 0 6mm;
+      text-indent: -6mm;
+      text-align: left;
+    }
+    .prose-page.chapter-page ol.listing-annotations .marker {
+      display: inline-block;
+      width: 5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      text-align: center;
+    }
+    .prose-page.chapter-page ol.listing-annotations code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0072.html">← Trước</a>
+    <a href="page_0074.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">73</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>FROM pg_settings
+WHERE category LIKE '%Planner%'
+GROUP BY category
+ORDER BY category;
+\H
+\qecho '&lt;/td&gt;&lt;td&gt;&lt;h2&gt;Vị trí tệp&lt;/h2&gt;'
+\x off
+\t on
+\pset format html
+SELECT name, setting FROM pg_settings WHERE category = 'Vị trí tệp' ORDER BY
+name;
+\qecho '&lt;h2&gt;Cài đặt bộ nhớ&lt;/h2&gt;'
+SELECT name, setting, unit FROM pg_settings WHERE category ILIKE '%memory%' ORDER
+BY name;
+\qecho '&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;'
+\qecho '&lt;/body&gt;&lt;/html&gt;'
+\o</code></pre>
+      </figure>
+
+      <ol class="listing-annotations" aria-label="Example 3-11 annotations">
+        <li><span class="marker" aria-hidden="true">❶</span> Chuyển hướng đầu ra truy vấn đến một tệp.</li>
+        <li><span class="marker" aria-hidden="true">❷</span> Cài đặt bảng HTML cho đầu ra truy vấn.</li>
+        <li><span class="marker" aria-hidden="true">❸</span> Thêm HTML bổ sung.</li>
+        <li><span class="marker" aria-hidden="true">❹</span> Chế độ mở rộng. Lặp lại tiêu đề cột cho mỗi hàng và xuất mỗi
+        cột của mỗi hàng như một hàng riêng biệt.</li>
+        <li><span class="marker" aria-hidden="true">❻</span> Buộc các truy vấn xuất ra dưới dạng bảng HTML.</li>
+        <li><span class="marker" aria-hidden="true">❼</span> <code>string_agg()</code>, được giới thiệu trong PostgreSQL 9.0 để nối tất cả các thuộc tính trong cùng một danh mục thành một cột duy nhất.</li>
+        <li><span class="marker" aria-hidden="true">❽</span> Tắt chế độ mở rộng. Các truy vấn thứ hai và thứ ba nên xuất ra một hàng
+        cho mỗi hàng bảng.</li>
+        <li><span class="marker" aria-hidden="true">❺</span> Chuyển đổi chế độ tuple. Khi bật, tiêu đề cột và số hàng sẽ bị bỏ qua.</li>
+      </ol>
+
+      <p class="no-indent">Ví dụ 3-11 cho thấy rằng bằng cách xen kẽ các lệnh SQL và psql, bạn có thể
+      tạo ra một báo cáo dạng bảng khá toàn diện với các báo cáo phụ. Chạy Ví dụ 3-11
+      bằng cách kết nối tương tác với psql và thực thi <code>\i settings_report.psql</code>, hoặc chạy
+      <code>psql -f settings_report.psql</code> từ dòng lệnh hệ điều hành của bạn. Đầu ra được tạo ra
+      bởi <em>settings_report.html</em> được hiển thị trong Hình 3-2.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Báo cáo cơ bản<span class="sep">|</span>55</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

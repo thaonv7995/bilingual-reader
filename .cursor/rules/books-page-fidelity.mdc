@@ -1,0 +1,37 @@
+---
+description: PDF→HTML fidelity — pages, figures, assemble, asset paths (all books)
+globs: books/**/output/**/*.html,books/**/work/**/source.pdf,application/agent/prompts/render_page.md,application/backend/books_core/assemble.py
+alwaysApply: false
+---
+
+# Books HTML — fidelity & delivery
+
+Read **`application/agent/FIDELITY-RULES.md`** before render, translate, or assemble.
+
+## Per-page (`output/<lang>/page_*.html`)
+
+- Visual PDF order; run-in headings; `page_chrome` header/footer
+- Diagrams: PNG `src="../assets/images/…"` + `width` + `height` (never glue dimensions into filename)
+- Shell: `main.book-page--sheet` + `article.sheet-flow.prose-page`
+- CSS: `prose-page.css` + `code-page.css` / `figures-page.css` as needed
+
+## Assembled (`output/book.html`, `book.vi.html`)
+
+- Same A4 shell per sheet (Rule 8)
+- Asset prefix **`assets/`** not `../assets/` (assemble rewrites automatically)
+- Must link `prose-page.css`, `code-page.css`, `figures-page.css`
+
+## Mandatory pipeline (every book, every lang)
+
+```bash
+PY=application/.venv/bin/python3
+$PY application/backend/scripts/extract_pdf_figures.py books/<slug>
+$PY application/backend/scripts/upgrade_figure_html.py books/<slug>
+$PY application/backend/scripts/refresh_figure_images.py books/<slug>
+$PY application/backend/scripts/fix_book_layout.py books/<slug>
+$PY application/backend/scripts/validate_page_fidelity.py books/<slug> --lang all
+books-cli assemble --book books/<slug> --lang <lang> --output book.<lang>.html
+$PY application/backend/scripts/validate_page_fidelity.py books/<slug> --lang all
+```
+
+Do not ship if validator fails.

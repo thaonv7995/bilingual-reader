@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0106.html">← Trước</a>
+    <a href="page_0108.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">107</span>
+      </header>
+
+      <p class="no-indent">thời gian mà bắt đầu và kết thúc là giống nhau). Hãy cẩn thận với điều này nếu bạn là một người dùng
+      nhiệt tình của hàm OVERLAPS.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-10.</strong> OVERLAPS cho timestamp và date</figcaption>
+        <pre class="code-block"><code>SELECT ('2012-10-25 10:00 AM'::timestamp, '2012-10-25 2:00 PM'::timestamp) OVERLAPS
+('2012-10-25 11:00 AM'::timestamp,'2012-10-26 2:00 PM'::timestamp) AS x,
+('2012-10-25'::date,'2012-10-26'::date) OVERLAPS
+('2012-10-26'::date,'2012-10-27'::date) As y;
+ x  | y
+----+---
+ t  | f</code></pre>
+      </figure>
+
+      <p class="no-indent">Ngoài các toán tử, PostgreSQL đi kèm với các hàm hỗ trợ các kiểu
+      tạm thời. Một danh sách đầy đủ có thể được tìm thấy tại <span class="accent-word">Hàm và Toán tử Datetime</span>. Chúng tôi sẽ trình bày
+      một mẫu ở đây.</p>
+
+      <p>Một lần nữa, chúng ta bắt đầu với hàm đa năng <code>generate_series</code>. Bạn có thể sử dụng hàm này
+      với các kiểu tạm thời và bước khoảng thời gian.</p>
+
+      <p>Như bạn có thể thấy trong <span class="accent-word">Ví dụ 5-11</span>, chúng ta có thể biểu diễn ngày tháng theo định dạng ngày giờ địa phương hoặc
+      định dạng ISO Y-M-D toàn cầu hơn. PostgreSQL tự động diễn giải các định dạng đầu vào khác nhau.
+      Để an toàn, chúng tôi thường nhập ngày theo định dạng ISO, vì các định dạng ngày
+      khác nhau từ văn hóa này sang văn hóa khác, từ máy chủ này sang máy chủ khác, hoặc thậm chí từ cơ sở dữ liệu này sang cơ sở dữ liệu khác.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-11.</strong> Tạo chuỗi thời gian sử dụng generate_series()</figcaption>
+        <pre class="code-block"><code>SELECT (dt - interval '1 day')::date As eom
+FROM generate_series('2/1/2012', '6/30/2012', interval '1 month') As dt;
+ eom
+------------
+2012-01-31
+2012-02-29
+2012-03-31
+2012-04-30
+2012-05-31</code></pre>
+      </figure>
+
+      <p class="no-indent">Một hoạt động phổ biến khác là trích xuất hoặc định dạng các phần của giá trị ngày giờ. Ở đây, các
+      hàm <code>date_part</code> và <code>to_char</code> phù hợp với yêu cầu. <span class="accent-word">Ví dụ 5-12</span> cũng nhấn mạnh hành vi
+      của DST cho một kiểu dữ liệu nhận thức về múi giờ. Chúng tôi cố ý chọn một khoảng thời gian
+      vượt qua một sự chuyển đổi tiết kiệm ánh sáng ban ngày ở US/East. Bởi vì đồng hồ tiến lên vào lúc 2
+      giờ sáng, hàng cuối cùng của bảng phản ánh thời gian mới.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-12.</strong> Trích xuất các phần tử của một datetime</figcaption>
+        <pre class="code-block"><code>SELECT dt, date_part('hour',dt) As mh, to_char(dt, 'HH12:MI AM') As tm
+FROM
+generate_series( '2012-03-11 12:30 AM', '2012-03-11 3:00 AM', interval '15 minutes'
+) As dt;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Thời gian<span class="sep">|</span>89</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

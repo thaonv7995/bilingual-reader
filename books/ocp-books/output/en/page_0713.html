@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 23: Using Modules</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0712.html">← Prev</a>
+    <a href="page_0714.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">713</span>
+      </header>
+
+      <p class="no-indent"><code>taxfiling.jar</code>, is still on the classpath. This command works because every class that is
+      loaded from the classpath becomes part of the unnamed module and classes on the unnamed
+      module are allowed to read all packages from the unnamed as well as named modules.</p>
+
+      <p class="no-indent"><strong>Step 2:</strong></p>
+
+      <p>We can now shift our attention to <code>calculators.jar</code>. Since it doesn&rsquo;t depend on any non-
+      modular jar and is controlled by our team, it is a good candidate for migration. To convert this
+      library into a module, we need to create a <code>module-info.java</code> with the following contents and
+      place it into the root folder of the source code of the calculators library:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>module calculators{
+  requires logging; //since this is the name of the module packaged
+in logging.jar
+  exports calculators; //assuming that the package name that we want
+to export is calculators
+}</code></pre>
+      </figure>
+
+      <p>Since this library doesn&rsquo;t depend on anything else, it can be easily recompiled into a modular jar
+      using the compilation options for compiling a module discussed before. At the end of this step,
+      our command to run the application will be:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>java --module-path logging.jar;calculators.jar -classpath
+taxfiling.jar;audit.jar;charts.jar
+com.abc.taxfiling.Main</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong>Step 3:</strong></p>
+
+      <p>As this point, we have to wait until the other team that is responsible for producing <code>audit.jar</code>
+      modularizes it. Once the other team modularizes <code>audit.jar</code>, we can place it on module-path
+      just like <code>calculators.jar</code>. However, we will now be stuck until the company responsible for
+      producing <code>charts.jar</code> modularizes it (unless we use it as an &ldquo;automatic&rdquo; module). Let&rsquo;s say
+      they modularize <code>charts.jar</code> as well and in that case, our command will become:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

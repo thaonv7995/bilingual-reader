@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Tác động hiệu suất của khối lượng dữ liệu</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Tác động hiệu suất của khối lượng dữ liệu</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Tính mở rộng cho thấy sự phụ thuộc của hiệu suất vào các yếu tố như khối lượng dữ liệu.</p>
+        <p>Giá trị hiệu suất chỉ là một điểm dữ liệu duy nhất trên biểu đồ tính mở rộng.</p>
+      </aside>
+
+      <p class="no-indent">Hình&nbsp;3.2 cho thấy thời gian phản hồi theo số SECTION&mdash;điều đó có nghĩa là cho một khối lượng dữ liệu đang tăng lên.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;3.2.&nbsp;Tính mở rộng theo khối lượng dữ liệu</figcaption>
+        <img src="../assets/images/page_0091_fig_3_2.png" width="1027" height="317" alt="Hình 3.2. Tính mở rộng theo khối lượng dữ liệu">
+      </figure>
+
+      <p>Biểu đồ cho thấy thời gian phản hồi đang tăng lên cho cả hai chỉ mục. Ở phía bên phải của biểu đồ, khi khối lượng dữ liệu cao gấp trăm lần, truy vấn nhanh hơn cần nhiều hơn gấp đôi thời gian so với ban đầu trong khi thời gian phản hồi của truy vấn chậm hơn tăng lên gấp 20 lần, vượt quá một giây.</p>
+
+      <p>Thời gian phản hồi của một truy vấn SQL phụ thuộc vào nhiều yếu tố. Khối lượng dữ liệu là một trong số đó. Nếu một truy vấn đủ nhanh dưới các điều kiện thử nghiệm nhất định, điều đó không có nghĩa là nó sẽ đủ nhanh trong môi trường sản xuất. Điều này đặc biệt đúng trong các môi trường phát triển chỉ có một phần nhỏ dữ liệu của hệ thống sản xuất.</p>
+
+      <p>Tuy nhiên, không có gì ngạc nhiên khi các truy vấn trở nên chậm hơn khi khối lượng dữ liệu tăng lên. Nhưng khoảng cách rõ rệt giữa hai chỉ mục là điều hơi bất ngờ. Nguyên nhân của các tỷ lệ tăng trưởng khác nhau là gì?</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">81</p>
+    </article>
+  </main>
+</body>
+</html>

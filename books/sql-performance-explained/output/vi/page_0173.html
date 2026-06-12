@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Update</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Cập nhật</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Một câu lệnh <code>delete</code> không có điều kiện <code>where</code> là một ví dụ rõ ràng mà trong đó cơ sở dữ liệu không thể sử dụng chỉ mục, mặc dù đây là một trường hợp đặc biệt có lệnh SQL riêng: <code>truncate table</code>. Lệnh này có tác dụng tương tự như <code>delete</code> không có <code>where</code> ngoại trừ việc nó xóa tất cả các hàng trong một lần. Nó rất nhanh nhưng có hai tác dụng phụ quan trọng: (1) nó thực hiện một <code>commit</code> ngầm định (ngoại lệ: PostgreSQL); (2) nó không thực thi bất kỳ trigger nào.</p>
+
+      <aside class="sidebar-note">
+        <h3>Tác dụng phụ của MVCC</h3>
+
+        <p>Kiểm soát đồng thời phiên bản đa (MVCC) là một cơ chế cơ sở dữ liệu cho phép truy cập dữ liệu đồng thời không bị chặn và một cái nhìn giao dịch nhất quán. Tuy nhiên, các triển khai khác nhau giữa các cơ sở dữ liệu và có thể có tác động đáng kể đến hiệu suất.</p>
+
+        <p>Cơ sở dữ liệu PostgreSQL, ví dụ, chỉ giữ thông tin phiên bản (= thông tin khả năng nhìn thấy) ở cấp độ bảng: xóa một hàng chỉ đặt cờ &ldquo;đã xóa&rdquo; trong khối bảng. Do đó, hiệu suất <code>delete</code> của PostgreSQL không phụ thuộc vào số lượng chỉ mục trên bảng. Việc xóa vật lý hàng bảng và bảo trì chỉ mục liên quan chỉ được thực hiện trong quá trình VACCUM.</p>
+      </aside>
+
+      <h3 class="section-title">Cập nhật</h3>
+
+      <p class="no-indent">Một câu lệnh <code>update</code> phải di chuyển các mục chỉ mục đã thay đổi để duy trì thứ tự chỉ mục. Để làm điều đó, cơ sở dữ liệu phải xóa mục cũ và thêm mục mới tại vị trí mới. Thời gian phản hồi về cơ bản giống như cho các câu lệnh <code>delete</code> và <code>insert</code> tương ứng.</p>
+
+      <p>Hiệu suất <code>update</code>, giống như <code>insert</code> và <code>delete</code>, cũng phụ thuộc vào số lượng chỉ mục trên bảng. Sự khác biệt duy nhất là các câu lệnh <code>update</code> không nhất thiết phải ảnh hưởng đến tất cả các cột vì chúng thường chỉ sửa đổi một vài cột được chọn. Do đó, một câu lệnh <code>update</code> không nhất thiết phải ảnh hưởng đến tất cả các chỉ mục trên bảng mà chỉ những chỉ mục chứa các cột đã được cập nhật.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">163</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

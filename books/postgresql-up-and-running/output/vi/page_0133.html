@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 6: Bảng, Ràng buộc và Chỉ mục — Chỉ mục</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0132.html">← Trước</a>
+    <a href="page_0134.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">133</span>
+      </header>
+
+      <p class="no-indent">class system table cung cấp danh sách đầy đủ các lớp toán tử có sẵn, cả từ
+      cài đặt ban đầu của bạn và từ các phần mở rộng. Một phương pháp chỉ mục cụ thể sẽ chỉ hoạt động
+      với một tập hợp các lớp toán tử nhất định. Để xem danh sách đầy đủ này, bạn có thể mở pgAdmin
+      và xem dưới mục toán tử, hoặc thực hiện truy vấn trong <span class="accent-word">Ví dụ 6-7</span> trên catalog hệ thống
+      để có cái nhìn tổng quát.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 6-7.</strong> Các kiểu dữ liệu và lớp toán tử nào được B-Tree hỗ trợ?</figcaption>
+        <pre class="code-block"><code>SELECT am.amname AS index_method, opc.opcname AS opclass_name,
+opc.opcintype::regtype AS indexed_type, opc.opcdefault AS is_default
+FROM pg_am am INNER JOIN pg_opclass opc ON opc.opcmethod = am.oid
+WHERE am.amname = 'btree'
+ORDER BY index_method, indexed_type, opclass_name;
+index_method |    opclass_name     |        indexed_type         | is_default
+-------------+---------------------+-----------------------------+------------
+btree        | bool_ops            | boolean                     | t
+:
+btree        | text_ops            | text                        | t
+btree        | text_pattern_ops    | text                        | f
+btree        | varchar_ops         | text                        | f
+btree        | varchar_pattern_ops | text                        | f
+  :</code></pre>
+      </figure>
+
+      <p>Trong <span class="accent-word">Ví dụ 6-7</span>, chúng ta giới hạn kết quả của mình ở B-Tree. Lưu ý rằng một lớp toán tử cho mỗi kiểu dữ liệu
+      được đánh dấu là mặc định. Khi bạn tạo một chỉ mục mà không chỉ định lớp toán tử,
+      PostgreSQL sẽ chọn lớp toán tử mặc định cho chỉ mục. Thông thường, điều này là đủ tốt,
+      nhưng không phải lúc nào cũng vậy.</p>
+
+      <p>Ví dụ, B-Tree với <code>text_ops</code> (còn gọi là <code>varchar_ops</code>) không bao gồm toán tử <code>~~</code> (toán tử <code>LIKE</code>),
+      vì vậy không có tìm kiếm <code>LIKE</code> nào của bạn có thể sử dụng chỉ mục trong lớp toán tử <code>text_ops</code>.
+      Nếu bạn dự định thực hiện nhiều tìm kiếm wildcard trên các cột <code>varchar</code> hoặc <code>text</code>,
+      bạn sẽ tốt hơn nếu chọn rõ ràng lớp toán tử <code>text_pattern_ops</code>/<code>varchar_pattern_ops</code>
+      cho chỉ mục của bạn. Để chỉ định lớp toán tử, chỉ cần thêm lớp toán tử sau tên cột,
+      như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx1 ON census.lu_tracts USING btree (tract_name text_pattern_ops);</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0133_icon_tip.png" width="43" height="57" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Bạn sẽ nhận thấy có cả <code>varchar_ops</code> và <code>text_ops</code> trong danh sách,
+        nhưng chúng chỉ ánh xạ đến <code>text</code>. <code>character varying</code> không có các toán tử B-Tree
+        riêng của nó, vì nó về cơ bản là <code>text</code> với một ràng buộc độ dài.
+        <code>varchar_ops</code> và <code>varchar_pattern_ops</code> chỉ là bí danh cho
+        <code>text_ops</code> và <code>text_pattern_ops</code> để thỏa mãn mong muốn của một số người
+        duy trì sự đối xứng của các lớp toán tử bắt đầu bằng tên của
+        kiểu mà chúng hỗ trợ.</p>
+      </div>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Chỉ mục<span class="sep">|</span>115</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 1: Chào mừng đến với đám mây, Spring</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.8mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 3mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8mm;
+      padding-top: 0.5mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.cmd-line {
+      margin: 0 0 2.8mm;
+      font-family: var(--font-mono, "Courier New", Courier, monospace);
+      font-size: 10pt;
+      line-height: 1.3;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.json-line {
+      margin: 0 0 2.8mm;
+      font-family: var(--font-mono, "Courier New", Courier, monospace);
+      font-size: 10pt;
+      line-height: 1.3;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #ccc;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #262626;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0034.html">← Trước</a>
+    <a href="page_0036.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">10</span>
+        <span class="rh-center">CHƯƠNG 1 <em>Chào mừng đến với đám mây, Spring</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="listing-annotated">
+        <figure class="listing">
+          <pre class="code-block"><code>@SpringBootApplication
+@RestController
+@RequestMapping(value="hello")
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+    @RequestMapping(value="/{firstName}/{lastName}",
+                    method = RequestMethod.GET)
+    public String hello( @PathVariable("firstName") String firstName,
+                         @PathVariable("lastName") String lastName) {
+        return String.format("{\"message\":\"Hello %s %s\"}",
+                              firstName, lastName);
+    }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Chú thích bảng liệt kê 1.1">
+          <p class="listing-callout">Báo cho framework Spring Boot biết lớp này là điểm vào cho dịch vụ Spring Boot</p>
+          <p class="listing-callout">Báo cho Spring Boot biết bạn sẽ phơi bày mã trong lớp này dưới dạng lớp Spring RestController</p>
+          <p class="listing-callout">Tất cả URL được phơi bày trong ứng dụng này sẽ có tiền tố /hello.</p>
+          <p class="listing-callout">Spring Boot sẽ phơi bày một điểm cuối REST dạng GET nhận hai tham số: firstName và lastName.</p>
+          <p class="listing-callout">Ánh xạ các tham số firstName và lastName được truyền qua URL vào hai biến truyền vào hàm hello</p>
+          <p class="listing-callout">Trả về một chuỗi JSON đơn giản mà bạn tự xây dựng. Ở chương 2, bạn sẽ không tạo JSON nào cả.</p>
+        </div>
+      </div>
+
+      <p class="no-indent">Trong bảng liệt kê 1.1, bạn về cơ bản đang phơi bày một điểm cuối HTTP GET duy nhất nhận hai tham số (firstName và lastName) trên URL, rồi trả về một chuỗi JSON đơn giản có payload chứa thông điệp &ldquo;Hello firstName lastName&rdquo;. Nếu bạn gọi điểm cuối /hello/john/carnell trên dịch vụ (tôi sẽ trình bày ngay sau đây), kết quả trả về của lời gọi sẽ là</p>
+
+      <p class="json-line">{"message":"Hello john carnell"}</p>
+
+      <p>Hãy khởi động dịch vụ. Để làm điều này, hãy mở dòng lệnh và chạy lệnh sau:</p>
+
+      <p class="cmd-line">mvn spring-boot:run</p>
+
+      <p>Lệnh này, mvn, sẽ dùng plug-in Spring Boot để khởi động ứng dụng bằng máy chủ Tomcat nhúng.</p>
+
+      <aside class="sidebar-note">
+        <h3>Java so với Groovy và Maven so với Gradle</h3>
+        <p>Framework Spring Boot hỗ trợ mạnh cả Java và ngôn ngữ lập trình Groovy. Bạn có thể xây dựng microservice bằng Groovy mà không cần thiết lập dự án. Spring Boot cũng hỗ trợ cả Maven và công cụ build Gradle. Tôi đã giới hạn các ví dụ trong cuốn sách này ở Java và Maven. Là người yêu thích Groovy và Gradle từ lâu, tôi có sự tôn trọng lớn đối với ngôn ngữ và công cụ build đó, nhưng để giữ cuốn sách dễ quản lý và tập trung vào nội dung, tôi đã chọn Java và Maven để tiếp cận đối tượng độc giả rộng nhất có thể.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

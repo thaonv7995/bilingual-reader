@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 12: Luồng điều khiển chương trình</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0023.html">← Trước</a>
+    <a href="page_0025.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">24</span>
+      </header>
+
+      <p class="no-indent">câu lệnh switch và câu lệnh break quyết định lối thoát. Điều đó đúng nhưng điều thú vị
+      là ngay cả câu lệnh break cũng là <strong>tùy chọn</strong>. Một khối case không nhất thiết phải kết thúc
+      bằng một break. Hãy để tôi sửa đổi chương trình mà tôi đã giới thiệu với bạn ở phần đầu:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>void main(String[] args){
+   switch(args.length) {  //switch block starts here
+      case 0 : System.out.println("No argument");
+         //break;
+      case 1 : System.out.println("Only one argument");
+         //break;
+      case 2 : System.out.println("Two arguments");
+         //break;
+      default : System.out.println("Too many arguments!");
+         //break;
+
+   }//switch block ends here
+
+   System.out.println("All done.");
+}</code></pre>
+      </figure>
+
+      <p>Tôi đã chú thích hóa tất cả các câu lệnh break. Bây giờ, nếu bạn chạy chương trình này mà không có bất kỳ
+      đối số nào, bạn sẽ thấy kết quả đầu ra như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>No argument
+Only one argument
+Two arguments
+Too many arguments!
+All done.</code></pre>
+      </figure>
+
+      <p>Luồng điều khiển đã đi vào khối được gắn nhãn <strong>case 0</strong> (bởi vì <code>args.length</code> là <code>0</code>), và thực thi
+      tất cả các câu lệnh của khối switch... ngay cả các câu lệnh liên kết với các khối case khác
+      không khớp với giá trị của <code>args.length</code>. Điều này được gọi là hành vi &ldquo;fall through&rdquo;&nbsp;của một
+      câu lệnh switch. Khi không có câu lệnh break, luồng điều khiển sẽ trôi tuột xuống khối case
+      tiếp theo và khối case tiếp theo nữa, và cứ thế cho đến khi nó</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

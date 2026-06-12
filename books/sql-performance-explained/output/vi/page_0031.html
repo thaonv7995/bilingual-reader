@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục chậm, Phần II</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">31</span>
+      </header>
+      <p class="chapter-running-head">Chỉ mục chậm, Phần II</p>
+
+      <p>Thời gian phản hồi của câu lệnh không phụ thuộc vào kích thước tập kết quả mà phụ thuộc vào số lượng nhân viên trong chi nhánh cụ thể. Nếu chi nhánh chỉ có một vài thành viên, <code>INDEX RANGE SCAN</code> cung cấp hiệu suất tốt hơn. Tuy nhiên, <code>TABLE ACCESS FULL</code> có thể nhanh hơn cho một chi nhánh lớn vì nó có thể đọc một phần lớn từ bảng trong một lần (xem <i>&ldquo;Quét bảng đầy đủ&rdquo;</i> trên trang&nbsp;13).</p>
+
+      <p>Câu truy vấn chậm vì việc tra cứu chỉ mục trả về nhiều <code>ROWIDs</code>—một cho mỗi nhân viên của công ty gốc—và cơ sở dữ liệu phải lấy chúng một cách riêng lẻ. Đây là sự kết hợp hoàn hảo của hai yếu tố khiến một chỉ mục chậm: cơ sở dữ liệu đọc một phạm vi chỉ mục rộng và phải lấy nhiều hàng một cách riêng lẻ.</p>
+
+      <p>Việc chọn kế hoạch thực thi tốt nhất cũng phụ thuộc vào phân phối dữ liệu của bảng, vì vậy bộ tối ưu hóa sử dụng thống kê về nội dung của cơ sở dữ liệu. Trong ví dụ của chúng tôi, một biểu đồ chứa phân phối nhân viên qua các chi nhánh được sử dụng. Điều này cho phép bộ tối ưu hóa ước lượng số lượng hàng được trả về từ việc tra cứu chỉ mục—kết quả được sử dụng cho việc tính toán chi phí.</p>
+
+      <aside class="sidebar-note">
+        <h3>Thống kê</h3>
+        <p>Một bộ tối ưu hóa dựa trên chi phí sử dụng thống kê về các bảng, cột và chỉ mục. Hầu hết các thống kê được thu thập ở cấp độ cột: số lượng giá trị khác nhau, giá trị nhỏ nhất và lớn nhất (phạm vi dữ liệu), số lần xuất hiện của <code>NULL</code> và biểu đồ cột (phân phối dữ liệu). Giá trị thống kê quan trọng nhất cho một bảng là kích thước của nó (theo hàng và khối).</p>
+        <p>Các thống kê chỉ mục quan trọng nhất là độ sâu của cây, số lượng nút lá, số lượng khóa khác nhau và yếu tố phân cụm (xem Chương&nbsp;5, <i>&ldquo;Phân cụm dữ liệu&rdquo;</i>).</p>
+        <p>Bộ tối ưu hóa sử dụng những giá trị này để ước lượng tính chọn lọc của các điều kiện trong mệnh đề <code>where</code>.</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">21</p>
+    </article>
+  </main>
+</body>
+</html>

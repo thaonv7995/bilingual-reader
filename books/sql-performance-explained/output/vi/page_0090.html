@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Tác động hiệu suất của khối lượng dữ liệu</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">90</span>
+      </header>
+      <p class="chapter-running-head">Chương 3: Hiệu suất và Khả năng mở rộng</p>
+
+      <h3 class="section-title">Tác động hiệu suất của khối lượng dữ liệu</h3>
+
+      <p class="no-indent">Khối lượng dữ liệu được lưu trữ trong cơ sở dữ liệu có tác động lớn đến hiệu suất của nó. Thông thường, người ta chấp nhận rằng một truy vấn trở nên chậm hơn khi có thêm dữ liệu trong cơ sở dữ liệu. Nhưng tác động hiệu suất lớn đến mức nào nếu khối lượng dữ liệu gấp đôi? Và làm thế nào chúng ta có thể cải thiện tỷ lệ này? Đây là những câu hỏi chính khi thảo luận về khả năng mở rộng của cơ sở dữ liệu.</p>
+
+      <p>Ví dụ, chúng ta phân tích thời gian phản hồi của truy vấn sau khi sử dụng hai chỉ mục khác nhau. Định nghĩa chỉ mục sẽ vẫn chưa được tiết lộ trong thời gian này&mdash;chúng sẽ được tiết lộ trong quá trình thảo luận.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT count(*)
+  FROM scale_data
+ WHERE section = ?
+   AND id2 = ?</code></pre>
+      </figure>
+
+      <p>Cột <code>SECTION</code> có một mục đích đặc biệt trong truy vấn này: nó kiểm soát khối lượng dữ liệu. Số <code>SECTION</code> càng lớn, số hàng mà truy vấn chọn càng nhiều. Hình&nbsp;3.1 cho thấy thời gian phản hồi cho một <code>SECTION</code> nhỏ.</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;3.1.&nbsp;So sánh Hiệu suất</figcaption>
+        <img src="../assets/images/page_0090_fig_3_1.png" width="1027" height="418" alt="Hình 3.1. So sánh Hiệu suất">
+      </figure>
+
+      <p>Có sự khác biệt hiệu suất đáng kể giữa hai biến thể chỉ mục. Cả hai thời gian phản hồi vẫn dưới một phần mười giây, vì vậy ngay cả truy vấn chậm hơn cũng có thể đủ nhanh trong hầu hết các trường hợp. Tuy nhiên, biểu đồ hiệu suất chỉ cho thấy một điểm thử nghiệm. Thảo luận về khả năng mở rộng có nghĩa là xem xét tác động hiệu suất khi thay đổi các tham số môi trường&mdash;chẳng hạn như khối lượng dữ liệu.</p>
+
+      <p class="page-folio page-folio--left">80</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

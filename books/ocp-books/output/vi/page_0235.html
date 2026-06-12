@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--output pre.code-block {
+      background: #e2e8f0;
+      border-left: none;
+      font-size: 9.75pt;
+      line-height: 1.4;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0234.html">← Trước</a>
+    <a href="page_0236.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">235</span>
+      </header>
+
+      <p class="no-indent">mệnh đề resource (tài nguyên) (theo thứ tự ngược lại với khai báo của chúng trong mệnh đề try-with-resources) ngay cả khi
+      một hoặc nhiều resource (tài nguyên) trong số đó ném ra một Exception (Ngoại lệ) trong quá trình đóng.</p>
+
+      <p class="no-indent"><strong class="run-in">Tình huống 2:</strong> Mã nguồn trong khối try thực thi mà không có bất kỳ Exception (Ngoại lệ) nào, nhưng các phương thức close của
+      một hoặc nhiều resource (tài nguyên) được quản lý ném ra một Exception (Ngoại lệ). Trong tình huống này, Exception (Ngoại lệ) đầu tiên được ném ra
+      là Exception (Ngoại lệ) mà phía gọi (caller) nhận được, nhưng Exception (Ngoại lệ) đó chứa tất cả các Exception (Ngoại lệ)
+      gặp phải trong khi đóng các resource (tài nguyên) còn lại. Nếu bạn chuyển câu lệnh throw
+      trong phương thức read của Device thành chú thích (comment out), cùng một chương trình sẽ tạo ra kết quả đầu ra sau:</p>
+
+      <figure class="code-snippet code-snippet--output">
+        <pre class="code-block"><code>Device 1 opened
+Device 2 opened
+Device 1 reading
+Device 2 reading
+Exception received : Unable to close Device 2!
+java.lang.RuntimeException: Unable to close Device 2!
+    at exceptions.Device.close(Device.java:17)
+    at exceptions.Device.main(Device.java:25)
+    Suppressed: java.lang.RuntimeException: Unable to close Device 1!
+        at exceptions.Device.close(Device.java:17)
+        at exceptions.Device.main(Device.java:22)
+In Finally</code></pre>
+      </figure>
+
+      <p>Hãy quan sát thấy rằng Device 2 được đóng trước (vì nó được liệt kê cuối cùng trong mệnh đề try-with-resources)
+      và Exception (Ngoại lệ) được ném ra bởi phương thức close của nó chính là Exception (Ngoại lệ) mà phương thức main
+      nhận được. Exception (Ngoại lệ) này chứa Exception (Ngoại lệ) được ném ra bởi phương thức close của Device 1 trong
+      mảng các Ngoại lệ bị ẩn đi (Suppressed Exception) của nó.</p>
+
+      <h3 class="section-title section-title--sub">15.4.4 Trắc nghiệm<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent"><strong>Q 1.</strong> Lớp (Class) nào sau đây có thể được sử dụng với câu lệnh try-with-resources?</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 10: Sao chép và Dữ liệu bên ngoài — Thuật ngữ Sao chép</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p .run-in {
+      font-style: italic;
+      font-weight: normal;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0197.html">← Trước</a>
+    <a href="page_0199.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">198</span>
+      </header>
+
+      <p class="no-indent"><em class="run-in">Master</em> Máy chủ master là máy chủ cơ sở dữ liệu cung cấp dữ liệu được sao chép và
+      nơi tất cả các cập nhật diễn ra. Bạn chỉ được phép có một master khi sử dụng các
+      tính năng sao chép tích hợp của PostgreSQL. Các kế hoạch đang được thực hiện để hỗ trợ
+      các kịch bản sao chép đa master. Hãy chú ý đến điều này trong các phiên bản tương lai.</p>
+
+      <p class="no-indent"><em class="run-in">Slave</em> Máy chủ slave tiêu thụ dữ liệu được sao chép và cung cấp một bản sao của master.
+      Những thuật ngữ đẹp hơn như người đăng ký và đại lý đã được đề cập, nhưng slave vẫn là
+      thuật ngữ phù hợp nhất. Sao chép tích hợp của PostgreSQL chỉ hỗ trợ các slave chỉ đọc
+      tại thời điểm này.</p>
+
+      <p class="no-indent"><em class="run-in">Write-ahead log (WAL)</em> WAL là nhật ký theo dõi tất cả các giao dịch, thường được gọi là nhật ký
+      giao dịch trong các sản phẩm cơ sở dữ liệu khác. Để chuẩn bị cho việc sao chép, PostgreSQL
+      đơn giản chỉ cần làm cho các nhật ký có sẵn cho các slave. Khi các slave đã kéo các nhật ký,
+      họ chỉ cần thực hiện các giao dịch trong đó.</p>
+
+      <p class="no-indent"><em class="run-in">Synchronous</em> Một giao dịch trên master sẽ không được coi là hoàn thành cho đến khi ít nhất một
+      slave được cập nhật. Nếu bạn có nhiều slave đồng bộ, không cần tất cả chúng phải phản hồi
+      để thành công.</p>
+
+      <p class="no-indent"><em class="run-in">Asynchronous</em> Một giao dịch trên master sẽ được cam kết ngay cả khi các slave chưa được cập nhật. Điều này
+      hữu ích trong trường hợp các máy chủ xa, nơi bạn không muốn các giao dịch phải chờ
+      vì độ trễ mạng, nhưng nhược điểm là tập dữ liệu của bạn trên slave có thể
+      bị chậm lại, và slave có thể bỏ lỡ một số giao dịch trong trường hợp thất bại
+      truyền tải.</p>
+
+      <p class="no-indent"><em class="run-in">Streaming</em> Mô hình sao chép streaming được giới thiệu trong PostgreSQL 9.0. Không giống như các
+      phiên bản trước, nó không yêu cầu truy cập tệp trực tiếp giữa master và slave. Thay vào đó,
+      nó dựa vào giao thức kết nối PostgreSQL để truyền tải các WAL.</p>
+
+      <p class="no-indent"><em class="run-in">Cascading replication</em> Bắt đầu từ phiên bản 9.2, các slave có thể nhận nhật ký từ các slave gần
+      thay vì trực tiếp từ master. Điều này cho phép một slave cũng hoạt động như một master
+      cho mục đích sao chép. Slave vẫn giữ chế độ chỉ đọc. Khi một slave hoạt động như cả
+      người nhận và người gửi, nó được gọi là cascading standby.</p>
+
+      <p class="no-indent"><em class="run-in">Remastering</em> Remastering là quá trình mà bạn nâng cấp một slave lên làm master. Đến
+      phiên bản 9.2, đây là một quá trình yêu cầu sử dụng lưu trữ tệp WAL thay vì sao chép
+      streaming. Nó cũng yêu cầu tất cả các slave phải được sao chép lại. Phiên bản 9.3 đã giới thiệu
+      remastering chỉ với streaming, có nghĩa là remastering không còn</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">180<span class="sep">|</span>Chương 10: Sao chép và Dữ liệu bên ngoài</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

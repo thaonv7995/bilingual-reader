@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tinh chỉnh Hiệu suất Truy vấn — Viết Truy vấn Tốt Hơn</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 8.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 8.5pt;
+    }
+    .prose-page.chapter-page a.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0189.html">← Trước</a>
+    <a href="page_0191.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">190</span>
+      </header>
+
+      <p class="no-indent">Lần thứ hai bạn chạy truy vấn, bạn nên nhận thấy ít nhất tốc độ hiệu suất tăng
+      10% và nên thấy những thông tin sau được lưu trong bộ đệm:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    relname    | dirty_buffers | num_buffers
+---------------+---------------+-------------
+ facts         |             0 |         736
+ lu_fact_types |             0 |           4</code></pre>
+      </figure>
+
+      <p>Càng nhiều bộ nhớ onboard bạn dành cho bộ đệm, bạn sẽ có càng nhiều không gian
+      để lưu trữ dữ liệu. Bạn có thể thiết lập lượng bộ nhớ dành riêng bằng cách thay đổi
+      thiết lập <code>shared_buffers</code> trong <code>postgresql.conf</code>. Đừng quá lạm dụng; việc tăng
+      <code>shared_buffers</code> quá nhiều sẽ làm phình to bộ đệm của bạn, dẫn đến việc lãng phí thời gian
+      quét bộ đệm.</p>
+
+      <p>Ngày nay, không thiếu bộ nhớ onboard. Bạn có thể tận dụng điều này bằng cách
+      precaching các bảng thường được sử dụng bằng một tiện ích mở rộng gọi là
+      <code>pg_prewarm</code>, hiện đã được đóng gói như
+      <a href="http://bit.ly/1rX2Rey" class="accent-word">một phần của PostgreSQL 9.4</a>. <code>pg_prewarm</code> cho phép bạn khởi động PostgreSQL của bạn bằng cách tải
+      dữ liệu từ các bảng thường được sử dụng vào bộ nhớ để người dùng đầu tiên truy cập vào cơ sở dữ liệu
+      có thể trải nghiệm cùng một sự tăng tốc hiệu suất mà bộ đệm cung cấp cho những người dùng sau. Một
+      bài viết tốt mô tả tính năng này là <a href="http://bit.ly/1FUkmNa" class="accent-word">Prewarming relational data</a>.</p>
+
+      <h3 class="section-title">Viết Truy vấn Tốt Hơn</h3>
+
+      <p class="no-indent">Cách tốt nhất và dễ nhất để cải thiện hiệu suất truy vấn là bắt đầu với các
+      truy vấn được viết tốt. Bốn trong số năm truy vấn mà chúng tôi gặp không được viết
+      hiệu quả như chúng có thể.</p>
+
+      <p>Có hai nguyên nhân chính cho tất cả những truy vấn kém này. Đầu tiên, chúng tôi thấy mọi người
+      tái sử dụng các mẫu SQL mà không suy nghĩ. Ví dụ, nếu họ viết thành công một truy vấn
+      sử dụng left join, họ sẽ tiếp tục sử dụng left join khi kết hợp thêm nhiều bảng
+      thay vì xem xét inner join đôi khi phù hợp hơn. Khác với các ngôn ngữ lập trình khác,
+      ngôn ngữ SQL không dễ dàng cho việc tái sử dụng mù quáng.</p>
+
+      <p>Thứ hai, mọi người không có xu hướng cập nhật các phát triển mới nhất trong phương ngữ
+      SQL của họ. Nếu một người dùng PostgreSQL vẫn viết SQL như thể họ vẫn đang sử dụng
+      một phiên bản sớm, họ sẽ không biết đến tất cả các bổ sung tiết kiệm cú pháp (và tiết kiệm
+      lý trí) đã xuất hiện.</p>
+
+      <p>Viết SQL hiệu quả cần có thực hành. Không có truy vấn nào là sai miễn là bạn
+      nhận được kết quả mong đợi, nhưng có một truy vấn chậm. Trong phần này, chúng tôi
+      chỉ ra một số lỗi phổ biến mà chúng tôi thấy mọi người mắc phải. Mặc dù cuốn sách này
+      nói về PostgreSQL, các khuyến nghị của chúng tôi cũng áp dụng cho các cơ sở dữ liệu quan hệ
+      khác.</p>
+
+      <h3 class="subsection-title">Lạm dụng Subqueries trong SELECT</h3>
+
+      <p class="no-indent">Một sai lầm cổ điển của người mới là nghĩ rằng subqueries là những thực thể độc lập. Khác với các ngôn ngữ lập trình thông thường,
+      SQL không chấp nhận ý tưởng về việc đóng gói đen.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">172<span class="sep">|</span>Chương 9: Tinh chỉnh Hiệu suất Truy vấn</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

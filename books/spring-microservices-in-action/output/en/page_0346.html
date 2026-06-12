@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: Listing 10.5 continued and build services</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left,
+    .prose-page.chapter-page .running-head .rh-right {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--105-cont .listing-callouts-right {
+      padding-top: 5.5mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0345.html">← Prev</a>
+    <a href="page_0347.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Enabling your service to build in Travis CI</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">321</span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--105-cont" aria-label="Listing 10.5 (continued)">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>  \"body\": \"Release of version $BUILD_NAME\",
+  \"draft\": true,
+  \"prerelease\": true
+}"
+
+curl –k -X POST \
+   -H "Content-Type: application/json"   \
+  -d "$body" \
+  $TARGET_URL</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 10.5 annotation callout">
+            <p class="listing-callout">Uses curl to invoke the service used to kick off a build</p>
+          </div>
+      </div>
+
+      <p class="no-indent">This script is simple. The first thing you do is build the target URL for the GitHub release API:</p>
+
+      <figure class="code-snippet" aria-label="GitHub release API target URL">
+        <pre class="code-block"><code>export TARGET_URL="https://api.github.com/repos/
+  ➥ carnellj/spmia-chapter10/
+  ➥ releases?access_token=$GITHUB_TOKEN"</code></pre>
+      </figure>
+
+      <p>In the TARGET_URL you&rsquo;re passing an HTTP query parameter called <code>access_token</code>. This parameter contains a GitHub personal access token set up to specifically allow your script to take action via the REST API. Your GitHub personal access token is stored in an encrypted environment variable called <code>GITHUB_TOKEN</code>. To generate a personal access token, log in to your GitHub account and navigate to <a href="https://github.com/settings/tokens">https://github.com/settings/tokens</a>. When you generate a token, make sure you cut and paste it right away. When you leave the GitHub screen it will be gone and you&rsquo;ll need to regenerate it.</p>
+
+      <p>The second step in your script is to set up the JSON body for the REST call:</p>
+
+      <figure class="code-snippet" aria-label="GitHub release REST call JSON body">
+        <pre class="code-block"><code>body="{
+  \"tag_name\": \"$BUILD_NAME\",
+  \"target_commitish\": \"master\",
+  \"name\": \"$BUILD_NAME\",
+  \"body\": \"Release of version $BUILD_NAME\",
+  \"draft\": true,
+  \"prerelease\": true
+}"</code></pre>
+      </figure>
+
+      <p>In the previous code snippet you&rsquo;re supplying the <code>$BUILD_NAME</code> for a <code>tag_name</code> value and the setting basic release notes using the <code>body</code> field.</p>
+
+      <p>Once the JSON body for the call is built, executing the call via the curl command is trivial:</p>
+
+      <figure class="code-snippet" aria-label="curl POST to GitHub release API">
+        <pre class="code-block"><code>curl –k -X POST \
+  -H "Content-Type: application/json"   \
+  -d "$body" \
+  $TARGET_URL</code></pre>
+      </figure>
+
+      <h4 class="subsection-title">10.6.5 Building the microservices and creating the Docker images</h4>
+
+      <p class="no-indent">The next step in the Travis <code>script</code> attribute is to build the individual services and then create Docker container images for each service. You do this via a small script called <code>travis_scripts/build_services.sh</code>. This script will execute the following command:</p>
+
+      <figure class="code-snippet" aria-label="Maven Docker build command">
+        <pre class="code-block"><code>mvn clean package docker:build</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Hình 8.4</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.diagram + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0263.html">← Trước</a>
+    <a href="page_0265.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Viết message producer và consumer đơn giản</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">239</span>
+      </header>
+
+      <figure class="diagram" aria-label="Hình 8.4">
+        <img src="../assets/images/page_0264_fig_8_4.png" width="1313" height="647" alt="Hình 8.4 — Khi dữ liệu organization service thay đổi, nó sẽ publish một message tới Kafka">
+        <figcaption><strong>Hình 8.4</strong><br>Khi dữ liệu organization service thay đổi, nó sẽ publish một message tới Kafka.</figcaption>
+      </figure>
+
+      <h4 class="subsection-title">8.3.1 Viết message producer trong organization service</h4>
+
+      <p class="no-indent">Bạn sẽ bắt đầu bằng cách sửa organization service để mỗi khi dữ liệu tổ chức được thêm, cập nhật hoặc xóa, organization service sẽ publish một message tới một Kafka topic cho biết sự kiện thay đổi tổ chức đã xảy ra. Hình 8.4 làm nổi bật message producer và dựa trên kiến trúc Spring Cloud Stream tổng quát từ hình 8.3.</p>
+
+      <p>Message được publish sẽ bao gồm organization ID liên quan đến sự kiện thay đổi và cũng sẽ bao gồm hành động đã xảy ra (Add, Update hoặc Delete).</p>
+
+      <p>Việc đầu tiên bạn cần làm là thiết lập các dependency Maven trong file pom.xml Maven của organization service. File pom.xml có thể tìm thấy trong thư mục organization-service. Trong pom.xml, bạn cần thêm hai dependency: một cho các thư viện Spring Cloud Stream cốt lõi và một để bao gồm các thư viện Spring Cloud Stream Kafka:</p>
+
+      <figure class="code-snippet" aria-label="Dependency Maven Spring Cloud Stream">
+        <pre class="code-block"><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-stream&lt;/artifactId&gt;
+  &lt;/dependency&gt;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

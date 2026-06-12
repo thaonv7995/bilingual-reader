@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý việc thực thi mã nguồn đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="2"] {
+      counter-reset: init-step 1;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0461.html">← Trước</a>
+    <a href="page_0463.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">462</span>
+      </header>
+
+      <ol class="numbered" start="2">
+        <li>
+          <p>chúng ta bắt đầu theo dõi từ vị trí đó. Tương tự, một Thread (Luồng) biết được vị trí của nó khi nhận được quyền truy cập vào CPU và nó bắt đầu thực thi các câu lệnh từ điểm đó.</p>
+          <p>Thread (Luồng) mà CPU đang thực thi tại một thời điểm được coi là ở trạng thái <strong>running</strong> (đang chạy), trong khi
+          Thread (Luồng) đã sẵn sàng chạy nhưng đang đợi đến lượt được coi là ở trạng thái <strong>ready</strong> (sẵn sàng). Bộ
+          lập lịch đủ thông minh để biết Thread (Luồng) nào đang đợi một Resource (Tài nguyên) cụ thể khả
+          dụng và đặt Thread (Luồng) đó vào trạng thái <strong>waiting</strong> (đang chờ) cho đến khi Resource (Tài nguyên) đó trở nên khả dụng.</p>
+          <p>Tất nhiên, nếu hệ thống bên dưới có nhiều CPU như trong hình trên, bộ
+          lập lịch có thể lập lịch cho nhiều Thread (Luồng) chạy cùng lúc trên các CPU khác nhau.</p>
+        </li>
+        <li>
+          <p>Khi đi sâu vào tiến trình JVM, hãy quan sát sự tương đồng giữa các thành phần của
+          toàn bộ hình vẽ và các thành phần bên trong JVM. Điều này không phải ngẫu nhiên mà là do thiết kế. Một
+          JVM trên thực tế mô phỏng một máy tính hoàn chỉnh bao gồm cả hệ điều hành. Vì vậy,
+          bất kỳ khái niệm nào tôi đã giải thích ở hai điểm trên đều áp dụng hoàn toàn tương tự cho một JVM.</p>
+          <p>Về mặt khái niệm, các thành phần của một JVM phục vụ cùng mục đích như các thành phần tương ứng trong
+          PC thực tế. Ví dụ, bộ nhớ chương trình của một JVM giống như RAM của
+          hệ thống. Các virtual threads (thread ảo) bên trong một JVM giống như các thread được tạo bởi hệ điều hành. <strong>Platform
+          threads</strong> (còn gọi là <strong>native threads</strong>) giống như các CPU logic của JVM. Bộ lập lịch thread của JVM
+          lập lịch cho các virtual threads chạy trên các platform threads tương tự như bộ lập lịch thread của hệ điều hành
+          lập lịch cho các thread của hệ điều hành chạy trên các CPU logic.</p>
+          <p>Vì vậy, khi bạn khởi chạy một JVM (sử dụng tệp <code>java.exe</code> trên Windows hoặc tệp thực thi <code>java</code>
+          trên Linux), về cơ bản bạn đang khởi động một máy ảo. Giống như hệ điều hành tạo ra
+          một user thread để khởi chạy một tiến trình, JVM cũng tạo ra một platform thread để thực thi
+          các câu lệnh có trong lớp main của bạn. Thread này được gọi là <strong>main thread</strong>.</p>
+        </li>
+        <li>
+          <p>Trước phiên bản <strong>Java 21</strong>, bất cứ khi nào JVM cần tạo một thread, nó đều yêu cầu hệ điều hành
+          tạo ra nó. Hệ điều hành sau đó sẽ tạo ra một thread và gán cho JVM. Như vậy, tất cả các thread trong
+          JVM thực chất chỉ là các lớp bọc (wrapper) bên ngoài các thread của hệ điều hành và chúng sẽ có cơ hội
+          thực thi khi và chỉ khi hệ điều hành lập lịch cho thread liên kết tương ứng thực thi. Các thread JVM như vậy
+          hiện nay được gọi chính thức là <strong>platform</strong></p>
+        </li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

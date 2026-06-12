@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý việc thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0465.html">← Trước</a>
+    <a href="page_0467.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">466</span>
+      </header>
+
+      <p class="no-indent">các CPU khác nhau cùng một lúc và do đó, chúng sẽ được thực thi song song. Nếu không, OS
+      sẽ chia sẻ CPU với cả hai thread trên cơ sở chia sẻ thời gian (time sharing).</p>
+
+      <p>Tại thời điểm viết code, chúng ta không thể chắc chắn khi nào và trong bao lâu một thread thực sự
+      sẽ được chạy, đó là lý do tại sao tôi nói rằng kết quả đầu ra ở trên có khả năng xảy ra cao nhất. Vì việc tính giai thừa của 100000
+      mất nhiều thời gian hơn (khoảng 5 giây trên máy của tôi) so với câu lệnh in (print statement) trong phương thức main
+      (chỉ mất tối đa vài mili giây), rất có thể main thread sẽ hoàn thành việc thực thi
+      trước khi thread tính giai thừa kết thúc. Nhưng điều quan trọng là chúng ta
+      không thể giả định trình tự thực thi này khi viết code. Hoàn toàn có khả năng là tại
+      run time, OS sẽ phân bổ 10 giây thời gian CPU cho thread tính giai thừa trước và 10 giây cho
+      main thread tiếp theo. Trong trường hợp đó, kết quả đầu ra của hai câu lệnh in sẽ bị đảo ngược. Bạn
+      cần hiểu và nhớ điểm này thật rõ ràng vì đây là <strong>một trong hai</strong> nguyên nhân
+      chính gây ra bug trong các chương trình đa luồng (multithreaded). Bạn đơn giản là không thể xây dựng logic của chương trình dựa trên
+      thời gian thực thi (timing) của các thread. OS có thể lập lịch (schedule) cho bất kỳ thread nào chạy vào bất kỳ lúc nào.</p>
+
+      <p>Cuối cùng, khi chạy chương trình trên, bạn sẽ nhận thấy rằng chương trình không kết thúc
+      ngay cả khi đã đi đến cuối phương thức main. Bạn sẽ thấy con trỏ nhấp nháy một lúc
+      sau khi câu lệnh in trong phương thức main được thực thi. Nó chỉ kết thúc sau khi câu lệnh
+      in từ phương thức run được thực thi. Đó là vì một chương trình Java không chỉ được cấu thành từ
+      mỗi main thread. Một chương trình Java bao gồm tất cả các thread mà chúng ta đã khởi chạy bao gồm cả
+      main thread cũng như các thread mà JVM khởi chạy cho mục đích dọn dẹp hệ thống (chẳng hạn như
+      cho bộ thu dọn rác (Garbage Collection)) được gọi là <strong>daemon threads</strong>. Chương trình không kết thúc cho đến khi tất cả các
+      non-daemon threads hoàn thành việc thực thi của chúng. Sự khác biệt giữa daemon và non-daemon
+      threads là rất quan trọng vì các daemon threads chỉ tồn tại để hỗ trợ các non-daemon threads. Nếu
+      không có non-daemon threads nào đang chạy trong JVM, thì không cần thiết phải giữ cho các daemon
+      threads tiếp tục chạy. Ví dụ, nếu không có logic nghiệp vụ (business logic) nào cần thực thi, tại sao một chương trình
+      lại tiếp tục thực hiện bộ thu dọn rác (Garbage Collection)?</p>
+
+      <p>Ví dụ trên không quá thú vị vì thời gian chương trình hoàn thành cũng giống
+      như thời gian của một chương trình tính giai thừa mà không sử dụng thread.&nbsp; So, hãy để tôi
+      sửa đổi chương trình trên để chỉ ra cho bạn lợi thế của lập trình đồng thời (concurrent)</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

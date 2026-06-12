@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0524.html">← Prev</a>
+    <a href="page_0526.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">525</span>
+      </header>
+
+      <p class="no-indent"><strong class="run-in">Scenario 3:</strong> The first thread started by main runs and gets the lock upon calling
+      <code>rlck.lock()</code>. The scheduler now suspends the first thread and runs the second thread. The
+      second thread calls <code>rlck.tryLock()</code>&nbsp;but this call will return <code>false</code>&nbsp;because the <code>rlck</code>&nbsp;is
+      already locked by the first thread. So, the second thread executes <code>rlck.unlock()</code>&nbsp;in the
+      <code>else</code>&nbsp;part. Since the second thread does not hold the lock for <code>rlck</code>, it will get an
+      <code>IllegalMonitorStateException</code>&nbsp;and end. The first thread now runs and executes the
+      remaining code without any issue. Thus, in this scenario, the <code>print</code>&nbsp;statement will not be
+      executed but the stack trace for the exception generated in the second thread will be printed.</p>
+
+      <p>Try to work out the output in the scenario where the second thread runs first and executes
+      <code>tryLock</code>&nbsp;but is then suspended by the scheduler immediately afterwards.</p>
+
+      <h3 class="section-title section-title--sub">20.5.3 Using ReadWriteLock and ReentrantReadWriteLock<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Blocking simultaneous access from multiple threads to a shared field makes sense only if that
+      shared field is modified. As you learned in the previous section, an immutable field poses no risk
+      when read by multiple threads simultaneously. So, if there is a shared field that is read more
+      frequently than it is written to, it would be very inefficient to block access to that field for every
+      read operation. It would be ideal to block access to it only when a thread actually wants to
+      modify it.</p>
+
+      <p>Well, this is the functionality that a <code>ReadWriteLock</code>&nbsp;provides. It allows multiple reads of a
+      field to execute simultaneously but blocks all access to the field from other threads when one
+      thread wants to modify it.</p>
+
+      <p>In technical terms, a <code>ReadWriteLock</code>&nbsp;has two locks&nbsp;- a &ldquo;read&rdquo; lock,
+      which can be acquired by any number of threads simultaneously while the write lock is free and
+      an exclusive &ldquo;write&rdquo; lock, which can be acquired by only one thread at a time and only when no
+      thread has a read lock.</p>
+
+      <p class="no-indent">The following example shows how it is used:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public class TestRWLock {</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 6: Sorting and Grouping</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 6: Sắp xếp và Nhóm</p>
+
+      <h3 class="section-title">Chỉ mục ASC, DESC và NULLS FIRST/LAST</h3>
+
+      <p class="no-indent">Cơ sở dữ liệu có thể đọc chỉ mục theo cả hai hướng. Điều đó có nghĩa là một <code><strong>order by</strong></code> theo chuỗi cũng có thể xảy ra nếu phạm vi chỉ mục được quét theo thứ tự ngược lại so với điều được chỉ định bởi mệnh đề <code><strong>order by</strong></code>. Mặc dù các bộ điều chỉnh <code>ASC</code> và <code>DESC</code> trong mệnh đề <code><strong>order by</strong></code> có thể ngăn chặn việc thực thi theo chuỗi, hầu hết các cơ sở dữ liệu cung cấp một cách đơn giản để thay đổi thứ tự chỉ mục để chỉ mục trở nên khả dụng cho một <code><strong>order by</strong></code> theo chuỗi.</p>
+
+      <p>Ví dụ sau sử dụng một chỉ mục theo thứ tự ngược lại. Nó cung cấp doanh số từ hôm qua được sắp xếp theo ngày giảm dần và <code>PRODUCT_ID</code> giảm dần.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT sale_date, product_id, quantity
+  FROM sales
+ WHERE sale_date &gt;= TRUNC(sysdate) - INTERVAL '1' DAY
+ <strong>ORDER BY sale_date DESC, product_id DESC</strong>;</code></pre>
+      </figure>
+
+      <p>Kế hoạch thực thi cho thấy rằng cơ sở dữ liệu đọc chỉ mục theo hướng giảm dần.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id |Operation                    | Name        | Rows | Cost |
+---------------------------------------------------------------
+| 0 |SELECT STATEMENT             |             |  320 |  300 |
+| 1 | TABLE ACCESS BY INDEX ROWID | SALES       |  320 |  300 |
+|*2 |  <strong>INDEX RANGE SCAN DESCENDING</strong>| SALES_DT_PR |  320 |    4 |
+---------------------------------------------------------------</code></pre>
+      </figure>
+
+      <p>Trong trường hợp này, cơ sở dữ liệu sử dụng cây chỉ mục để tìm <em>mục</em> khớp cuối cùng. Từ đó, nó theo dõi chuỗi nút lá &ldquo;lên trên&rdquo; như được hiển thị trong Hình&nbsp;6.2. Sau cùng, đây là lý do tại sao cơ sở dữ liệu sử dụng một danh sách liên kết <em>đôi</em> để xây dựng chuỗi nút lá.</p>
+
+      <p>Tất nhiên, điều quan trọng là phạm vi chỉ mục được quét phải theo thứ tự ngược lại chính xác như cần thiết cho mệnh đề <code><strong>order by</strong></code>.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Các cơ sở dữ liệu có thể đọc chỉ mục theo cả hai hướng.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">134</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

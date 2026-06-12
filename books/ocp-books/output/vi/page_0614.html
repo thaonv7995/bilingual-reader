@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0613.html">← Trước</a>
+    <a href="page_0615.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">614</span>
+      </header>
+
+      <p class="no-indent">các result container không an toàn (unsafe result container) là một mẹo thú vị nhưng nó có một vấn đề - nội dung của các thực thể (instance) container cần phải được gộp (merge) thành một đối tượng kết quả cuối cùng ở bước cuối. Tùy thuộc vào loại container nào đang được sử dụng, thao tác gộp có thể rất tốn kém. Ví dụ, nếu container kết quả có thể thay đổi (mutable result container) của bạn là một <code>Map</code>, việc gộp nhiều map sẽ là một thao tác rất tốn kém.</p>
+
+      <p>Tuy nhiên, cũng có một giải pháp cho vấn đề đó - sử dụng các concurrent collection. Lưu ý rằng tôi không nói về các synchronized collection, thứ mà bạn có thể tạo bằng cách sử dụng các phương thức <code>synchronizedXXX</code> của lớp <code>Collections</code>, bởi vì chúng đồng bộ hóa từng thao tác và điều đó sẽ làm mất đi toàn bộ ý nghĩa của việc làm cho stream chạy song song. Tôi đang nói về các concurrent collection chẳng hạn như <code>java.util.concurrent.ConcurrentHashMap</code>. Các lớp này cung cấp hiệu năng tốt hơn các synchronized collection bằng cách cho phép các thao tác đồng thời. Vì vậy, thay vị tạo các thực thể (instance) mới của lớp result container trong hàm <code>Supplier</code> của bạn, bạn có thể sử dụng cùng một thực thể (instance) của một lớp hỗ trợ các thao tác đồng thời. Một phép thu gọn có thể thay đổi (mutable reduction) sử dụng các concurrent collection được gọi là &ldquo;concurrent reduction&rdquo; (thu gọn đồng thời).</p>
+
+      <p>Lớp <code>Collectors</code> cung cấp hai phương thức - <code>toConcurrentMap</code> và <code>groupingByConcurrent</code> hoạt động dựa trên nguyên lý này. Ví dụ, câu lệnh</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Map&lt;Boolean, List&lt;Integer&gt;&gt; result = List.of(1, 2, 3,
+4).stream().parallel().collect(Collectors.groupingByConcurrent(i -&gt; i%2==0,
+Collectors.toList()));</code></pre>
+      </figure>
+
+      <p class="no-indent">sử dụng một concurrent map để nhóm các giá trị đầu vào. Tuy nhiên, <code>Collector</code> lồng nhau được trả về bởi <code>toList</code> là một collector thông thường.&nbsp;</p>
+
+      <p>Mặc dù kỳ thi không đi quá sâu vào concurrent reduction, bạn nên biết rằng vì nhiều thread (luồng) có thể tích lũy kết quả vào một container đồng thời (concurrent container) dùng chung bất kỳ lúc nào, thứ tự tích lũy các kết quả không thể mang tính xác định. Do đó, một concurrent reduction cho một parallel stream chỉ khả thi nếu - 1. collector có đặc tính <code>CONCURRENT</code> và 2. stream không có thứ tự (unordered) hoặc <code>Collector</code> tuyên bố rõ ràng rằng nó bỏ qua thứ tự gặp (encounter order) bằng cách có đặc tính <code>Collector.Characteristics.UNORDERED</code>.</p>
+
+      <footer class="book-footer">
+        <span>CHỨNG CHỈ ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

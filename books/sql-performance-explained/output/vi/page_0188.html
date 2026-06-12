@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Phụ lục A: Kế hoạch thực thi</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+      margin: 0;
+      font-size: 9.5pt;
+      line-height: 1.4;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phụ lục A: Kế hoạch thực thi</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Các bộ lọc <code>select</code> sau đây trên cột <code>ID2</code>, cột này không được bao gồm trong chỉ mục:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>PREPARE stmt(int) AS SELECT count(*)
+                       FROM scale_data
+                      WHERE section = 1
+                        AND id2 = $1;
+EXPLAIN EXECUTE stmt(1);
+                      QUERY PLAN
+-----------------------------------------------------
+Aggregate  (cost=529346.31..529346.32 rows=1 width=0)
+  Output: count(*)
+  -> Index Scan using scale_data_key on scale_data
+     (cost=0.00..529338.83 rows=2989 width=0)
+     Index Cond: (scale_data.section = 1::numeric)
+     Filter: (scale_data.id2 = ($1)::numeric)</code></pre>
+      </figure>
+
+      <p>Điều kiện <code>ID2</code> xuất hiện dưới dạng &ldquo;<code>Filter</code>&rdquo; bên dưới hoạt động <code>Index Scan</code>. Điều này là do PostgreSQL thực hiện truy cập bảng như một phần của hoạt động <code>Index Scan</code>. Nói cách khác, hoạt động <code>TABLE ACCESS BY INDEX ROWID</code> của cơ sở dữ liệu Oracle được ẩn bên trong hoạt động <code>Index Scan</code> của PostgreSQL. Do đó, có thể một <code>Index Scan</code> lọc trên các cột không được bao gồm trong chỉ mục.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Các điều kiện <code>Filter</code> của PostgreSQL là các điều kiện lọc cấp bảng&mdash;ngay cả khi được hiển thị cho một <code>Index Scan</code>.</p>
+      </aside>
+
+      <p>Khi chúng ta thêm chỉ mục từ chương &ldquo;Hiệu suất và Khả năng mở rộng&rdquo;, chúng ta có thể thấy rằng tất cả các cột xuất hiện dưới dạng &ldquo;Index Cond&rdquo;&mdash;không phân biệt chúng là điều kiện truy cập hay điều kiện lọc.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX scale_slow
+          ON scale_data (section, id1, id2);</code></pre>
+      </figure>
+
+      <p class="no-indent">Kế hoạch thực thi với chỉ mục mới không hiển thị bất kỳ điều kiện lọc nào:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>                      QUERY PLAN
+------------------------------------------------------
+Aggregate  (cost=14215.98..14215.99 rows=1 width=0)
+  Output: count(*)
+  -> Index Scan using scale_slow on scale_data
+     (cost=0.00..14208.51 rows=2989 width=0)
+     Index Cond: (section = 1::numeric AND id2 = ($1)::numeric)</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span class="page-folio">178</span>
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

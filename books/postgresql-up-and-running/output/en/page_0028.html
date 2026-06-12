@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 1: The Basics (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ul.bullets figure.code-snippet {
+      margin: 1.5mm 0 1.5mm 4.5mm;
+    }
+    .prose-page.chapter-page ul.bullets figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10pt;
+      line-height: 1.25;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0027.html">← Prev</a>
+    <a href="page_0029.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <h3 class="section-title">What’s New in PostgreSQL 9.4?</h3>
+      <p class="lead no-indent">At the time of writing, PostgreSQL 9.3 is the latest stable release, and 9.4 is in beta with
+      binaries available for the brave. The following features have been committed and are
+      available in the beta release:</p>
+
+      <ul class="bullets">
+        <li>Materialized views are improved. In version 9.3, refreshing a materialized view locks
+        it for reading for the entire duration of the refresh. But refreshing materialized views
+        usually takes time, so making them inaccessible during a refresh greatly reduces
+        their usability in production environments. Version 9.4 removes the lock so you
+        can still read the data while the view is being refreshed. One caveat is that for a
+        materialized view to utilize this feature, it must have a unique index on it.</li>
+        <li>The SQL:2008 analytic functions <code>percentile_disc</code> (percentile discrete) and
+        <code>percentile_cont</code> (percentile continuous) are added, with the companion
+        <code>WITHIN GROUP (ORDER BY…)</code> SQL construct. Examples are detailed in
+        <span class="accent-word">Depesz ORDERED SET WITHIN GROUP Aggregates</span>. These functions give you a built-in fast median
+        function. For example, if we have test scores and want to get the median score
+        (median is 0.5) and 75 percentile score, we would write this query:
+          <figure class="code-snippet">
+            <pre class="code-block"><code>SELECT subject, percentile_cont(ARRAY[0.5, 0.75])
+  WITHIN GROUP (ORDER BY score) As med_75_score
+ FROM test_scores GROUP BY subject;</code></pre>
+          </figure>
+        PostgreSQL’s implementation of <code>percentile_cont</code> and <code>percentile_disc</code> can take
+        an array or a single value between 0 and 1 that corresponds to the percentile values
+        desired and correspondingly returns an array of values or a single value. The
+        <code>ORDER BY score</code> says that we are interested in getting the <code>score</code> field values corresponding
+        to the designated percentiles.</li>
+        <li><code>WITH CHECK OPTION</code> syntax for views allows you to ensure that an update/insert on
+        a view cannot happen if the resulting data is no longer visible in the view. We
+        demonstrate this feature in <span class="accent-word">Example 7-2</span>.</li>
+        <li>A new data type—<code>jsonb</code>, a JavaScript Object Notation (JSON) binary type replete
+        with index support—was added. <code>jsonb</code> allows you to index a full JSON document
+        and speed up retrieval of subelements. For details, see <span class="accent-word">“JSON” on page 96</span>, and check
+        out these blog posts: “<span class="accent-word">Introduce jsonb: A Structured Format for Storing JSON</span>,” and
+        “<span class="accent-word">jsonb: Wildcard Query</span>.”</li>
+        <li>Query speed for the Generalized Inverted Index (GIN) has improved, and GIN
+        indexes have a smaller footprint. GIN is gaining popularity and is particularly handy
+        for full text searches, trigrams, <code>hstore</code>s, and <code>jsonb</code>. You can also use it in lieu of B-
+        Tree in many circumstances, and it is generally a smaller index in these cases. Check
+        out <span class="accent-word">GIN as a Substitute for Bitmap Indexes</span>.</li>
+        <li>More JSON functions are available. See <span class="accent-word">Depesz: New JSON functions</span>.</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">10<span class="sep">|</span>Chapter 1: The Basics</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — Window Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0152.html">← Prev</a>
+    <a href="page_0154.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">153</span>
+      </header>
+
+      <p class="no-indent">The key observation to make in the output is how the sum changes from row to row.
+      The ORDER BY clause means that the sum will be taken only from the beginning of the
+      partition to the current row, giving you a running total, where the location of the current
+      row in the list is dictated by the ORDER BY. For instance, if your row is in the fifth row
+      in the third partition, the sum will cover only the first five rows in the third partition.</p>
+
+      <p>We put an ORDER BY <code>left(tract_id,5), val</code> at the end of the query so you could
+      easily see the pattern, but keep in mind that the ORDER BY of the query is independent
+      of the ORDER BY in each OVER clause.</p>
+
+      <p>You can explicitly control the rows under consideration by adding a RANGE or ROWS
+      clause: <code>ROWS BETWEEN CURRENT ROW AND 5 FOLLOWING</code>.</p>
+
+      <p>PostgreSQL also supports window naming, which is useful if you have the same window
+      for each of your window columns. <span class="accent-word">Example 7-27</span> demonstrates how to name windows,
+      as well as how to use the LEAD and LAG window functions to show a record value before
+      and after for a given partition.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-27.</strong> Naming windows, demonstrating LEAD and LAG</figcaption>
+        <pre class="code-block"><code>SELECT * FROM (
+    SELECT
+        ROW_NUMBER() OVER( wt ) As rnum,  (1)
+        substring(tract_id,1, 5) As county_code,
+        tract_id,
+        LAG(tract_id,2) OVER wt As tract_2_before,
+        LEAD(tract_id) OVER wt As tract_after
+    FROM census.lu_tracts
+    WINDOW wt AS (PARTITION BY substring(tract_id,1, 5) ORDER BY tract_id)  (2)
+) As x
+WHERE rnum BETWEEN 2 and 3 AND county_code IN ('25007','25025')
+ORDER BY county_code, rnum;</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>rnum | county_code | tract_id    | tract_2_before | tract_after
+-----+-------------+-------------+----------------+-------------
+2    | 25007       | 25007200200 |                | 25007200300
+3    | 25007       | 25007200300 | 25007200100    | 25007200400
+2    | 25025       | 25025000201 |                | 25025000202
+3    | 25025       | 25025000202 | 25025000100    | 25025000301</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">(1)</span> Using our window name instead of retyping.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">(2)</span> Naming our window <code>wt</code> window.</p>
+
+      <p>Both LEAD and LAG take an optional step argument that defines how many rows to skip
+      forward or backward; the step can be positive or negative. LEAD and LAG return NULL
+      when trying to retrieve rows outside the window partition. This is a possibility that you
+      always have to account for.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Window Functions<span class="sep">|</span>135</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

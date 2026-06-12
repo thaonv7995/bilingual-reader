@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 7: Partial Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label {
+      margin: 3.5mm 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .operation-label:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chapter 7: Partial Results</p>
+
+      <p class="no-indent">The following examples show the more widely used offset method. Its main advantage is that it is very easy to handle&mdash;especially with databases that have a dedicated keyword for it (offset). This keyword was even taken into the SQL standard as part of the fetch first extension.</p>
+
+      <p class="operation-label">MySQL</p>
+
+      <p class="no-indent">MySQL and PostgreSQL offer the <code><strong>offset</strong></code> clause for discarding the specified number of rows from the beginning of a top-N query. The <code><strong>limit</strong></code> clause is applied afterwards.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM sales
+ ORDER BY sale_date DESC
+ LIMIT 10 <strong>OFFSET 10</strong>;</code></pre>
+      </figure>
+
+      <p class="operation-label">Oracle Database</p>
+
+      <p class="no-indent">The Oracle database provides the pseudo column <code>ROWNUM</code> that numbers the rows in the result set automatically. It is, however, not possible to apply a greater than or equal to (&gt;=) filter on this pseudo-column. To make this work, you need to first &ldquo;materialize&rdquo; the row numbers by renaming the column with an alias.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM ( SELECT tmp.*, <strong>rownum rn</strong>
+           FROM ( SELECT *
+                    FROM sales
+                   ORDER BY sale_date DESC
+                ) tmp
+          WHERE <strong>rownum &lt;= 20</strong>
+       )
+ WHERE rn &gt; 10;</code></pre>
+      </figure>
+
+      <p>Note the use of the alias <code>RN</code> for the lower bound and the <code>ROWNUM</code> pseudo column itself for the upper bound.</p>
+
+      <p class="operation-label">PostgreSQL</p>
+
+      <p class="no-indent">The fetch first extension defines an <code>offset ... rows</code> clause as well. PostgreSQL, however, only accepts <code>offset</code> without the <code>rows</code> keyword. The previously used limit/offset syntax still works as shown in the MySQL example.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT *
+  FROM sales
+ ORDER BY sale_date DESC
+<strong>OFFSET 10
+ FETCH NEXT 10 ROWS ONLY;</strong></code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">148</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

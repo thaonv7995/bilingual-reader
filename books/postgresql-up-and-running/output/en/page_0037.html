@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p.callout-item code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0036.html">← Prev</a>
+    <a href="page_0038.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> <code>unit</code> tells you the measurement unit reported by the settings. This is sometimes
+      confusing when it comes to memory because, as you can see in <span class="accent-word">Example 2-2</span>,
+      some are reported in 8 KB units and some just in KB. In <em>postgresql.conf</em>, usually,
+      you deliberately set these to a unit of measurement of your choice; 128 MB is a
+      good candidate. You can also get a more human-readable display of a particular
+      setting by running a statement such as <code>SHOW effective_cache_size;</code> or <code>SHOW
+      maintenance_work_mem;</code>, both of which display settings in MBs. If you want to
+      see all settings in friendly units, use <code>SHOW ALL</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> <code>setting</code> is the current setting; <code>boot_val</code> is the default setting; <code>reset_val</code> is the
+      new setting if you were to restart or reload the server. Make sure that after any
+      change you make to <em>postgresql.conf</em>, <code>setting</code> and <code>reset_val</code> are the same. If they
+      are not, the server is still in need of a restart or reload.</p>
+
+      <p class="no-indent">Pay special attention to the following network settings in <em>postgresql.conf</em>; changing their
+      values requires a service restart.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0037_icon_warning.png" width="92" height="87" alt="Warning">
+        </figure>
+        <p class="callout-text">If you are running version 9.4 or later, the same-named settings in
+        <em>postgresql.auto.conf</em> take precedence over the ones in <em>postgresql.conf</em>.</p>
+      </div>
+
+      <p class="object-term">listen_addresses</p>
+      <p class="object-def">Informs PostgreSQL which IP addresses to listen on. This usually defaults to <code>localhost</code>
+      or <code>local</code>, but many people change it to <code>*</code>, meaning all available IP ad‐
+      dresses.</p>
+
+      <p class="object-term">port</p>
+      <p class="object-def">Defaults to 5432. If you happen to be on Red Hat or CentOS, make changes to the
+      <code>PGPORT</code> value <code><em>/etc/sysconfig/pgsql/your_service_name_here</em></code> to change the listening
+      port.</p>
+
+      <p class="object-term">max_connections</p>
+      <p class="object-def">The maximum number of concurrent connections allowed.</p>
+
+      <p class="no-indent">In our experience, we found the following three settings to affect performance across
+      the board and might be worthy of experimentation for your particular setup:</p>
+
+      <p class="object-term">shared_buffers</p>
+      <p class="object-def">Defines the amount of memory shared among all connections to store recently
+      accessed pages. This setting profoundly affects the speed of your queries. You want
+      this setting to be fairly high, probably as much as 25% of your onboard memory.
+      However, you’ll generally see diminishing returns after more than 8 GB. Changes
+      require a restart.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Configuration Files<span class="sep">|</span>19</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

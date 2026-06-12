@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub + h3.section-title.section-title--sub {
+      margin-top: 4mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0628.html">← Trước</a>
+    <a href="page_0630.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">629</span>
+      </header>
+
+      <p class="no-indent">Nếu duyệt qua JavaDoc của API Ngày và Giờ (Date/Time API) mới, bạn sẽ thấy nhiều Lớp (Class)
+      khác nhau và nhiều phương thức khác nhau trong mỗi Lớp (Class) này. Sẽ rất dễ bị choáng ngợp, nhưng
+      đừng lo lắng. API này thực sự khá dễ hiểu một khi bạn nhận ra rằng chỉ có
+      bốn loại thao tác mà bạn có thể thực hiện với các Lớp (Class) này - tạo các Đối tượng (Object) mới, so sánh,
+      đọc trạng thái của các Đối tượng (Object), và chuyển đổi chúng thành chuỗi (String). Không có phương thức nào để
+      cập nhật vì các Đối tượng (Object) của các Lớp (Class) này là bất biến. Tất cả các Lớp (Class) liên quan đều có
+      các phương thức tương tự để thực hiện các thao tác này. Trong các phần tiếp theo, tôi sẽ giải thích từng thao tác
+      này kèm theo các ví dụ.</p>
+
+      <h3 class="section-title">22.2 Tạo các Đối tượng (Object) Ngày/Giờ<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Hãy nhớ rằng không có Lớp (Class) ngày/giờ nào có constructor public. Do đó,
+      không thể tạo chúng bằng cách sử dụng toán tử <code>new</code>&nbsp;. Nếu bạn thấy bất kỳ dòng mã nào dạng <code>new LocalDate()</code>
+      ở bất kỳ đâu, hãy chọn ngay phương án nói rằng, &ldquo;compilation fails&rdquo;!</p>
+
+      <p>Thay vì sử dụng các constructor, API Ngày và Giờ (Date and Time API) mới cung cấp một số cách khác để tạo
+      các Đối tượng (Object) ngày/giờ. Chúng có thể được phân loại rộng rãi thành hai nhóm:</p>
+
+      <ol class="numbered">
+        <li>Các phương thức factory <strong>public</strong>&nbsp;<strong>static</strong>&nbsp;nạp chồng (overloaded) có tên là <code>now</code>, <code>of</code>, và <code>from</code></li>
+        <li>Các phương thức instance <strong>public</strong> nạp chồng (overloaded) có tên là <code>with</code> và <code>truncatedTo</code></li>
+      </ol>
+
+      <p class="no-indent">Hãy cùng tìm hiểu chúng.</p>
+
+      <h3 class="section-title section-title--sub">22.2.1 Sử dụng các phương thức static now/of/from<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--sub">Các phương thức <code>now</code>&nbsp;<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Các phương thức <strong>now</strong> trả về một thực thể (instance) đại diện cho ngày hoặc giờ hiện tại trên dòng thời gian
+      mà Lớp (Class) đó đại diện. Ví dụ, vì Lớp (Class) <code>LocalDateTime</code>&nbsp;đại diện
+      cho ngày và giờ của hệ thống mà chương trình đang chạy, <code>LocalDateTime.now();</code>
+      trả về một Đối tượng (Object) <code>LocalDateTime</code> được thiết lập</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

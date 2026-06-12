@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 4: The Join Operation</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .language-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chapter 4: The Join Operation</p>
+
+      <p>When minimizing the hash table size, the relevant factor is not the number of rows but the memory footprint. It is, in fact, also possible to reduce the hash table size by selecting fewer columns&mdash;only the attributes you really need:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  SELECT s.sale_date, s.eur_value
+       , e.last_name, e.first_name
+    FROM sales s
+    JOIN employees e ON (s.subsidiary_id = e.subsidiary_id
+                    AND s.employee_id = e.employee_id )
+   WHERE s.sale_date &gt; trunc(sysdate) - INTERVAL '6' MONTH</code></pre>
+      </figure>
+
+      <p>That method seldom introduces bugs because dropping the wrong column will probably quickly result in an error message. Nevertheless it is possible to cut the hash table size considerably, in this particular case from 9 megabyte down to 234 kilobytes&mdash;a reduction of 97%.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>--------------------------------------------------------------
+| Id | Operation                    | Name      | Bytes| Cost|
+--------------------------------------------------------------
+|  0 | SELECT STATEMENT             |           | 2067K| 2202|
+|* 1 |  HASH JOIN                   |           | 2067K| 2202|
+|  2 |   TABLE ACCESS FULL          | EMPLOYEES | 234K|  478|
+|  3 |   TABLE ACCESS BY INDEX ROWID| SALES     | 913K| 1724|
+|* 4 |    INDEX RANGE SCAN          | SALES_DATE|      |  133|
+--------------------------------------------------------------</code></pre>
+      </figure>
+
+      <aside class="sidebar-note">
+        <h3>Tip</h3>
+        <p>Select fewer columns to improve hash join performance.</p>
+      </aside>
+
+      <p>Although at first glance it seems simple to remove a few columns from an SQL statement, it is a real challenge when using an object-relational mapping (ORM) tool. Support for so-called partial objects is very sparse. The following examples show some possibilities.</p>
+
+      <p class="language-label">Java</p>
+
+      <p>JPA defines the <code>FetchType.LAZY</code> in the <code>@Basic</code> annotation. It can be applied on property level:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    @Column(name="junk")
+    @Basic(fetch=FetchType.LAZY)
+    private String junk;</code></pre>
+      </figure>
+
+      <p class="page-folio page-folio--left">104</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

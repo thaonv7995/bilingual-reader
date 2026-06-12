@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 7: SQL: The PostgreSQL Way — DISTINCT ON</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0142.html">← Prev</a>
+    <a href="page_0144.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">143</span>
+      </header>
+
+      <h3 class="subsection-title">DISTINCT ON</h3>
+      <p class="no-indent">One of our favorites is the DISTINCT ON. It behaves like DISTINCT, but with two en‐
+      hancements: you can tell it which columns to consider as distinct and to sort the re‐
+      maining columns. The first row after the sort will be returned. One little word&mdash;ON&mdash;
+      replaces numerous lines of additional code to achieve the same result.</p>
+
+      <p>In <span class="accent-word">Example 7-9</span>, we demonstrate how to get the details of the first tract for each county.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-9.</strong> DISTINCT ON</figcaption>
+        <pre class="code-block"><code>SELECT DISTINCT ON (left(tract_id, 5))
+    left(tract_id, 5) As county, tract_id, tract_name
+FROM census.lu_tracts
+ORDER BY county, tract_id;
+
+county |  tract_id   |                     tract_name
+-------+-------------+----------------------------------------------------
+25001  | 25001010100 | Census Tract 101, Barnstable County, Massachusetts
+25003  | 25003900100 | Census Tract 9001, Berkshire County, Massachusetts
+25005  | 25005600100 | Census Tract 6001, Bristol County, Massachusetts
+25007  | 25007200100 | Census Tract 2001, Dukes County, Massachusetts
+25009  | 25009201100 | Census Tract 2011, Essex County, Massachusetts
+:</code></pre>
+      </figure>
+
+      <p>The ON modifier can take on multiple columns, all of which will be considered to de‐
+      termine uniqueness. The ORDER BY clause has to start with the set of columns in the
+      DISTINCT ON; then you can follow with your preferred ordering.</p>
+
+      <h3 class="subsection-title">LIMIT and OFFSET</h3>
+      <p class="no-indent">LIMIT returns only the number of rows indicated, and OFFSET indicates the number of
+      rows to skip. You can use them in tandem or separately. You almost always use them in
+      conjunction with an ORDER BY. In <span class="accent-word">Example 7-10</span>, we demonstrate use of a positive offset.
+      Leaving out the offset is the same as setting the offset to zero.</p>
+
+      <p>These constructs are not unique to PostgreSQL and are in fact copied from MySQL,
+      although implementation differs widely among database products.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 7-10.</strong> First tract for counties 2 through 5</figcaption>
+        <pre class="code-block"><code>SELECT DISTINCT ON (left(tract_id, 5))
+    left(tract_id, 5) As county, tract_id, tract_name
+FROM census.lu_tracts
+ORDER BY county, tract_id LIMIT 3 OFFSET 2;
+
+county |  tract_id   |                    tract_name
+-------+-------------+--------------------------------------------------
+25005  | 25005600100 | Census Tract 6001, Bristol County, Massachusetts
+25007  | 25007200100 | Census Tract 2001, Dukes County, Massachusetts
+25009  | 25009201100 | Census Tract 2011, Essex County, Massachusetts</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Handy Constructions<span class="sep">|</span>125</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

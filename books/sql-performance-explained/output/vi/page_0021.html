@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Khóa Chính</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 8mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Khóa Chính</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Kế hoạch thực thi của Oracle cho thấy một <code>INDEX UNIQUE SCAN</code> — thao tác chỉ đi qua cây chỉ mục. Nó tận dụng hoàn toàn khả năng mở rộng theo logarit của chỉ mục để tìm kiếm mục rất nhanh — gần như không phụ thuộc vào kích thước bảng.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Kế hoạch thực thi (đôi khi được gọi là <i>explain plan</i> hoặc <i>query plan</i>) cho thấy các bước mà cơ sở dữ liệu thực hiện để thực thi một câu lệnh SQL. Phụ lục&nbsp;A ở trang&nbsp;165 giải thích cách lấy và đọc kế hoạch thực thi với các cơ sở dữ liệu khác.</p>
+      </aside>
+
+      <p>Sau khi truy cập vào chỉ mục, cơ sở dữ liệu phải thực hiện thêm một bước nữa để lấy dữ liệu được truy vấn (<code>FIRST_NAME</code>, <code>LAST_NAME</code>) từ kho bảng: thao tác <code>TABLE ACCESS BY INDEX ROWID</code>. Thao tác này có thể trở thành nút thắt cổ chai về hiệu suất — như đã giải thích trong <i>&ldquo;Chỉ mục Chậm, Phần I&rdquo;</i> — nhưng không có rủi ro nào liên quan đến một <code>INDEX UNIQUE SCAN</code>. Thao tác này không thể cung cấp nhiều hơn một mục nên nó không thể kích hoạt nhiều hơn một lần truy cập bảng. Điều đó có nghĩa là các thành phần của một truy vấn chậm không có mặt với một <code>INDEX UNIQUE SCAN</code>.</p>
+
+      <aside class="sidebar-note">
+        <h3>Khóa Chính không có Chỉ Mục Độc Nhất</h3>
+        <p>Một khóa chính không nhất thiết phải cần một chỉ mục độc nhất — bạn cũng có thể sử dụng một chỉ mục không độc nhất. Trong trường hợp đó, cơ sở dữ liệu Oracle không sử dụng một <code>INDEX UNIQUE SCAN</code> mà thay vào đó là thao tác <code>INDEX RANGE SCAN</code>. Tuy nhiên, ràng buộc vẫn duy trì tính duy nhất của các khóa để việc tra cứu chỉ mục cung cấp tối đa một mục.</p>
+        <p>Một trong những lý do để sử dụng các chỉ mục không độc nhất cho các khóa chính là các ràng buộc có thể hoãn lại. Khác với các ràng buộc thông thường, được xác thực trong quá trình thực thi câu lệnh, cơ sở dữ liệu hoãn lại việc xác thực các ràng buộc có thể hoãn lại cho đến khi giao dịch được cam kết. Các ràng buộc hoãn lại là cần thiết để chèn dữ liệu vào các bảng có phụ thuộc vòng tròn.</p>
+      </aside>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">11</p>
+    </article>
+  </main>
+</body>
+</html>

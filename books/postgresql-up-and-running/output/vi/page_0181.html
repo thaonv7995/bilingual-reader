@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tinh chỉnh hiệu suất truy vấn — EXPLAIN</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0180.html">← Trước</a>
+    <a href="page_0182.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">181</span>
+      </header>
+
+      <p>Trong hầu hết các kế hoạch EXPLAIN, bạn sẽ thấy một sự phân tích theo từng bước, và mỗi bước có thể có
+      các bước con. Mỗi bước sẽ có một chi phí được báo cáo trông giống như
+      <code>cost=0.00..33.48</code>, như được hiển thị trong <span class="accent-word">Ví dụ 9-2</span>. Số đầu tiên, 0.00, là chi phí khởi động ước tính,
+      và số thứ hai, 33.48, là tổng chi phí ước tính của bước đó. Chi phí khởi động là thời gian trước khi lấy dữ liệu và có thể bao gồm việc quét các chỉ mục, kết nối
+      các bảng, v.v. Đối với các bước quét tuần tự, chi phí khởi động là bằng không vì trình lập kế hoạch
+      vô tư kéo tất cả dữ liệu nên việc lấy dữ liệu bắt đầu ngay lập tức.</p>
+
+      <p>Hãy nhớ rằng thước đo chi phí được báo cáo bằng các đơn vị tùy ý, thay đổi dựa trên
+      phần cứng và chủ yếu được kiểm soát bởi các hằng số chi phí của trình lập kế hoạch. Do đó, thật hợp lý
+      chỉ sử dụng như một ước tính khi so sánh các kế hoạch khác nhau trên cùng một máy chủ. Nhiệm vụ của trình lập kế hoạch
+      là chọn kế hoạch có chi phí tổng thể ước tính thấp nhất.</p>
+
+      <p>Bởi vì chúng tôi đã chọn bao gồm tham số ANALYZE trong <span class="accent-word">Ví dụ 9-1</span>, trình lập kế hoạch sẽ
+      chạy truy vấn, và chúng tôi được ban phước với thời gian thực tế nữa.</p>
+
+      <p>Từ kế hoạch trong <span class="accent-word">Ví dụ 9-2</span>, chúng tôi có thể thấy rằng trình lập kế hoạch đã chọn một quét tuần tự
+      vì nó không thể tìm thấy bất kỳ chỉ mục nào. Thông tin bổ sung <code>Rows Removed
+      by Filter: 1477</code> là số lượng hàng mà trình lập kế hoạch đã kiểm tra trước khi loại trừ
+      chúng khỏi đầu ra.</p>
+
+      <p>Trong PostgreSQL 9.4, đầu ra phân biệt giữa thời gian lập kế hoạch và thời gian thực thi.
+      Thời gian lập kế hoạch là khoảng thời gian mà trình lập kế hoạch cần để đưa ra
+      kế hoạch thực thi, trong khi thời gian thực thi là mọi thứ theo sau. Đầu ra trong
+      phiên bản 9.4 sẽ trông như được hiển thị trong <span class="accent-word">Ví dụ 9-3</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-3.</strong> Đầu ra EXPLAIN (ANALYZE) trong phiên bản 9.4</figcaption>
+        <pre class="code-block"><code>Seq Scan on hisp_pop
+    (cost=0.00..33.48 rows=1 width=16) (actual time=0.213..0.346 rows=1 loops=1)
+    Filter: ((tract_id)::text = '25025010103'::text)
+    Rows Removed by Filter: 1477
+Planning time: 0.095 ms
+Execution time: 0.381 ms</code></pre>
+      </figure>
+
+      <p>Giờ hãy thêm lại khóa chính của chúng tôi:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ALTER TABLE census.hisp_pop ADD CONSTRAINT hisp_pop_pkey PRIMARY KEY(tract_id);</code></pre>
+      </figure>
+
+      <p>Lặp lại <span class="accent-word">Ví dụ 9-1</span>, chúng tôi giờ thấy đầu ra kế hoạch trong <span class="accent-word">Ví dụ 9-4</span> (kiểu PostgreSQL 9.4).</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-4.</strong> Đầu ra EXPLAIN (ANALYZE) của kế hoạch chiến lược chỉ mục</figcaption>
+        <pre class="code-block"><code>Index Scan using idx_hisp_pop_tract_id_pat on hisp_pop
+    (cost=0.28..8.29 rows=1 width=16) (actual time=0.018..0.019 rows=1 loops=1)
+    Index Cond: ((tract_id)::text = '25025010103'::text)
+Planning time: 0.110 ms
+Execution time: 0.046 ms</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">EXPLAIN<span class="sep">|</span>163</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets {
+      margin: 0 0 3.2mm 1.25em;
+      padding: 0;
+    }
+
+    .prose-page.ocp-chapter-page ul.bullets li {
+      margin: 0 0 2.5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0067.html">← Trước</a>
+    <a href="page_0069.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">68</span>
+      </header>
+
+      <h3 class="section-title section-title--sub">Ảnh hưởng về bộ nhớ của các access modifier đối với lớp con (subclass)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Ngay cả khi một lớp con (subclass) không kế thừa một số biến thể hiện (instance variable) của một lớp cha (superclass) (do các access modifier), một đối tượng của lớp con (subclass object) vẫn tiêu tốn không gian cần thiết để lưu trữ toàn bộ các biến thể hiện (instance variable) của lớp cha (superclass). Ví dụ, khi JVM cấp phát bộ nhớ cho một đối tượng <code>RetirementAccount</code>, nó bao gồm cả không gian cần thiết để lưu trữ tất cả các biến thể hiện của <code>SavingsAccount</code> và <code>Account</code> bất kể chúng có được kế thừa trong <code>RetirementAccount</code> hay không. Vì vậy, dưới góc nhìn bộ nhớ, các access modifier không có bất kỳ ảnh hưởng nào.</p>
+
+      <p>Vì vậy, một mặt, chúng ta nói rằng một thành viên private không được kế thừa bởi một lớp con (subclass) và mặt khác, chúng ta lại nói rằng đối tượng của lớp con (subclass object) thực sự chứa thành viên đó trong bộ nhớ của nó. Sự mâu thuẫn này làm cho việc hiểu một cách trực quan về thuật ngữ "kế thừa (inheritance)" trở nên khó khăn. Thật không may, thực tế lại là như vậy. Ví dụ, trong Mục 8.2, Đặc tả Ngôn ngữ Java (Java Language Specification - JLS) có viết: "Các thành viên của một lớp được khai báo là private thì không được kế thừa bởi các lớp con của lớp đó." Điều này cho thấy JLS liên kết thuật ngữ kế thừa với các access modifier và không cân nhắc gì đến bộ nhớ.</p>
+
+      <h3 class="section-title section-title--sub">13.1.4 Kế thừa thành viên thể hiện (instance member) so với thành viên static (static member)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <h3 class="section-title section-title--sub">Kế thừa biến thể hiện (instance variable) so với biến static (static variable)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Trong một ví dụ trước đó, bạn đã thấy rằng lớp <code>Employee</code> kế thừa các biến thể hiện cũng như các biến static của lớp cha <code>Person</code> của nó. Tuy nhiên, có một sự khác biệt cơ bản giữa cách các biến thể hiện và biến static được kế thừa. Sự khác biệt này là</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

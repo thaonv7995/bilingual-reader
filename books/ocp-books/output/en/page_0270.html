@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 10mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title,
+    .prose-page.ocp-chapter-page h3.section-title + ol.numbered {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: list-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: list-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(list-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      margin: 0;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0269.html">← Prev</a>
+    <a href="page_0271.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">270</span>
+      </header>
+
+      <p class="no-indent">zero based, which means, the index of the first element is zero.</p>
+
+      <ol class="numbered">
+        <li><code>E get(int index)</code>&nbsp;: Returns the element at index.</li>
+        <li><code>E set(int index, E e)</code>&nbsp;: Replaces the existing element at index with the passed object
+        <p>and returns the original element that was replaced.</p></li>
+        <li><code>boolean add(E e)</code>&nbsp;: Adds an object at the end of the list. Returns <code>true</code>&nbsp;.</li>
+        <li><code>void add(int index, E e)</code>&nbsp;: Adds an object at the specified index and shifts the
+        <p>existing elements at a higher index to the right.</p></li>
+        <li><code>boolean addAll(Collection&lt;? extends E&gt; c)</code>&nbsp;: Adds all the elements of the given
+        collection to this list at the end. Returns <code>true</code>&nbsp; if this list changed as a result of the call.</li>
+        <li><code>void addAll(int index, Collection&lt;? extends E&gt; c)</code>&nbsp;: Adds all the elements of
+        the given collection at the given index. Returns <code>true</code>&nbsp; if this list changed as a result of the
+        <p>call.</p></li>
+        <li><code>E remove(int index)</code>&nbsp;: Removes an object from the specified index and shifts the
+        <p>existing elements at a higher index to the left. It returns the original element that was</p>
+        <p>removed from the list.</p></li>
+        <li><code>boolean remove(Object obj)</code>&nbsp;: Removes the first occurrence of given object from the
+        list. Returns <code>true</code>&nbsp; if the object was found. The passed object is matched with the objects
+        <p>in the list using the equals method.</p></li>
+        <li><code>boolean removeAll(Collection&lt;?&gt; c)</code>&nbsp;: Removes from this list all the elements that
+        are present in the passed collection. Returns <code>true</code>&nbsp; if this list changed as a result of the
+        <p>call.</p></li>
+        <li><code>boolean retainAll(Collection c)</code>&nbsp;: Removes from this list all the elements that are
+        not in the passed collection. Returns <code>true</code>&nbsp; if this list changed as a result of the call.</li>
+        <li><code>void clear()</code>&nbsp;: Removes all the elements from this list.</li>
+        <li><code>int size()</code>&nbsp;: Returns the number of elements in this list.</li>
+        <li><code>default void forEach(Consumer&lt;? super T&gt; action)</code>&nbsp;: Inherited from
+        <code>java.lang.Iterable</code>&nbsp;. Performs the given action for each element of the Iterable until
+        <p>all elements have been processed or the action throws an exception.</p></li>
+      </ol>
+
+      <p>You will see this method used with lambda expressions a lot.</p>
+
+      <p>Remember that for the <code>get</code>&nbsp; and the <code>remove</code>&nbsp; methods, the <code>index</code>&nbsp; must be between 0</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

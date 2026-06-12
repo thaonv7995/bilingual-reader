@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: CI/CD pipeline steps 4–6 and testing types</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-right {
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 3;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .highlight-panel {
+      margin: 0 0 2.5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #f7f5e8;
+    }
+    .prose-page.chapter-page .highlight-panel h3 {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: normal;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .highlight-panel p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .highlight-panel p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .highlight-panel .run-in {
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + .highlight-panel,
+    .prose-page.chapter-page .highlight-panel p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0331.html">← Prev</a>
+    <a href="page_0333.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">307</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">The architecture of a build/deployment pipeline</span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Build and deployment pipeline steps continued">
+        <li>This is where your build/deploy pipeline begins to deviate from a traditional Java CI build process. After your executable JAR is built you&rsquo;re going to &ldquo;bake&rdquo; a machine image with your microservice deployed to it. This baking process will basically create a virtual machine image or container (Docker) and install your service onto it. When the virtual machine image is started, your service will be started and will be ready to begin taking requests. Unlike a traditional CI build process where you might (and I mean might) deploy the compiled JAR or WAR to an application server that&rsquo;s independently (and often with a separate team) managed from the application, with the CI/CD process you&rsquo;re deploying the microservice, the runtime engine for the service, and the machine image all as one co-dependent unit that&rsquo;s managed by the development team that wrote the software.</li>
+        <li>Before you officially deploy to a new environment, the machine image is started and a series of platform tests are run against the running image to determine if everything is running correctly. If the platform tests pass, the machine image is promoted to the new environment and made available for use.</li>
+        <li>Before a service is promoted to the next environment, the platform tests for the environment must be run. The promotion of the service to the new environment involves starting up the exact machine image that was used in the lower environment to the next environment.</li>
+      </ol>
+
+      <p>This is the secret sauce of the whole process. The entire machine image is deployed. No changes are made to any installed software (including the operating system) after the server is created. By promoting and always using the same machine image, you guarantee the immutability of the server as it&rsquo;s promoted from one environment to the next.</p>
+
+      <aside class="highlight-panel" aria-labelledby="testing-types-heading">
+        <h3 id="testing-types-heading">Unit tests vs. integration tests vs. platform test</h3>
+        <p>You&rsquo;ll see from figure 10.15 that I do several types of testing (unit, integration, and platform) during the build and deployment of a service. Three types of testing are typical in a build and deployment pipeline:</p>
+        <p class="no-indent"><strong class="run-in">Unit tests—</strong>Unit tests are run immediately before the compiliation of the service code, but before it&rsquo;s deployed to an environment. They&rsquo;re designed to run in complete isolation, with each unit test being small and narrow in focus. A unit test should have no dependencies on third-party infrastructure databases, services, and so on. Usually a unit test scope will encompass the testing of a single method or function.</p>
+        <p class="no-indent"><strong class="run-in">Integration tests—</strong>Integration tests are run immediately after packaging the service code. These tests are designed to test an entire workflow and stub or mock out major services or components that would need to be called off box. During an integration test, you might be running an in-memory database to hold data, mocking out third-party service calls, and so on. Integration tests test an entire workflow or code path. For integration tests, third-party dependencies are mocked or stubbed so that any</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

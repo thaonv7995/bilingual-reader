@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0414.html">← Prev</a>
+    <a href="page_0416.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">415</span>
+      </header>
+
+      <p class="no-indent">while on Linux and MacOS, it is forward slash (<code>/</code>). It is not necessary for an abstract pathname
+      to refer to an actual file in the file system, but if you want to be able to convert it to a real
+      pathname, every component except the last one of an abstract pathname must correspond to a
+      directory. This makes sense because a file cannot contain other files, only a directory can.</p>
+
+      <p>Ideally, you should use the platform specific separator character while writing pathnames in
+      your code (if you want to hardcode them in your code at all) but on Windows, the JVM
+      automatically converts forward slashes to back slashes and so, if you use forward slashes in your
+      code, the path will be acceptable on Windows as well as on Unix like machines. You will learn
+      better ways to work with paths in a platform independent manner soon.</p>
+
+      <h3 class="section-title section-title--minor">Absolute path and relative path<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>To access a file in a hierarchical file system, we need to know not just the name of the file but
+      also the names of its containing folders, all the way up to the root. So, if a pathname includes all
+      the names starting from the root down to the file that you want to access, it is an absolute path.</p>
+
+      <p>For example, <code>c:\a\b\c\test.txt</code>&nbsp;is an absolute path because we can start from the root
+      <code>c:\</code>&nbsp;and step inside the folder named <code>a</code>, then in <code>b</code>, and <code>c</code>&nbsp;to reach the <code>test.txt</code>&nbsp;file.</p>
+
+      <p>Similarly, on Linux, since the root is denoted by <code>/</code>, <code>/a/b/c/test.txt</code>&nbsp;would be an absolute
+      path.</p>
+
+      <p>A relative path, on the other hand, is not sufficient in itself to identify a file in a file system. It
+      can only identify a file when used in relation to another path whose location is already known.</p>
+
+      <p>For example, <code>b\c\test.txt</code>&nbsp;is not sufficient in itself to locate the <code>test.txt</code>&nbsp;file. However, if
+      we are told that this path is relative to <code>c:\a</code>, then we can figure out its exact location. Thus,
+      any path that does not start with a root is a relative path.</p>
+
+      <h3 class="section-title section-title--minor">Current directory<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>The current directory is the path from where a program is run. For example, if you run your
+      Java program from <code>c:\temp</code>, then <code>c:\temp</code>&nbsp;will be the current directory irrespective of
+      where the class file being executed is located. When you execute a Jar file directly by double
+      clicking on it, Windows sets the current directory as directory in</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

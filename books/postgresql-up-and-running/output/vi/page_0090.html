@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 4: Using pgAdmin (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 1mm auto 1mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 0.5mm;
+    }
+    .prose-page.chapter-page img.inline-icon {
+      display: inline;
+      vertical-align: middle;
+      width: 9pt;
+      height: auto;
+      margin: 0 0.5mm;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0089.html">← Trước</a>
+    <a href="page_0091.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">90</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>INSERT INTO census.hisp_pop(@tcols)
+SELECT @tload FROM census.facts
+WHERE fact_type_id IN(@fact_types) AND yr=2010
+GROUP BY tract_id;</code></pre>
+      </figure>
+
+      <p class="no-indent">Bài học rút ra từ <span class="accent-word">Ví dụ 4-2</span> là bạn có thể động thái thêm các đoạn SQL
+      vào một biến.</p>
+
+      <h3 class="section-title">Giải thích Đồ họa</h3>
+      <p class="no-indent">Một trong những điểm nổi bật của pgAdmin là giải thích đồ họa nhanh chóng về kế hoạch truy vấn.
+      Bạn có thể truy cập kế hoạch giải thích đồ họa bằng cách mở một cửa sổ truy vấn SQL, viết
+      một truy vấn và nhấp vào biểu tượng giải thích (<img class="inline-icon" src="../assets/images/page_0090_icon_explain.png" width="22" height="23" alt="Biểu tượng giải thích">).</p>
+
+      <p class="no-indent">Nếu chúng ta chạy truy vấn:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT left(tract_id, 5) As county_code, SUM(hispanic_or_latino) As tot,
+    SUM(white_alone) As tot_white,
+    SUM(COALESCE(hispanic_or_latino,0) - COALESCE(white_alone,0)) AS non_white
+FROM census.hisp_pop
+GROUP BY county_code
+ORDER BY county_code;</code></pre>
+      </figure>
+
+      <p class="no-indent">chúng ta sẽ nhận được giải thích đồ họa như được hiển thị trong <span class="accent-word">Hình 4-16</span>. Đây là một mẹo nhanh để đọc
+      giải thích đồ họa: cắt giảm những thứ không cần thiết! Càng dày mũi tên, bước hoàn thành càng lâu.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0090_fig_4_16.png" width="1246" height="194" alt="Hình 4-16. Ví dụ giải thích đồ họa">
+        <figcaption>Hình 4-16. Ví dụ giải thích đồ họa</figcaption>
+      </figure>
+
+      <p class="no-indent">Giải thích đồ họa bị vô hiệu hóa nếu Query→Explain→Buffers được bật. Vì vậy, hãy chắc chắn
+      bỏ chọn buffers trước khi thử giải thích đồ họa. Ngoài giải thích đồ họa,
+      tab Xuất Dữ liệu hiển thị kế hoạch giải thích văn bản, mà trong ví dụ này trông như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>GroupAggregate  (cost=111.29..151.93 rows=1478 width=20)
+
+
+Output: ("left"((tract_id)::text, 5)), sum(hispanic_or_latino), sum(white_alone), ...
+  -&gt;  Sort  (cost=111.29..114.98 rows=1478 width=20)
+     Output: tract_id, hispanic_or_latino, white_alone,
+     ("left"((tract_id)::text, 5)) Sort Key: ("left"((tract_id)::text, 5)) -&gt;
+Seq Scan on census.hisp_pop  (cost=0.00..33.48 rows=1478 width=20)    Output:
+tract_id, hispanic_or_latino     , white_alone, "left"((tract_id)::text, 5)</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">72<span class="sep">|</span>Chương 4: Sử dụng pgAdmin</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

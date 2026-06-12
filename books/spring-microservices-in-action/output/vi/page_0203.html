@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Listing 6.8 UserContextFilter</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered.continued {
+      counter-reset: manning-num 2;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note--gray {
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--68 .listing-callouts-right {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered + .sidebar-note--gray,
+    .prose-page.chapter-page p + .sidebar-note--gray,
+    .prose-page.chapter-page .sidebar-note--gray + h3.section-title,
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page p + figure.listing {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0202.html">← Trước</a>
+    <a href="page_0204.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">178</span>
+        <span class="rh-center">CHƯƠNG 6 <em>Định tuyến dịch vụ với Spring Cloud và Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <ol class="manning-numbered continued" aria-label="Hướng dẫn Hình 6.13 (tiếp theo)">
+        <li>Logic nghiệp vụ của licensing service cần thực hiện một lời gọi tới organization service.</li>
+        <li>Một <code>RestTemplate</code> được dùng để gọi organization service. <code>RestTemplate</code> sẽ dùng một lớp Spring Interceptor tùy chỉnh (<code>UserContextInterceptor</code>) để chèn correlation ID vào lời gọi đi dưới dạng HTTP header.</li>
+      </ol>
+
+      <aside class="sidebar-note sidebar-note--gray" aria-label="Mã lặp so với thư viện dùng chung">
+        <h3>Mã lặp so với thư viện dùng chung</h3>
+        <p>Việc có nên dùng thư viện chung giữa các microservice hay không là một vùng xám trong thiết kế microservice. Những người theo chủ nghĩa thuần túy về microservice sẽ nói rằng bạn không nên dùng một framework tùy chỉnh xuyên suốt các dịch vụ vì nó tạo ra các phụ thuộc nhân tạo giữa các dịch vụ. Thay đổi trong logic nghiệp vụ hoặc một lỗi có thể khiến bạn phải tái cấu trúc quy mô lớn trên tất cả dịch vụ. Mặt khác, các chuyên gia microservice khác sẽ cho rằng cách tiếp cận thuần túy là không thực tế vì có những tình huống nhất định (như ví dụ <code>UserContextFilter</code> trước đó) mà việc xây dựng một thư viện chung và chia sẻ nó giữa các dịch vụ là hợp lý.</p>
+        <p>Tôi nghĩ có một điểm cân bằng ở đây. Các thư viện chung là ổn khi xử lý các tác vụ kiểu hạ tầng. Nếu bạn bắt đầu chia sẻ các lớp hướng nghiệp vụ, bạn đang tự tạo rắc rối vì bạn đang phá vỡ ranh giới giữa các dịch vụ.</p>
+        <p>Có vẻ tôi đang phá vỡ lời khuyên của chính mình với các ví dụ mã trong chương này, vì nếu bạn nhìn vào tất cả các dịch vụ trong chương, chúng đều có bản sao riêng của các lớp <code>UserContextFilter</code>, <code>UserContext</code> và <code>UserContextInterceptor</code>. Lý do tôi chọn cách tiếp cận không chia sẻ ở đây là vì tôi không muốn làm phức tạp các ví dụ mã trong sách này bằng việc phải tạo một thư viện dùng chung phải được publish lên kho Maven của bên thứ ba. Do đó, tất cả các lớp trong gói utils của dịch vụ được chia sẻ trên tất cả các dịch vụ.</p>
+      </aside>
+
+      <h3 class="section-title">UserContextFilter: Chặn HTTP request đến</h3>
+
+      <p>Lớp đầu tiên bạn sẽ xây dựng là lớp <code>UserContextFilter</code>. Lớp này là một HTTP servlet filter sẽ chặn mọi HTTP request đến dịch vụ và ánh xạ correlation ID (cùng một vài giá trị khác) từ HTTP request sang lớp <code>UserContext</code>. Listing sau đây trình bày mã cho lớp UserContext. Mã nguồn của lớp này có thể tìm thấy tại <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/utils/UserContextFilter.java</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.8</strong><br>Ánh xạ correlation ID sang lớp UserContext</figcaption>
+        <div class="listing-annotated listing-annotated--68" aria-label="Listing 6.8 mã có chú thích">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.utils;
+
+//Remove the imports for conciseness
+@Component
+public class UserContextFilter implements Filter {
+  private static final Logger logger =
+    LoggerFactory.getLogger(
+      UserContextFilter.class);
+  @Override</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 6.8 chú thích bên phải">
+            <p class="listing-callout">Filter được đăng ký và Spring nhận diện thông qua annotation Spring <code>@Component</code> và bằng cách triển khai interface javax.servler.Filter.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

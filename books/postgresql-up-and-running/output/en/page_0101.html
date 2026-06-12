@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0100.html">← Prev</a>
+    <a href="page_0102.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">101</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-4.</strong> Getting the nth element of a delimited string</figcaption>
+        <pre class="code-block"><code>SELECT split_part('abc.123.z45', '.', 2) As x;
+ x
+ -----
+ 123</code></pre>
+      </figure>
+
+      <p class="no-indent">The <code>string_to_array</code> is useful for creating an array of elements from a delimited string.
+      By combining <code>string_to_array</code> with the <code>unnest</code> function, you can expand the returned
+      array into a set of rows, as shown in <span class="accent-word">Example 5-5</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-5.</strong> Converting delimited string to array to rows</figcaption>
+        <pre class="code-block"><code>SELECT unnest(string_to_array('abc.123.z45', '.')) As x;
+ x
+ -----
+ abc
+ 123
+ z45</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Regular Expressions and Pattern Matching</h3>
+      <p class="no-indent">PostgreSQL’s regular expression support is downright fantastic. You can return matches
+      as tables or arrays and do fairly sophisticated replaces and updates. Back-referencing
+      and other fairly advanced search patterns are also supported. In this section, we’ll pro‐
+      vide a small sampling of these. For more information, see <span class="accent-word">Pattern Matching and String
+      Functions</span>.</p>
+
+      <p><span class="accent-word">Example 5-6</span> shows you how to format phone numbers stored simply as contiguous
+      digits:</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 5-6.</strong> Reformat a phone number using back-referencing</figcaption>
+        <pre class="code-block"><code>SELECT regexp_replace(
+'6197306254',
+'([0-9]{3})([0-9]{3})([0-9]{4})',
+ E'\(\\1\) \\2-\\3'
+ ) As x;
+ x
+ --------------
+ (619) 730-6254</code></pre>
+      </figure>
+
+      <p class="no-indent">The <code>\\1</code>, <code>\\2</code>, etc. refer to the elements in our pattern expression. We use the reverse
+      solidus (<code>\</code>) to escape the parentheses. The <code>E'</code> construct is PostgreSQL syntax for denoting
+      that a string is an expression so that special characters like <code>\</code> are treated literally.</p>
+
+      <p>Suppose some field contains text with embedded phone numbers; <span class="accent-word">Example 5-7</span> shows
+      how to extract the phone numbers and turn them into rows all in one step.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Characters and Strings<span class="sep">|</span>83</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

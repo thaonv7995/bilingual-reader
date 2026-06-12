@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: Listings 4.11 and 4.12</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--411 .listing-callouts {
+      padding-top: 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--411 .listing-callout:nth-child(1) {
+      margin-bottom: 4mm;
+    }
+    .prose-page.chapter-page .listing-annotated--412 .listing-callouts {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--412 .listing-callout:nth-child(1) {
+      margin-bottom: 5mm;
+    }
+    .prose-page.chapter-page .listing-annotated--412 .listing-callout:nth-child(2) {
+      margin-bottom: 6mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0141.html">← Prev</a>
+    <a href="page_0143.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Using service discovery to look up a service</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">117</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 4.11</strong><br>Enabling the Spring Cloud/Netflix Feign client in the licensing service</figcaption>
+        <div class="listing-annotated listing-annotated--411" aria-label="Listing 4.11 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients
+public class Application {
+  public static void main(String[] args) {
+    SpringApplication.run(Application.class, args);
+  }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Listing 4.11 annotation callouts">
+            <p class="listing-callout">Because we&rsquo;re only using the FeignClient, in your own code you can remove the <code>@EnableDiscoveryClient</code> annotation.</p>
+            <p class="listing-callout">The <code>@EnableFeignClients</code> annotation is needed to use the FeignClient in your code.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Now that you&rsquo;ve enabled the Feign client for use in your licensing service, let&rsquo;s look at a Feign client interface definition that can be used to call an endpoint on the organization service. The following listing shows an example. The code in this listing can be found in the <code>src/main/java/com/thoughtmechanix/licenses/clients/OrganizationFeignClient.java</code> class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 4.12</strong><br>Defining a Feign interface for calling the organization service</figcaption>
+        <div class="listing-annotated listing-annotated--412" aria-label="Listing 4.12 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>/*Package and import left off for conciseness*/
+@FeignClient("organizationservice")
+public interface OrganizationFeignClient {
+  @RequestMapping(
+      method= RequestMethod.GET,
+      value="/v1/organizations/{organizationId}",
+      consumes="application/json")
+  Organization getOrganization(
+      @PathVariable("organizationId") String organizationId);
+}</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Listing 4.12 annotation callouts">
+            <p class="listing-callout">Identify your service to Feign using the FeignClient Annotation.</p>
+            <p class="listing-callout">The path and action to your endpoint is defined using the <code>@RequestMapping</code> annotation.</p>
+            <p class="listing-callout">The parameters passed into the endpoint are defined using the <code>@PathVariable</code> endpoint.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">You start the Feign example by using the <code>@FeignClient</code> annotation and passing it the name of the application id of the service you want the interface to represent. Next you&rsquo;ll define a method, <code>getOrganization()</code>, in your interface that can be called by the client to invoke the organization service.</p>
+
+      <p>How you define the <code>getOrganization()</code> method looks exactly like how you would expose an endpoint in a Spring Controller class. First, you&rsquo;re going to define a <code>@RequestMapping</code> annotation for the <code>getOrganization()</code> method that will map the HTTP verb and endpoint that will be exposed on the organization service invocation. Second, you&rsquo;ll map the organization ID passed in on the URL to an <code>organizationId</code> parameter on the method call, using the <code>@PathVariable</code> annotation. The return value from the call to the organization service will be automatically mapped to the <code>Organization</code> class that&rsquo;s defined as the return value for the <code>getOrganization()</code> method.</p>
+
+      <p>To use the <code>OrganizationFeignClient</code> class, all you need to do is autowire and use it. The Feign Client code will take care of all the coding work for you.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

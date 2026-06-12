@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 23: Using Modules</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0681.html">← Prev</a>
+    <a href="page_0683.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">682</span>
+      </header>
+
+      <p class="no-indent">implements that interface into separate modules allows us to build an application by mixing and
+      matching modules without the need to bundle classes that are not required for the application.</p>
+
+      <p>In our case, we will create a <code>calculators.InterestCalculator</code>&nbsp;interface in <code>calculators</code>
+      module. We will then have our <code>SimpleInterestCalculator</code>&nbsp;class implement this interface.</p>
+
+      <p class="no-indent">Here is the interface definition:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//in file calculators\calculators\InterestCalculator.java
+package calculators;
+public interface InterestCalculator{
+public double calculate(double principal, double rate, double
+time);
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">and the following is the module descriptor for the new module:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//in file calculators\module-info.java
+module calculators{
+exports calculators;
+}</code></pre>
+      </figure>
+
+      <p>The only thing new in this module definition is the <code>exports</code>&nbsp;clause. A module is an insular
+      unit of packages. Members of a module are normally not accessible to code belonging to other
+      modules. To make a package eligible to be accessible to other modules, the package must first be
+      &ldquo;exported&rdquo; explicitly in the module descriptor. Making something eligible to be accessible only
+      through an explicit <code>exports</code>&nbsp;clause ensures that code from other modules does not access code
+      that is internal to this module inadvertently. Note that I am talking about packages instead of
+      classes because only packages can be exported and not individual classes. When you export a
+      package, all of the public types contained in that package are made eligible to be accessible by
+      other modules. In module parlance, accessing a module is called &ldquo;reading&rdquo; the module. So, the
+      <code>exports</code>&nbsp;clause in the above code makes the <code>InterestCalculator</code>&nbsp;interface eligible to be
+      read by classes in other module. I have used the phrase &ldquo;eligible to be read&rdquo; because an <code>exports</code>
+      clause is only one of the two requirements that must be fulfilled for a module to access
+      classes from another</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

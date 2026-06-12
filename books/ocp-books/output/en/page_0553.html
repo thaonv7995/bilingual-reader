@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 21: Streams</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: stream-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="4"] {
+      counter-reset: stream-step 3;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: stream-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(stream-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0552.html">← Prev</a>
+    <a href="page_0554.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">553</span>
+      </header>
+
+      <ol class="numbered" start="4">
+        <li>through each junction at once but it is not so in reality. The elements flow through the
+        stream pipeline sequentially, one by one. So, for example, &rsquo;a&rsquo;&nbsp;will pass through all of the
+        three junctions first and then the next element &rsquo;b&rsquo;&nbsp;will enter the pipeline, and so on. A
+        stream pipeline will not have more than one element traversing through it at any given
+        moment (unless it is a parallel stream or the operation is stateful, but let&rsquo;s worry about
+        that later). You may verify this by adding print statements in the lambda expressions
+        passed to the calls to the <code>map</code>&nbsp;, <code>filter</code>&nbsp;, and <code>collect</code>&nbsp;methods.</li>
+      </ol>
+
+      <p>Observe that the return type of intermediate operations is always a <code>Stream</code>&nbsp;, so, typically, the
+      code for a stream pipeline is written in a single chained statement like this:</p>
+
+      <pre class="code-block ocp-code-line"><code>StringBuilder finalString = al.stream().map(ch-&gt;
+Character.toUpperCase(ch)).filter(ch -&gt; !Character.isWhitespace(ch)).collect(
+StringBuilder::new , (s, ch) -&gt; s.append(ch), (s1, s2) -&gt; s1.append(s2));</code></pre>
+
+      <p class="no-indent">which is often formatted for better readability as:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>StringBuilder finalString = al.stream()
+.map(ch-&gt;Character.toUpperCase(ch))
+.filter(ch-&gt;!Character.isWhitespace(ch))
+.collect( StringBuilder::new , (s, ch)-&gt;s.append(ch), (s1, s2) -&gt;
+s1.append(s2));</code></pre>
+      </figure>
+
+      <p>As you can see, a stream pipeline is nothing more than a chain of method calls but the
+      fundamental difference between this code and other regular methods calls is that here the
+      arguments are not data variables data but functions. Since the functions that we pass to the
+      stream operations as arguments provide behavior to these operations, these parameters are
+      called &ldquo;behavioral parameters&rdquo;.</p>
+
+      <p>Another point to understand in the above example is that we have not written any code to iterate
+      through the elements of the list and to pass each element to different functions. The <code>Stream</code>
+      implementation class (provided by the JDK) makes the</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

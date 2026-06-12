@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 22: Date and Time API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0645.html">← Prev</a>
+    <a href="page_0647.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">646</span>
+      </header>
+
+      <p class="no-indent">4. It prints &ndash; 2019-01-01 P1M . From the output, it looks like the call to <code>ofDays(1)</code>&nbsp;on
+      <code>p1</code>&nbsp;had no effect!</p>
+
+      <p>Actually, the call to <code>of(2018, 1, 31)</code>&nbsp;on <code>LocalDate</code>&nbsp;had no effect either but the result
+      produced in case of a <code>Period</code>&nbsp;is more alarming.</p>
+
+      <p>In both the cases, the <code>ofXXX</code> methods are static methods and produce a new object from
+      scratch. Unlike the instance methods (i.e. <code>with</code>, <code>plus</code>, <code>minus</code>, ), the static methods (<code>of</code> and
+      <code>parse</code>) don&rsquo;t build &ldquo;on top of&rdquo; a previous object. As you know, it is technically valid to
+      invoke a static method on a reference variable but invoking a static method on a reference
+      is the same as invoking a static method on the class name.&nbsp; Thus, <code>LocalDate.of(2018,
+      1, 31)</code>&nbsp;produces a new <code>LocalDate</code>&nbsp;instance and chaining another <code>of</code>&nbsp;method to this
+      <code>LocalDate</code>&nbsp;instance is actually the same as invoking <code>LocalDate.of(2019, 1, 1)</code>
+      independently. However, since both the calls provide values for all the fields of a
+      <code>LocalDate</code> , there is no difference in the end result.</p>
+
+      <p>Similarly, in case of <code>Period</code> , invoking <code>ofMonths(1)</code>&nbsp;on an existing <code>Period</code>&nbsp;instance
+      is the same as invoking <code>Period.ofMonths(1)</code> . However, since <code>ofMonths</code>&nbsp;method
+      creates a <code>Period</code> with 0 years and 0 days, it seems as if this call lost the value of the days
+      property that was set earlier through <code>Period.ofDays(1)</code> .</p>
+
+      <p>In fact, none of the static methods make use of the values of an existing date/time instance
+      even if you invoke the static method using a reference instead of the class name. If you
+      want to create a <code>Period</code>&nbsp;with 1 month and 1 day, you should use <code>Period.of(0, 1,
+      1);</code> .</p>
+
+      <h3 class="section-title">22.4 Translating Date/time objects into different types and different time zones<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>As explained earlier, humans cannot comprehend what &ldquo;1735711200000 milliseconds since
+      epoch&rdquo; means. For example, you cannot tell someone to call you at</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

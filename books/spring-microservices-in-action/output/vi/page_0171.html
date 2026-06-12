@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Listing 5.9 UserContextHolder</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--59 .listing-callouts {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--59 .listing-callout:nth-child(1) {
+      margin-bottom: 12mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .bullet-sub {
+      display: block;
+      margin-top: 0.5mm;
+      padding-left: 3mm;
+    }
+    .prose-page.chapter-page p.no-indent + ul.manning-bullets {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0170.html">← Prev</a>
+    <a href="page_0172.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">146</span>
+        <span class="rh-center">CHƯƠNG 5 <em>Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Lớp <code>UserContextHolder</code> được dùng để lưu <code>UserContext</code> trong lớp <code>ThreadLocal</code>. Sau khi được lưu trong bộ nhớ <code>ThreadLocal</code>, mọi mã được thực thi cho một yêu cầu sẽ dùng đối tượng <code>UserContext</code> được lưu trong <code>UserContextHolder</code>. Lớp <code>UserContextHolder</code> được trình bày trong listing sau đây. Bạn có thể tìm lớp này tại <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/utils/UserContextHolder.java</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.9</strong><br>Tất cả dữ liệu <code>UserContext</code> được quản lý bởi <code>UserContextHolder</code></figcaption>
+        <div class="listing-annotated listing-annotated--59" aria-label="Listing 5.9 mã có chú thích">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>public class UserContextHolder {
+    private static final ThreadLocal&lt;UserContext&gt; userContext
+       = new ThreadLocal&lt;UserContext&gt;();
+    public static final UserContext getContext(){
+        UserContext context = userContext.get();
+        if (context == null) {
+            context = createEmptyContext();
+            userContext.set(context);
+        }
+        return userContext.get();
+    }
+    public static final void setContext(UserContext context) {
+        Assert.notNull(context,
+          "Only non-null UserContext instances are permitted");
+        userContext.set(context);
+    }
+    public static final UserContext createEmptyContext(){
+        return new UserContext();
+    }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích Listing 5.9">
+            <p class="listing-callout"><code>UserContext</code> được lưu trong biến <code>ThreadLocal</code> tĩnh.</p>
+            <p class="listing-callout">Phương thức <code>getContext()</code> sẽ lấy đối tượng <code>UserContext</code> để sử dụng.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Đến điểm này, bạn có thể thêm vài câu lệnh ghi log vào dịch vụ licensing của mình. Bạn sẽ thêm logging vào các lớp và phương thức của dịch vụ licensing sau đây:</p>
+
+      <ul class="manning-bullets" aria-label="Các lớp và phương thức dịch vụ licensing cần thêm logging">
+        <li><code>com/thoughtmechanix/licenses/utils/UserContextFilter.java</code><span class="bullet-sub">phương thức <code>doFilter()</code></span></li>
+        <li><code>com/thoughtmechanix/licenses/controllers/LicenseServiceController.java</code> phương thức <code>getLicenses()</code></li>
+        <li><code>com/thoughtmechanix/licenses/services/LicenseService.java</code><span class="bullet-sub">phương thức <code>getLicensesByOrg()</code>. Phương thức này được gắn annotation <code>@HystrixCommand</code>.</span></li>
+      </ul>
+
+      <p>Tiếp theo, bạn sẽ gọi dịch vụ của mình với correlation ID được truyền qua HTTP header tên là <code>tmx-correlation-id</code> và giá trị <code>TEST-CORRELATION-ID</code>. Hình 5.10 cho thấy lời gọi HTTP GET tới <code>http://localhost:8080/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/licenses/</code> trong Postman.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page figure.code-snippet code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0589.html">← Trước</a>
+    <a href="page_0591.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">590</span>
+      </header>
+
+      <p class="no-indent">điểm B nằm ở downstream. Tương tự, từ góc độ của một thao tác stream A, một
+      thao tác B được thực hiện trên stream đi ra từ A là thao tác downstream. Bạn
+      đã thấy điều này được thực hiện trong các ví dụ được trình bày trước đó khi chúng ta gọi liên tiếp
+      nhiều thao tác trung gian trong một stream pipeline và kết thúc pipeline ở
+      cuối bằng một thao tác kết thúc.</p>
+
+      <p>Tuy nhiên, phương thức <code>collect</code>&nbsp;của <code>Stream</code>&nbsp;bản thân nó là một thao tác kết thúc. Không bao giờ có một
+      stream đi ra từ phương thức <code>collect</code>&nbsp;. Stream đã bị kết thúc khi lời gọi tới
+      <code>collect</code>&nbsp;trả về. Vì vậy, làm thế nào một <code>Collector</code>&nbsp;khác có thể được áp dụng cho kết quả được tạo ra bởi một
+      <code>Collector</code>&nbsp;? Điều đó thực sự không thể, ít nhất là không theo cách mà một thao tác trung gian được
+      gọi sau một thao tác khác.</p>
+
+      <p>Cách framework <code>Collectors</code>&nbsp;được thiết kế là một <code>Collector</code>&nbsp;có thể được tạo ra với một
+      tham chiếu đến một <code>Collector</code>&nbsp;"downstream". Để cho phép tạo ra một <code>Collector</code>&nbsp;với
+      <code>Collector</code>&nbsp;downstream, nhiều phương thức <code>xxxBy</code>&nbsp;của lớp <code>Collectors</code>&nbsp;được
+      nạp chồng để nhận thêm một tham số kiểu <code>Collector</code>&nbsp;. Vì vậy, khi một <code>Collector</code>&nbsp;được
+      tạo ra với một tham chiếu đến một <code>Collector</code>&nbsp;downstream, thay vị trả về kết quả cuối cùng,
+      <code>Collector</code>&nbsp;này sẽ chuyển tiếp các kết quả của thao tác đến <code>Collector</code>&nbsp;downstream được lồng đó và
+      để cho <code>Collector</code>&nbsp;downstream đó thực hiện các thao tác rút gọn tiếp theo trên kết quả đó. Vì
+      <code>Collector</code>&nbsp;downstream cũng được tạo bằng một trong các phương thức <code>xxxBy</code>&nbsp;của lớp
+      <code>Collectors</code>&nbsp;, nó cũng có thể chấp nhận một <code>Collector</code>&nbsp;sẽ được áp dụng sâu hơn ở downstream.
+      Do đó, sự lồng nhau này có thể diễn ra sâu tùy ý bạn muốn. Vì vậy, thay vì chuỗi các thao tác liên tiếp
+      nhau một cách bên ngoài, các collector cho phép bạn lồng một thao tác bên trong một thao tác khác.</p>
+
+      <p>Hãy sử dụng cách tiếp cận này để sửa đổi một câu lệnh mà tôi đã trình bày với bạn trước đó nhằm ghép nối các giá trị <code>id</code>&nbsp;của
+      các đối tượng <code>Student</code>&nbsp;:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>String str = students.collect(
+  Collectors.mapping( s -&gt; s.id(), Collectors.joining() )
+);</code></pre>
+      </figure>
+
+      <p class="no-indent">Câu lệnh trên tạo ra một collector <code>mapping</code>&nbsp;với một collector <code>joining</code>&nbsp;được lồng bên trong. Collector
+      <code>mapping</code>&nbsp;sẽ ánh xạ các đối tượng <code>Student</code>&nbsp;thành các đối tượng <code>String</code>&nbsp;và sau đó chuyển</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

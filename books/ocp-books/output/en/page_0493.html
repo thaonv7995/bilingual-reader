@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0492.html">← Prev</a>
+    <a href="page_0494.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">493</span>
+      </header>
+
+      <p class="no-indent">and the <code>sleep</code>&nbsp;method.</p>
+
+      <p>There are several variations of this problem but they all have the same root cause - the business
+      logic expects a set of instructions to be executed as one single instruction but in reality, the
+      instructions are executed independently and one thread is able to interfere or is able to observe
+      intermediate values while another thread is in the middle of executing that set of instructions.</p>
+
+      <p>The set of instructions during which a program is vulnerable to producing undesirable outcomes
+      is called <strong>critical section</strong>.</p>
+
+      <p>The solution to this problem is to avoid letting multiple threads execute the critical
+      section&nbsp;simultaneously. If one thread is already in the middle of the critical section, then other
+      threads should wait until this thread leaves the critical section. In Java, this is achieved using a
+      &ldquo;monitor&rdquo;.</p>
+
+      <h3 class="section-title section-title--sub">Protecting critical section using a monitor<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>As I mentioned earlier, every object is associated with a monitor that a thread can lock and
+      unlock. If a thread has already locked a monitor, other threads have to wait if they try to lock the
+      monitor again until the thread that has locked the monitor unlocks it. This is, therefore, ideal for
+      protecting the critical section from being executed by multiple threads simultaneously.</p>
+
+      <p>The locking and unlocking of the monitor happens automatically when a thread enters and exits out
+      of a <code>synchronized</code>&nbsp;block of code. If you are not from Computer Science background, you can
+      imagine a monitor as a physical door bolt on the inside of a door of a room that contains the
+      code in the critical section.</p>
+
+      <p>If a thread wants exclusive access to the code, it must lock the bolt
+      after entering so that other threads cannot enter the room. Other threads have to wait at the
+      door if they find it locked. Once a thread is done with the code, it unlocks the bolt and exits the
+      room, giving a chance to another thread to enter. Here is how a monitor can be used to fix the
+      previous example:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class Student{
+volatile int id;
+volatile String name;</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Phụ lục A: Kế hoạch thực thi</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h2.appendix-section-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page .operation-label {
+      margin: 0 0 1mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page h3.subsection-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.subsection-title:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page h3.subsection-title + .operation-label {
+      margin-top: 0;
+    }
+
+    .prose-page .operation-desc {
+      margin: 0 0 0 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phụ lục A: Kế hoạch thực thi</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="subsection-title">Sắp xếp và Nhóm</h3>
+
+      <p class="operation-label">sử dụng filesort (trong cột &ldquo;Extra&rdquo;)</p>
+      <p class="operation-desc">&ldquo;sử dụng filesort&rdquo; trong cột Extra chỉ ra một thao tác sắp xếp rõ ràng&mdash; bất kể nơi nào thao tác sắp xếp diễn ra (bộ nhớ chính hoặc trên đĩa). &ldquo;Sử dụng filesort&rdquo; cần một lượng lớn bộ nhớ để hiện thực hóa kết quả trung gian (không theo ống dẫn). Xem thêm &ldquo;Chỉ mục Order By&rdquo; trên trang&nbsp;130.</p>
+
+      <h3 class="subsection-title">Truy vấn Top-N</h3>
+
+      <p class="operation-label">ngầm: không có &ldquo;sử dụng filesort&rdquo; trong cột &ldquo;Extra&rdquo;</p>
+      <p class="operation-desc">Một kế hoạch thực thi MySQL không hiển thị một truy vấn top-N một cách rõ ràng. Nếu bạn đang sử dụng cú pháp <code>limit</code> và không thấy &ldquo;sử dụng filesort&rdquo; trong cột extra, nó được thực hiện theo cách ống dẫn. Xem thêm &ldquo;Truy vấn Dòng Top-N&rdquo; trên trang&nbsp;143.</p>
+
+      <h2 class="appendix-section-title">Phân biệt Giới hạn Truy cập và Bộ lọc</h2>
+
+      <p class="no-indent">Cơ sở dữ liệu MySQL sử dụng ba cách khác nhau để đánh giá các điều kiện <code>where</code> (các điều kiện):</p>
+
+      <p class="operation-label">Giới hạn truy cập (thông qua cột &ldquo;key_len&rdquo;)</p>
+      <p class="operation-desc">Các giới hạn truy cập thể hiện các điều kiện bắt đầu và dừng của việc duyệt nút lá.</p>
+
+      <p class="operation-label">Giới hạn bộ lọc chỉ mục (&ldquo;Sử dụng điều kiện chỉ mục&rdquo;, kể từ MySQL 5.6)</p>
+      <p class="operation-desc">Các giới hạn bộ lọc chỉ mục chỉ được áp dụng trong quá trình duyệt nút lá. Chúng không góp phần vào các điều kiện bắt đầu và dừng và không thu hẹp phạm vi quét.</p>
+
+      <p class="operation-label">Giới hạn bộ lọc cấp bảng (&ldquo;Sử dụng where&rdquo; trong cột &ldquo;Extra&rdquo;)</p>
+      <p class="operation-desc">Các điều kiện trên các cột không phải là một phần của chỉ mục được đánh giá ở cấp bảng. Để điều này xảy ra, cơ sở dữ liệu phải tải hàng từ bảng trước.</p>
+
+      <p>Các kế hoạch thực thi MySQL không hiển thị loại điều kiện nào được sử dụng cho mỗi điều kiện&mdash; chúng chỉ liệt kê các loại điều kiện đang được sử dụng.</p>
+
+      <footer class="book-footer">
+        <span class="page-folio">190</span>
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

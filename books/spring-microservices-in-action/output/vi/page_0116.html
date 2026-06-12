@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Thiết lập khóa mã hóa</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0115.html">← Trước</a>
+    <a href="page_0117.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Bảo vệ thông tin cấu hình nhạy cảm</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">91</span>
+      </header>
+
+      <h4 class="subsection-title">3.4.2 Thiết lập khóa mã hóa</h4>
+
+      <p>Sau khi các tệp JAR đã sẵn sàng, bạn cần đặt một khóa mã hóa đối xứng. Khóa mã hóa đối xứng không gì khác hơn một bí mật dùng chung được bên mã hóa dùng để mã hóa một giá trị và bên giải mã dùng để giải mã một giá trị. Với máy chủ cấu hình Spring Cloud, khóa mã hóa đối xứng là một chuỗi ký tự bạn chọn được truyền vào dịch vụ qua biến môi trường hệ điều hành có tên <code>ENCRYPT_KEY</code>. Trong phạm vi cuốn sách này, bạn sẽ luôn đặt biến môi trường <code>ENCRYPT_KEY</code> là</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>export ENCRYPT_KEY=IMSYMMETRIC</code></pre>
+      </figure>
+
+      <p class="no-indent">Lưu ý hai điều về khóa đối xứng:</p>
+
+      <ol class="manning-numbered" aria-label="Thực hành tốt nhất về khóa đối xứng">
+        <li>Khóa đối xứng của bạn nên dài từ 12 ký tự trở lên và lý tưởng là một tập ký tự ngẫu nhiên.</li>
+        <li>Đừng để mất khóa đối xứng của bạn. Một khi bạn đã mã hóa dữ liệu bằng khóa mã hóa của mình, bạn không thể giải mã lại được.</li>
+      </ol>
+
+      <aside class="sidebar-note" aria-label="Quản lý khóa mã hóa">
+        <h3>Quản lý khóa mã hóa</h3>
+        <p>Trong phạm vi cuốn sách này, tôi đã làm hai việc mà tôi thường không khuyến nghị trong triển khai production:</p>
+        <ul class="manning-bullets">
+          <li>Tôi đặt khóa mã hóa là một cụm từ. Tôi muốn giữ khóa đơn giản để có thể nhớ và để phù hợp khi đọc văn bản. Trong triển khai thực tế, tôi sẽ dùng một khóa mã hóa riêng cho mỗi môi trường tôi triển khai và dùng các ký tự ngẫu nhiên làm khóa.</li>
+          <li>Tôi đã hard-code biến môi trường <code>ENCRYPT_KEY</code> trực tiếp trong các tệp Docker dùng trong cuốn sách. Tôi làm vậy để bạn đọc có thể tải các tệp xuống và khởi động mà không cần nhớ đặt biến môi trường. Trong môi trường runtime thực tế, tôi sẽ tham chiếu <code>ENCRYPT_KEY</code> như một biến môi trường hệ điều hành bên trong Dockerfile. Hãy lưu ý điều này và đừng hard-code khóa mã hóa trong Dockerfile. Hãy nhớ, Dockerfile của bạn được giả định được giữ trong kiểm soát mã nguồn.</li>
+        </ul>
+      </aside>
+
+      <h4 class="subsection-title">3.4.3 Mã hóa và giải mã một thuộc tính</h4>
+
+      <p>Bạn giờ đã sẵn sàng bắt đầu mã hóa các thuộc tính để dùng trong Spring Cloud Config. Bạn sẽ mã hóa mật khẩu cơ sở dữ liệu Postgres của licensing service mà bạn đã dùng để truy cập dữ liệu EagleEye. Thuộc tính này, có tên <code>spring.datasource.password</code>, hiện đang được đặt dưới dạng văn bản thuần với giá trị <code>p0stgr@s</code>.</p>
+
+      <p>Khi bạn khởi động instance Spring Cloud Config, Spring Cloud Config phát hiện biến môi trường <code>ENCRYPT_KEY</code> đã được đặt và tự động thêm hai endpoint mới (<code>/encrypt</code> và <code>/decrypt</code>) vào dịch vụ Spring Cloud Config. Bạn sẽ dùng endpoint <code>/encrypt</code> để mã hóa giá trị <code>p0stgr@s</code>.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

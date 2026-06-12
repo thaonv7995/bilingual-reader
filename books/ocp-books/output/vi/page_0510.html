@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý việc thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0509.html">← Trước</a>
+    <a href="page_0511.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">510</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public class Square{
+private int side;
+public synchronized void setSide(int side){
+if(side&lt;0) throw new IllegalArgumentException("Invalid side");
+this.side = side;
+}
+public synchronized int getSide(){return side;}
+}</code></pre>
+      </figure>
+
+      <h3 class="section-title section-title--sub">20.4.4 Cô lập và bảo vệ các bất biến của lớp<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một bất biến đề cập đến một khẳng định được định nghĩa bởi logic nghiệp vụ luôn đúng trong suốt vòng đời của một Đối tượng (Object) của một Lớp (Class). Ví dụ, hãy xem xét Lớp (Class) sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>public class Square{
+private int side;
+private int area;
+//synchronized getters and setters for side and area not shown
+}</code></pre>
+      </figure>
+
+      <p>Nếu logic nghiệp vụ của tôi yêu cầu rằng giá trị của trường <code>area</code>&nbsp;phải luôn bằng giá trị được đưa ra bởi công thức side*side, thì quy tắc này là một bất biến của Lớp (Class) <code>Square</code>&nbsp;. Bây giờ, điều gì sẽ xảy ra nếu một Thread (Luồng) cập nhật trường <code>side</code>&nbsp;và trước khi nó kịp cập nhật trường <code>area</code>&nbsp;với giá trị bằng side*side, một Thread (Luồng) khác lại xen vào và sửa đổi trường <code>side</code>&nbsp;thành một giá trị khác? Trong trường hợp này, các trường <code>side</code>&nbsp;và <code>area</code>&nbsp;sẽ trở nên mất đồng bộ xét theo bất biến của Lớp (Class). Do đó, Lớp (Class) <code>Square</code>&nbsp;không an toàn luồng (thread-safe).</p>
+
+      <p>Để làm cho một Lớp (Class) an toàn luồng (thread-safe), bất kỳ đoạn mã nào ảnh hưởng đến các bất biến của Lớp (Class) đều phải được</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 12: Kiểm soát luồng điều khiển chương trình</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0029.html">← Trước</a>
+    <a href="page_0031.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">30</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   }
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Không có điều gì đặc biệt trong đoạn mã trên. Nó giống như bất kỳ câu lệnh switch nào khác. Điểm duy nhất đáng lưu ý là trước Java 21, các câu lệnh case chỉ có thể sử dụng <code>ON</code> và <code>OFF</code> thay vì <code>ButtonState.ON</code> và <code>ButtonState.OFF</code>. Do đó, case <code>ButtonState.ON</code> sẽ gây ra lỗi biên dịch. Nhưng kể từ Java 21, việc sử dụng <code>&lt;enum name&gt;.&lt;constant&gt;</code> cũng hợp lệ.</p>
+
+      <p>Trong kỳ thi, bạn có thể gặp các câu hỏi sử dụng enum <code>DayOfWeek</code> được định nghĩa trong package <code>java.time</code>. Enum này định nghĩa bảy giá trị rõ ràng cho mỗi ngày, từ <code>MONDAY</code> đến <code>SUNDAY</code>. Bạn không cần phải biết chi tiết về enum này để trả lời câu hỏi. Bạn sẽ có thể trả lời câu hỏi nếu nắm vững các kiến thức cơ bản về câu lệnh switch. Ví dụ, bạn có thể cho biết đoạn mã sau sẽ in ra gì cho các ngày khác nhau trong tuần hay không?</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>import java.time.*;
+public class TestClass{
+   public static void main(String[] args){
+      DayOfWeek dow =
+LocalDate.now().getDayOfWeek();//java.time.LocalDate.now() returns
+current date
+      switch(dow){
+         case MONDAY: TUESDAY: System.out.println("MON/TUE"); break;
+         case WEDNESDAY: FRIDAY: System.out.println("WED - FRI");
+         default : System.out.println("SAT/SUN");
+      }
+   }
+}</code></pre>
+      </figure>
+
+      <p>Tôi xin nói với bạn rằng nó sẽ biên dịch thành công. Hãy cùng xem điều gì xảy ra đối với <code>MONDAY</code>. Nó có</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

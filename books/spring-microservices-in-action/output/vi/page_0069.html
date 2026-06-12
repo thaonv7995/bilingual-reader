@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Khi không nên dùng microservice</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 12pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.section-title + p,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .callout-note {
+      margin: 0 0 2.5mm;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .callout-note p {
+      margin: 0;
+      text-indent: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-label {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #476b85;
+      margin-right: 0.5em;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0068.html">← Trước</a>
+    <a href="page_0070.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">44</span>
+        <span class="rh-center">CHƯƠNG 2 <em>Xây dựng microservice với Spring Boot</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Tất cả các hướng dẫn cơ bản đều hướng tới một điều: làm cho giao diện dịch vụ của bạn dễ hiểu và dễ sử dụng. Bạn muốn một nhà phát triển ngồi xuống, xem các giao diện dịch vụ và bắt đầu sử dụng chúng. Nếu một microservice không dễ sử dụng, các nhà phát triển sẽ tìm cách lách luật và phá vỡ ý định của kiến trúc.</p>
+
+      <h3 class="section-title">2.2 Khi không nên dùng microservice</h3>
+
+      <p>Trong chương này, chúng ta đã nói về lý do microservice là mô hình kiến trúc mạnh mẽ để xây dựng ứng dụng. Nhưng tôi chưa đề cập đến khi nào bạn không nên dùng microservice để xây dựng ứng dụng của mình. Hãy cùng xem qua:</p>
+
+      <ol class="manning-numbered">
+        <li>Độ phức tạp khi xây dựng hệ thống phân tán</li>
+        <li>Sự bùng nổ máy chủ ảo/container</li>
+        <li>Loại ứng dụng</li>
+        <li>Giao dịch dữ liệu và tính nhất quán</li>
+      </ol>
+
+      <h4 class="subsection-title">2.2.1 Độ phức tạp của việc xây dựng hệ thống phân tán</h4>
+
+      <p>Vì microservice là phân tán và chi tiết (nhỏ), chúng đưa vào ứng dụng của bạn một mức độ phức tạp mà ứng dụng monolithic sẽ không có. Kiến trúc microservice đòi hỏi mức độ trưởng thành vận hành cao. Đừng cân nhắc dùng microservice trừ khi tổ chức của bạn sẵn sàng đầu tư vào tự động hóa và công việc vận hành (giám sát, mở rộng quy mô) mà một ứng dụng phân tán cao cần để thành công.</p>
+
+      <h4 class="subsection-title">2.2.2 Sự bùng nổ máy chủ</h4>
+
+      <p>Một trong những mô hình triển khai phổ biến nhất cho microservice là triển khai một instance microservice trên một máy chủ. Trong một ứng dụng lớn dựa trên microservice, bạn có thể kết thúc với 50 đến 100 máy chủ hoặc container (thường là ảo) chỉ riêng ở môi trường production mà phải được xây dựng và bảo trì. Dù chi phí vận hành các dịch vụ này trên đám mây thấp hơn, độ phức tạp vận hành khi phải quản lý và giám sát các máy chủ này có thể rất lớn.</p>
+
+      <aside class="callout-note" aria-label="Ghi chú">
+        <p class="no-indent"><strong class="callout-label">LƯU Ý</strong> Tính linh hoạt của microservice phải được cân nhắc với chi phí vận hành tất cả các máy chủ này.</p>
+      </aside>
+
+      <h4 class="subsection-title">2.2.3 Loại ứng dụng</h4>
+
+      <p>Microservice hướng tới khả năng tái sử dụng và cực kỳ hữu ích khi xây dựng các ứng dụng lớn cần khả năng phục hồi và mở rộng quy mô cao. Đây là một trong những lý do nhiều công ty dựa trên đám mây đã áp dụng microservice. Nếu bạn đang xây dựng ứng dụng cấp phòng ban nhỏ hoặc ứng dụng có lượng người dùng ít, độ phức tạp đi kèm với mô hình phân tán như microservice có thể tốn kém hơn lợi ích mang lại.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

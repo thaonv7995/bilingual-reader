@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Phương thức configure() của OAuth2Config</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.25;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0223.html">← Trước</a>
+    <a href="page_0225.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Bắt đầu nhỏ: sử dụng Spring và OAuth2 để bảo vệ một điểm cuối duy nhất</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">199</span>
+      </header>
+
+      <p class="no-indent">annotation <code>@Configuration</code>. Lớp <code>AuthenticationServerConfigurer</code> là thành phần cốt lõi của Spring Security. Nó cung cấp các cơ chế cơ bản để thực hiện các chức năng xác thực và phân quyền quan trọng. Đối với lớp <code>OAuth2Config</code>, bạn sẽ ghi đè hai phương thức. Phương thức đầu tiên, <code>configure()</code>, được dùng để định nghĩa những ứng dụng khách nào được đăng ký với dịch vụ xác thực của bạn. Phương thức <code>configure()</code> nhận một tham số duy nhất tên là <code>clients</code> thuộc kiểu <code>ClientDetailsServiceConfigurer</code>. Hãy bắt đầu đi qua mã trong phương thức <code>configure()</code> chi tiết hơn một chút. Việc đầu tiên bạn làm trong phương thức này là đăng ký những ứng dụng khách nào được phép truy cập các dịch vụ được bảo vệ bởi dịch vụ OAuth2. Tôi dùng từ &ldquo;truy cập&rdquo; ở đây theo nghĩa rộng nhất, vì sau này bạn kiểm soát những gì người dùng của các ứng dụng khách có thể làm bằng cách kiểm tra xem người dùng mà dịch vụ đang được gọi cho có được phân quyền thực hiện các hành động họ đang cố gắng thực hiện hay không:</p>
+
+      <figure class="code-snippet" aria-label="Đăng ký ứng dụng khách OAuth2">
+        <pre class="code-block"><code>clients.inMemory()
+    .withClient("eagleeye")
+    .secret("thisissecret")
+    .authorizedGrantTypes("password",
+                           ➥ "client_credentials")
+    .scopes("webclient","mobileclient");</code></pre>
+      </figure>
+
+      <p>Lớp <code>ClientDetailsServiceConfigurer</code> hỗ trợ hai loại kho lưu trữ khác nhau cho thông tin ứng dụng: kho lưu trữ trong bộ nhớ và kho lưu trữ JDBC. Vì mục đích của ví dụ này, bạn sẽ dùng kho lưu trữ <code>clients.inMemory()</code>.</p>
+
+      <p class="block-indent">Hai lời gọi phương thức <code>withClient()</code> và <code>secret()</code> cung cấp tên của ứng dụng (<code>eagleeye</code>) mà bạn đang đăng ký cùng với một secret (mật khẩu, <code>thisissecret</code>) sẽ được trình bày khi ứng dụng EagleEye gọi máy chủ OAuth2 của bạn để nhận mã thông báo truy cập OAuth2.</p>
+
+      <p class="block-indent">Phương thức tiếp theo, <code>authorizedGrantTypes()</code>, được truyền một danh sách phân tách bằng dấu phẩy các loại cấp quyền mà dịch vụ OAuth2 của bạn sẽ hỗ trợ. Trong dịch vụ của bạn, bạn sẽ hỗ trợ cấp quyền password và client credential.</p>
+
+      <p class="block-indent">Phương thức <code>scopes()</code> được dùng để định nghĩa ranh giới mà ứng dụng gọi có thể hoạt động trong đó khi họ yêu cầu máy chủ OAuth2 của bạn cấp mã thông báo truy cập. Ví dụ, ThoughtMechanix có thể cung cấp hai phiên bản khác nhau của cùng một ứng dụng: ứng dụng dựa trên web và ứng dụng dựa trên điện thoại di động. Mỗi ứng dụng này có thể dùng cùng tên client và khóa bí mật để yêu cầu truy cập tài nguyên được bảo vệ bởi máy chủ OAuth2. Tuy nhiên, khi các ứng dụng yêu cầu khóa, chúng cần định nghĩa phạm vi cụ thể mà chúng đang hoạt động. Bằng cách định nghĩa phạm vi, bạn có thể viết các quy tắc phân quyền cụ thể cho phạm vi mà ứng dụng khách đang hoạt động.</p>
+
+      <p>Ví dụ, bạn có thể có một người dùng có thể truy cập ứng dụng EagleEye bằng cả client dựa trên web và client điện thoại di động của ứng dụng. Mỗi phiên bản của ứng dụng thực hiện như sau:</p>
+
+      <ol class="manning-numbered" aria-label="Các phiên bản ứng dụng EagleEye">
+        <li>Cung cấp cùng chức năng</li>
+        <li>Là một &ldquo;ứng dụng đáng tin cậy&rdquo; trong đó ThoughtMechanix sở hữu cả các ứng dụng giao diện EagleEye và các dịch vụ người dùng cuối</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

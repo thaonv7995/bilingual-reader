@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 2: Database Administration (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0050.html">← Prev</a>
+    <a href="page_0052.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <figure class="listing">
+        <figcaption><strong>Example 2-7.</strong> Extensions installed on server</figcaption>
+        <pre class="code-block"><code><strong>SELECT</strong> name, default_version, installed_version, <strong>left</strong>(<strong>comment</strong>,30) <strong>As</strong> <strong>comment</strong>
+<strong>FROM</strong> pg_available_extensions
+<strong>WHERE</strong> installed_version <strong>IS</strong> <strong>NOT</strong> <strong>NULL</strong>
+<strong>ORDER</strong> <strong>BY</strong> name;
+     name      |  def  | installed |                    com
+---------------+-------+-----------+--------------------------------------------
+ btree_gist    | 1.0   | 1.0       | support for indexing common datatypes in..
+ fuzzystrmatch | 1.0   | 1.0       | determine similarities and distance betw..
+ hstore        | 1.2   | 1.2       | data type for storing sets of (key, valu..
+ plpgsql       | 1.0   | 1.0       | PL/pgSQL procedural language..
+ plv8          | 1.3.0 | 1.3.0     | PL/JavaScript (v8) trusted procedural la..
+ postgis       | 2.1.3 | 2.1.3     | PostGIS geometry, geography, and raster ..
+ www_fdw       | 0.1.8 | 0.1.8     | WWW FDW - extension for handling differe..</code></pre>
+      </figure>
+
+      <p class="no-indent">To get more details about a particular extension already installed on your server, enter
+      the following command from psql:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>\dx+ fuzzystrmatch</code></pre>
+      </figure>
+
+      <p class="no-indent">Alternatively, execute the following query:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_catalog.pg_describe_object(d.classid, d.objid, 0) <strong>AS</strong> description
+<strong>FROM</strong> pg_catalog.pg_depend <strong>AS</strong> D <strong>INNER</strong> <strong>JOIN</strong> pg_catalog.pg_extension <strong>AS</strong> E
+<strong>ON</strong> D.refobjid = E.oid
+<strong>WHERE</strong> D.refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass <strong>AND</strong> deptype
+= 'e' <strong>AND</strong> E.extname = 'fuzzystrmatch';</code></pre>
+      </figure>
+
+      <p class="no-indent">This shows what’s packaged in the extension:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>description
+----------------------------------------------------------------------------
+function dmetaphone_alt(text)
+function dmetaphone(text)
+function difference(text,text)
+function text_soundex(text)
+function soundex(text)
+function metaphone(text,integer)
+function levenshtein_less_equal(text,text,integer,integer,integer,integer)
+function levenshtein_less_equal(text,text,integer)
+function levenshtein(text,text,integer,integer,integer)
+function levenshtein(text,text)</code></pre>
+      </figure>
+
+      <p>Extensions can include database assets of all types: functions, tables, data types, casts,
+      languages, operators classes, etc., but functions usually constitute the bulk of the pay‐
+      load.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Extensions<span class="sep">|</span>33</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

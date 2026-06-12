@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0120.html">← Trước</a>
+    <a href="page_0122.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">121</span>
+      </header>
+
+      <figure class="code-snippet code-snippet--error">
+        <pre class="code-block"><code>Poisonous p = (Poisonous) s; //will not compile</code></pre>
+      </figure>
+
+      <h3 class="section-title section-title--minor">Downcast vs Upcast<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Việc ép kiểu một biến thuộc một kiểu sang một kiểu con (ví dụ: ép kiểu biến <code>f</code> có kiểu <code>Fruit</code> sang <code>Apple</code>)
+      được gọi là &quot;downcasting&quot;. Nó được gọi là <strong>downcasting</strong> vì trong sơ đồ UML, lớp con (subclass) luôn
+      được vẽ phía dưới lớp cha (superclass). Ngoài ra, một biến thuộc kiểu <code>Fruit</code> có thể tham chiếu đến bất kỳ loại
+      trái cây nào, nhưng khi bạn ép kiểu nó sang <code>Apple</code>, bạn đã làm giảm các khả năng về loại trái cây mà
+      biến đó có thể tham chiếu. Do đó, <code>Fruit</code> là một kiểu <strong>rộng hơn</strong> và <code>Apple</code> là một kiểu <strong>hẹp hơn</strong> khi
+      so với nhau. Nói cách khác, khi bạn ép kiểu một biến sang một kiểu con, bạn đang thu hẹp
+      kiểu của đối tượng mà biến này đang trỏ tới thành một kiểu cụ thể hơn. Vì vậy, xuất hiện
+      thuật ngữ &quot;narrowing&quot; (thu hẹp). Ý nghĩa của nó giống hệt như downcasting. Trái ngược với downcasting là
+      &quot;<strong>upcasting</strong>&quot; hoặc &quot;widening&quot;.</p>
+
+      <p>Như đã giải thích ở trên, downcasting luôn yêu cầu JVM thực hiện một kiểm tra để đảm bảo rằng
+      biến thực sự đang trỏ đến một đối tượng thuộc kiểu mà lập trình viên đã khai báo.
+      Ngược lại, upcasting không yêu cầu kiểm tra như vậy và trên thực tế hầu như luôn luôn dư thừa (tôi
+      sẽ sớm chỉ cho bạn một tình huống duy nhất mà nó không dư thừa). Vì một <code>Apple</code> là-một <code>Fruit</code>, bạn
+      luôn có thể gán một biến thuộc kiểu <code>Apple</code> cho một biến thuộc kiểu <code>Fruit</code> mà không cần bất kỳ thao tác ép kiểu tường minh nào.</p>
+
+      <h3 class="section-title section-title--minor">13.5.3 Khi nào việc ép kiểu là cần thiết<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Trong phần trước, tôi đã sử dụng hình ảnh so sánh giữa điều khiển từ xa và chiếc TV để chỉ ra cho bạn thấy rằng kiểu của một
+      biến và kiểu của đối tượng thực tế được tham chiếu bởi biến đó là hai thứ khác nhau và
+      không nhất thiết phải giống nhau.</p>
+
+      <p>Hãy để tôi tiếp tục với hình ảnh so sánh đó để chỉ ra cách bạn có thể xử lý sự khác biệt
+      giữa kiểu của một biến và kiểu của đối tượng được tham chiếu bởi biến đó. Hãy tưởng tượng bạn
+      có một chiếc điều khiển của một dòng TV cũ với số lượng nút bấm hạn chế và bạn đang sử dụng chiếc
+      điều khiển này để điều khiển một chiếc TV thế hệ mới có rất nhiều chức năng. Rõ ràng, bạn sẽ chỉ có thể sử dụng những chức năng mà ở đó có</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

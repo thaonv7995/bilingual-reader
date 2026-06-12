@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 8: Listing 8.2 Publishing a message</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--82 .listing-callouts-right {
+      padding-top: 13mm;
+    }
+    .prose-page.chapter-page .listing-annotated--82 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 30mm;
+    }
+    .prose-page.chapter-page .listing-annotated--82 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 15mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0265.html">← Prev</a>
+    <a href="page_0267.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Writing a simple message producer and consumer</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">241</span>
+      </header>
+
+      <p class="no-indent">The message publication code can be found in the <code>organization-service/src/com/thoughtmechanix/organization/events/source/SimpleSourceBean.java</code> class. The following listing shows the code for this class.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.2</strong><br>Publishing a message to the message broker</figcaption>
+        <div class="listing-annotated listing-annotated--82" aria-label="Listing 8.2 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.organization.events.source;
+
+//Removed imports for conciseness
+
+@Component
+public class SimpleSourceBean {
+    private Source source;
+
+    private static final Logger logger =
+        LoggerFactory.getLogger(SimpleSourceBean.class);
+
+    @Autowired
+    public SimpleSourceBean(Source source){
+        this.source = source;
+    }
+    public void publishOrgChange(String action,String orgId){
+       logger.debug("Sending Kafka message {}
+          ➥ for Organization Id: {}",
+          ➥ action, orgId);
+        OrganizationChangeModel change =  new OrganizationChangeModel(
+                OrganizationChangeModel.class.getTypeName(),
+                action,
+                orgId,
+                UserContext.getCorrelationId());
+        source
+            .output()
+            .send(
+              MessageBuilder
+                .withPayload(change)
+                .build());
+    }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing 8.2 annotation callouts">
+            <p class="listing-callout">Spring Cloud Stream will inject a Source interface implementation for use by the service.</p>
+            <p class="listing-callout">The message to be published is a Java POJO.</p>
+            <p class="listing-callout">When you&rsquo;re ready to send the message, use the send() method from a channel defined on the Source class.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">In listing 8.2 you inject the Spring Cloud Source class into your code. Remember, all communication to a specific message topic occurs through a Spring Cloud Stream construct called a channel. A channel is represented by a Java interface class. In this listing you&rsquo;re using the Source interface. The Source interface is a Spring Cloud defined interface that exposes a single method called output(). The Source interface is a convenient interface to use when your service only needs to publish to a single channel. The output() method returns a class of type MessageChannel. The MessageChannel is how you&rsquo;ll send messages to the message broker. Later in this chapter, I&rsquo;ll show you how to expose multiple messaging channels using a custom interface.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

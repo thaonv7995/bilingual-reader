@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0175.html">← Trước</a>
+    <a href="page_0177.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">176</span>
+      </header>
+
+      <p class="no-indent">JVM không hề biết gì về logic nghiệp vụ của chương trình mà nó đang thực thi, nó
+      &ldquo;xử lý&rdquo; exception (ngoại lệ) bằng cách chấm dứt (còn gọi là kết thúc) chương trình (thực tế, JVM chỉ chấm dứt
+      thread (luồng) được sử dụng để gọi chuỗi các phương thức, nhưng vì chúng ta chưa thảo luận về
+      thread (luồng) nên hiện tại bạn có thể giả định rằng một chương trình chỉ bao gồm một thread (luồng) duy nhất và việc chấm dứt
+      thread (luồng) đó cũng giống như chấm dứt chương trình).</p>
+
+      <h3 class="section-title">15.1.3 Các mảnh ghép của bài toán xử lý exception (ngoại lệ)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Cơ chế xử lý exception (ngoại lệ) của Java bao gồm nhiều thành phần khác nhau. Điều làm cho cơ chế này hơi
+      phức tạp là bạn cần phải đặt mỗi phần vào đúng vị trí của nó để toàn bộ hệ thống hoạt động.
+      Vì vậy, hãy để tôi giới thiệu sơ lược về các thành phần này trước.</p>
+
+      <h3 class="section-title section-title--minor">Đối tượng <code>java.lang.Throwable</code> -<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p><code>Throwable</code> là lớp (Class) gốc của tất cả các exception (ngoại lệ). Nó ghi lại chi tiết về chương trình và
+      môi trường xung quanh tại thời điểm nó được tạo ra. Trong số các thành phần khác, một đối tượng (Object) <code>Throwable</code> bao gồm chuỗi
+      các lệnh gọi phương thức dẫn đến exception (ngoại lệ) (được gọi là &ldquo;stack trace&rdquo;) và bất kỳ thông điệp thông tin
+      nào được lập trình viên truyền dưới dạng đối số <code>String</code> khi tạo exception (ngoại lệ) đó (thông điệp này có thể
+      lấy ra được bằng phương thức <code>getMessage()</code> của nó). Thông tin này rất hữu ích trong việc xác định
+      vị trí và nguyên nhân của exception (ngoại lệ) khi gỡ lỗi một chương trình.</p>
+
+      <p>Bạn có thể đã thấy kết quả hiển thị trông rất kỳ lạ trên console chứa tên các phương thức khi chương trình
+      bị crash (gặp sự cố). Kết quả đầu ra này thực chất chính là stack trace chứa trong đối tượng (Object) <code>Throwable</code>. Ví dụ: nếu
+      <code>m1()</code> gọi <code>m2()</code>, <code>m2()</code> gọi <code>m3()</code> và mã nguồn trong <code>m3()</code> ném ra một exception (ngoại lệ), thì stack
+      trace của exception (ngoại lệ) đó sẽ chứa tên của các phương thức <code>m3</code>, <code>m2</code>, và <code>m1</code>, theo đúng thứ tự đó.</p>
+
+      <p><code>Throwable</code> có hai lớp con (Subclass) - <code>java.lang.Error</code> và <code>java.lang.Exception</code>, và một số lượng khổng lồ
+      các lớp cháu. Mỗi lớp (Class) được thiết kế cho một tình huống cụ thể. Ví dụ: một
+      <code>java.lang.NullPointerException</code> sẽ bị ném ra khi mã nguồn cố gắng truy cập một tham chiếu null hoặc một
+      <code>java.lang.ArrayIndexOutOfBoundsException</code> sẽ bị ném ra khi bạn cố gắng truy cập một mảng vượt quá
+      kích thước của nó.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

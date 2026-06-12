@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 5: Clustering Data</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 5: Nhóm Dữ Liệu</p>
+
+      <h3 class="section-title">Quét Chỉ Mục Chỉ</h3>
+
+      <p class="no-indent">Quét chỉ mục chỉ là một trong những phương pháp tối ưu hóa mạnh mẽ nhất. Nó không chỉ tránh việc truy cập vào bảng để đánh giá điều kiện <code><strong>where</strong></code>, mà còn hoàn toàn tránh truy cập vào bảng nếu cơ sở dữ liệu có thể tìm thấy các cột được chọn trong chính chỉ mục.</p>
+
+      <p>Để bao phủ toàn bộ truy vấn, một chỉ mục phải chứa tất cả các cột từ câu lệnh SQL&mdash;đặc biệt cũng bao gồm các cột từ điều kiện <code><strong>select</strong></code> như được thể hiện trong ví dụ sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX sales_sub_eur
+    ON sales
+     ( subsidiary_id, eur_value );
+
+SELECT SUM(eur_value)
+  FROM sales
+ WHERE subsidiary_id = ?;</code></pre>
+      </figure>
+
+      <p>Tất nhiên, việc lập chỉ mục cho điều kiện <code><strong>where</strong></code> có ưu tiên hơn các điều kiện khác. Cột <code>SUBSIDIARY_ID</code> do đó nằm ở vị trí đầu tiên để đủ điều kiện làm một predicate truy cập.</p>
+
+      <p>Kế hoạch thực thi cho thấy quét chỉ mục mà không có truy cập bảng tiếp theo (<code>TABLE ACCESS BY INDEX ROWID</code>).</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>----------------------------------------------------------
+| Id | Operation         | Name          | Rows | Cost |
+----------------------------------------------------------
+|  0 | SELECT STATEMENT  |               |    1 |  104 |
+|  1 |  SORT AGGREGATE   |               |    1 |      |
+|* 2 |   INDEX RANGE SCAN| SALES_SUB_EUR |40388 |  104 |
+----------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   2 - access("SUBSIDIARY_ID"=TO_NUMBER(:A))</code></pre>
+      </figure>
+
+      <p>Chỉ mục bao phủ toàn bộ truy vấn nên nó cũng được gọi là <i>chỉ mục bao phủ</i>.</p>
+
+      <p class="page-folio page-folio--left">116</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

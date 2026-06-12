@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 16: Understanding Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0292.html">← Prev</a>
+    <a href="page_0294.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">293</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>for(Number n : list){ sum += n.doubleValue(); }
+return sum/list.size();
+}</code></pre>
+      </figure>
+
+      <p>Yes, the method has only four lines of code and the bug is easy to spot but the point is, if this bug
+      is not caught during code walkthrough, it will not be caught until functional testing. Ideally, the
+      method has no business modifying the input list but the compiler cannot object
+      to&nbsp;<code>list.add(10)</code>&nbsp;because <code>10</code>&nbsp;is an <code>Integer</code>&nbsp;and a <code>List&lt;Number&gt;</code>&nbsp;can certainly hold an
+      <code>Integer</code>.</p>
+
+      <p>Now, observe the <code>averageExN</code>&nbsp;method. Here, <code>E</code>&nbsp;is not just a <code>Number</code>. It has been upper
+      bounded to <code>Number</code>. Which means, the compiler knows that at run time the <code>list</code>&nbsp;variable
+      could point to a list of <code>Number</code>s or a list of any subclass of <code>Number</code>s such as a list of
+      <code>Integer</code>s or a list of <code>Double</code>s. It also knows that it is possible to add an <code>Integer</code>&nbsp;to a list of
+      <code>Number</code>s but not to a list of <code>Double</code>s. Since the compiler is not sure about the exact type of
+      the list that the <code>list</code>&nbsp;variable will point to at run time, it will reject the <code>list.add(10);</code>
+      statement with an error message saying, &ldquo;incompatible types: int cannot be
+      converted to E where E is a type-variable: E extends Number&rdquo;.&nbsp;</p>
+
+      <p>Note that applying an upper bound to <code>E</code>&nbsp;has not suddenly made the object pointed to by
+      the&nbsp;<code>list</code>&nbsp;variable immutable. You can still do <code>list.add(null);</code>&nbsp;and <code>list.remove(0);</code>
+      which modify the <code>List</code>&nbsp;object pointed to by <code>list</code>. But applying an upper bound to <code>E</code>&nbsp;did
+      prevent at least one kind of bug from appearing in our code and that is better than having no
+      protection at all. Ideally, if the caller wants to make sure that the callee does not modify the
+      input list, it should pass in an unmodifiable list. I will show you how to do that later while going
+      through the Collections API. The important point to understand here is that applying an upper
+      bound to the variable has only enabled to compiler to prevent the developer from making
+      method calls that compromise type safety using that variable. It has no impact on the
+      properties of the actual object.</p>
+
+      <p>The general principle expounded in the above discussion is that your method should be as
+      flexible as possible for use and should require only as much information as is</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

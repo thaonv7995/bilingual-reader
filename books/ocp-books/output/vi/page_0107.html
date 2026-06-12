@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0106.html">← Trước</a>
+    <a href="page_0108.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">107</span>
+      </header>
+
+      <h3 class="section-title section-title--sub">13.4.2 Ghi đè các phương thức<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Như đã thảo luận trước đó trong chương này, chỉ các phương thức instance <strong>non-private</strong> mới có thể được
+      <strong>ghi đè</strong>. Có một số quy tắc mà bạn cần tuân thủ khi ghi đè một phương thức. Những
+      quy tắc này chi phối <strong>phạm vi truy cập (accessibility)</strong>, <strong>kiểu trả về (return type)</strong>, <strong>kiểu tham số (parameter types)</strong>, và <strong>mệnh đề throws (throws clause)</strong> của
+      phương thức. Cách tốt nhất để hiểu và ghi nhớ các quy tắc này là luôn lưu ý rằng chúng
+      được thiết lập để đảm bảo rằng một Đối tượng (Object) của một Lớp (Class) có thể được thay thế bằng một Đối tượng (Object) của một Lớp con (Subclass)
+      nhưng không làm hỏng mã nguồn hiện có. Mục tiêu là có thể thay thế một thành phần này bằng
+      một thành phần khác một cách minh bạch trong khi vẫn mang lại sự linh hoạt cho một Lớp con (Subclass) trong việc triển khai các phương thức của nó.</p>
+
+      <p>Bất cứ khi nào bạn ghi đè một phương thức trong một Lớp con (Subclass), hãy nghĩ về điều gì sẽ xảy ra với mã nguồn phụ thuộc vào Đối tượng (Object) của Lớp cha (Superclass) và nếu bạn truyền cho nó một Đối tượng (Object) của Lớp con (Subclass) thay vì Đối tượng (Object) của Lớp cha (Superclass). Nếu sự thay thế này không yêu cầu mã nguồn phải biên dịch lại, thì bạn đã ghi đè phương thức đó một cách chính xác. Từ góc độ này, các quy tắc sau đây cũng áp dụng cho việc ẩn phương thức (method hiding) (điều xảy ra đối với các phương thức static non-private) nữa.</p>
+
+      <p>Bây giờ, hãy để tôi liệt kê tất cả các quy tắc và sau đó tôi sẽ chỉ cho bạn lập luận đằng sau các quy tắc này thông qua một ví dụ. (Hãy nhớ rằng &ldquo;phương thức bị ghi đè (overridden method)&rdquo; nghĩa là phương thức ở Lớp cha (Superclass) và &ldquo;phương thức ghi đè (overriding method)&rdquo; nghĩa là phương thức ở Lớp con (Subclass)).</p>
+
+      <ol class="numbered">
+        <li><strong>Phạm vi truy cập (Accessibility)</strong> - Phương thức ghi đè (overriding method) không được có phạm vi truy cập hạn chế hơn phương thức bị ghi đè (overridden method). Điều này có nghĩa là nếu phương thức bị ghi đè là <code>protected</code>, bạn không thể đặt phương thức ghi đè là <code>default</code> bởi vì <code>default</code> có phạm vi truy cập hạn chế hơn so với <code>protected</code>. Bạn có thể làm cho phương thức ghi đè có phạm vi truy cập rộng hơn. Do đó, bạn có thể khai báo nó là <code>public</code>.</li>
+        <li><strong>Kiểu trả về (Return type)</strong> - Kiểu trả về của phương thức ghi đè (overriding method) phải giống hệt kiểu trả về của phương thức bị ghi đè (overridden method) hoặc phải là một kiểu con (sub type). Ví dụ, nếu kiểu trả về của phương thức bị ghi đè là <code>Fruit</code>, thì kiểu trả về của phương thức ghi đè có thể là <code>Fruit</code> hoặc bất kỳ Lớp con (Subclass) nào của <code>Fruit</code> chẳng hạn như <code>Apple</code> hay <code>Mango</code>. Đây được gọi là quy tắc &ldquo;kiểu trả về đồng biến (covariant returns)&rdquo;.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

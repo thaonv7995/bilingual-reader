@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 1: Những Điều Cơ Bản (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.tool-title {
+      margin: 3mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: 0.01em;
+    }
+    .prose-page.chapter-page h3.tool-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page ul.bullets figure.code-snippet {
+      margin: 1.5mm 0 1.5mm 4.5mm;
+    }
+    .prose-page.chapter-page ul.bullets figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10pt;
+      line-height: 1.25;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0028.html">← Trước</a>
+    <a href="page_0030.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <ul class="bullets">
+        <li>Bạn có thể dễ dàng di chuyển tất cả tài sản từ một không gian bảng này sang không gian bảng khác bằng cách sử dụng cú pháp
+        <code>ALTER TABLESPACE old_space MOVE ALL TO new_space;</code>.</li>
+        <li>Bạn có thể sử dụng một số cho các hàm trả về tập. Thường thì, bạn cần một số hàng
+        khi trích xuất dữ liệu không chuẩn hóa được lưu trữ trong mảng, <code>hstore</code>, kiểu tổng hợp, và
+        vân vân. Bây giờ bạn có thể thêm cột hệ thống <code>ordinality</code> (một tiêu chuẩn ANSI SQL)
+        vào đầu ra của bạn. Đây là một ví dụ sử dụng một đối tượng <code>hstore</code> và hàm <code>each</code>
+        trả về một cặp khóa-giá trị:
+          <figure class="code-snippet">
+            <pre class="code-block"><code><strong>SELECT</strong> ordinality, key, value
+ <strong>FROM</strong> each('breed=&gt;pug,cuteness=&gt;high'::hstore) <strong>WITH</strong> ordinality;</code></pre>
+          </figure>
+        </li>
+        <li>Bạn có thể sử dụng SQL để thay đổi cài đặt cấu hình hệ thống. Cấu trúc <code>ALTER system SET ...</code>
+        cho phép bạn thiết lập các cài đặt hệ thống toàn cầu thường được thiết lập trong <i>postgresql.conf</i>,
+        như đã chi tiết trong <span class="accent-word">“postgresql.conf” trên trang 18</span>.</li>
+        <li>Các trigger có thể được sử dụng trên các bảng ngoại. Khi ai đó ở nửa vòng trái đất chỉnh sửa dữ liệu,
+        trigger của bạn sẽ bắt được sự kiện này. Chúng tôi không chắc điều này sẽ hoạt động tốt như thế nào với
+        độ trễ mong đợi trong các bảng ngoại khi bảng ngoại ở rất xa.</li>
+        <li>Một hàm <code>unnest</code> mới phân bổ dự đoán các mảng có kích thước khác nhau vào các cột.</li>
+        <li>Một cấu trúc <code>ROWS FROM</code> cho phép sử dụng dễ dàng nhiều hàm trả về tập trong một
+        chuỗi, ngay cả khi chúng có một tập không cân bằng các phần tử trong mỗi tập:
+          <figure class="code-snippet">
+            <pre class="code-block"><code><strong>SELECT</strong> * <strong>FROM</strong> <strong>ROWS</strong> <strong>FROM</strong> (
+jsonb_each('{"a":"foo1","b":"bar"}'::jsonb),
+jsonb_each('{"c":"foo2"}'::jsonb)) x
+(a1,a1_val,a2_val);</code></pre>
+          </figure>
+        </li>
+        <li>Bạn có thể lập trình các worker nền động trong C để thực hiện công việc khi cần. Một ví dụ tầm thường
+        có sẵn trong mã nguồn phiên bản 9.4 trong thư mục <i>contrib/worker_spi</i>.</li>
+      </ul>
+
+      <h3 class="tool-title">PostgreSQL 9.3: Tính Năng Mới</h3>
+      <p class="no-indent">Các tính năng nổi bật lần đầu tiên xuất hiện trong phiên bản 9.3 (phát hành năm 2013) là:</p>
+
+      <ul class="bullets">
+        <li>Điều khoản <code>LATERAL</code> theo tiêu chuẩn ANSI SQL đã được thêm vào. Một cấu trúc <code>LATERAL</code> cho phép
+        các điều khoản <code>FROM</code> với các phép nối tham chiếu đến các biến ở phía bên kia của phép nối. Nếu không
+        có điều này, việc tham chiếu chéo chỉ có thể diễn ra trong các điều kiện nối. <code>LATERAL</code> là không thể thiếu
+        khi bạn làm việc với các hàm trả về tập, chẳng hạn như <code>unnest</code>, <code>generate_series</code>,
+        các bảng trả về biểu thức chính quy, và nhiều cái khác. Xem <span class="accent-word">“Lateral
+        Joins” trên trang 139</span>.</li>
+        <li>Chức năng <code>pg_dump</code> song song đã có sẵn. Phiên bản 8.4 đã mang đến cho chúng ta phục hồi song song, và bây giờ chúng ta
+        có sao lưu song song để tăng tốc việc sao lưu các cơ sở dữ liệu lớn.</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Những Gì Mới Trong Các Phiên Bản Mới Nhất Của PostgreSQL?<span class="sep">|</span>11</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

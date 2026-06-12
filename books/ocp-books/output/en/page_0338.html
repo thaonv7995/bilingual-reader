@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 17: Lambda Expressions and Method References</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 12pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0337.html">← Prev</a>
+    <a href="page_0339.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">338</span>
+      </header>
+
+      <p class="no-indent">method references because they provide even more opportunity to remove boilerplate code that
+      the compiler can easily infer from the context.</p>
+
+      <p>For example, here is a statement that you saw earlier for printing all the elements of a
+      list:&nbsp;<code>list.forEach( obj -&gt; System.out.println(obj) );</code>&nbsp;It uses a lambda expression to
+      create the <code>accept</code>&nbsp;method of the&nbsp;<code>Consumer</code>&nbsp;interface. In this lambda, all we are doing is
+      creating a variable named <code>obj</code>&nbsp;and then passing it to the <code>println</code>&nbsp;method of <code>System.out</code>.
+      The variable serves no purpose other than being a conduit to pass an object reference to the
+      method. We don&apos;t even care about the name of the variable.&nbsp;</p>
+
+      <p>Now, see this statement:&nbsp;<code>list.forEach(System.out::println);</code>&nbsp;Here, we are essentially
+      telling the compiler to use the <code>println</code>&nbsp;method of <code>System.out</code>&nbsp;to generate the code for the
+      <code>Consumer</code>&nbsp;object expected by the <code>forEach</code>&nbsp;method. The compiler knows that the generated
+      <code>Consumer</code>&apos;s <code>accept</code>&nbsp;method will be passed an element of the list as an argument. Since
+      <code>println</code>&nbsp;also expects one argument, the compiler can easily put two and two together and
+      generate the code that passes the element received by the <code>accept</code>&nbsp;method down to the
+      <code>println</code>&nbsp;method.</p>
+
+      <p>That&apos;s pretty much all that method references do. You tell the compiler which method you are
+      interested in using the <strong>double colon</strong> syntax and if the method expects any arguments, the
+      compiler will automatically pick up the values that are available in the context and pass them as
+      arguments to the method that you are interested in. The only catch is that the compiler must be
+      able to figure out exactly which method you want to call <strong>unambiguously</strong> and that it must be
+      possible to call it with the information available in the context, which means the compiler must
+      be able to identity the object on which the method has to be invoked (aka target reference) and
+      the compiler must be able to identity the values that can be passed as arguments to the method.&nbsp;</p>
+
+      <h3 class="section-title section-title--sub">Identifying the method<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>This is easy because the method name is written on the right side of <code>::</code>&nbsp;in a method reference
+      expression. For example, in <code>System.out::println</code>, <code>println</code>&nbsp;is the method name.&nbsp; If you
+      want to create an instance of a class, the fictional method name in that case would be <code>new</code>. So,
+      <code>String::new</code>&nbsp;would mean that you want to create an</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

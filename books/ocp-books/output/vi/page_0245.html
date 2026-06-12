@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--warn pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--output pre.code-block {
+      background: #e2e8f0;
+      border-left: none;
+      font-size: 9.75pt;
+      line-height: 1.4;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0244.html">← Trước</a>
+    <a href="page_0246.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">245</span>
+      </header>
+
+      <p class="no-indent">Java giải quyết vấn đề này bằng cách cho phép chúng ta chỉ định kiểu của các đối tượng (Object) mà chúng ta sẽ lưu trữ trong một danh sách khi khai báo kiểu của danh sách đó. Nếu thay vì viết <code>ArrayList al = new
+      ArrayList();</code>&nbsp;, chúng ta viết <code>ArrayList&lt;String&gt; al = new ArrayList&lt;String&gt;();</code>&nbsp;thì tất cả các thông báo cảnh báo sẽ biến mất.</p>
+
+      <p>Câu lệnh này thực hiện hai việc: nó khai báo một biến tham chiếu <code>al</code>&nbsp;có kiểu
+      <code>ArrayList&lt;String&gt;</code>&nbsp;và tạo một đối tượng (Object) có kiểu <code>ArrayList&lt;String&gt;</code>&nbsp;. Bằng cách khai báo <code>al</code>
+      có kiểu <code>ArrayList&lt;String&gt;</code>&nbsp;, chúng ta đang báo cho trình biên dịch biết rằng đối tượng (Object) <code>ArrayList</code>&nbsp;được trỏ bởi <code>al</code>&nbsp;chỉ được phép chứa các <code>String</code>. Tại đây, điều quan trọng là phải nhớ lại sự khác biệt giữa kiểu của một biến và kiểu của một đối tượng (Object) được trỏ bởi biến đó mà tôi đã thảo luận trong chương &ldquo;Tái sử dụng các lớp triển khai thông qua tính kế thừa (Inheritance)&rdquo;. Hãy nhớ rằng chính kiểu của biến sẽ quyết định những method nào mà trình biên dịch cho phép gọi bằng cách sử dụng biến đó. Do đó, trình biên dịch giờ đây sẽ xác minh xem bất kỳ lệnh gọi method nào được thực hiện bằng cách sử dụng <code>al</code>&nbsp;có nhất quán với những gì danh sách được trỏ bởi <code>al</code>&nbsp;được phép chứa hay không, và nếu trình biên dịch thấy bất kỳ câu lệnh nào cố gắng thêm bất kỳ thứ gì không phải là một <code>String</code>&nbsp;, hoặc cố gắng lấy ra bất kỳ thứ gì khác ngoài một <code>String</code>&nbsp;bằng cách sử dụng biến tham chiếu <code>al</code>&nbsp;, nó sẽ từ chối biên dịch câu lệnh đó. Thông báo lỗi được tạo ra bởi đoạn code sau đây minh họa cho điểm này:</p>
+
+      <figure class="code-snippet code-snippet--warn">
+        <pre class="code-block"><code>ArrayList&lt;String&gt; al = new ArrayList&lt;String&gt;();
+al.add(new Object());</code></pre>
+      </figure>
+
+      <p>Thông báo lỗi là:</p>
+
+      <figure class="code-snippet code-snippet--output">
+        <pre class="code-block"><code>Error: no suitable method found for add(java.lang.Object)
+    method java.util.Collection.add(java.lang.String) is not applicable</code></pre>
+      </figure>
+
+      <p>Vì <code>al</code>&nbsp;giờ đây đã được khai báo có kiểu <code>ArrayList&lt;String&gt;</code>&nbsp;, trình biên dịch không cho phép bạn gọi <code>al.add(new Object())</code>&nbsp;. Tương tự như vậy, trình biên dịch cũng sẽ không cho phép bạn thực hiện các phép gán không chính xác. Dưới đây là một ví dụ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>List&lt;String&gt; al = new ArrayList&lt;String&gt;();//al points to a List</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

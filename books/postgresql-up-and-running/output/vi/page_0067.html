@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0066.html">← Trước</a>
+    <a href="page_0068.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">67</span>
+      </header>
+
+      <h3 class="subsection-title">Thời gian thực thi</h3>
+      <p class="no-indent">Bạn có thể thấy hữu ích khi có psql xuất thời gian mà mỗi truy vấn mất để thực thi.
+      Sử dụng lệnh <code>\timing</code> để bật và tắt nó.</p>
+
+      <p>Khi điều đó được bật, mỗi truy vấn bạn chạy sẽ báo cáo thời gian ở cuối. Ví dụ, với <code>\timing</code> bật, thực thi <code>SELECT COUNT(*) FROM pg_tables;</code> xuất:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>count
+-------
+73
+(1 hàng)
+Thời gian: 18.650 ms</code></pre>
+      </figure>
+
+      <h3 class="subsection-title">Lệnh tự động cam kết</h3>
+      <p class="no-indent">Theo mặc định, AUTOCOMMIT được bật, có nghĩa là bất kỳ lệnh SQL nào bạn phát hành thay đổi dữ liệu
+      sẽ ngay lập tức được cam kết. Mỗi lệnh là một giao dịch riêng biệt và không thể đảo ngược. Nếu
+      bạn đang chạy một loạt cập nhật nguy hiểm lớn, bạn có thể muốn có một mạng lưới an toàn. Bắt đầu bằng cách
+      tắt autocommit: <code>\set AUTOCOMMIT off</code>. Bây giờ, bạn có tùy chọn để hoàn tác
+      các câu lệnh của mình:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>UPDATE</strong> census.facts <strong>SET</strong> short_name = <em>'Đây là một sai lầm.'</em>;</code></pre>
+      </figure>
+
+      <p class="no-indent">Để hoàn tác cập nhật, chạy:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>ROLLBACK</strong>;</code></pre>
+      </figure>
+
+      <p class="no-indent">Để làm cho cập nhật trở thành vĩnh viễn, chạy</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>COMMIT</strong>;</code></pre>
+      </figure>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0067_icon_warning.png" width="92" height="87" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Đừng quên cam kết các thay đổi của bạn; nếu không, chúng sẽ tự động
+        hoàn tác nếu bạn thoát khỏi psql.</p>
+      </div>
+
+      <h3 class="subsection-title">Phím tắt</h3>
+      <p class="no-indent">Bạn có thể sử dụng lệnh <code>\set</code> để tạo các phím tắt gõ hữu ích. Lưu trữ các phím tắt áp dụng chung
+      trong tệp psqlrc của bạn. Ví dụ, nếu bạn sử dụng EXPLAIN ANALYZE VERBOSE một lần mỗi 10 phút và bạn đã chán việc gõ nó mỗi lần, hãy đặt một biến:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>\set eav 'EXPLAIN ANALYZE VERBOSE'</code></pre>
+      </figure>
+
+      <p class="no-indent">Bây giờ, bất cứ khi nào bạn muốn nhập EXPLAIN ANALYZE VERBOSE, chỉ cần gõ <code>:eav</code> (dấu hai chấm giải quyết biến):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>:eav SELECT COUNT(*) FROM pg_tables;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Tùy chỉnh psql<span class="sep">|</span>49</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

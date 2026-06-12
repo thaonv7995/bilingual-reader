@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Tìm kiếm các khoảng</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h3.section-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title:first-of-type {
+      margin-top: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">49</span>
+      </header>
+      <p class="chapter-running-head">Tìm kiếm các khoảng</p>
+
+      <aside class="sidebar-note">
+        <h3>Chia sẻ con trỏ và Tự động tham số hóa</h3>
+        <p>Càng phức tạp thì bộ tối ưu hóa và truy vấn SQL càng trở nên quan trọng trong việc lưu trữ kế hoạch thực thi. Các cơ sở dữ liệu SQL Server và Oracle có các tính năng tự động thay thế các giá trị literal trong chuỗi SQL bằng các tham số liên kết. Các tính năng này được gọi là <code>CURSOR_SHARING</code> (Oracle) hoặc tham số hóa cưỡng bức (SQL Server).</p>
+        <p>Cả hai tính năng đều là giải pháp tạm thời cho các ứng dụng không sử dụng tham số liên kết. Việc kích hoạt các tính năng này ngăn cản các nhà phát triển cố tình sử dụng các giá trị literal.</p>
+      </aside>
+
+      <h3 class="section-title">Tìm kiếm các khoảng</h3>
+
+      <p class="no-indent">Các toán tử bất đẳng thức như &lt;, &gt; và between có thể sử dụng chỉ mục giống như toán tử bằng đã được giải thích ở trên. Ngay cả một bộ lọc <code>LIKE</code> cũng có thể—trong một số trường hợp—sử dụng chỉ mục giống như các điều kiện khoảng.</p>
+
+      <p>Sử dụng các phép toán này giới hạn sự lựa chọn thứ tự cột trong các chỉ mục nhiều cột. Sự hạn chế này thậm chí có thể loại bỏ tất cả các tùy chọn chỉ mục tối ưu—có những truy vấn mà bạn đơn giản không thể xác định một thứ tự cột “đúng” nào cả.</p>
+
+      <h3 class="section-title">Lớn hơn, Nhỏ hơn và BETWEEN</h3>
+
+      <p class="no-indent">Rủi ro hiệu suất lớn nhất của một <code>INDEX RANGE SCAN</code> là việc duyệt nút lá. Do đó, quy tắc vàng của việc lập chỉ mục là giữ cho khoảng chỉ mục được quét càng nhỏ càng tốt. Bạn có thể kiểm tra điều đó bằng cách tự hỏi khoảng quét chỉ mục bắt đầu từ đâu và kết thúc ở đâu.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">39</p>
+    </article>
+  </main>
+</body>
+</html>

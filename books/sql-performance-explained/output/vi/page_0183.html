@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — PostgreSQL Lấy Kế Hoạch Thực Thi</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">PostgreSQL Lấy Kế Hoạch Thực Thi</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Đầu ra của kế hoạch giải thích như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>                QUERY PLAN
+------------------------------------------
+ Result  (cost=0.00..0.01 rows=1 width=0)</code></pre>
+      </figure>
+
+      <p>Đầu ra có thông tin tương tự như các kế hoạch thực thi của Oracle được trình bày trong suốt cuốn sách: tên hoạt động (“Result”), chi phí liên quan, ước lượng số hàng, và chiều rộng hàng dự kiến.</p>
+
+      <p>Lưu ý rằng PostgreSQL hiển thị hai giá trị chi phí. Giá trị đầu tiên là chi phí cho việc khởi động, giá trị thứ hai là tổng chi phí cho việc thực thi nếu tất cả các hàng được truy xuất. Kế hoạch thực thi của cơ sở dữ liệu Oracle chỉ hiển thị giá trị thứ hai.</p>
+
+      <p>Lệnh giải thích của PostgreSQL có hai tùy chọn. Tùy chọn <code>VERBOSE</code> cung cấp thông tin bổ sung như tên bảng đầy đủ—<code>VERBOSE</code> thường không có giá trị cao.</p>
+
+      <p>Tùy chọn giải thích thứ hai là <code>ANALYZE</code>. Mặc dù nó được sử dụng rộng rãi, tôi khuyên bạn không nên hình thành thói quen sử dụng nó tự động vì nó thực sự thực thi câu lệnh. Điều này hầu như không gây hại cho các câu lệnh select nhưng nó sẽ sửa đổi dữ liệu của bạn khi sử dụng cho insert, update hoặc delete. Để tránh rủi ro vô tình sửa đổi dữ liệu của bạn, bạn có thể bao bọc nó trong một giao dịch và thực hiện rollback sau đó.</p>
+
+      <p>Tùy chọn <code>ANALYZE</code> thực thi câu lệnh và ghi lại thời gian thực tế và số hàng. Điều này có giá trị trong việc tìm ra nguyên nhân của các ước lượng độ cardinality không chính xác (ước lượng số hàng):</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>BEGIN;
+EXPLAIN ANALYZE EXECUTE stmt(1);
+                   QUERY PLAN
+--------------------------------------------------
+ Result  (cost=0.00..0.01 rows=1 width=0)
+         (actual time=0.002..0.002 rows=1 loops=1)
+ Total runtime: 0.020 ms
+ROLLBACK;</code></pre>
+      </figure>
+
+      <p>Lưu ý rằng kế hoạch được định dạng để phù hợp hơn trên trang. PostgreSQL in các giá trị “thực tế” trên cùng một dòng với các giá trị ước lượng.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">173</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

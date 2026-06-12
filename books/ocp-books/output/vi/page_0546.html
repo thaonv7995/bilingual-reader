@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0545.html">← Trước</a>
+    <a href="page_0547.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">546</span>
+      </header>
+
+      <p class="no-indent">không cung cấp khả năng duyệt (iteration) an toàn Thread (Luồng). Do đó, A không khắc phục hoàn toàn vấn đề.</p>
+
+      <p class="no-indent">Việc làm cho các phương thức của các Lớp (Class) khác nhau được synchronized sẽ không ngăn cản nhiều Thread (Luồng) thực thi chúng đồng thời vì chúng sẽ đồng bộ hóa trên các lock khác nhau. Do đó, B là không chính xác.</p>
+
+      <p class="no-indent">C là một lựa chọn khả thi trong tình huống đã cho, nhưng hãy lưu ý rằng đây là một cách tiếp cận rủi ro vì tính an toàn Thread (Luồng) của nó hoàn toàn phụ thuộc vào người dùng danh sách sản phẩm (products list).</p>
+
+      <p class="no-indent"><code>CopyOnWriteArrayList</code>&nbsp;là một lựa chọn tốt vì các phương thức thay đổi dữ liệu (mutator methods) của nó có tính an toàn Thread (Luồng) độc lập và nó cho phép duyệt (iteration) an toàn Thread (Luồng). Vì vậy, D là đúng.</p>
+
+      <p class="no-indent">Lựa chọn E không chính xác vì không tồn tại khái niệm Iterator được đồng bộ hóa (synchronized Iterator).</p>
+
+      <h3 class="section-title section-title--sub">20.6.4 Sử dụng các bộ đồng bộ hóa (Synchronizers)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Trong khi phát triển các ứng dụng Java đa Thread (Luồng), bạn có thể nhận thấy các yêu cầu tương tự nhau giữa các ứng dụng và cuối cùng bạn phải viết đi viết lại cùng một kiểu code. Đúng vậy, đó là các mẫu (patterns) và chúng cũng tồn tại khi đồng bộ hóa nhiều Thread (Luồng). Package <code>java.util.concurrent</code>&nbsp;cung cấp một số Lớp (Class) ở cấp độ cao hơn, cụ thể là: <code>CyclicBarrier</code>&nbsp;, <code>CountdownLatch</code>&nbsp;, <code>Semaphore</code>&nbsp;, <code>Phaser</code>&nbsp;, và <code>Exchanger</code>&nbsp;, triển khai các mẫu đó. Các Lớp (Class) này cung cấp thêm các chức năng bổ sung dựa trên các công cụ đồng bộ hóa cấp thấp hơn như từ khóa <code>synchronized</code>&nbsp;và các Lớp (Class) <code>Lock</code>&nbsp;tường minh.</p>
+
+      <h3 class="section-title section-title--minor">CyclicBarrier<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một <code>CyclicBarrier</code>&nbsp;cho phép một số lượng Thread (Luồng) được xác định trước chờ đợi lẫn nhau để cùng đạt đến một điểm chung. Nó có hai constructor:</p>
+
+      <ol class="numbered">
+        <li><code>CyclicBarrier(int parties)</code>&nbsp;- Tạo một <code>CyclicBarrier</code>&nbsp;mới, đối tượng này sẽ được kích hoạt (trip) khi số lượng bên tham gia - parties (các Thread (Luồng)) được chỉ định đang chờ đợi tại đó, và không thực hiện hành động xác định trước nào khi barrier được kích hoạt.</li>
+        <li><code>CyclicBarrier(int parties, Runnable barrierAction)</code>&nbsp;- Tạo một <code>CyclicBarrier</code>&nbsp;mới, đối tượng này sẽ được kích hoạt (trip) khi số lượng bên tham gia - parties (các Thread (Luồng)) được chỉ định</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

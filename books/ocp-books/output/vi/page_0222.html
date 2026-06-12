@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 15: Xử lý Exception (Ngoại lệ)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-prompt {
+      margin: 0 0 2.5mm;
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0221.html">← Trước</a>
+    <a href="page_0223.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">222</span>
+      </header>
+
+      <p class="no-indent">Exception (Ngoại lệ). Nhưng nếu đoạn mã trong khối try ném ra các loại Exception (Ngoại lệ) khác nhau và bạn muốn thực hiện cùng một việc, chẳng hạn như ghi log thông báo của exception, cho từng loại Exception (Ngoại lệ) đó thì sao?</p>
+
+      <p>Điều đó thực ra rất dễ dàng. Bạn chỉ cần đặt một mệnh đề catch với Lớp cha (Superclass) cụ thể nhất của tất cả các Exception (Ngoại lệ) đó. Ví dụ, nếu đoạn mã ném ra <code>FileNotFoundException</code>, <code>ArrayIndexOutOfBoundsException</code>,
+      <code>NullPointerException</code>, và <code>IllegalArgumentException</code>, và nếu bạn muốn xử lý tất cả chúng theo cùng một cách, bạn có thể sử dụng khối catch sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>try{
+// code that may throw any one of FileNotFoundException,
+ArrayIndexOutOfBoundsException, NullPointerException, and
+IllegalArgumentException
+}
+catch(Exception e) { //catch a common superclass exception
+System.out.println(e.getMessage()); //all the exceptions will get
+logged here
+}</code></pre>
+      </figure>
+
+      <p>Hãy làm cho vấn đề thú vị hơn một chút. Điều gì sẽ xảy ra nếu bạn chỉ muốn ghi log <code>FileNotException</code>&nbsp;và
+      <code>ArrayIndexOutOfBoundsException</code>&nbsp;và ném lại tất cả các <code>RuntimeException</code> khác? Việc này không dễ dàng như vậy bởi vì nếu bạn đặt một mệnh đề catch sử dụng một Lớp cha (Superclass) của
+      <code>FileNotException</code>&nbsp;và&nbsp;<code>ArrayIndexOutOfBoundsException</code>&nbsp;(nhân tiện, đó chính là <code>Exception</code>), nó sẽ catch cả bốn lớp exception vì <code>Exception</code>&nbsp;là Lớp cha (Superclass) của tất cả các lớp đó.</p>
+
+      <p>Nếu bạn đặt một mệnh đề catch sử dụng một Lớp cha (Superclass) của <code>NullPointerException</code>&nbsp;và
+      <code>IllegalArgumentException</code>&nbsp;(nhân tiện, đó chính là <code>RuntimeException</code>), nó cũng sẽ catch cả
+      <code>ArrayIndexOutOfBoundsException</code>&nbsp;nữa. Vì vậy, bạn sẽ cần ít nhất ba khối catch.</p>
+
+      <p>Các nhà thiết kế Java đã giới thiệu một cách mới để giải quyết vấn đề này trong Java 7 dưới dạng một khối multi-catch. Hãy cùng xem đoạn mã dưới đây:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 6: Tables, Constraints, and Indexes — Functional Indexes</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0133.html">← Prev</a>
+    <a href="page_0135.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">134</span>
+      </header>
+
+      <p class="no-indent">Finally, remember that each index you create works against only a single opclass. If you
+      would like an index on a column to cover multiple opclasses, you must create separate
+      indexes. To add the default index <code>text_ops</code> to a table, run:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX idx2 ON census.lu_tracts USING btree (tract_name);</code></pre>
+      </figure>
+
+      <p>Now you have two indexes against the same column. (There&rsquo;s no limit to the number
+      of indexes you can build against a single column.) The planner will choose <code>idx2</code> for
+      basic equality queries and <code>idx1</code> for comparisons using <code>like</code>.</p>
+
+      <p>You&rsquo;ll find operator classes detailed in <span class="accent-word">Operator Classes</span>. We also strongly recommend
+      that you read our article for tips on troubleshooting index issues, <span class="accent-word">Why is My Index Not
+      Used?</span></p>
+
+      <h3 class="subsection-title">Functional Indexes</h3>
+      <p class="no-indent">PostgreSQL lets you add indexes to functions of columns. Functional indexes prove
+      their usefulness in mixed-case textual data. PostgreSQL is a case-sensitive database. To
+      perform a case-insensitive search you could create a functional index:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX fidx ON featnames_short
+ USING btree (upper(fullname) varchar_pattern_ops);</code></pre>
+      </figure>
+
+      <p>Creating such an index ensures that queries such as <code>SELECT fullname FROM featnames_short WHERE upper(fullname) LIKE 'S%';</code> can utilize an index.
+      Always use the same function when querying to ensure usage of the index.</p>
+
+      <p>Both PostgreSQL and Oracle provide functional indexes. MySQL and SQL Server pro‐
+      vide computed columns, which you can index. As of version 9.3, PostgreSQL supports
+      indexes on materialized views as well as tables.</p>
+
+      <h3 class="subsection-title">Partial Indexes</h3>
+      <p class="no-indent">Partial indexes (sometimes called filtered indexes) are indexes that cover only rows
+      fitting a predefined <code>WHERE</code> condition. For instance, if you have a table of 1,000,000 rows,
+      but you care about a fixed set of 10,000, you&rsquo;re better off creating partial indexes. The
+      resulting indexes can be faster because more of them can fit into RAM, plus you&rsquo;ll save
+      a bit of disk space on the index itself.</p>
+
+      <p>Partial indexes let you place uniqueness constraints only on some rows of the data.
+      Pretend that you manage newspaper subscribers who signed up in the past 10 years and
+      want to ensure that nobody is getting more than one paper delivered per day. With
+      dwindling interest in print media, only about 5% of your subscribers have a current
+      subscription. You don&rsquo;t care about subscribers who have stopped getting newspapers
+      being duplicated, because they&rsquo;re not on the carriers&rsquo; list anyway. Your table looks like
+      this:</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">116<span class="sep">|</span>Chapter 6: Tables, Constraints, and Indexes</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

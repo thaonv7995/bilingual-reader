@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e2e8f0;
+      border-left: 0.8mm solid #3b82f6;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      background: #fed7d7;
+      border-left-color: #ef4444;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0128.html">← Trước</a>
+    <a href="page_0130.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">129</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>double rate) {
+return principal*yrs*rate;
+}
+}
+class CompoundInterestCalculator implements InterestCalculator{
+public double computeInterest(double principal, double yrs,
+double rate) {
+return principal*Math.pow(1 + rate, yrs) - principal;
+}
+}</code></pre>
+      </figure>
+
+      <p>Hãy quan sát thấy rằng phương thức <code>getInterest</code> hiện nhận một <code>InterestCalculator</code> làm tham số.
+      Điều này giúp cho bất kỳ Lớp (Class) nào khác tính toán bất kỳ loại tiền lãi nào trên một Đối tượng (Object) tài khoản một cách rất dễ dàng.
+      Hiện tại, có hai Lớp (Class) thực hiện tính tiền lãi là <code>SimpleInterestCalculator</code> và
+      <code>CompoundInterestCalculator</code>, nhưng trong tương lai nếu bạn muốn tính tiền lãi với phương thức tính lãi kép khác,
+      tất cả những gì bạn cần làm là tạo một Lớp (Class) mới triển khai Interface (Giao diện) <code>InterestCalculator</code>
+      và truyền một Đối tượng (Object) của Lớp (Class) này vào phương thức <code>getInterest</code>. Lớp (Class) <code>Account</code> sẽ
+      không nhận ra sự khác biệt. JVM sẽ tự động liên kết lệnh gọi đến <code>computeInterest</code> với mã nguồn được cung cấp
+      bởi Lớp (Class) mới của bạn.</p>
+
+      <p>Việc liên kết động (dynamic binding) của các cuộc gọi phương thức có thể gây ra kết quả không mong muốn nếu bạn không cẩn thận. Hãy xem xét
+      đoạn mã sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>class Account{
+double balance = 0.0;
+Account(double balance){
+this.balance = balance;
+this.printBalance();
+}
+void printBalance(){
+System.out.println(balance);</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

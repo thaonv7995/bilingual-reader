@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — MySQL Distinguishing Access and Filter-Predicates</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">MySQL Distinguishing Access and Filter-Predicates</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">In the following example, the entire <code>where</code> clause is used as access predicate:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE TABLE demo (
+   id1 NUMERIC
+ , id2 NUMERIC
+ , id3 NUMERIC
+ , val NUMERIC);</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>INSERT INTO demo VALUES (1,1,1,1);
+INSERT INTO demo VALUES (2,2,2,2);</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>CREATE INDEX demo_idx
+          ON demo
+             (id1, id2, id3);</code></pre>
+      </figure>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>EXPLAIN
+ SELECT *
+   FROM demo
+  WHERE id1=1
+    AND id2=1;
+
++------+----------+---------+------+-------+
+| type | key      | key_len | rows | Extra |
++------+----------+---------+------+-------+
+| ref  | demo_idx | 12      |    1 |       |
++------+----------+---------+------+-------+</code></pre>
+      </figure>
+
+      <p>There is no &ldquo;Using where&rdquo; or &ldquo;Using index condition&rdquo; shown in the &ldquo;Extra&rdquo; column. The index is, however, used (<code>type=ref</code>, <code>key=demo_idx</code>) so you can assume that the entire <code>where</code> clause qualifies as access predicate.</p>
+
+      <p>You can use the <code>key_len</code> value to verify this. It shows that the query uses the first 12 bytes of the index definition. To map this to column names, you &ldquo;just&rdquo; need to know how much storage space each column needs (see &ldquo;Data Type Storage Requirements&rdquo; in the MySQL documentation). In absence of a NOT NULL constraint, MySQL needs an extra byte for each column. After all, each NUMERIC column needs 6 bytes in the example. Therefore, the key length of 12 confirms that the first two index columns are used as access predicates.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">191</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

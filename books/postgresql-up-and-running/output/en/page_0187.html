@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — Table Statistics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0186.html">← Prev</a>
+    <a href="page_0188.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">187</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Example 9-9.</strong> Disable sequential scan, coerce index use</figcaption>
+        <pre class="code-block"><code>set enable_seqscan = false;
+EXPLAIN (ANALYZE)
+SELECT *
+FROM census.lu_fact_types
+WHERE fact_subcats &amp;&amp; '{White alone, Black alone}'::varchar[];
+Bitmap Heap Scan on lu_fact_types (cost=12.02..14.04 rows=2 width=200) (actual
+time=0.058..0.058 rows=2 loops=1) Recheck Cond: (fact_subcats &amp;&amp; '{&quot;White
+alone&quot;,&quot;Black alone&quot;}'::character varying[]) Heap Blocks: exact=1  -&gt; Bitmap Index
+Scan on idx_lu_fact_types
+        (cost=0.00..12.02 rows=2 width=0) (actual time=0.048..0.048 rows=2 loops=1)
+        Index Cond: (fact_subcats &amp;&amp; '{&quot;White alone&quot;,&quot;Black alone&quot;}'::character
+varying[])
+Planning time: 0.230 ms
+Execution time: 0.119 ms</code></pre>
+      </figure>
+
+      <p class="no-indent">From this plan, we learn that our index can be used, but because the estimated cost is
+      more than doing a sequential scan, the planner under normal circumstances will opt
+      for the sequential scan. The planner was right in its assessment because our index execution
+      time turns out to be a little more than a sequential scan. As we add more data to
+      our table, we&rsquo;ll probably find that the planner changes strategies to an index scan.</p>
+
+      <p>In contrast to the previous example, suppose we were to write a query of the form:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM census.lu_fact_types WHERE 'White alone' = ANY(fact_subcats);</code></pre>
+      </figure>
+
+      <p>We would discover that, regardless of how we set <code>enable_seqscan</code>, the planner will
+      always perform a sequential scan because the index we have in place can&rsquo;t service this
+      query. So it is important to consider which indexes will be useful and to write queries
+      to take advantage of them. And experiment, experiment, experiment!</p>
+
+      <h3 class="section-title">Table Statistics</h3>
+
+      <p class="no-indent">Despite what you might think or hope, the query planner is not a magician. Its decisions
+      follow prescribed logic that&rsquo;s far beyond the scope of this book. The rules that the planner
+      follows depend heavily on the current state of the data. The planner can&rsquo;t possibly scan
+      all the tables and rows prior to formulating its plan. That would be self-defeating. Instead,
+      it relies on aggregated statistics about the data.</p>
+
+      <p>Having accurate and current stats is crucial for the planner to make the right decision.
+      If stats differ greatly from reality, the planner will often come up with bad plans, the
+      most detrimental of these being unnecessary sequential table scans. Generally, only
+      about 20 percent of the entire table is sampled to produce stats. This percentage could
+      be even lower for very large tables. You can control the number of rows sampled on a
+      column-by-column basis by setting the STATISTICS value.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Guiding the Query Planner<span class="sep">|</span>169</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 4: Section 4.4 and Listing 4.4</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--dep .listing-callouts {
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-annotated--yml .listing-callouts {
+      padding-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0131.html">← Prev</a>
+    <a href="page_0133.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Registering services with Spring Eureka</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">107</span>
+      </header>
+
+      <p class="no-indent">You use only one new annotation to tell your service to be a Eureka service; that&rsquo;s <code>@EnableEurekaServer</code>. At this point you can start up the Eureka service by running the <code>mvn spring-boot:run</code> or run <code>docker-compose</code> (see appendix A) to start the service. Once this command is run, you should have a running Eureka service with no services registered in it. Next you&rsquo;ll build out the organization service and register it with your Eureka service.</p>
+
+      <h4 class="subsection-title">4.4 Registering services with Spring Eureka</h4>
+
+      <p>At this point you have a Spring-based Eureka server up and running. In this section, you&rsquo;ll configure your organization and licensing services to register themselves with your Eureka server. This work is done in preparation for having a service client look up a service from your Eureka registry. By the time you&rsquo;re done with this section, you should have a firm understanding of how to register a Spring Boot microservice with Eureka.</p>
+
+      <p>Registering a Spring Boot-based microservice with Eureka is an extremely simple exercise. For the purposes of this chapter, we&rsquo;re not going to walk through all of the Java code involved with writing the service (we purposely kept that amount of code small), but instead focus on registering the service with the Eureka service registry you created in the previous section.</p>
+
+      <p>The first thing you need to do is add the Spring Eureka dependency to your organization service&rsquo;s <code>pom.xml</code> file:</p>
+
+      <div class="listing-annotated listing-annotated--dep">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>&lt;dependency&gt;
+  &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+  &lt;artifactId&gt;spring-cloud-starter-eureka&lt;/artifactId&gt;   
+&lt;/dependency&gt;</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Dependency annotation callout">
+          <p class="listing-callout">Includes the Eureka libraries so that the service can register with Eureka</p>
+        </div>
+      </div>
+
+      <p>The only new library that&rsquo;s being used is the <code>spring-cloud-starter-eureka</code> library. The <code>spring-cloud-starter-eureka</code> artifact holds the jar files that Spring Cloud will use to interact with your Eureka service.</p>
+
+      <p>After you&rsquo;ve set up your <code>pom.xml</code> file, you need to tell Spring Boot to register the organization service with Eureka. This registration is done via additional configuration in the organization service&rsquo;s <code>src/main/java/resources/application.yml</code> file, as shown in the following listing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 4.4</strong><br>Modifying your organization service&rsquo;s application.yml to talk to Eureka</figcaption>
+        <div class="listing-annotated listing-annotated--yml" aria-label="Listing 4.4 annotated code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>spring:
+ application:
+  name: organizationservice           
+ profiles:
+  active:
+   default
+ cloud:
+  config:
+   enabled: true</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Listing 4.4 annotation callout">
+            <p class="listing-callout">Logical name of the service that will be registered with Eureka</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

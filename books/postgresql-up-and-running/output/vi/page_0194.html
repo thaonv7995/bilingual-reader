@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Tinh Chỉnh Hiệu Suất Truy Vấn — Sử Dụng Tốt CASE</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 1mm auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 0.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0193.html">← Trước</a>
+    <a href="page_0195.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">194</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    ) As num_fact_types
+FROM census.lu_tracts As T;</code></pre>
+      </figure>
+
+      <p class="no-indent">Bây giờ, nếu chúng ta truy vấn view của mình với truy vấn này:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT tract_id FROM vw_stats;</code></pre>
+      </figure>
+
+      <p>thời gian thực thi khoảng 21 ms trên máy chủ của chúng ta vì nó không thực hiện bất kỳ tính toán nào cho
+      các trường nhất định như num_facts và num_fact_types, các trường mà chúng ta không yêu cầu. Nếu bạn
+      nhìn vào kế hoạch, bạn có thể ngạc nhiên khi thấy rằng nó thậm chí không chạm vào bảng facts
+      vì nó đủ thông minh để biết rằng nó không cần phải làm vậy. Nhưng nếu chúng ta sử dụng:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * FROM vw_stats;</code></pre>
+      </figure>
+
+      <p>thời gian thực thi của chúng ta tăng vọt lên 681 ms, và kế hoạch giống như chúng ta đã có trong <span class="accent-word">Hình 9-4</span>.
+      Mặc dù kết quả của chúng ta trong ví dụ này chỉ mất vài mili giây, hãy tưởng tượng các bảng
+      với hàng chục triệu dòng và hàng trăm cột. Những mili giây đó có thể
+      chuyển thành thời gian làm thêm tại văn phòng chờ đợi một truy vấn hoàn thành.</p>
+
+      <h3 class="section-title">Sử Dụng Tốt CASE</h3>
+
+      <p class="no-indent">Chúng tôi luôn ngạc nhiên về việc mọi người thường quên sử dụng biểu thức CASE của ANSI SQL.
+      Trong nhiều tình huống tổng hợp, một CASE có thể loại bỏ nhu cầu về các truy vấn con không hiệu quả.
+      Chúng tôi sẽ minh họa điểm này với hai truy vấn tương đương và các kế hoạch tương ứng của chúng. <span class="accent-word">Ví dụ 9-14</span> sử dụng các truy vấn con.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-14.</strong> Sử dụng các truy vấn con thay vì CASE</figcaption>
+        <pre class="code-block"><code>SELECT T.tract_id, COUNT(*) As tot, type_1.tot AS type_1
+FROM
+    census.lu_tracts AS T LEFT JOIN
+    (SELECT tract_id, COUNT(*) As tot
+        FROM census.facts
+        WHERE fact_type_id = 131
+        GROUP BY tract_id
+    ) As type_1 ON T.tract_id = type_1.tract_id LEFT JOIN
+    census.facts AS F ON T.tract_id = F.tract_id
+GROUP BY T.tract_id, type_1.tot;</code></pre>
+      </figure>
+
+      <p><span class="accent-word">Hình 9-7</span> cho thấy kế hoạch đồ họa của <span class="accent-word">Ví dụ 9-14</span>.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0194_fig_9_7.png" width="1246" height="132" alt="Hình 9-7. Kế hoạch đồ họa của việc sử dụng các truy vấn con thay vì CASE">
+        <figcaption>Hình 9-7. Kế hoạch đồ họa của việc sử dụng các truy vấn con thay vì CASE</figcaption>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">176<span class="sep">|</span>Chương 9: Tinh Chỉnh Hiệu Suất Truy Vấn</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

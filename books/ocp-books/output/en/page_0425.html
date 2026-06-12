@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered[start="6"] {
+      counter-reset: init-step 5;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li p + p {
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0424.html">← Prev</a>
+    <a href="page_0426.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">425</span>
+      </header>
+
+      <ol class="numbered" start="6">
+        <li>
+          <p>two methods of the <code>Path</code>&nbsp;interface that can throw an <code>IOException</code>&nbsp;. The other method
+          is <code>register</code>&nbsp;, but it is not in scope for this exam.</p>
+        </li>
+      </ol>
+
+      <p>Not important for the exam, but it is good to know that a well formed paths do not end with a
+      trailing separator character (unless it is referring to the root such as <code>C:\</code>&nbsp;or <code>/</code>&nbsp;). So, even if you try
+      to create a <code>Path</code>&nbsp;with a trailing slash, it will be ignored. For example:</p>
+
+      <p class="no-indent"><code>System.out.print(Path.of("/a/b/"));</code>&nbsp; will print <code>/a/b</code>&nbsp; and not <code>/a/b/</code>&nbsp;.</p>
+
+      <h3 class="section-title section-title--sub">Using resolve and resolveSibling<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Absolute paths on different environments in which an application runs, seldom match. For
+      example, let&rsquo;s say your application needs to read a properties file named <code>values.properties</code>&nbsp;.</p>
+
+      <p>On your Windows machine, you may be running this application under
+      <code>C:\dev\projects\fintech</code>&nbsp; and this file may be located at
+      <code>C:\dev\projects\fintech\props\values.properties</code>&nbsp;. But in&nbsp; production, the application
+      may be running under <code>/home/ec2-user/prod/fintech</code>&nbsp; and the actual location of this file
+      may be <code>/home/ec2-user/prod/fintech/props/values.properties</code>&nbsp;. Obviously, if you
+      hardcode the absolute path to this file in your code based on your development environment,
+      the application will not be able to find this file in production. Therefore, it is advisable to use
+      relative paths instead of absolute paths in Java code. The base path is provided to the
+      application though a command line argument and the application &ldquo;resolves&rdquo; the relative paths
+      (which are same on all environments) relative to the base path whenever it needs to locate the
+      file in the file system. The following example shows how it is done:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>import java.io.*;
+import java.nio.file.*;
+public class TestClass{
+    public static void main(String[] args) throws IOException{
+        Path basePath = Path.of(System.getProperty("basepath"));</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

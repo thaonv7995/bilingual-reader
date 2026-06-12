@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 13: Implementing Inheritance</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0117.html">← Prev</a>
+    <a href="page_0119.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">118</span>
+      </header>
+
+      <p class="no-indent"><code>f2</code> pointed to an <code>Apple</code> instead of a <code>Mango</code>.</p>
+
+      <p>The same logic discussed above applies to interfaces as well. If a class implements an interface,
+      then an object of that class <strong>is-a</strong> that interface. For example, if <code>Fruit</code> implements an interface
+      named <code>Edible</code>, then any fruit will satisfy the is-a test for <code>Edible</code>. In other words, a <code>Fruit</code>
+      is-a <code>Edible</code>.</p>
+
+      <h3 class="section-title section-title--minor">The cast Operator ( )<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">You saw above that the compiler does not let the lines <code>Mango m = f1;</code> and <code>Mango m =
+      f2;</code> compile because the compiler cannot know for sure that <code>f1</code> and <code>f2</code> will point to <code>Mango</code>
+      objects at run time. Instead of letting an <code>Apple</code> get assigned to <code>m</code> and thereby violating type
+      safety, it rejects the code altogether. However, the programmer knows what she expects <code>f2</code> to
+      refer to at run time (because she wrote the code after all!). Java language allows a programmer
+      to use their knowledge about their program to assure the compiler that a reference will point to
+      an object of the correct type at run time using the cast operator. This assurance convinces the
+      compiler to let them do the assignment. Here is how this works:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>m = (Mango) f1;
+m = (Mango) f2;</code></pre>
+      </figure>
+
+      <p>By casting <code>f1</code> and <code>f2</code> to <code>Mango</code>, the programmer basically guarantees to the compiler that
+      <code>f1</code> and <code>f2</code> will point to <code>Mango</code> objects at run time. The compiler accepts the guarantee
+      because it knows that <code>Mango</code> is a <code>Fruit</code> and it is possible for a variable of type <code>Fruit</code> to
+      refer to a <code>Mango</code>. The compiler rejected the code earlier because the variables could point to
+      <code>Apple</code> objects as well but with the explicit guarantee given by the programmer that they will
+      point to a <code>Mango</code> objects at run time, the compiler accepts the code.</p>
+
+      <h3 class="section-title section-title--minor">The java.lang.ClassCastException<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">If you observe the above code carefully, you will know that <code>f1</code> will not really point to a
+      <code>Mango</code> at run time. The line <code>Fruit f1 = a;</code> actually makes <code>f1</code> point to the same object as <code>a</code> and
+      <code>a</code> points to an <code>Apple</code>. Therefore, <code>f1</code> will actually point to an <code>Apple</code></p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

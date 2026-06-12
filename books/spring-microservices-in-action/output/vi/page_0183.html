@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 6: Listing 6.1 Lớp bootstrap máy chủ Zuul</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--61 .listing-callouts {
+      padding-top: 16mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page figure.listing + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title,
+    .prose-page.chapter-page .sidebar-note + p,
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0182.html">← Trước</a>
+    <a href="page_0184.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">158</span>
+        <span class="rh-center">CHƯƠNG 6 <em>Định tuyến dịch vụ với Spring Cloud và Zuul</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 6.1</strong><br>Thiết lập lớp bootstrap máy chủ Zuul</figcaption>
+        <div class="listing-annotated listing-annotated--61" aria-label="Mã nguồn Listing 6.1 có chú thích">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.zuulsvr;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
+import org.springframework.context.annotation.Bean;
+
+
+@SpringBootApplication
+@EnableZuulProxy
+public class ZuulServerApplication {
+   public static void main(String[] args) {
+    SpringApplication.run(
+      ZuulServerApplication.class,
+      args);
+  }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích Listing 6.1">
+            <p class="listing-callout">Cho phép dịch vụ hoạt động như máy chủ Zuul</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Vậy là xong. Chỉ cần một annotation duy nhất: <code>@EnableZuulProxy</code>.</p>
+
+      <aside class="sidebar-note" aria-label="Lưu ý">
+        <h3>LƯU Ý</h3>
+        <p>Nếu bạn xem qua tài liệu hoặc đã bật auto-complete, bạn có thể chú ý thấy một annotation tên là <code>@EnableZuulServer</code>. Dùng annotation này sẽ tạo máy chủ Zuul không tải bất kỳ filter reverse proxy nào của Zuul hoặc không dùng Netflix Eureka để service discovery. (Chúng ta sẽ đề cập chủ đề tích hợp Zuul và Eureka ngay sau đây.) <code>@EnableZuulServer</code> được dùng khi bạn muốn xây dựng dịch vụ định tuyến riêng và không dùng bất kỳ khả năng có sẵn nào của Zuul. Ví dụ là khi bạn muốn dùng Zuul để tích hợp với engine service discovery khác Eureka (ví dụ Consul). Trong cuốn sách này, chúng ta chỉ dùng annotation <code>@EnableZuulProxy</code>.</p>
+      </aside>
+
+      <h4 class="subsection-title">6.2.3 Cấu hình Zuul để giao tiếp với Eureka</h4>
+
+      <p>Máy chủ proxy Zuul được thiết kế mặc định để hoạt động với các sản phẩm Spring. Do đó, Zuul sẽ tự động dùng Eureka để tra cứu dịch vụ theo service ID, rồi dùng Netflix Ribbon để thực hiện client-side load balancing cho các yêu cầu từ bên trong Zuul.</p>
+
+      <aside class="sidebar-note" aria-label="Lưu ý">
+        <h3>LƯU Ý</h3>
+        <p>Tôi thường đọc các chương không theo thứ tự trong sách, nhảy thẳng tới chủ đề tôi quan tâm nhất. Nếu bạn cũng vậy và chưa biết Netflix Eureka và Ribbon là gì, tôi khuyên bạn nên đọc chương 4 trước khi tiếp tục. Zuul phụ thuộc nhiều vào các công nghệ đó để thực hiện công việc, nên hiểu các khả năng service discovery mà Eureka và Ribbon mang lại sẽ giúp bạn hiểu Zuul dễ hơn nhiều.</p>
+      </aside>
+
+      <p>Bước cuối cùng trong quá trình cấu hình là sửa tệp <code>zuulsvr/src/main/resources/application.yml</code> của máy chủ Zuul để trỏ tới máy chủ Eureka của bạn. Listing sau đây trình bày cấu hình Zuul cần thiết để Zuul giao tiếp với Eureka. Phần</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

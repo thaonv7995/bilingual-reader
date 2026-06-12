@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 3: psql (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0063.html">← Prev</a>
+    <a href="page_0065.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">console window will open from pgAdmin with psql and already connected to the da‐
+      tabase.</p>
+
+      <h3 class="section-title">Interactive versus Noninteractive psql</h3>
+      <p class="no-indent">You can run psql interactively by simply typing <code>psql</code> from your OS command line. Your
+      prompt will switch to the psql prompt, signaling that you are now in the interactive psql
+      console. Begin typing in commands. Don’t forget to terminate SQL statements with a
+      semicolon. If you press Enter without a semicolon, psql will assume that your statement
+      continues.</p>
+
+      <p>Typing <code>\?</code> while in the psql console brings up a list of all available commands. For
+      convenience, we reprinted this list in the appendix, highlighting new additions in the
+      latest versions; see <span class="accent-word">“psql Interactive Commands” on page 199</span>. Typing <code>\h</code> followed by the
+      command will bring up the relevant sections of the PostgreSQL documentation per‐
+      taining to the command.</p>
+
+      <p>To use psql noninteractively, execute psql from your OS prompt and pass it a script file.
+      Within this script you can mix an unlimited number of SQL and psql commands. Al‐
+      ternatively you can pass in one or more SQL statements surrounded by double quotes.
+      Noninteractive psql is well-suited for automated tasks. Batch your commands into a
+      file, and then schedule it to run at regular intervals using a job-scheduling agent like
+      pgAgent (covered in <span class="accent-word">“Job Scheduling with pgAgent” on page 73</span>), Linux/Unix crontab,
+      or Windows scheduler. For situations in which many commands must be run in se‐
+      quence or repeatedly, you’re better off creating a script first and then running it using
+      psql. Syntax-wise, noninteractively offers just a few options because the script file does
+      most of the work. To execute a file, use the <code>-f</code> option:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     psql -f some_script_file</code></pre>
+      </figure>
+
+      <p class="no-indent">To execute SQL statements on the fly, use the <code>-c</code> option. Join multiple statements with
+      a semicolon:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>     psql -d postgresql_book -c "DROP TABLE IF EXISTS dross; CREATE SCHEMA staging;"</code></pre>
+      </figure>
+
+      <p>For the listing of all options, see <span class="accent-word">“psql Noninteractive Commands” on page 201</span>.</p>
+
+      <p>You can embed interactive commands inside script files. Suppose you created the script
+      in Example 3-1 and named it <code>build_stage.psql</code>:</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 3-1.</strong> Script with interactive psql commands</figcaption>
+        <pre class="code-block"><code>\a \t ①
+SELECT 'CREATE TABLE
+ staging.count_to_50 (array_to_string(array_agg('x' || i::text ' varchar(10)));' As
+create_sql ②
+FROM generate_series(1,9) As i;</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">46<span class="sep">|</span>Chapter 3: psql</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

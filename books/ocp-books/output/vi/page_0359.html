@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 18: Collections API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + ol.numbered {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p.interface-label {
+      margin: 0 0 3.2mm;
+      text-align: center;
+      text-indent: 0;
+      font-size: 10pt;
+      font-weight: 700;
+      line-height: 1.42;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: iterable-method;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: iterable-method;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(iterable-method) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0358.html">← Trước</a>
+    <a href="page_0360.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">359</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//using the enhanced for loop
+for(Integer i : listI) System.out.println(i);
+
+//using forEach with lambda
+listI.forEach( (i)-&gt; System.out.println(i) );
+
+//using forEach with a method reference
+listI.forEach(System.out::println);</code></pre>
+      </figure>
+
+      <p class="interface-label">Iterator</p>
+
+      <p>Cách sử dụng các phương thức <code>hasNext()</code> và <code>next()</code> hiển thị trong đoạn code trên mang tính đặc trưng của các <code>Iterator</code>. Bạn gọi phương thức <code>hasNext()</code> để kiểm tra xem còn phần tử nào chưa được xử lý hay không, và nếu có, bạn gọi <code>next()</code> để lấy phần tử đó. Việc gọi <code>next()</code> nếu không còn phần tử nào sẽ khiến một&nbsp;<code>NoSuchElementException</code>&nbsp;bị ném ra.</p>
+
+      <p class="no-indent">Bên cạnh <code>hasNext</code> và <code>next</code>, <code>Iterator</code> có hai phương thức sau:</p>
+
+      <ol class="numbered">
+        <li><code>default void forEachRemaining(Consumer&lt;? super E&gt; action)</code> : Thực hiện hành động được chỉ định cho mỗi phần tử còn lại cho đến khi tất cả các phần tử đã được xử lý hoặc hành động đó ném ra một Exception (Ngoại lệ).</li>
+        <li><code>default void remove()</code> : Phương thức này rất hữu ích nếu bạn muốn xóa phần tử mình vừa lấy ra bằng cách gọi <code>next()</code> khỏi collection cơ sở. Phương thức này chỉ có thể được gọi một lần duy nhất cho mỗi lần gọi <code>next()</code>.</li>
+      </ol>
+
+      <p class="interface-label">Spliterator</p>
+
+      <p>Một <code>Spliterator</code> là một phiên bản nâng cấp mạnh mẽ của <code>Iterator</code>. Mặc dù ít khi được nhìn thấy sử dụng, tôi vẫn thích nó hơn <code>Iterator</code> vì nó rất mạnh mẽ và hữu ích trong việc xử lý các phần tử của một collection hoặc một stream theo cả tuần tự lẫn đồng thời, đây rất có thể là lý do tại sao kỳ thi có các câu hỏi về nó. Nó có vẻ hơi phức tạp nhưng thực ra không phải vậy. Hãy bắt đầu với một điều đơn giản:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

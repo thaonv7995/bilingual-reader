@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: Listing 10.2 Travis attributes explained</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout-letter {
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-weight: 700;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets > li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p + ul.manning-bullets {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0340.html">← Prev</a>
+    <a href="page_0342.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">316</span>
+        <span class="rh-center">CHAPTER 10 <em>Deploying your microservices</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">attribute set, the build for this chapter can take up to 10 minutes to download all of the dependent jars.</p>
+
+      <p>The next two attributes in listing 10.2 are the <code>sudo</code> attribute and the service attribute. <span class="listing-callout-letter">d</span> The <code>sudo</code> attribute is used to tell Travis that your build process will need to use <code>sudo</code> as part of the build. The UNIX <code>sudo</code> command is used to temporarily elevate a user to root privileges. Generally, you use <code>sudo</code> when you need to install third-party tools. You do exactly this later in the build when you need to install the Amazon ECS tools.</p>
+
+      <p>The <code>services</code> attribute is used to tell Travis whether you&rsquo;re going to use certain key services while executing your build. For instance, if your integration tests need a local database available for them to run, Travis allows you start a MySQL or PostgreSQL database right on your build box. In this case, you need Docker running to build your Docker images for each of your EagleEye services and push your images to the Docker hub. You&rsquo;ve set the <code>services</code> attribute to start Docker when the build is kicked off.</p>
+
+      <p>The next attribute, <code>notifications</code> <span class="listing-callout-letter">e</span> defines the communication channel to use whenever a build succeeds or fails. Right now, you always communicate the build results by setting the notification channel for the build to email. Travis will notify you via email on both the success and failure of the build. Travis CI can notify via multiple channels besides email, including Slack, IRC, HipChat, or a custom web hook.</p>
+
+      <p>The <code>branches.only</code> <span class="listing-callout-letter">f</span> attribute tells Travis what branches Travis should build against. For the examples in this chapter, you&rsquo;re only going to perform a build off the <code>master</code> branch of Git. This prevents you from kicking off a build every time you tag a repo or commit to a branch within GitHub. This is important because GitHub does a callback into Travis every time you tag a repo or create a release. The presence of the <code>branches.only</code> attribute being set to master prevents Travis from going into an endless build.</p>
+
+      <p>The last part of the build configuration is the setting of sensitive environment variables <span class="listing-callout-letter">g</span>. In your build process, you might communicate with third-party vendors such as Docker, GitHub, and Amazon. Sometimes you&rsquo;re communicating via their command line tools and other times you&rsquo;re using the APIs. Regardless, you often have to present sensitive credentials. Travis CI gives you the ability to add encrypted environment variables to protect these credentials.</p>
+
+      <p>To add an encrypted environment variable, you must encrypt the environment variable using the <code>travis</code> command line tool on your desk in the project directory where you have your source code. To install the Travis command-line tool locally, review the documentation for the tool at <a href="https://github.com/travis-ci/travis.rb">https://github.com/travis-ci/travis.rb</a>. For the <code>.travis.yml</code> used in this chapter, I created and encrypted the following environment variables:</p>
+
+      <ul class="manning-bullets" aria-label="Encrypted Travis environment variables">
+        <li><code>DOCKER_USERNAME</code>&mdash;Docker hub user name.</li>
+        <li><code>DOCKER_PASSWORD</code>&mdash;Docker hub password.</li>
+        <li><code>AWS_ACCESS_KEY</code>&mdash;AWS access key used by the Amazon <code>ecs-cli</code> command line client.</li>
+      </ul>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

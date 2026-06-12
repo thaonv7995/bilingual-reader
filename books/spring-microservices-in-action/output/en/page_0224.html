@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: OAuth2Config configure() method</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.block-indent {
+      margin-left: 3mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.25;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0223.html">← Prev</a>
+    <a href="page_0225.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Starting small: using Spring and OAuth2 to protect a single endpoint</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">199</span>
+      </header>
+
+      <p class="no-indent"><code>@Configuration</code> annotation. The <code>AuthenticationServerConfigurer</code> class is a core piece of Spring Security. It provides the basic mechanisms for carrying out key authentication and authorization functions. For the <code>OAuth2Config</code> class you&rsquo;re going to override two methods. The first method, <code>configure()</code>, is used to define what client applications are registered with your authentication service. The <code>configure()</code> method takes a single parameter called <code>clients</code> of type <code>ClientDetailsServiceConfigurer</code>. Let&rsquo;s start walking through the code in the <code>configure()</code> method in a little more detail. The first thing you do in this method is register which client applications are allowed to access services protected by the OAuth2 service. I&rsquo;m using &ldquo;access&rdquo; here in the broadest terms, because you control what the users of the client applications can do later by checking whether the user that the service is being invoked for is authorized to take the actions they&rsquo;re trying to take:</p>
+
+      <figure class="code-snippet" aria-label="OAuth2 client registration">
+        <pre class="code-block"><code>clients.inMemory()
+    .withClient("eagleeye")
+    .secret("thisissecret")
+    .authorizedGrantTypes("password",
+                           ➥ "client_credentials")
+    .scopes("webclient","mobileclient");</code></pre>
+      </figure>
+
+      <p>The <code>ClientDetailsServiceConfigurer</code> class supports two different types of stores for application information: an in-memory store and a JDBC store. For the purposes of this example, you&rsquo;re going to use the <code>clients.inMemory()</code> store.</p>
+
+      <p class="block-indent">The two method calls <code>withClient()</code> and <code>secret()</code> provide the name of the application (<code>eagleeye</code>) that you&rsquo;re registering along with a secret (a password, <code>thisissecret</code>) that will be presented when the EagleEye application calls your OAuth2 server to receive an OAuth2 access token.</p>
+
+      <p class="block-indent">The next method, <code>authorizedGrantTypes()</code>, is passed a comma-separated list of the authorization grant types that will be supported by your OAuth2 service. In your service, you&rsquo;ll support the password and client credential grants.</p>
+
+      <p class="block-indent">The <code>scopes()</code> method is used to define the boundaries that the calling application can operate in when they&rsquo;re asking your OAuth2 server for an access token. For instance, Thoughtmechanix might offer two different versions of the same application, a web-based application and a mobile phone based application. Each of these apps can use the same client name and secret key to ask for access to resources protected by the OAuth2 server. However, when the apps ask for a key, they need to define the specific scope they are operating in. By defining the scope, you can write authorization rules specific to the scope the client application is working in.</p>
+
+      <p>For instance, you might have a user who can access the EagleEye application with both the web-based client and the mobile-phone of the application. Each version of the application does the following:</p>
+
+      <ol class="manning-numbered" aria-label="EagleEye application versions">
+        <li>Offers the same functionality</li>
+        <li>Is a &ldquo;trusted application&rdquo; where ThoughtMechanix owns both the EagleEye front-end applications and the end user services</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 23: Using Modules</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--split-top {
+      margin-bottom: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--split-bottom {
+      margin-top: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--error pre.code-block {
+      border-left-color: #b91c1c;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0690.html">← Prev</a>
+    <a href="page_0692.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">691</span>
+      </header>
+
+      <p class="no-indent">If the <code>simpleinterest</code>&nbsp;module exported the <code>simpleinterest</code>&nbsp;package, other modules may
+      have been using the <code>SimpleInterest</code>&nbsp;class directly. Replacing it with the <code>opens</code>&nbsp;clause
+      ensures that their application does not fail at run time but also forces them to stop using
+      <code>SimpleInterest</code>&nbsp;class directly in their code.</p>
+
+      <h3 class="section-title section-title--sub">The <code>opens-to</code>&nbsp;directive<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">The <code>opens-to</code>&nbsp;directive is a qualified opens directive that works just like the qualified
+      <code>exports</code>&nbsp;directive. It allows only the listed modules to have a runtime dependency on this
+      package.</p>
+
+      <h3 class="section-title section-title--sub">The <code>open</code>&nbsp;directive<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">If you want to open all <code>public</code>&nbsp;and <code>protected</code>&nbsp;packages of a module, then you may apply
+      the <code>open</code>&nbsp;directive to the module declaration itself instead of applying the <code>opens</code>&nbsp;directive to
+      each package individually. For example:</p>
+
+      <figure class="code-snippet code-snippet--split-top">
+        <pre class="code-block"><code>open module simpleinterest{</code></pre>
+      </figure>
+
+      <figure class="code-snippet code-snippet--error code-snippet--split-bottom">
+        <pre class="code-block"><code>//opens simpleinterest; //can't have any opens directive if the
+module is open.
+}</code></pre>
+      </figure>
+
+      <h3 class="section-title section-title--sub">Opening a package for Reflection<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Besides providing a stepping stone while modularizing a library, opening a package in the
+      manner described above also allows members of a module to be accessible through Reflection.
+      Reflection is an advanced topic and is, fortunately, not on the OCP exam. You should definitely
+      read more about it from other sources whenever you have time but n the context of Modules, all
+      you need to know about Reflection is that it allows us to use classes at runtime that we didn&rsquo;t
+      know about at compile time. By</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

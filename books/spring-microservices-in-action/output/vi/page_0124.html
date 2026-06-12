@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 4: Dịch vụ của tôi ở đâu?</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ul.manning-bullets .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0123.html">← Trước</a>
+    <a href="page_0125.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Dịch vụ của tôi ở đâu?</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">99</span>
+      </header>
+
+      <p class="no-indent">trên một nhóm máy chủ tĩnh, nó không hoạt động tốt đối với các ứng dụng microservice dựa trên cloud. Lý do bao gồm</p>
+
+      <ul class="manning-bullets">
+        <li><strong class="run-in">Điểm lỗi duy nhất</strong>&mdash;Mặc dù load balancer có thể được thiết kế để có tính sẵn sàng cao, nó vẫn là điểm lỗi duy nhất cho toàn bộ hạ tầng của bạn. Nếu load balancer sập, mọi ứng dụng phụ thuộc vào nó cũng sập theo. Mặc dù bạn có thể làm cho load balancer có tính sẵn sàng cao, load balancer thường là các điểm nghẽn tập trung trong hạ tầng ứng dụng của bạn.</li>
+        <li><strong class="run-in">Khả năng mở rộng theo chiều ngang hạn chế</strong>&mdash;Bằng cách tập trung các dịch vụ của bạn vào một cụm load balancer duy nhất, khả năng mở rộng theo chiều ngang hạ tầng cân bằng tải trên nhiều máy chủ của bạn bị hạn chế. Nhiều load balancer thương mại bị ràng buộc bởi hai yếu tố: mô hình dự phòng của chúng và chi phí bản quyền. Hầu hết load balancer thương mại dùng mô hình hot-swap cho dự phòng nên bạn chỉ có một máy chủ duy nhất xử lý tải, trong khi load balancer phụ chỉ ở đó để failover khi load balancer chính gặp sự cố. Về bản chất, bạn bị ràng buộc bởi phần cứng của mình. Thứ hai, load balancer thương mại cũng có mô hình cấp phép hạn chế, hướng tới dung lượng cố định thay vì mô hình linh hoạt hơn.</li>
+        <li><strong class="run-in">Quản lý tĩnh</strong>&mdash;Hầu hết load balancer truyền thống không được thiết kế cho việc đăng ký và hủy đăng ký dịch vụ nhanh chóng. Chúng dùng cơ sở dữ liệu tập trung để lưu các route cho quy tắc và cách duy nhất để thêm route mới thường là qua API độc quyền của nhà cung cấp (Application Programming Interface).</li>
+        <li><strong class="run-in">Phức tạp</strong>&mdash;Vì load balancer hoạt động như proxy tới các dịch vụ, các yêu cầu của service consumer phải được ánh xạ tới các dịch vụ vật lý. Lớp chuyển đổi này thường thêm một lớp độ phức tạp vào hạ tầng dịch vụ của bạn vì các quy tắc ánh xạ cho dịch vụ phải được định nghĩa và triển khai thủ công. Trong kịch bản load balancer truyền thống, việc đăng ký các instance dịch vụ mới được thực hiện thủ công và không phải lúc khởi động một instance dịch vụ mới.</li>
+      </ul>
+
+      <p>Bốn lý do này không phải là lời kết tội chung cho load balancer. Chúng hoạt động tốt trong môi trường doanh nghiệp, nơi quy mô và tầm vực của hầu hết ứng dụng có thể được xử lý qua hạ tầng mạng tập trung. Ngoài ra, load balancer vẫn có vai trò trong việc tập trung SSL termination và quản lý bảo mật cổng dịch vụ. Một load balancer có thể khóa quyền truy cập cổng inbound (ingress) và outbound (egress) tới tất cả các máy chủ đứng phía sau nó. Khái niệm quyền truy cập mạng tối thiểu này thường là thành phần then chốt khi cố gắng đáp ứng các yêu cầu chứng nhận tiêu chuẩn ngành như tuân thủ PCI (Payment Card Industry).</p>
+
+      <p>Tuy nhiên, trên cloud, nơi bạn phải xử lý khối lượng giao dịch khổng lồ và dự phòng, một mảnh hạ tầng mạng tập trung cuối cùng không hoạt động tốt bằng vì nó không mở rộng hiệu quả và không tiết kiệm chi phí. Hãy xem cách bạn có thể triển khai cơ chế service discovery mạnh mẽ cho các ứng dụng dựa trên cloud.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

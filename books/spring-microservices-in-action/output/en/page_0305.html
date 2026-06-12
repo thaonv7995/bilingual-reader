@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 9: Figure 9.12 Zipkin span drill-down</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack figure.diagram {
+      margin: 0 0 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .diagram-annotated-stack figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0 0 1.5mm;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout--top {
+      margin: 0 auto 1.5mm;
+      max-width: 72%;
+    }
+    .prose-page.chapter-page .diagram-callouts-row {
+      display: grid;
+      grid-template-columns: minmax(0, 48%) minmax(0, 52%);
+      gap: 0 2mm;
+      margin: 0 0 1.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .diagram-callouts-row .listing-callout {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.diagram.fig-caption-only figcaption {
+      margin: 0;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page p + .diagram-annotated-stack,
+    .prose-page.chapter-page .diagram-annotated-stack + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0304.html">← Prev</a>
+    <a href="page_0306.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">280</span>
+        <span class="rh-center">CHAPTER 9 <em>Distributed tracing with Spring Cloud Sleuth and Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">The two calls to the organization service through Zuul took 3.204 seconds and 77.2365 milliseconds respectively. Because you queried on the organization service calls (and not the Zuul gateway calls), you can see that the organization service took 92% and 72% of the total amount of time of the transaction time.</p>
+
+      <p>Let&rsquo;s dig into the details of the longest running call (3.204 seconds). You can see more detail by clicking on the transaction and drilling into the details. Figure 9.12 shows the details after you&rsquo;ve clicked to drill down into further details.</p>
+
+      <div class="diagram-annotated-stack" aria-label="Figure 9.12 annotated Zipkin span drill-down">
+        <p class="listing-callout listing-callout--top">A transaction is broken down into individual spans. A span represents part of the transaction being measured. Here the total time of each span in the transaction is displayed.</p>
+        <figure class="diagram">
+          <img src="../assets/images/page_0305_fig_9_12.png" width="1313" height="691" alt="Figure 9.12 — Zipkin trace detail showing zuulservice and organizationservice spans">
+        </figure>
+        <div class="diagram-callouts-row" aria-label="Figure 9.12 annotation callouts">
+          <p class="listing-callout">Drilling down into one of the transactions, you see two spans: one for the time spent in Zuul and one for the time spent in the organization service.</p>
+          <p class="listing-callout">By clicking on an individual span, you bring up additional details on the span.</p>
+        </div>
+        <figure class="diagram fig-caption-only" aria-label="Figure 9.12 caption">
+          <figcaption><strong>Figure 9.12</strong><br>Zipkin allows you to drill down and see the amount of time each span in a transaction takes.</figcaption>
+        </figure>
+      </div>
+
+      <p class="no-indent">In figure 9.12 you can see that the entire transaction from a Zuul perspective took approximately 3.204 seconds. However, the organization service call made by Zuul took 2.967 seconds of the 3.204 seconds involved in the overall call. Each span presented can be drilled down into for even more detail. Click on the organization-service span and see what additional details can be seen from the call. Figure 9.13 shows the detail of this call.</p>
+
+      <p>One of the most valuable pieces of information in figure 9.13 is the breakdown of when the client (Zuul) called the organization service, when the organization service received the call, and when the organization service responded back. This type of timing information is invaluable in detecting and identifying network latency issues.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

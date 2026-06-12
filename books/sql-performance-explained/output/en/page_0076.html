@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 4mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note figure.code-snippet {
+      margin: 2mm 0 0 4.5mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">76</span>
+      </header>
+      <p class="chapter-running-head">Chapter 2: The Where Clause</p>
+
+      <aside class="sidebar-note">
+        <h3>Tip</h3>
+        <p>Write queries for continuous periods as explicit range condition. Do this even for a single day&mdash;e.g., for the Oracle database:</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>    sale_date >= TRUNC(sysdate)
+AND sale_date &lt;  TRUNC(sysdate + INTERVAL '1' DAY)</code></pre>
+        </figure>
+      </aside>
+
+      <p class="no-indent">Another common obfuscation is to compare dates as strings as shown in the following PostgreSQL example:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT ...
+  FROM sales
+ WHERE TO_CHAR(sale_Date, 'YYYY-MM-DD') = '1970-01-01'</code></pre>
+      </figure>
+
+      <p>The problem is, again, converting <code>DATE_COLUMN</code>. Such conditions are often created in the belief that you cannot pass different types than numbers and strings to the database. Bind parameters, however, support all data types. That means you can for example use a <code>java.util.Date</code> object as bind parameter. This is yet another benefit of bind parameters.</p>
+
+      <p>If you cannot do that, you just have to convert the search term instead of the table column:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT ...
+  FROM sales
+ WHERE sale_date = TO_DATE('1970-01-01', 'YYYY-MM-DD')</code></pre>
+      </figure>
+
+      <p>This query can use a straight index on <code>SALE_DATE</code>. Moreover it converts the input string only once. The previous statement must convert all dates stored in the table before it can compare them against the search term.</p>
+
+      <p>Whatever change you make&mdash;using a bind parameter or converting the other side of the comparison&mdash;you can easily introduce a bug if <code>SALE_DATE</code> has a time component. You must use an explicit range condition in that case:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT ...
+  FROM sales
+ WHERE sale_date &gt;= TO_DATE('1970-01-01', 'YYYY-MM-DD')
+   AND sale_date &lt;  TO_DATE('1970-01-01', 'YYYY-MM-DD')
+                  + INTERVAL '1' DAY</code></pre>
+      </figure>
+
+      <p>Always consider using an explicit range condition when comparing dates.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">66</p>
+    </article>
+  </main>
+</body>
+</html>

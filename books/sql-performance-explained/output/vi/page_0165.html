@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Paging Through Results</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note figure.code-snippet {
+      margin: 2.5mm 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phân Trang Kết Quả</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <aside class="sidebar-note">
+        <h3>Logic Tương Đương Chỉ Mục</h3>
+
+        <p>Một điều kiện logic luôn có thể được diễn đạt theo nhiều cách khác nhau. Bạn có thể, ví dụ, cũng thực hiện logic bỏ qua như đã trình bày ở trên như sau:</p>
+
+        <figure class="code-snippet">
+          <pre class="code-block"><code>WHERE (
+              (sale_date &lt; ?)
+            OR
+              (sale_date = ? AND sale_id &lt; ?)
+          )</code></pre>
+        </figure>
+
+        <p>Biến thể này chỉ sử dụng các điều kiện bao gồm và có thể dễ hiểu hơn&mdash; ít nhất là đối với con người. Các cơ sở dữ liệu có một quan điểm khác. Chúng không nhận ra rằng câu lệnh <code><strong>where</strong></code> chọn tất cả các hàng bắt đầu với cặp <code>SALE_DATE</code>/<code>SALE_ID</code> tương ứng&mdash;miễn là <code>SALE_DATE</code> là giống nhau cho cả hai nhánh. Thay vào đó, cơ sở dữ liệu sử dụng toàn bộ câu lệnh <code><strong>where</strong></code> như một điều kiện lọc. Chúng ta có thể ít nhất mong đợi bộ tối ưu hóa sẽ &ldquo;phân tách điều kiện <code>SALE_DATE &lt;= ?</code> ra&rdquo; khỏi hai nhánh hoặc, nhưng không có cơ sở dữ liệu nào cung cấp dịch vụ này.</p>
+
+        <p>Tuy nhiên, chúng ta có thể thêm điều kiện dư thừa này một cách thủ công&mdash; mặc dù điều này không làm tăng tính dễ đọc:</p>
+
+        <figure class="code-snippet">
+          <pre class="code-block"><code>WHERE sale_date &lt;= ?
+  AND (
+           (sale_date &lt; ?)
+        OR
+           (sale_date = ? AND sale_id &lt; ?)
+      )</code></pre>
+        </figure>
+
+        <p>May mắn thay, tất cả các cơ sở dữ liệu đều có khả năng sử dụng phần này của câu lệnh <code><strong>where</strong></code> như một điều kiện truy cập. Tuy nhiên, điều khoản đó thậm chí còn khó nắm bắt hơn so với logic xấp xỉ được trình bày ở trên. Hơn nữa, logic gốc tránh được rủi ro rằng phần &ldquo;không cần thiết&rdquo; (dư thừa) có thể bị xóa một cách tình cờ khỏi câu lệnh <code><strong>where</strong></code> sau này.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">155</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

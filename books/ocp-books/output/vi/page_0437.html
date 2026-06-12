@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 8mm 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0436.html">← Trước</a>
+    <a href="page_0438.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">437</span>
+      </header>
+
+      <p>Nói cách khác, Java không cho phép cơ chế tuần tự hóa (Serialization) của nó được sử dụng để tuần tự hóa bất kỳ đối tượng (Object) ngẫu nhiên nào trừ khi nhà phát triển chấp nhận các rủi ro liên quan một cách rõ ràng bằng cách triển khai Interface (Giao diện) <code>Serializable</code>. Điều này không có nghĩa là một Lớp (Class) có khả năng tuần tự hóa luôn là một rủi ro bảo mật. Bạn có thể viết thêm mã tùy chỉnh dựa trên cơ chế tuần tự hóa (Serialization) của Java để giảm thiểu các rủi ro liên quan đến dữ liệu được tuần tự hóa. Chúng được mô tả chi tiết trong tài liệu "Secure Coding Guidelines for Java SE" do Oracle xuất bản. Mặc dù điều này không bắt buộc đối với kỳ thi OCP, tôi thực sự khuyến khích bạn nên đọc qua tài liệu đó.</p>
+
+      <h3 class="section-title section-title--minor">Các Lớp (Class) ObjectOutputStream và ObjectInputStream<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Các Lớp (Class) <code>java.io.ObjectOutputStream</code> và <code>java.io.ObjectInputStream</code> lần lượt chứa logic tuần tự hóa (Serialization) và giải tuần tự hóa (Deserialization) đối tượng (Object). Phương thức <code>writeObject</code> của <code>ObjectOutputStream</code> nhận một đối tượng (Object) có thể tuần tự hóa và chuyển đổi nó thành một luồng byte (stream of bytes). Luồng byte này có thể được kết nối với bất kỳ output stream nào khác, chẳng hạn như một <code>FileOutputStream</code>, như đã thực hiện trong chương trình trên. Tương tự, phương thức <code>readObject</code> của <code>ObjectInputStream</code> đọc một luồng byte và tạo lại đối tượng (Object). Luồng byte này có thể được lấy nguồn từ bất kỳ input stream nào khác, chẳng hạn như một <code>FileInputStream</code>, như đã thực hiện trong đoạn mã trên. Giống như các phương thức stream khác, các phương thức này cũng throw <code>IOException</code>.</p>
+
+      <p>Hãy lưu ý trong đoạn mã trên rằng chúng ta đang ép kiểu (cast) đối tượng (Object) được trả về bởi <code>readObject</code> sang <code>AppPreferences</code>. Điều này là do kiểu trả về của <code>readObject</code> là <code>Object</code>. Vì chúng ta biết rằng tệp đầu vào chứa một đối tượng (Object) <code>AppPreferences</code>, chúng ta có thể ép kiểu (cast) đối tượng (Object) được trả về bởi <code>readObject</code> sang <code>AppPreferences</code> một cách an toàn. Tất nhiên, nếu input stream chứa một loại đối tượng (Object) khác không thể ép kiểu (cast) sang <code>AppPreferences</code>, phép ép kiểu này sẽ throw <code>java.lang.ClassCastException</code>, đây là một ngoại lệ unchecked (Unchecked Exception).</p>
+
+      <p>Một điểm quan trọng khác cần lưu ý ở đây là mặc dù đoạn mã trên chỉ ghi và đọc một đối tượng (Object) duy nhất đến/từ các stream đầu ra và đầu vào, nhưng không có giới hạn nào về số lượng đối tượng (Object) mà bạn có thể ghi và đọc. Ví dụ, đoạn mã sau đây ghi tất cả các phần tử có trong một danh sách vào tệp và sau đó đọc chúng ngược trở lại:</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

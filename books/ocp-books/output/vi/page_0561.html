@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block.ocp-code-line {
+      margin: 0 0 3.2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      font-size: 10.8pt;
+      line-height: 1.35;
+      color: #988970;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0560.html">← Trước</a>
+    <a href="page_0562.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">561</span>
+      </header>
+
+      <p class="no-indent">Vì một stream không thể được sắp xếp cho đến khi tất cả các phần tử được xác định, <code>sorted</code>&nbsp;là một hoạt động stateful và phải được sử dụng cẩn trọng trên các stream lớn. Việc áp dụng nó trên các stream vô hạn sẽ khiến chương trình bị hết bộ nhớ.</p>
+
+      <h3 class="section-title section-title--sub">Loại bỏ các phần tử trùng lặp bằng distinct<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Phương thức <code>distinct</code>&nbsp;lọc bỏ các phần tử trùng lặp từ stream đầu vào. Các đối tượng được so sánh bằng phương thức <code>equals</code>. Đây cũng là một hoạt động stateful và phải được sử dụng cẩn trọng trên các stream lớn. Ví dụ, câu lệnh sau loại bỏ các số trùng lặp từ stream số ngẫu nhiên đầu vào:</p>
+
+      <pre class="code-block ocp-code-line"><code>Stream&lt;Double&gt; sd = Stream.generate(Math::random).limit(10).distinct();</code></pre>
+
+      <h3 class="section-title section-title--sub">21.1.4 Tìm hiểu về Optional<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Vì nhiều thao tác terminal trả về <code>Optional</code>, dưới đây là phần giới thiệu cơ bản về lớp này.</p>
+
+      <p>Java đã bị chỉ trích kể từ khi mới ra đời vì không cung cấp một cách hiệu quả để xử lý các giá trị <code>null</code>. Thông thường, lập trình viên có trách nhiệm kiểm tra xem một tham chiếu có phải là <code>null</code>&nbsp;hay không trước khi gọi bất kỳ phương thức nào trên nó, nếu không, mã nguồn có thể ném ra một <code>NullPointerException</code>&nbsp;ở runtime. Ví dụ, việc gọi <code>s.enrollInCourse("Math")</code>&nbsp;trong đoạn mã sau sẽ ném ra một <code>NullPointerException</code>&nbsp;nếu <code>getStudentById(10)</code>&nbsp;trả về <code>null</code>.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Student s = getStudentById(10);
+s.enrollInCourse("Math");</code></pre>
+      </figure>
+
+      <p>Lý tưởng nhất, lập trình viên nên kiểm tra xem <code>s</code>&nbsp;có bị <code>null</code>&nbsp;hay không và cung cấp một luồng thực thi thay thế trước khi gọi <code>enrollInCourse()</code>&nbsp;trên nó. Ví dụ như</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

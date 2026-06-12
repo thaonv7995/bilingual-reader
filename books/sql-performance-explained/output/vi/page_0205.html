@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .index-page {
+      padding: 12mm var(--book-margin-x) 16mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      line-height: 1.2;
+      color: var(--book-ink);
+      position: relative;
+    }
+
+    .index-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 10mm;
+      align-items: start;
+    }
+
+    .index-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6mm;
+    }
+
+    .index-letter {
+      margin: 3.5mm 0 1mm;
+      font-size: 14pt;
+      font-weight: 400;
+      line-height: 1;
+      text-indent: 0;
+    }
+
+    .index-col > .index-letter:first-child {
+      margin-top: 0;
+    }
+
+    .index-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: baseline;
+      gap: 2mm;
+      text-indent: 0;
+      margin: 0;
+    }
+
+    .index-row--l1 {
+      padding-left: 3mm;
+    }
+
+    .index-row--l2 {
+      padding-left: 6mm;
+    }
+
+    .index-term {
+      min-width: 0;
+    }
+
+    .index-pages {
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .index-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .index-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page index-page index-page--continued">
+      <div class="index-columns">
+        <div class="index-col index-col--left">
+          <div class="index-row">
+            <span class="index-term">NOSORT</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">SORT GROUP BY</span>
+            <span class="index-pages">140</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">WINDOW</span>
+            <span class="index-pages">157</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">NULL</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">chỉ mục trong Oracle</span>
+            <span class="index-pages">54</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">O</div>
+          <div class="index-row">
+            <span class="index-term"><strong>offset (MySQL, PostgreSQL)</strong></span>
+            <span class="index-pages">148</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">optimizer</span>
+            <span class="index-pages">18</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">cost based</span>
+            <span class="index-pages">18</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">hint</span>
+            <span class="index-pages">19</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">rule based</span>
+            <span class="index-pages">18</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">statistics</span>
+            <span class="index-pages">21</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">OPTIMIZE FOR (SQL Server)</span>
+            <span class="index-pages">76</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">OPTION (SQL Server)</span>
+            <span class="index-pages">76</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">OR</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">tắt bộ lọc</span>
+            <span class="index-pages">72</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term"><strong>order by</strong></span>
+            <span class="index-pages">130</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">ASC, DESC</span>
+            <span class="index-pages">134</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">NULLS FIRST/LAST</span>
+            <span class="index-pages">137</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">ma trận hỗ trợ</span>
+            <span class="index-pages">138</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">OVER()</span>
+            <span class="index-pages">156</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">P</div>
+          <div class="index-row">
+            <span class="index-term">phân trang</span>
+            <span class="index-pages">147</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">phương pháp offset</span>
+            <span class="index-pages">148</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">phương pháp seek</span>
+            <span class="index-pages">149</span>
+          </div>
+          <div class="index-row index-row--l2">
+            <span class="index-term">xấp xỉ</span>
+            <span class="index-pages">152</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">parameter sniffing (SQL Server)</span>
+            <span class="index-pages">76</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">phân tích</span>
+            <span class="index-pages">18</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">chỉ mục một phần</span>
+            <span class="index-pages">51</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">đối tượng một phần (ORM)</span>
+            <span class="index-pages">104</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">phân vùng và tham số ràng buộc</span>
+            <span class="index-pages">35</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">pipelining</span>
+            <span class="index-pages">92</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">PLAN_TABLE</span>
+            <span class="index-pages">166</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">thông tin predicate</span>
+            <span class="index-pages">20</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">predicate truy cập vs. bộ lọc</span>
+            <span class="index-pages">44</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">trong các kế hoạch thực thi</span>
+          </div>
+          <div class="index-row index-row--l2">
+            <span class="index-term">MySQL</span>
+            <span class="index-pages">190</span>
+          </div>
+          <div class="index-row index-row--l2">
+            <span class="index-term">Oracle</span>
+            <span class="index-pages">170</span>
+          </div>
+          <div class="index-row index-row--l2">
+            <span class="index-term">SQL Server</span>
+            <span class="index-pages">185</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term"><strong>prepare (PostgreSQL)</strong></span>
+            <span class="index-pages">172</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">khóa chính không có chỉ mục duy nhất</span>
+            <span class="index-pages">11</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">Q</div>
+          <div class="index-row">
+            <span class="index-term">query planner (xem optimizer)</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">R</div>
+          <div class="index-row">
+            <span class="index-term">RBO (xem optimizer, rule based)</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">RECOMPILE (SQL Server hint)</span>
+            <span class="index-pages">76</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">bộ biến đổi tập kết quả</span>
+            <span class="index-pages">98</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">RID</span>
+            <span class="index-pages">3</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">RID Lookup (Heap)</span>
+            <span class="index-pages">183</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">nút gốc</span>
+            <span class="index-pages">5</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">tách</span>
+            <span class="index-pages">160</span>
+          </div>
+        </div>
+
+        <div class="index-col index-col--right">
+          <div class="index-row">
+            <span class="index-term">sắp xếp hàng</span>
+            <span class="index-pages">113</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">giá trị hàng</span>
+            <span class="index-pages">153</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">ROWID</span>
+            <span class="index-pages">3</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">ROWNUM (cột giả Oracle)</span>
+            <span class="index-pages">144, 148</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">ROW_NUMBER</span>
+            <span class="index-pages">156</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">S</div>
+          <div class="index-row">
+            <span class="index-term">khả năng mở rộng</span>
+            <span class="index-pages">81</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">theo chiều ngang</span>
+            <span class="index-pages">87</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">logarit</span>
+            <span class="index-pages">7</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">Khả năng mở rộng</span>
+            <span class="index-pages">79</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">Seek Predicates (SQL Server)</span>
+            <span class="index-pages">185</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">select *, tránh việc</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">kích hoạt quét chỉ mục duy nhất</span>
+            <span class="index-pages">120</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">cải thiện hiệu suất hash join</span>
+            <span class="index-pages">104</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">Seq Scan</span>
+            <span class="index-pages">174</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">Sort (SQL Server)</span>
+            <span class="index-pages">184</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">SORT GROUP BY</span>
+            <span class="index-pages">169</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">NOSORT</span>
+            <span class="index-pages">140</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">SORT ORDER BY</span>
+            <span class="index-pages">130</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">STOPKEY</span>
+            <span class="index-pages">145</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">khu vực SQL</span>
+            <span class="index-pages">75</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">SQL injection</span>
+            <span class="index-pages">32</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">SSD (Solid State Disk)</span>
+            <span class="index-pages">90</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">statistics</span>
+            <span class="index-pages">21</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">cho các chỉ mục dựa trên hàm của Oracle</span>
+            <span class="index-pages">28</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">STATISTICS PROFILE</span>
+            <span class="index-pages">181</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">STOPKEY</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">COUNT</span>
+            <span class="index-pages">145</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">SORT ORDER BY</span>
+            <span class="index-pages">146</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">WINDOW</span>
+            <span class="index-pages">157</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">Stream Aggregate</span>
+            <span class="index-pages">184</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">T</div>
+          <div class="index-row">
+            <span class="index-term"><strong>top (SQL Server)</strong></span>
+            <span class="index-pages">145</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">Top-N Query</span>
+            <span class="index-pages">143</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">TO_CHAR(DATE)</span>
+            <span class="index-pages">66</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">TRUNC(DATE)</span>
+            <span class="index-pages">62</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term"><strong>truncate table</strong></span>
+            <span class="index-pages">163</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">các trigger không được thực thi</span>
+            <span class="index-pages">163</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">U</div>
+          <div class="index-row">
+            <span class="index-term">UPPER</span>
+            <span class="index-pages">24</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">V</div>
+          <div class="index-row">
+            <span class="index-term">Vaccum (PostgreSQL)</span>
+            <span class="index-pages">163</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">các cột ảo cho các ràng buộc NOT NULL</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">trên FBI</span>
+            <span class="index-pages">58</span>
+          </div>
+
+          <div class="index-letter" aria-hidden="true">W</div>
+          <div class="index-row">
+            <span class="index-term"><strong>where</strong></span>
+            <span class="index-pages">9</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">điều kiện</span>
+            <span class="index-pages">72</span>
+          </div>
+          <div class="index-row index-row--l1">
+            <span class="index-term">trong kế hoạch thực thi SQL Server</span>
+            <span class="index-pages">187</span>
+          </div>
+          <div class="index-row">
+            <span class="index-term">hàm cửa sổ</span>
+            <span class="index-pages">156</span>
+          </div>
+        </div>
+      </div>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">195</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Listing 8.12 kênh tùy chỉnh và Listing 8.13</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--812 .listing-callouts-right {
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-annotated--812 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 18mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0280.html">← Trước</a>
+    <a href="page_0282.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">256</span>
+        <span class="rh-center">CHƯƠNG 8 <em>Kiến trúc hướng sự kiện với Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">dữ liệu. Dòng thứ hai được in ra từ console cho thấy khi bạn gọi endpoint licensing service lần thứ hai, bản ghi organization giờ đã được cache.</p>
+
+      <h4 class="subsection-title">8.4.2 Định nghĩa kênh tùy chỉnh</h4>
+
+      <p class="no-indent">Trước đó bạn đã xây dựng tích hợp messaging giữa licensing service và organization service để dùng các kênh output và input mặc định đi kèm với các interface Source và Sink trong dự án Spring Cloud Stream. Tuy nhiên, nếu bạn muốn định nghĩa nhiều hơn một kênh cho ứng dụng hoặc muốn tùy chỉnh tên kênh, bạn có thể định nghĩa interface riêng và expose bao nhiêu kênh input và output mà ứng dụng cần.</p>
+
+      <p>Để tạo kênh tùy chỉnh, hãy gọi <code>inboundOrgChanges</code> trong licensing service. Bạn có thể định nghĩa kênh trong interface <code>licensing-service/src/main/java/com/thoughtmechanix/licenses/events/CustomChannels.java</code>, như thể hiện trong listing sau.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.12</strong><br>Định nghĩa kênh input tùy chỉnh cho licensing service</figcaption>
+        <div class="listing-annotated listing-annotated--812" aria-label="Listing 8.12 có chú thích code">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.events;
+
+import org.springframework.cloud.stream.annotation.Input;
+import org.springframework.messaging.SubscribableChannel;
+
+public interface CustomChannels {
+    @Input("inboundOrgChanges")
+    SubscribableChannel orgs();
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 8.12">
+            <p class="listing-callout">Annotation <code>@Input</code> là annotation mức phương thức dùng để định nghĩa tên kênh.</p>
+            <p class="listing-callout">Mỗi kênh được expose qua annotation <code>@Input</code> phải trả về lớp <code>SubscribableChannel</code>.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">Điểm chính cần rút ra từ listing 8.12 là: với mỗi kênh input tùy chỉnh bạn muốn expose, bạn đánh dấu một phương thức trả về lớp <code>SubscribableChannel</code> bằng annotation <code>@Input</code>. Nếu bạn muốn định nghĩa kênh output để publish message, bạn sẽ dùng <code>@OutputChannel</code> phía trên phương thức sẽ được gọi. Trong trường hợp kênh output, phương thức được định nghĩa sẽ trả về lớp <code>MessageChannel</code> thay vì lớp <code>SubscribableChannel</code> dùng với kênh input:</p>
+
+      <figure class="code-snippet" aria-label="Ví dụ kênh output">
+        <pre class="code-block"><code>@OutputChannel(&ldquo;outboundOrg&rdquo;)
+MessageChannel outboundOrg();</code></pre>
+      </figure>
+
+      <p>Giờ bạn đã có kênh input tùy chỉnh được định nghĩa, bạn cần sửa đổi thêm hai điều nữa để dùng nó trong licensing service. Đầu tiên, bạn cần sửa licensing service để ánh xạ tên kênh input tùy chỉnh tới Kafka topic. Listing sau trình bày điều này.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 8.13</strong><br>Sửa đổi licensing service để dùng kênh input tùy chỉnh của bạn</figcaption>
+        <pre class="code-block"><code>spring:
+...
+  cloud:</code></pre>
+      </figure>
+
+      <p class="license-watermark no-indent">Licensed to Jianjun Shou &lt;seanshou@gmail.com&gt;</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

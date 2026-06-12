@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 19: Using Java I/O API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option {
+      margin: 0 0 2mm;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option-label {
+      margin: 0 0 0.8mm;
+      font-weight: 700;
+    }
+
+    .prose-page.ocp-chapter-page .quiz-option figure.code-snippet {
+      margin: 0 0 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0412.html">← Prev</a>
+    <a href="page_0414.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">413</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>world</code></pre>
+      </figure>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">B.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>hello
+worldwor</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">C.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>hello
+world
+w</code></pre>
+        </figure>
+      </div>
+
+      <div class="quiz-option">
+        <p class="no-indent quiz-option-label">D.</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>hello
+world
+wor</code></pre>
+        </figure>
+      </div>
+
+      <p class="no-indent">Correct answer is B.</p>
+
+      <p>There are a total of 12 characters in <code>test1.txt</code>&nbsp;(don&rsquo;t forget the two characters used for
+      terminating the first line). In the first iteration of the while loop, the <code>read</code>&nbsp;method fills <code>buff</code>
+      with the first 5 chars, i.e., <code>hello</code>. Observe that we have not specified the offset and the length
+      arguments to the <code>write</code>&nbsp;method. So, it writes all of the characters in <code>buff</code>&nbsp;to <code>test2.txt</code>.</p>
+
+      <p>Thus, <code>hello</code>&nbsp;is written to the file. In the second iteration, the <code>read</code>&nbsp;method reads the next 5
+      chars, i.e., <code>\r\nwor</code>, which are then written to the file. Now there are only 2 more characters
+      left to be read from the file. Thus, in the third iteration, the <code>read</code>&nbsp;method reads only those
+      characters and puts them in the first two locations of <code>buff</code>. The remaining three locations in
+      <code>buff</code>&nbsp;are unaffected and still contain the characters read in the previous iteration, i.e., <code>wor</code>.</p>
+
+      <p>So, <code>buff</code>&nbsp;now contains <code>ldwor</code>. Thus, the <code>write</code>&nbsp;method writes <code>ldwor</code>&nbsp;to the file. The fourth
+      iteration does not happen because the <code>read</code>&nbsp;method returns <code>-1</code>.</p>
+
+      <p>Had we used <code>fw.write(buff, 0, count)</code>&nbsp;instead of <code>fw.write(buff)</code>, the program would
+      have copied the contents correctly.</p>
+
+      <h3 class="section-title section-title--sub">19.1.8 Understanding file names and paths<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>I am sure you have been managing files in your computer using the File Explorer</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

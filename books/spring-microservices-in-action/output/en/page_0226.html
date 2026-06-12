@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 7: Listing 7.3 WebSecurityConfigurer</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--73cont .listing-callouts-right {
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--73cont .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 9mm;
+    }
+    .prose-page.chapter-page .listing-annotated--73cont .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-annotated--73cont .listing-callouts-right .listing-callout:nth-child(4) {
+      margin-top: 20mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-annotated + p,
+    .prose-page.chapter-page p + figure.code-snippet {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0225.html">← Prev</a>
+    <a href="page_0227.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Starting small: using Spring and OAuth2 to protect a single endpoint</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">201</span>
+      </header>
+
+      <div class="listing-annotated listing-annotated--73cont" aria-label="Listing 7.3 (continued)">
+        <figure class="code-snippet">
+          <pre class="code-block"><code>public class WebSecurityConfigurer
+➥ extends
+  WebSecurityConfigurerAdapter {
+  @Override
+  @Bean
+  public AuthenticationManager authenticationManagerBean()
+      throws Exception{
+    return super.authenticationManagerBean();
+  }
+  @Override
+  @Bean
+  public UserDetailsService userDetailsServiceBean() throws Exception {
+    return super.userDetailsServiceBean();
+  }
+  @Override
+  protected void configure(
+      AuthenticationManagerBuilder auth)
+   ➥ throws Exception {
+    auth.inMemoryAuthentication()
+      .withUser("john.carnell")
+      ➥ .password("password1")
+      ➥ .roles("USER")
+      .and()
+      ➥ .withUser("william.woodward")
+      .password("password2")
+      ➥ .roles("USER", "ADMIN");
+  }
+}</code></pre>
+        </figure>
+        <div class="listing-callouts-right" aria-label="Listing 7.3 annotation callouts">
+          <p class="listing-callout">Extends the core Spring Security WebSecurityConfigurerAdapter</p>
+          <p class="listing-callout">The AuthenticationManagerBean is used by Spring Security to handle authentication.</p>
+          <p class="listing-callout">The UserDetailsService is used by Spring Security to handle user information that will be returned the Spring Security.</p>
+          <p class="listing-callout">The configure() method is where you&rsquo;ll define users, their passwords, and their roles.</p>
+        </div>
+      </div>
+
+      <p class="no-indent">Like other pieces of the Spring Security framework, to set up users (and their roles), start by extending the <code>WebSecurityConfigurerAdapter</code> class and mark it with the <code>@Configuration</code> annotation. Spring Security is implemented in a fashion similar to how you snap Lego blocks together to build a toy car or model. As such, you need to provide the OAuth2 server a mechanism to authenticate users and return the user information about the authenticating user. This is done by defining two beans in your Spring <code>WebSecurityConfigurerAdapter</code> implementation: <code>authenticationManagerBean()</code> and <code>userDetailsServiceBean()</code>. These two beans are exposed by using the default authentication <code>authenticationManagerBean()</code> and <code>userDetailsServiceBean()</code> methods from the parent <code>WebSecurityConfigurerAdapter</code> class.</p>
+
+      <p>As you&rsquo;ll remember from listing 7.2, these beans are injected into the <code>configure(AuthorizationServerEndpointsConfigurer endpoints)</code> method shown in the <code>OAuth2Config</code> class:</p>
+
+      <figure class="code-snippet" aria-label="OAuth2Config configure endpoints method">
+        <pre class="code-block"><code>public void configure(
+  AuthorizationServerEndpointsConfigurer endpoints)
+   ➥ throws Exception {
+    endpoints</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

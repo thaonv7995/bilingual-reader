@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 9: Figure 9.7 Papertrail Syslog</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p + figure.diagram,
+    .prose-page.chapter-page figure.diagram + p,
+    .prose-page.chapter-page p + .sidebar-note,
+    .prose-page.chapter-page .sidebar-note + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0292.html">← Prev</a>
+    <a href="page_0294.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">268</span>
+        <span class="rh-center">CHAPTER 9 <em>Distributed tracing with Spring Cloud Sleuth and Zipkin</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">By default, Papertrail allows you to send log data to it via a Syslog call (<a href="https://en.wikipedia.org/wiki/Syslog">https://en.wikipedia.org/wiki/Syslog</a>). Syslog is a log messaging format that originated in UNIX. Syslog allows for the sending of log messages over both TCP and UDP. Papertrail will automatically define a Syslog port that you can use to write log messages to.</p>
+
+      <p>For the purposes of this discussion, you&rsquo;ll use this default port. Figure 9.7 shows you the Syslog connect string that&rsquo;s automatically generated when you click on the &ldquo;Add your first system&rdquo; button shown in figure 9.6.</p>
+
+      <figure class="diagram" aria-label="Figure 9.7">
+        <img src="../assets/images/page_0293_fig_9_7.png" width="1313" height="624" alt="Figure 9.7 — Papertrail Syslog connection string for sending log data">
+        <figcaption><strong>Figure 9.7</strong><br>Papertrail uses Syslog as one of the mechanisms for sending data to it.</figcaption>
+      </figure>
+
+      <p class="no-indent">At this point you&rsquo;re all set up with Papertrail. You now have to configure your Docker environment to capture output from each of the containers running your services to the remote syslog endpoint defined in figure 9.7.</p>
+
+      <aside class="sidebar-note" aria-label="NOTE">
+        <h3>NOTE</h3>
+        <p>The connection string from figure 9.7 is unique to my account. You&rsquo;ll need to make sure you use the connection string generated for you by Papertrail or define one via the Papertrail Settings &gt; Log destinations menu option.</p>
+      </aside>
+
+      <h4 class="subsection-title">9.2.3 Redirecting Docker output to Papertrail</h4>
+
+      <p class="no-indent">Normally, if you&rsquo;re running each of your services in their own virtual machine, you&rsquo;ll have to configure each individual service&rsquo;s logging configuration to send its logging information to a to a remote syslog endpoint (like the one exposed through Papertrail).</p>
+
+      <p>Fortunately, Docker makes it incredibly easy to capture all the output from any Docker container running on a physical or virtual machine. The Docker daemon communicates with all of the Docker containers it&rsquo;s managing through a Unix socket called <code>docker.sock</code>. Any container running on the server where Docker is running</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

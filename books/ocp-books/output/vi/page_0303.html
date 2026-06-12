@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 16: Tìm hiểu về Generics</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0302.html">← Trước</a>
+    <a href="page_0304.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">303</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   void m1(List&lt;? super CharSequence&gt; list){ }
+   void m2(List&lt;? extends String&gt; list){ }
+   void m3(List&lt;?&gt; list){ }</code></pre>
+      </figure>
+
+      <p class="no-indent"><strong>Đáp án đúng là</strong></p>
+
+      <p class="no-indent"><strong>m1</strong>: v2, v3, và v5</p>
+
+      <p class="no-indent"><strong>m2</strong>: v6</p>
+
+      <p class="no-indent"><strong>m3</strong>: Tất cả các biến</p>
+
+      <p>Hãy nhớ nguyên lý thay thế (principle of substitutability), cho phép bạn sử dụng một đối tượng kiểu con (subtype) ở bất kỳ nơi nào cần một đối tượng kiểu cha (supertype). Vì vậy, tất cả những gì bạn cần làm ở đây là kiểm tra xem kiểu khai báo của biến có phải là kiểu con (subtype) của kiểu tham số phương thức hay không. Đối tượng thực tế được tham chiếu bởi biến không đóng vai trò gì ở đây.</p>
+
+      <p>Vì vậy, hãy áp dụng các quy tắc subtyping cho <code>m1</code>&nbsp;và các biến đã cho. Để làm như vậy, trước tiên hãy liệt kê tập hợp các kiểu tương thích cho ký tự đại diện (wildcard) được sử dụng trong tham số phương thức.</p>
+
+      <p>Ký tự đại diện (wildcard) trong phương thức m1 là <code>? super CharSequence</code>&nbsp;, chỉ tương thích với hai kiểu &mdash;
+      <code>CharSequence</code>&nbsp;và <code>Object</code>&nbsp;. Hãy gọi tập hợp này là <strong>M1 Set</strong>.</p>
+
+      <ol class="numbered">
+        <li>Kiểu của biến <code>v1</code>&nbsp;là <code>List</code>&nbsp;, giống với kiểu tham số trong
+        <code>m1</code>&nbsp;. Nhưng đối số kiểu (type argument) trong <code>v1</code>&nbsp;là <code>?</code>&nbsp;, khớp với tất cả các kiểu. Tập hợp tất cả các kiểu không phải là tập con (subset) của M1 Set. Do đó, <code>List&lt;?&gt;</code>&nbsp;không phải là kiểu con (subtype) của <code>List&lt;? super CharSequence&gt;</code>
+        và vì thế, <code>v1</code>&nbsp;không thể được truyền vào <code>m1</code>&nbsp;.</li>
+        <li>Đối số kiểu <code>&lt;Object&gt;</code>&nbsp;chỉ tương thích với một kiểu duy nhất, tức là <code>Object</code>&nbsp;. Nó thực sự là tập con của M1 Set. Do đó, <code>List&lt;Object&gt;</code>&nbsp;là một kiểu con (subtype) của <code>List&lt;? super CharSequence&gt;</code>&nbsp;,
+        và vì thế, <code>v2</code>&nbsp;có thể được truyền vào <code>m1</code>&nbsp;.</li>
+      </ol>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

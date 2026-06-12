@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0607.html">← Trước</a>
+    <a href="page_0609.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">608</span>
+      </header>
+
+      <p class="no-indent">pipeline để tổ chức lại kết quả của các thao tác trung gian theo thứ tự ban đầu của các
+      phần tử stream. Một lần nữa, vì kỳ thi không tập trung vào hiệu năng, tôi sẽ không đi sâu vào
+      chi tiết của khía cạnh này nhưng tôi khuyến khích bạn tìm hiểu thêm về chủ đề này trực tuyến. Phần mô tả JavaDoc
+      được cung cấp cho package <code>java.util.stream</code>&nbsp;là một tài liệu phải đọc.</p>
+
+      <h3 class="section-title">Sử dụng các thao tác có trạng thái với stream song song<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Như đã giải thích trước đó, các thao tác có trạng thái cần duy trì một trạng thái phụ thuộc vào các phần tử
+      đi qua stream. Trong khi nhiều thao tác có trạng thái như <code>distinct</code>&nbsp;không cần đợi
+      stream kết thúc trước khi tạo ra stream đầu ra, một số thao tác như <code>sort</code>&nbsp;thì có. Trong
+      cả hai trường hợp, một thao tác có trạng thái vừa đọc vừa cập nhật trạng thái nội bộ của nó khi các phần tử mới đi
+      qua. Bây giờ bạn có thể hình dung điều này sẽ diễn ra như thế nào khi quá trình xử lý stream được
+      song song hóa. Duy trì một trạng thái được chia sẻ với nhiều Thread (Luồng) cần có sự đồng bộ hóa. Tin
+      vui là bạn không cần phải lo lắng về điều đó. Bất kỳ sự đồng bộ hóa nào cần thiết cho một thao tác có trạng thái
+      đều được quản lý bởi stream framework.&nbsp;Tin xấu là sự đồng bộ hóa sẽ gây ra tổn thất về
+      hiệu năng. Hơn nữa, vì quá trình xử lý stream phải tôn trọng thứ tự của các phần tử
+      nếu stream được sắp thứ tự, nhiều thao tác có trạng thái tưởng chừng như vô hại như
+      <code>dropWhile</code>, <code>takeWhile</code>, <code>limit</code>&nbsp;và <code>skip</code>&nbsp;hoạt động kém hiệu quả khi một stream có thứ tự được
+      song song hóa.</p>
+
+      <p>Vì vậy, mặc dù việc chuyển một stream thành song song là dễ dàng, nhưng việc đưa ra quyết định có nên song song hóa stream hay không lại không
+      hề dễ dàng. Không có công thức chung nào có thể giúp bạn quyết định. Cách tốt nhất để đưa ra
+      quyết định này là thực sự đo hiệu năng (benchmark) ứng dụng của bạn với dữ liệu thực tế và xem liệu
+      việc song song hóa stream có cải thiện hiệu năng hay không.</p>
+
+      <h3 class="section-title">Sử dụng các đối số hành vi có trạng thái với stream song song<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Việc truyền một hàm có trạng thái vào một thao tác stream sẽ gặp phải tất cả các vấn đề đã mô tả ở trên,
+      và hơn thế nữa, hàm đó chịu trách nhiệm đảm bảo an toàn luồng (thread safety) cho trạng thái mà nó lưu giữ. Ví
+      dụ, giả sử sum là một biến int được chia sẻ, có</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

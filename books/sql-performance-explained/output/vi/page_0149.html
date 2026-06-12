@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục Group By</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Chỉ mục Group By</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">Chỉ mục Group By</h3>
+
+      <p class="no-indent">Các cơ sở dữ liệu SQL sử dụng hai thuật toán <code><strong>group by</strong></code> hoàn toàn khác nhau. Thuật toán đầu tiên, thuật toán băm, tổng hợp các bản ghi đầu vào trong một bảng băm tạm thời. Khi tất cả các bản ghi đầu vào được xử lý, bảng băm được trả về như là kết quả. Thuật toán thứ hai, thuật toán sắp xếp/group, trước tiên sắp xếp dữ liệu đầu vào theo khóa nhóm để các hàng của mỗi nhóm theo sau nhau ngay lập tức. Sau đó, cơ sở dữ liệu chỉ cần tổng hợp chúng. Nói chung, cả hai thuật toán đều cần phải hiện thực hóa một trạng thái trung gian, vì vậy chúng không được thực thi theo cách ống dẫn. Tuy nhiên, thuật toán sắp xếp/group có thể sử dụng một chỉ mục để tránh thao tác sắp xếp, do đó cho phép một <code><strong>group by</strong></code> theo cách ống dẫn.</p>
+
+      <aside class="sidebar-note">
+        <h3>Ghi chú</h3>
+        <p>MySQL 5.6 không sử dụng thuật toán băm. Tuy nhiên, tối ưu hóa cho thuật toán sắp xếp/group hoạt động như mô tả dưới đây.</p>
+      </aside>
+
+      <p>Xem xét truy vấn sau. Nó cung cấp doanh thu của ngày hôm qua được nhóm theo <code>PRODUCT_ID</code>:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT product_id, sum(eur_value)
+  FROM sales
+ WHERE sale_date = TRUNC(sysdate) - INTERVAL '1' DAY
+ <strong>GROUP BY</strong> product_id;</code></pre>
+      </figure>
+
+      <p>Biết rằng có chỉ mục trên <code>SALE_DATE</code> và <code>PRODUCT_ID</code> từ phần trước, thuật toán sắp xếp/group là phù hợp hơn vì một <code>INDEX RANGE SCAN</code> tự động cung cấp các hàng theo thứ tự yêu cầu. Điều đó có nghĩa là cơ sở dữ liệu tránh hiện thực hóa vì nó không cần một thao tác sắp xếp rõ ràng&mdash;<code><strong>group by</strong></code> được thực thi theo cách ống dẫn.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id |Operation                    | Name        | Rows | Cost |
+---------------------------------------------------------------
+| 0 |SELECT STATEMENT             |             |   17 |  192 |
+| 1 | <strong>SORT GROUP BY NOSORT</strong>        |             |   17 |  192 |
+| 2 |  TABLE ACCESS BY INDEX ROWID| SALES       |  321 |  192 |
+|*3 |   INDEX RANGE SCAN          | SALES_DT_PR |  321 |    3 |
+---------------------------------------------------------------</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">139</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

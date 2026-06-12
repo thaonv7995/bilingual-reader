@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 1: Listing 1.2 Hello World Service using Spring Cloud</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 1.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5mm;
+      padding-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0055.html">← Prev</a>
+    <a href="page_0057.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">31</span>
+        <span class="rh-center"><em>Spring Cloud by example</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <div class="listing-annotated">
+        <figure class="listing">
+          <figcaption><strong>Listing 1.2</strong><br>Hello World Service using Spring Cloud</figcaption>
+          <pre class="code-block"><code>package com.thoughtmechanix.simpleservice;
+//Removed other imports for conciseness
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+import  org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
+
+@SpringBootApplication
+@RestController
+@RequestMapping(value="hello")
+@EnableCircuitBreaker
+@EnableEurekaClient
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+    @HystrixCommand(threadPoolKey = "helloThreadPool")
+public String helloRemoteServiceCall(String firstName,
+                                         String lastName){
+    ResponseEntity&lt;String&gt; restExchange =
+       restTemplate.exchange(
+          "http://logical-service-id/name/
+          {firstName}/{lastName}",
+           HttpMethod.GET,
+           null, String.class, firstName, lastName);
+
+       return restExchange.getBody();
+    }
+
+@RequestMapping(value="/{firstName}/{lastName}",
+method = RequestMethod.GET)
+    public String hello( @PathVariable("firstName") String firstName,
+                         @PathVariable("lastName") String lastName) {
+       return helloRemoteServiceCall(firstName, lastName)
+}
+}</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Listing 1.2 callouts">
+          <p class="listing-callout">Enables the service to use the Hystrix and Ribbon libraries</p>
+          <p class="listing-callout">Tells the service that it should register itself with a Eureka service discovery agent and that service calls are to use service discovery to &ldquo;lookup&rdquo; the location of remote services</p>
+          <p class="listing-callout">Wrappers calls to the helloRemoteServiceCall method with a Hystrix circuit breaker</p>
+          <p class="listing-callout">Uses a decorated RestTemplate class to take a &ldquo;logical&rdquo; service ID and Eureka under the covers to look up the physical location of the service</p>
+        </div>
+      </div>
+
+      <p class="no-indent">This code has a lot packed into it, so let&rsquo;s walk through it. Keep in mind that this listing is only an example and isn&rsquo;t found in the chapter 1 GitHub repository source code. I&rsquo;ve included it here to give you a taste of what&rsquo;s to come later in the book.</p>
+
+      <p>The first thing you should notice is the <code>@EnableCircuitBreaker</code> and <code>@EnableEurekaClient</code> annotations. The <code>@EnableCircuitBreaker</code> annotation tells your Spring microservice that you&rsquo;re going to use the Netflix Hystrix libraries in your application. The <code>@EnableEurekaClient</code> annotation tells your microservice to</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Parameterized Queries</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page .language-label {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-indent: 0;
+    }
+
+    .prose-page .language-label + .snippet-caption {
+      margin-top: 0;
+    }
+
+    .prose-page .snippet-caption {
+      margin: 2.5mm 0 1mm 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page .see-also {
+      margin: 2.5mm 0 0 4.5mm;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 6.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2.5mm;
+    }
+
+    .prose-page .sidebar-note figure.code-snippet {
+      margin: 2.5mm 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">48</span>
+      </header>
+      <p class="chapter-running-head">Chapter 2: The Where Clause</p>
+
+      <p class="language-label">Ruby</p>
+
+      <p class="snippet-caption">Without bind parameters:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>dbh.execute("select first_name, last_name"
+          + "  from employees"
+          + " where <strong>subsidiary_id = #{subsidiary_id}</strong>");</code></pre>
+      </figure>
+
+      <p class="snippet-caption">Using a bind parameter:</p>
+      <figure class="code-snippet">
+        <pre class="code-block"><code>dbh.<strong>prepare</strong>("select first_name, last_name"
+          + "  from employees"
+          + " where <strong>subsidiary_id = ?</strong>");
+<strong>dbh.execute(subsidiary_id);</strong></code></pre>
+      </figure>
+
+      <p class="see-also">See also: &ldquo;Quoting, Placeholders, and Parameter Binding&rdquo; in the Ruby DBI Tutorial.</p>
+
+      <p>The question mark (<code>?</code>) is the only placeholder character that the SQL standard defines. Question marks are positional parameters. That means the question marks are numbered from left to right. To bind a value to a particular question mark, you have to specify its number. That can, however, be very impractical because the numbering changes when adding or removing placeholders. Many databases offer a proprietary extension for named parameters to solve this problem&mdash;e.g., using an &ldquo;at&rdquo; symbol (<code>@name</code>) or a colon (<code>:name</code>).</p>
+
+      <aside class="sidebar-note">
+        <h3>Note</h3>
+        <p>Bind parameters cannot change the structure of an SQL statement.</p>
+        <p>That means you cannot use bind parameters for table or column names. The following bind parameters do not work:</p>
+        <figure class="code-snippet">
+          <pre class="code-block"><code>String sql = prepare("SELECT * FROM ? WHERE ?");
+sql.execute('employees', 'employee_id = 1');</code></pre>
+        </figure>
+      </aside>
+
+      <p>If you need to change the structure of an SQL statement during runtime, use dynamic SQL.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">38</p>
+    </article>
+  </main>
+</body>
+</html>

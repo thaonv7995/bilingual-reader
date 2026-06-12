@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm 0;
+      padding: 0 0 0 6mm;
+      list-style: none;
+      counter-reset: init-step 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      counter-increment: init-step;
+      margin: 0 0 2.5mm;
+      padding-left: 6mm;
+      text-align: justify;
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li::before {
+      content: counter(init-step) ".";
+      float: left;
+      margin-left: -6mm;
+      width: 5mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page ol.numbered li code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0609.html">← Trước</a>
+    <a href="page_0611.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">610</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>System.out.println(result);</code></pre>
+      </figure>
+
+      <p class="no-indent">Nó tạo ra kết quả đầu ra sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>T 21 Accumulating - partialResult= newvalue=b
+T 1 Accumulating - partialResult= newvalue=c
+T 22 Accumulating - partialResult= newvalue=a
+T 23 Accumulating - partialResult= newvalue=d
+T 22 Combining - partialResult1=a partialResult2=b
+T 23 Combining - partialResult1=c partialResult2=d
+T 23 Combining - partialResult1=ab partialResult2=cd
+abcd</code></pre>
+      </figure>
+
+      <p class="no-indent">Hãy lưu ý các điểm sau trong kết quả đầu ra ở trên:</p>
+
+      <ol class="numbered">
+        <li>Bốn Thread (Luồng) đã được sử dụng để tích lũy song song các phần tử của stream với giá trị identity. Các kết quả riêng phần cũng được kết hợp song song bằng cách sử dụng các Thread (Luồng) khác nhau.</li>
+        <li>Thứ tự thực hiện việc tích lũy và kết hợp không giống với thứ tự của các phần tử trong stream. Mặc dù vậy, thứ tự trong kết quả cuối cùng vẫn giống nhau vì stream có thứ tự.</li>
+        <li>Các hàm accumulator và combiner không có bất kỳ trạng thái nào và không sửa đổi các đối số.</li>
+      </ol>
+
+      <h3 class="section-title">Giá trị identity khi thu gọn các stream song song<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Giá trị được truyền cho tham số identity là cực kỳ quan trọng để duy trì tính nhất quán của kết quả được tạo ra bởi các phương thức reduce. Vì một stream có thể bị chia thành nhiều phân đoạn và mỗi phân đoạn có thể được thu gọn độc lập, giá trị identity có thể được sử dụng một số lần <strong>không thể dự đoán trước</strong>&nbsp;khi thu gọn các phân đoạn đó. Do đó, giá trị identity nên được chọn sao cho việc tích lũy giá trị identity với bất kỳ phần tử nào cũng tạo ra một giá trị giống như giá trị của phần tử đó. Nói cách khác, <code>accumulator.apply(identity,</code>
+      <code>t)</code>&nbsp;phải luôn trả về cùng giá trị với&nbsp;<code>t</code>&nbsp;. Ví dụ, <code>0</code>&nbsp;là một giá trị identity phù hợp nếu hàm accumulator cộng hai giá trị, trong khi <code>1</code>&nbsp;phù hợp nếu nó nhân chúng.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

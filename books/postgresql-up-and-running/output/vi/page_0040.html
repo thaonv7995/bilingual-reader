@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0039.html">← Trước</a>
+    <a href="page_0041.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="no-indent">rules, kết nối bị từ chối. Một sai lầm phổ biến mà mọi người mắc phải là không đặt các quy tắc
+      theo thứ tự đúng. Ví dụ, nếu bạn đặt <code>+0.0.0.0/0 reject+</code> trước <code>+127.0.0.1/32</code>
+      <code>trust+</code>, người dùng địa phương sẽ không thể kết nối, mặc dù có một quy tắc cho phép họ
+      làm như vậy.</p>
+
+      <h3 class="subsection-title">“Tôi đã chỉnh sửa pg_hba.conf và bây giờ máy chủ của tôi bị hỏng.”</h3>
+      <p>Đừng lo lắng. Điều này xảy ra khá thường xuyên, nhưng dễ dàng khôi phục. Lỗi này thường
+      do lỗi chính tả hoặc do thêm một phương thức xác thực không khả dụng. Khi dịch vụ postgres
+      không thể phân tích tệp <i>pg_hba.conf</i>, nó sẽ chặn tất cả quyền truy cập để đảm bảo an toàn hoặc thậm chí không khởi động
+      lên. Cách dễ nhất để tìm ra bạn đã làm sai điều gì là đọc tệp nhật ký. Tệp này nằm
+      trong thư mục gốc của thư mục dữ liệu hoặc trong thư mục con pg_log. Mở tệp mới nhất và đọc
+      dòng cuối cùng. Thông báo lỗi thường tự giải thích. Nếu bạn dễ bị trượt tay,
+      hãy sao lưu tệp trước khi chỉnh sửa.</p>
+
+      <h3 class="subsection-title">Các phương thức xác thực</h3>
+      <p>PostgreSQL cung cấp cho bạn nhiều lựa chọn để xác thực người dùng—có lẽ nhiều hơn bất kỳ
+      sản phẩm cơ sở dữ liệu nào khác. Hầu hết mọi người đều giữ lại những phương thức phổ biến nhất: <code>trust</code>, <code>peer</code>,
+      <code>ident</code>, <code>md5</code>, và <code>password</code>. Cũng có <code>reject</code>, áp dụng từ chối ngay lập tức.
+      Các phương thức xác thực được quy định trong <i>pg_hba.conf</i> đóng vai trò như những người gác cổng cho toàn bộ
+      máy chủ PostgreSQL. Người dùng hoặc thiết bị vẫn phải đáp ứng các hạn chế về vai trò và quyền truy cập cơ sở dữ liệu
+      sau khi kết nối.</p>
+
+      <p>Để biết thêm thông tin về các phương thức xác thực khác nhau, hãy tham khảo <span class="accent-word">Xác thực
+      Khách hàng PostgreSQL</span>. Các phương thức xác thực được sử dụng phổ biến nhất là:</p>
+
+      <p class="object-term">trust</p>
+      <p class="object-def">Phương thức xác thực kém an toàn nhất. Nó cho phép mọi người tự xác định và
+      không yêu cầu mật khẩu. Chỉ cần yêu cầu đáp ứng địa chỉ IP, người dùng và
+      tiêu chí cơ sở dữ liệu, người dùng có thể kết nối. Bạn nên giới hạn <code>trust</code> cho các kết nối cục bộ
+      hoặc kết nối mạng riêng. Ngay cả khi đó, có thể có ai đó giả mạo địa chỉ IP,
+      vì vậy những người có tư tưởng an ninh hơn trong chúng ta khuyến khích không sử dụng nó hoàn toàn. Tuy nhiên,
+      đây là phương thức phổ biến nhất cho PostgreSQL được cài đặt trên máy tính để bàn cho truy cập cục bộ một người dùng
+      nơi an ninh không phải là mối quan tâm lớn. Tên người dùng mặc định
+      là người dùng OS đã đăng nhập nếu không được chỉ định.</p>
+
+      <p class="object-term">md5</p>
+      <p class="object-def">Rất phổ biến, yêu cầu mật khẩu được mã hóa md5 để kết nối.</p>
+
+      <p class="object-term">password</p>
+      <p class="object-def">Sử dụng xác thực mật khẩu dạng văn bản rõ.</p>
+
+      <p class="object-term">ident</p>
+      <p class="object-def">Sử dụng <i>pg_ident.conf</i> để xem liệu tài khoản OS của người dùng đang cố gắng kết nối có
+      ánh xạ đến tài khoản PostgreSQL hay không. Không kiểm tra mật khẩu.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Chương 2: Quản trị cơ sở dữ liệu<span class="sep">|</span>22</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

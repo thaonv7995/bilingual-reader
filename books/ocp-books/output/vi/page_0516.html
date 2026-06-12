@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 20: Quản lý việc thực thi mã đồng thời</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0515.html">← Trước</a>
+    <a href="page_0517.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">516</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//ignore the value returned by getAndIncrement
+t1.start(); t2.start(); t1.join(); t2.join();
+System.out.println("counter = "+counter.get());
+}
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Lưu ý rằng không cần thiết phải sử dụng một <code>AtomicInteger</code>&nbsp;khi nó chỉ được yêu cầu cục bộ bên trong một phương thức, chẳng hạn như cho một vòng lặp for, bởi vì các biến cục bộ không bao giờ được chia sẻ với các Thread (Luồng) khác.</p>
+
+      <p>Bên cạnh <code>AtomicInteger</code>, package <code>java.util.concurrent.atomic</code>&nbsp;có nhiều lớp (class) khác bao gồm <code>AtomicLong</code>, <code>AtomicBoolean</code>, và <code>AtomicReference</code>&nbsp;hoạt động tương tự. Bạn không cần phải biết chi tiết về tất cả các lớp (class) đó cho kỳ thi nhưng chỉ cần nhận biết được chúng để không bị cám dỗ tự mình viết mã khi bạn cần chức năng mong muốn.</p>
+
+      <h3 class="section-title section-title--sub">20.4.7 Cảnh giác với các vấn đề liveness<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Đồng bộ hóa quyền truy cập vào các đối tượng (object) được chia sẻ đôi khi có thể khiến một chương trình đa luồng bị treo hoặc hoạt động chậm chạp. Những chương trình như vậy không hẳn là không an toàn cho luồng (thread unsafe) theo nghĩa là chúng không tạo ra kết quả sai, nhưng chúng cũng không quá hữu ích vì không tạo ra bất kỳ kết quả nào. Thủ phạm thường là việc tranh chấp lock (khóa) một cách thiếu trách nhiệm hoặc không được phối hợp trong ứng dụng.</p>
+
+      <h3 class="section-title section-title--sub">Đói tài nguyên (Starvation)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một Thread (Luồng) được coi là bị &ldquo;đói&rdquo; (starved) khi nó không thể tiếp tục công việc của mình trong một thời gian dài do đối tượng (object) được chia sẻ không có sẵn vì đối tượng (object) đó bị khóa bởi các Thread (Luồng) khác trong hầu hết thời gian. Điều này có thể xảy ra do việc lập lịch không hợp lý từ bộ lập lịch luồng (thread scheduler) hoặc do một Thread (Luồng) khác giữ đối tượng (object) bị khóa trong một thời gian dài. Ví dụ, giả sử người dùng yêu cầu làm mới giá của một vé bằng cách nhấp vào một</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

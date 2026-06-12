@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 20: Managing Concurrent Code Execution</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      margin: 8mm 0 3mm;
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0519.html">← Prev</a>
+    <a href="page_0521.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">520</span>
+      </header>
+
+      <p class="no-indent">thread is pinned to a platform thread when it executes native code as well just like it is when it
+      executes a synchronized block.</p>
+
+      <p>The <code>java.util.concurrent.locks</code>&nbsp;package provides&nbsp;<code>Lock</code>&nbsp;and
+      <code>ReadWriteLock</code>&nbsp;interfaces and their implementations such as <code>ReentrantLock</code>&nbsp;and
+      <code>ReentrantReadWriteLock</code>, that are more flexible to use than intrinsic locks and also provide a
+      few extra features that one might need while crafting complicated thread coordination logic.</p>
+
+      <p>They do not cause a virtual thread to be pinned to a platform thread either. These are called
+      <strong>explicit locks</strong>. The OCP 17 exam covers <code>Lock</code>&nbsp;and its implementation class
+      <code>ReentrantLock</code>&nbsp;only but OCP 21 exam expects you to know <code>ReadWriteLock</code>&nbsp;as well.</p>
+
+      <p class="no-indent">The basic usage of an explicit lock is as follows:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>lock.lock(); //lock refers to a Lock instance
+try{
+//critical section code goes here
+}finally{
+lock.unlock();
+}</code></pre>
+      </figure>
+
+      <p>Any code that exists between the calls to <code>lock()</code>&nbsp;and&nbsp;<code>unlock()</code>&nbsp;is executed just like the code
+      within a synchronized block. If the <code>lock</code>&nbsp;is not free, a thread will go into one of the blocking
+      states (i.e.,&nbsp;<code>WAITING</code>, <code>TIMED_WAITING</code>, or <code>BLOCKED</code>) depending on the
+      <code>Lock</code>&nbsp;implementation and thus, will not be scheduled to execute after the call to <code>lock()</code>. It
+      will become <code>RUNNABLE</code>&nbsp;again only after it acquires the lock, which is when the call to <code>lock()</code>
+      returns. Threads that use the same <code>Lock</code>&nbsp;instance to coordinate their execution can rely on the
+      happens-before guarantees provided by the Java Memory Model.</p>
+
+      <p>Although the <code>lock()</code>&nbsp;and <code>unlock()</code>&nbsp;methods work about the same as a&nbsp;<code>synchronized</code>
+      block, the extra features provided by explicit locks, as evident from the following methods of the
+      <code>Lock</code>&nbsp;interface, are not present in intrinsic locks.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

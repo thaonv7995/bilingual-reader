@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Combining Columns</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page h4.subsection-title {
+      margin: 5mm 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">80</span>
+      </header>
+      <p class="chapter-running-head">Chapter 2: The Where Clause</p>
+
+      <h4 class="subsection-title">Combining Columns</h4>
+
+      <p class="no-indent">This section is about a popular obfuscation that affects concatenated indexes.</p>
+
+      <p>The first example is again about date and time types but the other way around. The following MySQL query combines a data and a time column to apply a range filter on both of them.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  SELECT ...
+    FROM ...
+   WHERE ADDTIME(date_column, time_column)
+       &gt; DATE_ADD(now(), INTERVAL -1 DAY)</code></pre>
+      </figure>
+
+      <p>It selects all records from the last 24 hours. The query cannot use a concatenated index on <code>(DATE_COLUMN, TIME_COLUMN)</code> properly because the search is not done on the indexed columns but on derived data.</p>
+
+      <p>You can avoid this problem by using a data type that has both a date and time component (e.g., MySQL <code>DATETIME</code>). You can then use this column without a function call:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>  SELECT ...
+    FROM ...
+   WHERE datetime_column
+       &gt; DATE_ADD(now(), INTERVAL -1 DAY)</code></pre>
+      </figure>
+
+      <p>Unfortunately it is often not possible to change the table when facing this problem.</p>
+
+      <p>The next option is a function-based index if the database supports it&mdash;although this has all the drawbacks discussed before. When using MySQL, function-based indexes are not an option anyway.</p>
+
+      <p>It is still possible to write the query so that the database can use a concatenated index on <code>DATE_COLUMN, TIME_COLUMN</code> with an access predicate&mdash;at least partially. For that, we add an extra condition on the <code>DATE_COLUMN</code>.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   WHERE ADDTIME(date_column, time_column)
+       &gt; DATE_ADD(now(), INTERVAL -1 DAY)
+     AND date_column
+      &gt;= DATE(DATE_ADD(now(), INTERVAL -1 DAY))</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">70</p>
+    </article>
+  </main>
+</body>
+</html>

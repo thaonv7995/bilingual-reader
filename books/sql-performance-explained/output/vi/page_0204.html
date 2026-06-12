@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chỉ mục</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 9pt;
+      line-height: 1.2;
+      padding: 10mm var(--book-margin-x) 16mm;
+    }
+
+    .index-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 8mm;
+      align-items: start;
+    }
+
+    .index-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6mm;
+    }
+
+    .index-letter {
+      margin: 2.5mm 0 0.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-weight: 400;
+      line-height: 1;
+      text-indent: 0;
+    }
+
+    .index-col .index-letter:first-child {
+      margin-top: 0;
+    }
+
+    .index-entry {
+      margin: 0;
+      text-align: left;
+      text-indent: 0;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .index-entry--sub {
+      padding-left: 3mm;
+    }
+
+    .index-entry--sub2 {
+      padding-left: 6mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <div class="index-columns">
+        <div class="index-col">
+          <p class="index-entry">quét bảng đầy đủ, 13</p>
+          <p class="index-entry index-entry--sub">Tất cả (MySQL), 189</p>
+          <p class="index-entry index-entry--sub">Quét tuần tự (PostgreSQL), 174</p>
+          <p class="index-entry index-entry--sub">TRUY CẬP BẢNG ĐẦY ĐỦ (Oracle), 168</p>
+          <p class="index-entry index-entry--sub">Quét bảng (SQL Server), 183</p>
+          <p class="index-entry">hàm, 24</p>
+          <p class="index-entry index-entry--sub">xác định, 29</p>
+          <p class="index-entry index-entry--sub2">trong các chỉ mục một phần, 52</p>
+          <p class="index-entry index-entry--sub">cửa sổ, 156</p>
+
+          <p class="index-letter">G</p>
+          <p class="index-entry">nhóm theo, 139</p>
+          <p class="index-entry index-entry--sub">với PostgreSQL và cơ sở dữ liệu Oracle và chỉ mục ASC/DESC không được pipelined, 140</p>
+
+          <p class="index-letter">H</p>
+          <p class="index-entry">nối băm, 101</p>
+          <p class="index-entry">NHÓM BẰNG BÁM, 169</p>
+          <p class="index-entry">NỐI BÁM (Oracle), 169</p>
+          <p class="index-entry">Nối băm (PostgreSQL), 175</p>
+          <p class="index-entry">Khớp băm, 183</p>
+          <p class="index-entry">Khớp băm (Tổng hợp), 184</p>
+          <p class="index-entry">bảng heap, 3, 122</p>
+          <p class="index-entry index-entry--sub">tạo trong SQL Server, 127</p>
+          <p class="index-entry">Hibernate</p>
+          <p class="index-entry index-entry--sub">lấy dữ liệu ngay lập tức, 96</p>
+          <p class="index-entry index-entry--sub">ILIKE sử dụng LOWER, 98</p>
+          <p class="index-entry index-entry--sub">cập nhật tất cả các cột, 164</p>
+          <p class="index-entry">gợi ý, 19</p>
+
+          <p class="index-letter">I</p>
+          <p class="index-entry">BẤT BIẾN (PostgreSQL), 30</p>
+          <p class="index-entry">chỉ mục</p>
+          <p class="index-entry index-entry--sub">bao phủ, 117</p>
+          <p class="index-entry index-entry--sub">toàn văn, 48</p>
+          <p class="index-entry index-entry--sub">dựa trên hàm, 24</p>
+          <p class="index-entry index-entry--sub2">không phân biệt chữ hoa chữ thường, 24</p>
+          <p class="index-entry index-entry--sub2">để chỉ mục các phép toán toán học, 77</p>
+          <p class="index-entry index-entry--sub">nối, 50</p>
+          <p class="index-entry index-entry--sub">giới hạn</p>
+          <p class="index-entry index-entry--sub2">MySQL, Oracle, PostgreSQL, 121</p>
+          <p class="index-entry index-entry--sub2">SQL Server, 122</p>
+          <p class="index-entry index-entry--sub">hợp nhất, 49</p>
+          <p class="index-entry index-entry--sub">nhiều cột, 12</p>
+          <p class="index-entry index-entry--sub2">thứ tự sai (tác động), 81</p>
+          <p class="index-entry index-entry--sub">một phần, 51</p>
+          <p class="index-entry index-entry--sub">tiền tố (MySQL), 121</p>
+          <p class="index-entry index-entry--sub">thứ cấp, 123</p>
+          <p class="index-entry">chỉ mục trong các kế hoạch thực thi MySQL, 189</p>
+          <p class="index-entry">quét chỉ mục chỉ, 116</p>
+          <p class="index-entry">bảng tổ chức chỉ mục, 122</p>
+          <p class="index-entry index-entry--sub">hỗ trợ cơ sở dữ liệu, 127</p>
+          <p class="index-entry">Điều kiện chỉ mục (PostgreSQL), 177</p>
+          <p class="index-entry">QUÉT TOÀN BỘ CHỈ MỤC NHANH, 168</p>
+        </div>
+
+        <div class="index-col">
+          <p class="index-entry">QUÉT TOÀN BỘ CHỈ MỤC, 168</p>
+          <p class="index-entry">Quét chỉ mục chỉ (PostgreSQL), 174</p>
+          <p class="index-entry">QUÉT PHẠM VI CHỈ MỤC, 167</p>
+          <p class="index-entry">Quét chỉ mục (PostgreSQL), 174</p>
+          <p class="index-entry">Tìm kiếm chỉ mục, 182</p>
+          <p class="index-entry">QUÉT CHỈ MỤC ĐỘC NHẤT, 167</p>
+          <p class="index-entry index-entry--sub">khi truy cập một IOT, 124</p>
+          <p class="index-entry">HÀM NỘI BỘ, 67</p>
+          <p class="index-entry">IOT (bảng tổ chức chỉ mục), 122</p>
+
+          <p class="index-letter">J</p>
+          <p class="index-entry">nối, 91</p>
+          <p class="index-entry index-entry--sub">toàn bộ bên ngoài, 109</p>
+
+          <p class="index-letter">K</p>
+          <p class="index-entry">Tra cứu khóa (Cụm), 182</p>
+
+          <p class="index-letter">L</p>
+          <p class="index-entry">lấy dữ liệu lười biếng</p>
+          <p class="index-entry index-entry--sub">cho các thuộc tính vô hướng (cột), 104</p>
+          <p class="index-entry">nút lá, 2</p>
+          <p class="index-entry index-entry--sub">tách, 160</p>
+          <p class="index-entry">LIKE, 45</p>
+          <p class="index-entry index-entry--sub">các lựa chọn thay thế, 48</p>
+          <p class="index-entry index-entry--sub">như là điều kiện bộ lọc chỉ mục, 112</p>
+          <p class="index-entry index-entry--sub">trên cột DATE, 67</p>
+          <p class="index-entry index-entry--sub">trên các cột DATE, 67</p>
+          <p class="index-entry">giới hạn (MySQL, PostgreSQL), 144</p>
+          <p class="index-entry">khả năng mở rộng logarithmic, 7</p>
+          <p class="index-entry">LOWER, 24</p>
+
+          <p class="index-letter">M</p>
+          <p class="index-entry">Nối hợp nhất, 109</p>
+          <p class="index-entry index-entry--sub">PostgreSQL, 175</p>
+          <p class="index-entry index-entry--sub">SQL Server, 183</p>
+          <p class="index-entry">NỐI HỢP NHẤT (Oracle), 169</p>
+          <p class="index-entry">đọc nhiều khối</p>
+          <p class="index-entry index-entry--sub">cho một quét bảng đầy đủ, 13</p>
+          <p class="index-entry index-entry--sub">cho một QUÉT TOÀN BỘ CHỈ MỤC NHANH, 168</p>
+          <p class="index-entry">MVCC, 163</p>
+          <p class="index-entry index-entry--sub">ảnh hưởng đến quét chỉ mục chỉ của PostgreSQL, 174</p>
+          <p class="index-entry">huyền thoại</p>
+          <p class="index-entry index-entry--sub">SQL động chậm, 72, 74</p>
+          <p class="index-entry index-entry--sub">cột chọn lọc nhất trước</p>
+          <p class="index-entry index-entry--sub2">phủ nhận, 43</p>
+          <p class="index-entry index-entry--sub2">nguồn gốc, 49</p>
+          <p class="index-entry index-entry--sub">Oracle không thể chỉ mục NULL, 56</p>
+
+          <p class="index-letter">N</p>
+          <p class="index-entry">Vấn đề N+1, 92</p>
+          <p class="index-entry">Vòng lặp lồng nhau, 92</p>
+          <p class="index-entry index-entry--sub">PostgreSQL, 175</p>
+          <p class="index-entry index-entry--sub">SQL Server, 183</p>
+          <p class="index-entry">VÒNG LẶP LỒNG NHAU (Oracle), 168</p>
+        </div>
+      </div>
+
+      <footer class="book-footer">
+        <span class="page-folio">194</span>
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

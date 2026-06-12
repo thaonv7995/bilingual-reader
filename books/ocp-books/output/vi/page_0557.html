@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 21: Stream</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0556.html">← Trước</a>
+    <a href="page_0558.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">557</span>
+      </header>
+
+      <p class="no-indent">Stream sau khi ghép nối chứa các phần tử của stream thứ nhất, theo sau là các phần tử của stream thứ hai.
+      Stream ghép nối này sẽ có thứ tự nếu cả hai stream đầu vào đều có thứ tự, và song song nếu một trong
+      hai stream đầu vào là song song.</p>
+
+      <h3 class="section-title section-title--sub">21.1.2 Các thao tác trên stream<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Interface <code>Stream</code>&nbsp;(Giao diện) chứa một số phương thức để xử lý các phần tử chảy qua
+      stream. Chúng được gọi là <strong>các thao tác trên stream (stream operations)</strong>. Các thao tác trên stream gồm hai loại &mdash;
+      <strong>các thao tác trung gian (intermediate operations)</strong>&nbsp;và <strong>các thao tác đầu cuối (terminal operations)</strong>. Các thao tác trung gian trả về một
+      stream mới (có khả năng đã bị biến đổi), cho phép liên kết thao tác tiếp theo trong pipeline, trong khi
+      các thao tác đầu cuối tạo ra kết quả cuối cùng và đánh dấu sự kết thúc của pipeline của stream.
+      Điều này cũng có nghĩa là bạn không thể gọi bất kỳ thao tác nào trên một stream sau khi đã gọi một
+      thao tác đầu cuối. Việc biết một thao tác trên stream là trung gian hay đầu cuối là rất
+      quan trọng bởi vì các thao tác trung gian luôn ở cơ chế trì hoãn (lazy) và không thực sự thực hiện
+      bây kỳ hành động nào cho đến khi chúng bị bắt buộc thực thi bởi một thao tác đầu cuối được liên kết ở cuối pipeline.</p>
+
+      <p>Các thao tác trung gian được phân loại sâu hơn thành các thao tác <strong>không duy trì trạng thái (stateless)</strong> và <strong>có duy trì trạng thái (stateful)</strong>. Các thao tác stateless,
+      chẳng hạn như <code>filter</code>&nbsp;và <code>map</code>&nbsp;, xử lý từng phần tử một cách độc lập mà không
+      cần xem xét bất kỳ thông tin nào có được từ các phần tử đã được xử lý trước đó. Các thao tác stateful,
+      chẳng hạn như <code>distinct</code>&nbsp;và <code>sorted</code>&nbsp;, thường giữ lại một trạng thái tích hợp thông tin từ
+      mỗi phần tử khi nó được xử lý, và trạng thái đó sẽ ảnh hưởng đến việc xử lý các phần tử tiếp theo.</p>
+
+      <p>Mặc dù kỳ thi OCP không tập trung vào hiệu năng, bạn nên biết rằng các thao tác stateful
+      có ảnh hưởng nghiêm trọng đến hiệu năng của một pipeline của stream. Điều này là do các thao tác stateful
+      có thể phải xử lý toàn bộ đầu vào trước khi tạo ra phần tử đầu tiên của stream đầu ra (như trường hợp
+      của <code>sorted</code>&nbsp;), và/hoặc cũng có thể yêu cầu lưu trữ một lượng dữ liệu đáng kể
+      trong khi xử lý các phần tử (như trường hợp của <code>distinct</code>&nbsp;). Chúng cũng có thể
+      gây ra hiện tượng nghẽn cổ chai khi việc thực thi một pipeline của stream được song song hóa.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 5: Clustering Data</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.diagram {
+      margin: 2mm auto 4mm;
+      max-width: 100%;
+    }
+
+    .prose-page figure.diagram figcaption {
+      margin: 0 0 2mm;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 700;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot-left {
+      position: absolute;
+      left: calc(var(--book-margin-x) + 14mm);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio--left {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: auto;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      width: 12mm;
+      text-align: left;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 5: Phân cụm Dữ liệu</p>
+
+      <p class="no-indent">Truy cập một chỉ mục phụ không cung cấp một <code>ROWID</code> mà là một khóa logic để tìm kiếm chỉ mục phân cụm. Tuy nhiên, một lần truy cập là không đủ để tìm kiếm chỉ mục phân cụm&mdash;nó yêu cầu một lần duyệt cây đầy đủ. Điều đó có nghĩa là truy cập một bảng thông qua một chỉ mục phụ tìm kiếm hai chỉ mục: chỉ mục phụ một lần (<code>INDEX RANGE SCAN</code>), sau đó là chỉ mục phân cụm cho mỗi hàng được tìm thấy trong chỉ mục phụ (<code>INDEX UNIQUE SCAN</code>).</p>
+
+      <figure class="diagram">
+        <figcaption>Hình&nbsp;5.2.&nbsp;Chỉ mục phụ trên một IOT</figcaption>
+        <img src="../assets/images/page_0134_fig_5_2.png" width="912" height="645" alt="Hình 5.2. Chỉ mục phụ trên một IOT">
+      </figure>
+
+      <p class="no-indent">Hình&nbsp;5.2 làm rõ rằng cây B của chỉ mục phân cụm đứng giữa chỉ mục phụ và dữ liệu bảng.</p>
+
+      <p>Truy cập một bảng được tổ chức theo chỉ mục thông qua một chỉ mục phụ là rất không hiệu quả, và điều này có thể được ngăn chặn theo cách mà người ta ngăn chặn truy cập bảng trên một bảng heap: bằng cách sử dụng một quét chỉ mục duy nhất&mdash;trong trường hợp này được mô tả tốt hơn là &ldquo;quét chỉ mục phụ duy nhất&rdquo;. Lợi thế về hiệu suất của một quét chỉ mục duy nhất còn lớn hơn vì nó không chỉ ngăn chặn một lần truy cập mà còn toàn bộ <code>INDEX UNIQUE SCAN</code>.</p>
+
+      <aside class="sidebar-note">
+        <h3>Quan trọng</h3>
+        <p>Truy cập một bảng được tổ chức theo chỉ mục thông qua một chỉ mục phụ là rất không hiệu quả.</p>
+      </aside>
+
+      <p class="page-folio page-folio--left">124</p>
+      <hr class="chapter-rule chapter-rule--foot-left" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

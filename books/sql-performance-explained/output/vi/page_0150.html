@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 6: Sorting and Grouping</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .prose-page .sidebar-note p + p {
+      margin-top: 2mm;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <p class="chapter-running-head">Chương 6: Sắp xếp và Nhóm</p>
+
+      <p class="no-indent">Kế hoạch thực thi của cơ sở dữ liệu Oracle đánh dấu một hoạt động <code>SORT GROUP BY</code> theo ống dẫn với phụ lục <code>NOSORT</code>. Kế hoạch thực thi của các cơ sở dữ liệu khác không đề cập đến bất kỳ hoạt động sắp xếp nào.</p>
+
+      <p>Hoạt động <code><strong>group by</strong></code> theo ống dẫn có cùng các điều kiện tiên quyết như hoạt động <code><strong>order by</strong></code> theo ống dẫn, ngoại trừ không có các bộ điều chỉnh <code>ASC</code> và <code>DESC</code>. Điều đó có nghĩa là việc định nghĩa một chỉ mục với các bộ điều chỉnh <code>ASC</code>/<code>DESC</code> không nên ảnh hưởng đến việc thực thi <code><strong>group by</strong></code> theo ống dẫn. Điều này cũng đúng với <code>NULLS FIRST</code>/<code>LAST</code>. Tuy nhiên, có những cơ sở dữ liệu không thể sử dụng đúng chỉ mục <code>ASC</code>/<code>DESC</code> cho <code><strong>group by</strong></code> theo ống dẫn.</p>
+
+      <aside class="sidebar-note">
+        <h3>Cảnh báo</h3>
+        <p>Đối với PostgreSQL, bạn phải thêm một điều khoản <code><strong>order by</strong></code> để làm cho một chỉ mục với sắp xếp <code>NULLS LAST</code> có thể sử dụng cho <code><strong>group by</strong></code> theo ống dẫn.</p>
+        <p>Cơ sở dữ liệu Oracle không thể đọc một chỉ mục theo chiều ngược lại để thực hiện một <code><strong>group by</strong></code> theo ống dẫn mà theo sau là một <code><strong>order by</strong></code>.</p>
+      </aside>
+
+      <p>Nếu chúng ta mở rộng truy vấn để xem xét tất cả doanh số <i>kể từ hôm qua</i>, như chúng ta đã làm trong ví dụ cho <code><strong>order by</strong></code> theo ống dẫn, điều này ngăn cản <code><strong>group by</strong></code> theo ống dẫn vì lý do giống như trước: <code>INDEX RANGE SCAN</code> không cung cấp các hàng được sắp xếp theo khóa nhóm (so sánh Hình&nbsp;6.1 trên trang 131).</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT product_id, sum(eur_value)
+  FROM sales
+ <strong>WHERE sale_date &gt;= TRUNC(sysdate) - INTERVAL '1' DAY</strong>
+ GROUP BY product_id;
+
+---------------------------------------------------------------
+|Id |Operation                    | Name        | Rows | Cost |
+---------------------------------------------------------------
+| 0 |SELECT STATEMENT             |             |   24 |  356 |
+| 1 | <strong>HASH GROUP BY</strong>               |             |   24 |  356 |
+| 2 |  TABLE ACCESS BY INDEX ROWID| SALES       |  596 |  355 |
+|*3 |   INDEX RANGE SCAN          | SALES_DT_PR |  596 |    4 |
+---------------------------------------------------------------</code></pre>
+      </figure>
+
+      <p>Thay vào đó, cơ sở dữ liệu Oracle sử dụng thuật toán băm. Lợi thế của thuật toán băm là nó chỉ cần lưu trữ <i>kết quả tổng hợp</i>, trong khi thuật toán sắp xếp/nhóm tạo ra <i>tập hợp đầu vào hoàn chỉnh</i>. Nói cách khác: thuật toán băm cần ít bộ nhớ hơn.</p>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">140</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

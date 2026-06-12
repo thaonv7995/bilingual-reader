@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 23: Using Modules</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet.code-snippet--terminal pre.code-block {
+      background: #e2e8f0;
+      border-left: none;
+      font-size: 9.75pt;
+      line-height: 1.4;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code,
+    .prose-page.ocp-chapter-page figure.code-snippet code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0693.html">← Prev</a>
+    <a href="page_0695.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">694</span>
+      </header>
+
+      <p class="no-indent">to locate them on its own.</p>
+
+      <h3 class="section-title section-title--sub">Using a module without source code<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">While developing a module, you may be required to use third party modules whose source code
+      is not available. For example, what if the <code>calculators</code>&nbsp;module was developed by another
+      team and you just had a <code>calculators.jar</code>&nbsp;for it?</p>
+
+      <p>Well, we can use the <code>--module-path</code>&nbsp;switch for telling <code>javac</code>&nbsp;the location of a module just
+      like we used it while executing a module. Let&rsquo;s say we put <code>calculators.jar</code>&nbsp;in
+      <code>c:\ocp21\moduletest\modulejars</code>&nbsp;directory. We can now use the following command to
+      compile the <code>simpleinterest</code>&nbsp;module:</p>
+
+      <figure class="code-snippet code-snippet--terminal">
+        <pre class="code-block"><code>c:\ocp21\moduletest&gt;javac --module-path modulejars -d out --module-source-
+path src --module simpleinterest</code></pre>
+      </figure>
+
+      <p class="no-indent">Observe that we didn&rsquo;t specify the actual jar name in the module path (although we could have
+      done that as well). We specified just the directory that contains it. We can specify as many
+      directories as we need separated by the path separator (<code>;</code>&nbsp;on windows and <code>:</code>&nbsp;on *nix). The
+      difference between specifying a directory and specifying a jar is that when you specify a
+      directory, all the jars as well as exploded module definitions present in that directory become
+      available to the compiler (or to the jvm, in the case of execution), while in the other case, only
+      the jar that you specify on the module path becomes available. It is alright to specify a directory
+      on the module-path while learning but it is always better to specify the jars while developing a
+      professional application. The command to run <code>simpleinterest</code>&nbsp;with explicitly listed jar files
+      in the module-path looks like this:</p>
+
+      <figure class="code-snippet code-snippet--terminal">
+        <pre class="code-block"><code>c:\ocp21\moduletest&gt;java --module-path modulejars\simpleinterest.jar;modulejars\calculators.jar  --module
+simpleinterest</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

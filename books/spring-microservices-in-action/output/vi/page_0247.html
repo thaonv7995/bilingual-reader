@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 7: Listing 7.13 TokenEnhancer và mục 7.4.4</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--713 .listing-callouts-right {
+      padding-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-annotated--713 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 11mm;
+    }
+    .prose-page.chapter-page .listing-annotated--713 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 14mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0246.html">← Trước</a>
+    <a href="page_0248.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">222</span>
+        <span class="rh-center">CHƯƠNG 7 <em>Bảo mật microservice của bạn</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <figure class="code-snippet" aria-label="Listing 7.12 (tiếp theo)">
+        <pre class="code-block"><code>    public TokenEnhancer jwtTokenEnhancer() {
+        return new JWTTokenEnhancer();
+    }
+}</code></pre>
+      </figure>
+
+      <p class="no-indent">Sau khi bạn expose <code>JWTTokenEnhancer</code> dưới dạng bean, bạn có thể gắn nó vào class <code>JWTOAuth2Config</code> từ listing 7.9. Việc này được thực hiện trong phương thức <code>configure()</code> của class. Listing sau đây cho thấy sự sửa đổi đối với phương thức <code>configure()</code> của class <code>JWTOAuth2Config</code>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 7.13</strong><br>Gắn TokenEnhancer của bạn vào</figcaption>
+        <div class="listing-annotated listing-annotated--713" aria-label="Code có chú thích Listing 7.13">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.authentication.security;
+@Configuration
+public class JWTOAuth2Config extends AuthorizationServerConfigurerAdapter {
+    //Rest of code removed for conciseness
+    @Autowired
+    private TokenEnhancer jwtTokenEnhancer;
+
+    @Override
+    public void configure(
+      AuthorizationServerEndpointsConfigurer endpoints)
+         ➥ throws Exception {
+     TokenEnhancerChain tokenEnhancerChain =
+         new TokenEnhancerChain();
+     tokenEnhancerChain.setTokenEnhancers(
+            Arrays.asList(jwtTokenEnhancer, jwtAccessTokenConverter));
+      endpoints.tokenStore(tokenStore)
+                .accessTokenConverter(jwtAccessTokenConverter)
+                .tokenEnhancer(tokenEnhancerChain)
+                .authenticationManager(authenticationManager)
+                .userDetailsService(userDetailsService);
+    }
+}</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Chú thích annotation Listing 7.13">
+            <p class="listing-callout">Auto-wire class TokenEnhancer vào.</p>
+            <p class="listing-callout">Spring OAuth cho phép bạn gắn nhiều token enhancer, vì vậy hãy thêm token enhancer của bạn vào class TokenEnhancerChain.</p>
+            <p class="listing-callout">Gắn token enhancer chain của bạn vào tham số endpoints được truyền vào lời gọi configure().</p>
+          </div>
+        </div>
+      </figure>
+
+      <p>Đến lúc này, bạn đã thêm một trường tùy chỉnh vào JWT token của mình. Câu hỏi tiếp theo bạn nên đặt ra là: &ldquo;Làm thế nào để parse một trường tùy chỉnh ra khỏi JWT token?&rdquo;</p>
+
+      <h4 class="subsection-title">7.4.4 Phân tích trường tùy chỉnh ra khỏi JavaScript token</h4>
+
+      <p class="no-indent">Chúng ta sẽ quay sang Zuul gateway của bạn để xem một ví dụ về cách parse trường tùy chỉnh trong JWT token. Cụ thể, bạn sẽ sửa đổi class <code>TrackingFilter</code> mà chúng ta đã giới thiệu ở chương 6 để decode trường <code>organizationId</code> ra khỏi JWT token đang đi qua gateway.</p>
+
+      <p>Để làm việc này, bạn sẽ kéo vào một thư viện JWT parser và thêm vào file <code>pom.xml</code> của Zuul server. Có nhiều token parser sẵn có và tôi chọn thư viện JJWT</p>
+
+      <p class="license-watermark no-indent">Licensed to Jianjun Shou &lt;seanshou@gmail.com&gt;</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

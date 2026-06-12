@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 6: Bảng, Ràng buộc và Chỉ mục — Ràng buộc loại trừ</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0129.html">← Trước</a>
+    <a href="page_0131.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">130</span>
+      </header>
+
+      <p class="no-indent">Khía cạnh đáng chú ý khác của các ràng buộc kiểm tra là khác với khóa chính, khóa ngoại và
+      các ràng buộc khóa duy nhất, chúng kế thừa từ các bảng cha.</p>
+
+      <h3 class="subsection-title">Ràng buộc loại trừ</h3>
+      <p class="no-indent">Được giới thiệu trong phiên bản 9.0, ràng buộc loại trừ cho phép bạn kết hợp các
+      toán tử bổ sung để thực thi tính duy nhất mà không thể được thỏa mãn bởi toán tử bằng. Ràng buộc
+      loại trừ đặc biệt hữu ích trong các vấn đề liên quan đến lập lịch.</p>
+
+      <p>PostgreSQL 9.2 đã giới thiệu các kiểu dữ liệu khoảng mà là ứng cử viên hoàn hảo cho các ràng buộc
+      loại trừ. Bạn sẽ tìm thấy một ví dụ tốt về việc sử dụng ràng buộc loại trừ cho các kiểu dữ liệu
+      khoảng tại <span class="accent-word">Chờ đợi các kiểu dữ liệu khoảng 9.2</span>.</p>
+
+      <p>Các ràng buộc loại trừ thường được thực thi bằng cách sử dụng các chỉ mục GiST, nhưng bạn có thể tạo
+      các chỉ mục hợp thành cũng kết hợp B-Tree. Trước khi bạn làm điều này, bạn cần cài đặt
+      phần mở rộng <code>btree_gist</code>. Một ví dụ cổ điển về việc sử dụng ràng buộc loại trừ hợp thành là
+      cho việc lập lịch tài nguyên.</p>
+
+      <p>Dưới đây là một ví dụ sử dụng ràng buộc loại trừ. Giả sử bạn có một số lượng cố định các
+      phòng hội nghị trong văn phòng của bạn, và các nhóm phải đặt trước chúng. Xem cách chúng tôi sẽ
+      ngăn chặn việc đặt chồng chéo trong <span class="accent-word">Ví dụ 6-6</span>. Hãy lưu ý cách chúng tôi có thể sử dụng toán tử
+      chồng chéo (<code>&amp;&amp;</code>) cho so sánh tạm thời của chúng tôi và toán tử bằng thông thường cho số
+      phòng.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 6-6.</strong> Ngăn chặn việc đặt chồng chéo cho cùng một phòng</figcaption>
+        <pre class="code-block"><code>CREATE TABLE schedules(id serial primary key, room smallint, time_slot tstzrange);
+ALTER TABLE schedules ADD CONSTRAINT ex_schedules
+EXCLUDE USING gist (room WITH =, time_slot WITH &amp;&amp;);</code></pre>
+      </figure>
+
+      <p>Giống như với các ràng buộc tính duy nhất, PostgreSQL tự động tạo một chỉ mục tương ứng
+      của loại được chỉ định trong khai báo ràng buộc.</p>
+
+      <h3 class="section-title">Chỉ mục</h3>
+      <p class="no-indent">PostgreSQL được trang bị một khung phong phú để tạo và tinh chỉnh các chỉ mục.
+      Nghệ thuật lập chỉ mục trong PostgreSQL có thể lấp đầy một cuốn sách riêng. Tại thời điểm viết,
+      PostgreSQL đi kèm với ít nhất bốn loại chỉ mục, thường được gọi là phương pháp chỉ mục. Nếu bạn thấy
+      những điều này không đủ, bạn có thể định nghĩa các toán tử và bộ sửa đổi chỉ mục mới để bổ sung
+      cho chúng. Nếu vẫn không hài lòng, bạn có thể tự do phát minh ra loại chỉ mục của riêng mình.</p>
+
+      <p>PostgreSQL cũng cho phép bạn kết hợp và kết hợp các loại chỉ mục khác nhau trong cùng một bảng
+      với kỳ vọng rằng trình lập kế hoạch sẽ xem xét tất cả chúng. Ví dụ, một cột có thể sử dụng chỉ mục B-Tree trong khi một cột liền kề sử dụng chỉ mục GiST, với cả hai chỉ mục
+      góp phần vào tốc độ của truy vấn. Để tìm hiểu thêm về cơ chế mà trình lập kế hoạch tận dụng các
+      chỉ mục, hãy truy cập <span class="accent-word">chiến lược quét chỉ mục bitmap</span>.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">112<span class="sep">|</span>Chương 6: Bảng, Ràng buộc và Chỉ mục</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

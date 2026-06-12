@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 8: Writing Functions — Basic Python Function</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm 6mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page p.callout-item code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0171.html">← Prev</a>
+    <a href="page_0173.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">172</span>
+      </header>
+
+      <p class="no-indent">The extensions are compiled against a specific minor version of Python. You should
+      install the minor version of Python that matches what your plpythonu extensions were
+      compiled against. For example, if your plpython2u was compiled against Python 2.7,
+      you should install Python 2.7.</p>
+
+      <h3 class="subsection-title">Basic Python Function</h3>
+
+      <p class="no-indent">PostgreSQL automatically converts PostgreSQL data types to Python data types and
+      back. PL/Python is capable of returning arrays and composite types. You can use PL/
+      Python to write triggers and create aggregate functions. We&rsquo;ve demonstrated some of
+      these in the Postgres OnLine Journal, in <span class="accent-word">PL/Python Examples</span>.</p>
+
+      <p>Python allows you to perform feats that aren&rsquo;t possible in PL/pgSQL. In <span class="accent-word">Example 8-12</span>,
+      we demonstrate how to write a PL/Python function to do a text search of the online
+      PostgreSQL document site.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-12.</strong> Searching PostgreSQL documents using PL/Python</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION postgresql_help_search(param_search text)
+RETURNS text AS
+$$
+import urllib, re ①
+response = urllib.urlopen(
+  'http://www.postgresql.org/search/?u=%2Fdocs%2Fcurrent%2F&amp;q=' + param_search
+) ②
+raw_html = response.read() ③
+result = raw_html[raw_html.find("&lt;!-- docbot goes here --&gt;") : raw_html.find("&lt;!--
+pgContentWrap --&gt;") - 1] ④
+result = re.sub('&lt;[^&lt;]+?&gt;', '', result).strip() ⑤
+return result ⑥
+$$
+LANGUAGE plpython2u SECURITY DEFINER STABLE;</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">①</span> Imports the libraries we&rsquo;ll be using.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">②</span> Performs a search after concatenating the search term.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">③</span> Reads the response and saves the retrieved HTML to a variable called <code>raw_html</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">④</span> Saves the part of the <code>raw_html</code> that starts with <code>&lt;!-- docbot goes here --&gt;</code> and
+      ends just before the beginning of <code>&lt;!-- pgContentWrap --&gt;</code> into a new variable
+      called <code>result</code>.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">⑤</span> Removes leading and trailing HTML symbols and whitespace.</p>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">⑥</span> Returns <code>result</code>.</p>
+
+      <p>Calling Python functions is no different from calling functions written in other lan&shy;guages.
+      In <span class="accent-word">Example 8-13</span>, we use the function we created in <span class="accent-word">Example 8-12</span> to output the
+      result with three search terms.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">154<span class="sep">|</span>Chapter 8: Writing Functions</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

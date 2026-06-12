@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+      margin: 8mm 0 3mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page pre.code-block code,
+    .prose-page.ocp-chapter-page ol.numbered code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page pre.code-block code {
+      font-size: 9.8pt;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered {
+      margin: 0 0 3.2mm;
+      padding-left: 1.5em;
+      text-align: justify;
+    }
+
+    .prose-page.ocp-chapter-page ol.numbered li {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0396.html">← Trước</a>
+    <a href="page_0398.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">397</span>
+      </header>
+
+      <ol class="numbered" start="4">
+        <li>giá trị trả về sang kiểu <code>byte</code>. Hãy nhớ rằng việc ép kiểu một giá trị <code>int</code>&nbsp;sang <code>byte</code>&nbsp;sẽ loại bỏ 24 bit quan trọng nhất (tức là ba byte bậc cao hơn) và giữ nguyên 8 bit ít quan trọng nhất của giá trị đã cho.</li>
+        <li>Chúng ta tiếp tục đọc từ luồng đầu vào cho đến khi nhận được giá trị <code>-1</code>. Giá trị <code>-1</code>&nbsp;cho biết rằng luồng đã kết thúc và không còn dữ liệu khả dụng để đọc từ luồng đầu vào.</li>
+        <li>Việc gặp phải các tình huống ngoại lệ khi thực hiện Vào/Ra (I/O) là rất phổ biến. Ví dụ: tệp tin bạn đang cố mở có thể không tồn tại hoặc tệp tin bạn đang cố ghi có thể bị hệ điều hành đánh dấu là chỉ đọc (read-only). Có một số lớp ngoại lệ chuyên biệt như <code>FileNotFoundException</code>&nbsp;hoặc <code>EOFException</code>&nbsp;được định nghĩa trong thư viện chuẩn cho mục đích này, nhưng tất cả chúng đều bắt nguồn từ lớp ngoại lệ checked (Checked Exception)&nbsp;<code>java.io.IOException</code>&nbsp;và do đó, mệnh đề&nbsp;<code>throws IOException</code>&nbsp;trong main đáp ứng tất cả các ngoại lệ đó.</li>
+        <li>Phần thực hiện ghi dữ liệu không có gì đặc biệt. Nó chỉ là ghi một nghìn byte lần lượt từng byte một.</li>
+        <li>Cuối cùng, chúng ta sử dụng phương thức <code>close()</code>&nbsp;để đóng các luồng đầu vào và đầu ra. Việc đóng các luồng Vào/Ra (I/O) bằng phương thức <code>close()</code>&nbsp;là rất quan trọng vì nó cho phép bất kỳ Resource (Tài nguyên) hệ thống nào liên kết với các luồng đó, chẳng hạn như khóa tệp (file lock), được hệ điều hành thu hồi. Việc đóng một luồng đầu ra cũng sẽ đẩy (flush) toàn bộ dữ liệu còn lại trong đường ống dẫn đầu ra đến đích. Vì <code>InputStream</code>&nbsp;và <code>OutputStream</code>&nbsp;triển khai <code>AutoCloseable</code>, cách tiếp cận được ưu tiên là để câu lệnh Try-with-resources tự động đóng các luồng này.</li>
+      </ol>
+
+      <p>Các nhà thiết kế API Java quyết định trả về một kiểu <code>int</code>&nbsp;từ <code>read()</code>&nbsp;thay vì <code>byte</code>&nbsp;vì cần một giá trị bổ sung để biểu thị sự kết thúc của luồng. Tổng số giá trị được trả về bởi phương thức này là 257, bao gồm 256 giá trị (<code>00000000</code>&nbsp;đến <code>11111111</code>) được biểu diễn bởi một byte và một giá trị bổ sung là <code>-1</code>&nbsp;để biểu thị kết thúc luồng. Vì kiểu <code>byte</code>&nbsp;không thể biểu diễn được 257 giá trị, nên cần có một kiểu dữ liệu lớn hơn. Điều này cũng có thể đạt được bằng cách sử dụng kiểu <code>short</code>,&nbsp;nhưng kiểu <code>int</code>&nbsp;được sử dụng để đảm bảo tính nhất quán với ngôn ngữ C.</p>
+
+      <p>Tương tự, mặc dù phương thức <code>write(int)</code>&nbsp;chấp nhận một tham số kiểu <code>int</code>, nhưng chỉ có 8 bit thấp hơn thực sự được ghi vào tệp. Mặc dù kiểu <code>byte</code>&nbsp;là đã đủ dùng trong trường hợp này, nhưng kiểu <code>int</code>&nbsp;đã được sử dụng</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

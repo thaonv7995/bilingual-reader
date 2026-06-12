@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0104.html">← Trước</a>
+    <a href="page_0106.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">105</span>
+      </header>
+
+      <p>mở cửa tại San Francisco. Người nhượng quyền mới gọi điện đến trụ sở McDonald’s để thêm
+      cửa hàng của mình vào danh bạ chính với thời gian mở cửa là 7 giờ sáng. Nhân viên nhập dữ liệu
+      đã nhập thông tin như được yêu cầu: 7 giờ sáng. Máy chủ PostgreSQL ở Bờ Đông hiểu
+      điều này có nghĩa là 7 giờ sáng theo giờ Đông, và giờ đây những người dậy sớm ở San Francisco đang xếp hàng
+      trước cửa wondering tại sao họ không thể có bữa sáng McBreakfast vào lúc 4 giờ sáng. Cảm thấy đói là một
+      chuyện, nhưng chúng ta có thể tưởng tượng nhiều tình huống mà sự nhầm lẫn về sự khác biệt ba
+      giờ có thể có nghĩa là sống hoặc chết.</p>
+
+      <p>Với những cạm bẫy đó, tại sao ai đó lại muốn sử dụng các kiểu dữ liệu nhận thức về múi giờ? Đầu tiên, nó
+      giúp bạn không phải thực hiện các chuyển đổi múi giờ một cách thủ công. Ví dụ, nếu một
+      chuyến bay rời Boston lúc 8 giờ sáng và đến Los Angeles lúc 11 giờ sáng, và máy chủ của bạn ở
+      châu Âu, bạn không muốn phải tự tính toán độ lệch cho từng chuyến bay. Bạn chỉ cần
+      nhập dữ liệu với thời gian địa phương của Boston và Los Angeles. Có một lý do thuyết phục khác để sử dụng các kiểu dữ liệu nhận thức về múi giờ: việc xử lý tự động DST. Với
+      các quốc gia ngày càng khác nhau về lịch trình DST, việc theo dõi thủ công các thay đổi DST cho một cơ sở dữ liệu được sử dụng toàn cầu sẽ yêu cầu một lập trình viên chuyên trách chỉ làm việc để cập nhật
+      với các lịch trình DST mới nhất và ánh xạ chúng đến các khu vực địa lý.</p>
+
+      <p>Dưới đây là một ví dụ thú vị: một nhân viên bán hàng đi công tác bắt chuyến bay về nhà từ San
+      Francisco đến Oakland gần đó. Khi cô ấy lên máy bay, đồng hồ tại nhà ga hiển thị
+      2012-03-11 1:50 sáng. Khi cô ấy hạ cánh, đồng hồ trong nhà ga hiển thị 2012-03-11 3:10
+      sáng. Chuyến bay kéo dài bao lâu? Chìa khóa để giải quyết là sự thay đổi sang DST xảy ra
+      trong chuyến bay—các đồng hồ đã nhảy về phía trước. Với các dấu thời gian nhận thức về múi giờ, bạn
+      có 20 phút, đây là câu trả lời hợp lý cho một chuyến bay ngắn qua Vịnh. Chúng ta có câu trả lời sai nếu không sử dụng các dấu thời gian nhận thức về múi giờ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    SELECT '2012-03-11 3:10 AM America/Los_Angeles'::timestamptz
+     - '2012-03-11 1:50 AM America/Los_Angeles'::timestamptz;</code></pre>
+      </figure>
+
+      <p>cho bạn 20 phút, trong khi:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    SELECT '2012-03-11 3:10 AM'::timestamp - '2012-03-11 1:50 AM'::timestamp;</code></pre>
+      </figure>
+
+      <p>cho bạn 1 giờ và 20 phút.</p>
+
+      <p>Hãy nhấn mạnh điểm này với nhiều ví dụ hơn, sử dụng máy chủ Boston. Đối với
+      <span class="accent-word">Ví dụ 5-8</span>, tôi nhập thời gian của mình theo giờ địa phương của Los Angeles, nhưng vì máy chủ của tôi ở
+      Boston, tôi nhận được thời gian trả về theo giờ địa phương của Boston. Lưu ý rằng nó cung cấp cho tôi độ lệch,
+      nhưng đó chỉ là thông tin hiển thị. Dấu thời gian được lưu trữ nội bộ theo UTC.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-8.</strong> Nhập thời gian trong một múi giờ và xuất ra trong một múi giờ khác</figcaption>
+        <pre class="code-block"><code>SELECT '2012-02-28 10:00 PM America/Los_Angeles'::timestamptz;
+2012-02-29 01:00:00-05</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Thời gian<span class="sep">|</span>87</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

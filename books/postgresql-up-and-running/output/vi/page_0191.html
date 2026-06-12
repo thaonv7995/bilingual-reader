@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tối ưu hóa hiệu suất truy vấn — Viết truy vấn tốt hơn</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0190.html">← Trước</a>
+    <a href="page_0192.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">191</span>
+      </header>
+
+      <p class="no-indent">&mdash;viết một loạt các truy vấn con độc lập và sau đó lắp ráp chúng một cách vô tâm
+      để có được kết quả cuối cùng. Bạn phải xem xét từng truy vấn một cách toàn diện. Cách bạn kết hợp
+      dữ liệu từ các chế độ xem và bảng khác nhau cũng quan trọng như cách bạn truy xuất
+      dữ liệu ngay từ đầu.</p>
+
+      <p>Việc sử dụng không cần thiết các truy vấn con, như được thể hiện trong <span class="accent-word">Ví dụ 9-12</span>, là một triệu chứng phổ biến
+      của tư duy từng phần.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-12.</strong> Sử dụng quá nhiều truy vấn con</figcaption>
+        <pre class="code-block"><code>SELECT tract_id,
+    (SELECT COUNT(*) FROM census.facts As F WHERE F.tract_id = T.tract_id) As
+num_facts,
+    (SELECT COUNT(*)
+    FROM census.lu_fact_types As Y
+    WHERE Y.fact_type_id IN (
+        SELECT fact_type_id
+        FROM census.facts F
+        WHERE F.tract_id = T.tract_id
+    )
+    ) As num_fact_types
+FROM census.lu_tracts As T;</code></pre>
+      </figure>
+
+      <p><span class="accent-word">Ví dụ 9-12</span> có thể được viết hiệu quả hơn như được thể hiện trong <span class="accent-word">Ví dụ 9-13</span>. Truy vấn này,
+      hợp nhất các lựa chọn và sử dụng một phép nối, không chỉ ngắn hơn so với truy vấn trước đó, mà còn nhanh hơn.
+      Nếu bạn có một tập dữ liệu lớn hơn hoặc phần cứng yếu hơn, sự khác biệt có thể còn rõ rệt hơn.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 9-13.</strong> Đơn giản hóa các truy vấn con đã sử dụng quá mức</figcaption>
+        <pre class="code-block"><code>SELECT T.tract_id,
+    COUNT(f.fact_type_id) As num_facts,
+    COUNT(DISTINCT fact_type_id) As num_fact_types
+FROM census.lu_tracts As T LEFT JOIN census.facts As F ON T.tract_id = F.tract_id
+GROUP BY T.tract_id;</code></pre>
+      </figure>
+
+      <p><span class="accent-word">Hình 9-4</span> cho thấy kế hoạch đồ họa cho <span class="accent-word">Ví dụ 9-12</span> (chúng tôi sẽ tiết kiệm cho bạn sự khó chịu khi
+      nhìn thấy đầu ra rối rắm của lệnh EXPLAIN), trong khi <span class="accent-word">Hình 9-5</span> cho thấy đầu ra dạng bảng
+      từ http://explain.depesz.com, tiết lộ một lượng lớn sự không hiệu quả.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Viết truy vấn tốt hơn<span class="sep">|</span>173</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

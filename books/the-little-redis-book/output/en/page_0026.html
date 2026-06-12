@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The Little Redis Book — Page 26</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+@media print {
+  .book-page { height: 296mm; }
+}
+.prose-page h3.section-title {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.prose-page .cover-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding-top: 18mm;
+}
+.prose-page .cover-wrap img {
+  width: 52mm;
+  height: auto;
+  margin-bottom: 14mm;
+}
+.prose-page .cover-title {
+  margin: 0 0 4mm;
+  font-size: 28pt;
+  font-weight: 400;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page .cover-author {
+  margin: 0;
+  font-size: 14pt;
+  color: #666;
+  font-family: var(--font-display, Georgia, serif);
+}
+.prose-page pre.code-block .cli-prompt { color: #c00; }
+.prose-page pre.code-block .cli-string { color: #c00; }
+
+
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Page navigation">
+      <a href="page_0025.html">← Prev</a>
+      <span>Page 26 / 30</span>
+      <a href="page_0027.html">Next →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+<p class="lead no-indent">script, it might be cleaner to pass it as JSON:</p><figure class="code-snippet"><pre class="code-block"><code>redis.evalsha ".....", [KEY1], [JSON.fast_generate({gender: 'm', ghola: true})]</code></pre></figure><p>Which you could then deserialize within the Lua script as:</p><figure class="code-snippet"><pre class="code-block"><code>local arguments = cjson.decode(ARGV[1])</code></pre></figure><p>Of course, the JSON library can also be used to parse values stored in Redis itself. Our above example could potentially be rewritten as such:</p><figure class="code-snippet"><pre class="code-block"><code>local friend_names = redis.call('smembers', KEYS[1])
+local friends = {}
+for i = 1, #friend_names do
+  local friend_raw = redis.call('get', 'user:' .. friend_names[i])
+  local friend_parsed = cjson.decode(friend_raw)
+  if friend_parsed.gender == ARGV[1] then
+    table.insert(friends, friend_raw)
+  end
+end
+return friends</code></pre></figure><p>Instead of getting the gender from specific hash field, we could get it from the stored friend data itself. (This is a much slower solution, and I personally prefer the original, but it does show what's possible).</p><h3 class="section-title">Atomic</h3><p>Since Redis is single-threaded, you don't have to worry about your Lua script being interrupted by another Redis command. One of the most obvious benefits of this is that keys with a TTL won't expire half-way through execution. If a key is present at the start of the script, it'll be present at any point thereafter - unless you delete it.</p><h3 class="section-title">Administration</h3><p>The next chapter will talk about Redis administration and configuration in more detail. For now, simply know that the <code>lua-time-limit</code> defines how long a Lua script is allowed to execute before being terminated. The default is generous 5 seconds. Consider lowering it.</p><h3 class="section-title">In This Chapter</h3><p>This chapter introduced Redis' Lua scripting capabilities. Like anything, this feature can be abused. However, used prudently in order to implement your own custom and focused commands, it won't only simplify your code, but will likely improve performance. Lua scripting is like almost every other Redis feature/command: you make limited, if any, use of it at first only to find yourself using it more and more every day.</p>
+      <p class="page-folio">25</p>
+    </article>
+  </main>
+</body>
+</html>

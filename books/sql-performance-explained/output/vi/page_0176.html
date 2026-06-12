@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Phụ lục A: Kế hoạch thực thi</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head--section {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+      display: block;
+      text-align: center;
+    }
+
+    .prose-page .running-head--section .rh-left,
+    .prose-page .running-head--section .rh-right {
+      display: none;
+    }
+
+    .prose-page .running-head--section .rh-center {
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 16pt;
+      font-weight: 400;
+      font-variant: small-caps;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 2.5mm 4.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+      padding: 0;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin: 0;
+      padding-top: 2mm;
+      border-top: 0.35pt solid var(--book-rule);
+      font-family: var(--font-ui);
+      font-size: 8pt;
+      font-variant: small-caps;
+      text-indent: 0;
+    }
+
+    .prose-page .book-footer .page-folio {
+      position: static;
+      border: none;
+      padding: 0;
+      font-size: 10pt;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head running-head--section">
+        <span class="rh-left"></span>
+        <span class="rh-center">Phụ lục A: Kế hoạch thực thi</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <h3 class="section-title">Cơ sở dữ liệu Oracle</h3>
+
+      <p class="no-indent">Hầu hết các môi trường phát triển (IDE) có thể rất dễ dàng hiển thị một kế hoạch thực thi nhưng sử dụng các cách rất khác nhau để định dạng chúng trên màn hình. Phương pháp được mô tả trong phần này cung cấp kế hoạch thực thi như đã trình bày trong toàn bộ cuốn sách và chỉ yêu cầu cơ sở dữ liệu Oracle trong phiên bản 9iR2 hoặc mới hơn.</p>
+
+      <h3 class="section-title">Lấy Kế Hoạch Thực Thi</h3>
+
+      <p class="no-indent">Xem một kế hoạch thực thi trong cơ sở dữ liệu Oracle bao gồm hai bước:</p>
+
+      <p class="no-indent">1. <code>explain plan for</code> &mdash; lưu kế hoạch thực thi vào bảng PLAN_TABLE.</p>
+
+      <p class="no-indent">2. Định dạng và hiển thị kế hoạch thực thi.</p>
+
+      <h3 class="section-title">Tạo và Lưu Kế Hoạch Thực Thi</h3>
+
+      <p class="no-indent">Để tạo một kế hoạch thực thi, bạn chỉ cần thêm tiền tố cho câu lệnh SQL tương ứng với explain plan for:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>EXPLAIN PLAN FOR select * from dual;</code></pre>
+      </figure>
+
+      <p>Bạn có thể thực thi lệnh explain plan for trong bất kỳ môi trường phát triển hoặc SQL*Plus nào. Tuy nhiên, nó sẽ không hiển thị kế hoạch mà lưu nó vào một bảng có tên là PLAN_TABLE. Bắt đầu từ phiên bản 10g, bảng này tự động có sẵn như một bảng tạm thời toàn cầu. Với các phiên bản trước, bạn phải tạo nó trong mỗi lược đồ khi cần. Hãy yêu cầu quản trị viên cơ sở dữ liệu của bạn tạo nó cho bạn hoặc cung cấp câu lệnh tạo bảng từ cài đặt cơ sở dữ liệu Oracle:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>$ORACLE_HOME/rdbms/admin/utlxplan.sql</code></pre>
+      </figure>
+
+      <p>Bạn có thể thực thi câu lệnh này trong bất kỳ lược đồ nào bạn thích để tạo bảng PLAN_TABLE trong lược đồ này.</p>
+
+      <aside class="sidebar-note">
+        <h3>Cảnh báo</h3>
+        <p>Lệnh explain plan for không nhất thiết tạo ra cùng một kế hoạch thực thi như khi thực thi câu lệnh.</p>
+      </aside>
+
+      <footer class="book-footer">
+        <span>Ex Libris GHEORGHE GABRIEL SICHIM &lt;gabriel.sichim@gmail.com&gt;</span>
+        <span class="page-folio">166</span>
+      </footer>
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+    </article>
+  </main>
+</body>
+</html>

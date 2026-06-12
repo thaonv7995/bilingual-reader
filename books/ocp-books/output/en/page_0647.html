@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 22: Date and Time API</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0646.html">← Prev</a>
+    <a href="page_0648.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">647</span>
+      </header>
+
+      <p class="no-indent">&ldquo;1735711200000 since epoch&rdquo; even though it is a perfectly valid specification of the time when
+      you want them to call. Humans need a format such as 1st Jan 2025 6AM UTC to make sense
+      of time. However, even a time written in this format can be inconvenient when people are
+      spread out geographically and are in different time zones. For example, if you are in New York,
+      you may be befuddled if you are asked to dial in for a team meeting at 2PM UTC on 29th
+      March 2024! You would expect to see the time in your time zone, i.e., 10AM EST. Of course,
+      your remote colleague in India may not be too happy to see that they have to dial in at 7.30PM
+      but that&rsquo;s a different issue!</p>
+
+      <p>Java&rsquo;s Date/Time API makes it quite easy to do these translations. Let&rsquo;s start with the example
+      discussed above. One way to capture a date/time at a zone is to create a <code>ZonedDateTime</code> using
+      <code>LocalDateTime</code> and the time zone that you want. Like this:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>LocalDateTime ldt = LocalDateTime.of(2024, 04, 29, 10, 0, 0); //no time zone here
+ZonedDateTime nyTime = ldt.atZone(ZoneId.of("America/New_York"));
+//time in New York, 2024-04-29T10:00-04:00[America/New_York]</code></pre>
+      </figure>
+
+      <p>To see the same time in another time zone, you can do:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Instant ins = nyTime.toInstant(); //get the time on machine's time line, i.e., UTC
+ZonedDateTime indiaTime = ins.atZone(ZoneId.of("Asia/Calcutta"));
+//translate it to the desired time zone</code></pre>
+      </figure>
+
+      <p>Or you can use the <code>ZonedDateTime</code>&rsquo;s <code>withZoneSameInstant</code> method to do it in one call:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>ZonedDateTime indiaTime = nyTime.withZoneSameInstant(ZoneId.of("Asia/Calcutta"));</code></pre>
+      </figure>
+
+      <p>Both the approaches will set <code>indiaTime</code> to 2024-04-</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

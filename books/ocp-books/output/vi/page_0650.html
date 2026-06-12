@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 22: API Ngày và Giờ (Date and Time API)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0649.html">← Trước</a>
+    <a href="page_0651.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">650</span>
+      </header>
+
+      <p class="no-indent">được chuyển đổi thành 7:30 PM ở Ấn Độ. Thông thường, Giờ miền Đông (Eastern Time - ET) đi sau UTC 5 giờ, nhưng vào ngày 29 tháng 4 năm 2024, Giờ tiết kiệm ánh sáng ngày (Daylight Savings Time - DST) đã có hiệu lực tại múi giờ ET (nghĩa là đồng hồ ở New York đã được chỉnh nhanh lên 1 giờ) và vì thế, ET chỉ đi sau UTC 4 giờ vào ngày này. Ấn Độ không áp dụng DST, vì vậy Giờ chuẩn Ấn Độ (Indian Standard Time - IST) luôn đi trước UTC 5 giờ 30 phút. Bạn có thể kiểm chứng các con số này bằng cách in ra <code>nyTime.getOffset()</code> và <code>indiaTime.getOffset()</code>. Chúng sẽ lần lượt in ra <code>-04:00</code> và <code>+05:30</code>. Đó là lý do tại sao 10 AM ở ET được chuyển đổi thành 7:30 PM ở IST thay vì 8:30 PM vào ngày này. Ví dụ này cho thấy <code>ZonedDateTime</code> tự động xử lý các điều chỉnh cần thiết do DST.</p>
+
+      <p>Lưu ý rằng tôi chỉ sử dụng ET và IST để minh họa logic. Bạn không cần phải ghi nhớ độ lệch (offset) của bất kỳ múi giờ nào, hoặc ngày tháng và lượng thời gian thay đổi do DST yêu cầu cho bất kỳ địa điểm nào.</p>
+
+      <p>Trong kỳ thi thực tế, đề bài sẽ bao gồm thông tin này nếu nó cần thiết để đưa ra câu trả lời đúng.</p>
+
+      <h3 class="section-title section-title--sub">Chuyển đổi vào các khoảng trống và khoảng chồng chéo tạo ra do DST</h3>
+
+      <p>Việc chuyển đổi từ ET sang IST rất dễ dàng, nhưng điều gì sẽ xảy ra nếu sau khi chuyển đổi, ngày và giờ tại địa điểm đích không tồn tại? Điều này có thể xảy ra khi địa điểm đích áp dụng DST và ngày/giờ sau khi chuyển đổi lại rơi vào khoảng thời gian đồng hồ được điều chỉnh tiến lên.</p>
+
+      <p>Ví dụ: giả sử ET đi sau UTC 5 giờ và DST bắt đầu vào ngày 10 tháng 3 năm 2024 lúc 2 AM (nghĩa là ngay khi đồng hồ ở New York chỉ 2 AM vào ngày này, chúng sẽ được chỉnh tiến lên 1 giờ để hiển thị 3 AM), điều gì sẽ xảy ra nếu bạn cố gắng chuyển đổi 7:30 AM ngày 10 tháng 3 năm 2024 từ UTC sang ET?</p>
+
+      <p>Thông thường, thời gian ở ET sẽ là 2:30 AM, nhưng vào ngày 10 tháng 3 năm 2024, 2:30 AM không tồn tại ở ET!</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>LocalDateTime ldt = LocalDateTime.of(2024, 03, 10, 7, 30, 0); //10th
+March 2024 7.30 AM</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

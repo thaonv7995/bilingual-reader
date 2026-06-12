@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Chapter 2: The Where Clause</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.code-snippet pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 5mm 0 5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">30</span>
+      </header>
+      <p class="chapter-running-head">Chapter 2: The Where Clause</p>
+
+      <p class="no-indent">The execution plan that was presumably used before the index change did not use an index at all:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>----------------------------------------------------
+| Id | Operation         | Name      | Rows | Cost |
+----------------------------------------------------
+|  0 | SELECT STATEMENT  |           |    1 |  477 |
+|* 1 |  TABLE ACCESS FULL| EMPLOYEES |    1 |  477 |
+----------------------------------------------------
+Predicate Information (identified by operation id):
+---------------------------------------------------
+   1 - filter("LAST_NAME"='WINAND' AND "SUBSIDIARY_ID"=30)</code></pre>
+      </figure>
+
+      <p>Even though the <code>TABLE ACCESS FULL</code> must read and process the entire table, it seems to be faster than using the index in this case. That is particularly unusual because the query matches one row only. Using an index to find a single row should be much faster than a full table scan, but in this case it is not. The index seems to be slow.</p>
+
+      <p>In such cases it is best to go through each step of the troublesome execution plan. The first step is the <code>INDEX RANGE SCAN</code> on the <code>EMPLOYEES_PK</code> index. That index does not cover the <code>LAST_NAME</code> column&mdash;the <code>INDEX RANGE SCAN</code> can consider the <code>SUBSIDIARY_ID</code> filter only; the Oracle database shows this in the &ldquo;Predicate Information&rdquo; area&mdash;entry &ldquo;2&rdquo; of the execution plan. There you can see the conditions that are applied for each operation.</p>
+
+      <aside class="sidebar-note">
+        <h3>Tip</h3>
+        <p>Appendix&nbsp;A, &ldquo;Execution Plans&rdquo;, explains how to find the &ldquo;Predicate Information&rdquo; for other databases.</p>
+      </aside>
+
+      <p>The <code>INDEX RANGE SCAN</code> with operation ID 2 (Example&nbsp;2.1 on page&nbsp;19) applies only the <code>SUBSIDIARY_ID=30</code> filter. That means that it traverses the index tree to find the first entry for <code>SUBSIDIARY_ID</code> 30. Next it follows the leaf node chain to find all other entries for that subsidiary. The result of the <code>INDEX RANGE SCAN</code> is a list of <code>ROWIDs</code> that fulfill the <code>SUBSIDIARY_ID</code> condition: depending on the subsidiary size, there might be just a few ones or there could be many hundreds.</p>
+
+      <p>The next step is the <code>TABLE ACCESS BY INDEX ROWID</code> operation. It uses the <code>ROWIDs</code> from the previous step to fetch the rows&mdash;all columns&mdash;from the table. Once the <code>LAST_NAME</code> column is available, the database can evaluate the remaining part of the where clause. That means the database has to fetch all rows for <code>SUBSIDIARY_ID=30</code> before it can apply the <code>LAST_NAME</code> filter.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">20</p>
+    </article>
+  </main>
+</body>
+</html>

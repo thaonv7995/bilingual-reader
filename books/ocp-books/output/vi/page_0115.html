@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai Tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+      line-height: 1.15;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0114.html">← Trước</a>
+    <a href="page_0116.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">115</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>       public void dump(Object obj){
+          //do something with obj
+        }
+    }</code></pre>
+      </figure>
+
+      <p class="no-indent">Trình biên dịch không biết ai có thể đang gọi <code>dump</code> và họ có thể đang truyền cái gì cho nó làm đối số. Tất cả những gì nó biết là <code>obj</code> sẽ tham chiếu đến một <code>Object</code> nhưng nó không hề biết về kiểu chính xác của đối tượng (Object) đó. Ví dụ, một lập trình viên khác có thể viết một phương thức trong một lớp (Class) khác để gọi <code>dump</code> của <code>Test</code> với một <code>String</code> hoặc một <code>Integer</code> làm đối số:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>   public class Other{
+      public void testDump(){
+         new Test().dump("hello");
+         new Test().dump(new Integer(1));
+        }
+    }</code></pre>
+      </figure>
+
+      <p>Ví dụ trên thực sự cho thấy tính đa hình (Polymorphism) đang hoạt động. Biến <code>obj</code> trong <code>dump</code> có khả năng hoạt động giống như một <code>String</code>, một <code>Integer</code>, hoặc giống như bất kỳ lớp con (Subclass) nào khác của <code>Object</code> tùy thuộc vào lớp (Class) thực tế của đối tượng (Object) được truyền vào <code>dump</code>.</p>
+
+      <h3 class="section-title section-title--sub">13.5.2 Thu hẹp khoảng cách giữa compile time và run time<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Để viết mã nguồn đa hình, điều quan trọng là phải hiểu rằng tính đa hình (Polymorphism) xảy ra ở run time (tức là tại thời điểm thực thi mã nguồn), nhưng mã nguồn giúp điều đó xảy ra lại được viết ở compile time. Có một sự khác biệt giữa lượng thông tin mà trình biên dịch biết về chương trình và lượng thông tin mà JVM có được khi đang thực thi chương trình đó. Ví dụ, khi bạn định nghĩa một biến, trình biên dịch chỉ biết kiểu của biến đó, nhưng nó không thể biết đối tượng (Object) chính xác mà biến đó tham chiếu tới bởi vì các đối tượng (Object) chỉ được tạo ra khi chương trình được chạy, tức là ở run time. Giờ đây, Java là một ngôn ngữ định kiểu mạnh (strongly typed language), điều đó có nghĩa là kiểu của</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

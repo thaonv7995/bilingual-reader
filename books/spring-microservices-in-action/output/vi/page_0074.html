@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Hãy dùng REST</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-left {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3.5mm 4mm 4mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #ccc;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #262626;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-of-type {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 4.5mm;
+      text-align: justify;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .sidebar-note ul.manning-bullets li::before {
+      content: "■";
+      position: absolute;
+      left: 0;
+      top: 0.1mm;
+      font-size: 9pt;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .footnotes {
+      margin: 0 0 2.5mm;
+      font-size: 9pt;
+      line-height: 1.35;
+    }
+    .prose-page.chapter-page .footnotes p {
+      text-indent: 0;
+      margin: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0073.html">← Trước</a>
+    <a href="page_0075.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">Câu chuyện của lập trình viên: xây dựng microservice với Spring Boot và Java</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">49</span>
+      </header>
+
+      <p class="no-indent">Lớp Controller phơi bày các endpoint của dịch vụ và ánh xạ dữ liệu từ yêu cầu HTTP đến vào một phương thức Java sẽ xử lý yêu cầu đó.</p>
+
+      <aside class="sidebar-note" aria-label="Hãy dùng REST">
+        <h3>Hãy dùng REST</h3>
+        <p>Tất cả các microservice trong cuốn sách này đều theo cách tiếp cận REST khi xây dựng dịch vụ của bạn. Một cuộc thảo luận chuyên sâu về REST nằm ngoài phạm vi của cuốn sách này,<sup>a</sup> nhưng với mục đích của bạn, tất cả các dịch vụ bạn xây dựng sẽ có các đặc điểm sau:</p>
+        <ul class="manning-bullets">
+          <li>Dùng HTTP làm giao thức gọi dịch vụ&mdash;Dịch vụ sẽ được phơi bày qua endpoint HTTP và sẽ dùng giao thức HTTP để truyền dữ liệu đến và từ các dịch vụ.</li>
+          <li>Ánh xạ hành vi của dịch vụ sang các động từ HTTP tiêu chuẩn&mdash;REST nhấn mạnh việc các dịch vụ ánh xạ hành vi của chúng sang các động từ HTTP POST, GET, PUT và DELETE. Các động từ này ánh xạ sang các hàm CRUD có trong hầu hết các dịch vụ.</li>
+          <li>Dùng JSON làm định dạng tuần tự hóa cho mọi dữ liệu đi và đến dịch vụ&mdash;Đây không phải nguyên tắc cứng nhắc cho các microservice dựa trên REST, nhưng JSON đã trở thành ngôn ngữ chung cho việc tuần tự hóa dữ liệu sẽ được gửi và trả về bởi một microservice. XML có thể được dùng, nhưng nhiều ứng dụng dựa trên REST sử dụng rộng rãi JavaScript và JSON (JavaScript Object Notation). JSON là định dạng gốc để tuần tự hóa và giải tuần tự hóa dữ liệu được tiêu thụ bởi các front-end web và dịch vụ dựa trên JavaScript.</li>
+          <li>Dùng mã trạng thái HTTP để truyền đạt trạng thái của một lời gọi dịch vụ&mdash;Giao thức HTTP đã phát triển một bộ phong phú các mã trạng thái để chỉ ra thành công hay thất bại của dịch vụ. Các dịch vụ dựa trên REST tận dụng các mã trạng thái HTTP này và cơ sở hạ tầng web khác, chẳng hạn như reverse proxy và cache, có thể được tích hợp với các microservice của bạn một cách tương đối dễ dàng.</li>
+        </ul>
+        <p>HTTP là ngôn ngữ của web và việc dùng HTTP làm khung triết lý để xây dựng dịch vụ của bạn là chìa khóa để xây dựng dịch vụ trên đám mây.</p>
+      </aside>
+
+      <div class="footnotes">
+        <p><sup>a</sup> Có lẽ tài liệu toàn diện nhất về thiết kế dịch vụ REST là cuốn <em>REST in Practice</em> của Ian Robinson và cộng sự (O&rsquo;Reilly, 2010).</p>
+      </div>
+
+      <p>Lớp controller đầu tiên của bạn nằm trong <code>src/main/java/com/thoughtmechanix/licenses/controllers/LicenseServiceController.java</code>. Lớp này sẽ phơi bày bốn endpoint HTTP ánh xạ sang các động từ POST, GET, PUT và DELETE.</p>
+
+      <p>Hãy cùng xem qua lớp controller và tìm hiểu cách Spring Boot cung cấp một tập hợp annotation giúp giảm thiểu công sức cần thiết để phơi bày các endpoint dịch vụ của bạn và cho phép bạn tập trung vào xây dựng logic nghiệp vụ cho dịch vụ. Chúng ta sẽ bắt đầu bằng cách xem định nghĩa lớp controller cơ bản mà chưa có phương thức lớp nào. Liệt kê sau đây cho thấy lớp controller mà bạn đã xây dựng cho dịch vụ licensing.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 2.3</strong><br>Đánh dấu LicenseServiceController là Spring RestController</figcaption>
+        <pre class="code-block"><code>package com.thoughtmechanix.licenses.controllers;
+import &hellip; // Removed for conciseness</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

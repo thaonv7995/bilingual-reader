@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Appendix A: Listing A.2 Dockerfile</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      padding-left: 1.25em;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 1.5mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      grid-column: 1;
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts-right {
+      grid-column: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 1mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A2 .listing-callouts-right .listing-callout:nth-child(2) {
+      margin-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A2 .listing-callouts-right .listing-callout:nth-child(3) {
+      margin-top: 8mm;
+    }
+    .prose-page.chapter-page .listing-annotated--A2 .listing-callouts-right .listing-callout:nth-child(4) {
+      margin-top: 2mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0356.html">← Prev</a>
+    <a href="page_0358.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">332</span>
+        <span class="rh-center">APPENDIX A <em>Running a cloud on your desktop</em></span>
+        <span class="rh-right">3</span>
+      </header>
+
+      <p class="no-indent">It pushes the Docker image to the local Docker image repository that&rsquo;s installed when you install Docker.</p>
+
+      <p class="no-indent">The following listing shows the contents of the Dockerfile from your licensing service.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing A.2</strong><br>Dockerfile prepares Docker image</figcaption>
+        <div class="listing-annotated listing-annotated--A2" aria-label="Listing A.2 annotated Dockerfile">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>FROM openjdk:8-jdk-alpine
+RUN  apk update &amp;&amp; apk upgrade &amp;&amp; apk add netcat-openbsd
+RUN mkdir -p /usr/local/licensingservice
+ADD licensing-service-0.0.1-SNAPSHOT.jar /usr/local/licensingservice/
+ADD run.sh run.sh
+RUN chmod +x run.sh
+CMD ./run.sh</code></pre>
+          </figure>
+          <div class="listing-callouts-right" aria-label="Listing A.2 annotation callouts">
+            <p class="listing-callout">This is the Linux Docker image that you&rsquo;re going to use in your Docker run-time. This installation is optimized for Java applications.</p>
+            <p class="listing-callout">You install nc (netcat), a utility that you&rsquo;ll use to ping dependent services to see if they are up.</p>
+            <p class="listing-callout">The Docker ADD command copies the executable JAR from the local filesystem to the Docker image.</p>
+            <p class="listing-callout">You add a custom BASH shell script that will monitor for service dependencies and then launch the actual service.</p>
+          </div>
+        </div>
+      </figure>
+
+      <p class="no-indent">In the Dockerfile from this listing you&rsquo;re provisioning your instance using Alpine Linux (<a href="https://alpinelinux.org/">https://alpinelinux.org/</a>). Alpine Linux is a small Linux distribution that&rsquo;s often used to build Docker images. The Alpine Linux image you&rsquo;re using already has Java JDK installed on it.</p>
+
+      <p>When you&rsquo;re provisioning your Docker image, you&rsquo;re going to install a command-line utility called nc. The nc command is used to ping a server and see if a specific port is online. You&rsquo;re going to use it in your run.sh command script to ensure that before you launch your service, all its dependent services (for example, the database and the Spring Cloud Config service) have started. The nc command does this by watching the ports the dependent services listen on. This installation of nc is done via the <code>RUN apk update &amp;&amp; apk upgrade &amp;&amp; apk add netcat-openbsd</code>, running the services using Docker Compose.</p>
+
+      <p>Next, your Dockerfile will make a directory for the licensing service&rsquo;s executable jar file and then copy the jar file from the local file system to a directory that was created on the Docker image. This is all done via the <code>ADD licensing-service-0.0.1-SNAPSHOT.jar /usr/local/licensingservice/</code>.</p>
+
+      <p>The next step in the provisioning process is to install the run.sh script via the ADD command. The run.sh script is a custom script I wrote that launches the target service when the Docker image is started. It uses the nc command to listen for the ports of any key service dependencies that the licensing service needs and then blocks until those dependencies are started.</p>
+
+      <p>The following listing shows how the run.sh is used to launch the licensing service.</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

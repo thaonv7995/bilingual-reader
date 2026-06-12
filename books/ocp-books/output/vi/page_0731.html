@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chapter 24: Implementing Localization</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: 14pt;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      font-size: 10pt;
+      line-height: 1.35;
+      background: #e2e9f0;
+      border-left: none;
+      white-space: pre-wrap;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0730.html">← Trước</a>
+    <a href="page_0732.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">731</span>
+      </header>
+
+      <p class="no-indent">được chỉ định, FORMAT được ngầm định.</p>
+
+      <p>Locale của người dùng có thể được lấy ra bằng cách sử dụng các phương thức static <code>getDefault()</code> hoặc
+      <code>getDefault(Locale.Category)</code> của <code>Locale</code>. Nhiều ứng dụng cung cấp cho người dùng tùy chọn
+      để thay đổi locale mặc định của họ. Điều này có thể được thực hiện bằng cách sử dụng <code>Locale.setDefault(Locale
+      newLocale)</code> và <code>Locale.setDefault(Locale.Category category, Locale newLocale)</code>.
+      Các phương thức này thay đổi locale mặc định của JVM và bất kỳ lệnh gọi nào tiếp theo đến
+      <code>getDefault</code> sẽ trả về locale mới.</p>
+
+      <h3 class="section-title">Tạo một Locale<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Một đối tượng <code>Locale</code> có thể được tạo bằng cách sử dụng <code>Locale.Builder</code> hoặc sử dụng các phương thức factory tĩnh (static factory methods)
+      nạp chồng có tên là <code>of</code> của lớp <code>Locale</code>. Các constructor của Locale đã bị deprecated và có
+      thể bỏ qua. Dưới đây là một vài ví dụ bạn có thể gặp trong kỳ thi:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Locale enUs = new
+Locale.Builder().setLanguage("en").setRegion("US").build();
+Locale hi = Locale.of("hi"); //language Hindi
+Locale hiIn = Locale.of("hi", "IN"); //language Hindi, country India</code></pre>
+      </figure>
+
+      <p>Lưu ý rằng Builder có phương thức <code>setRegion</code> (chứ không phải <code>setCountry</code>) nhưng API này coi
+      region và country là như nhau. <code>Locale</code> cũng định nghĩa một số hằng số public static cho
+      các quốc gia và ngôn ngữ, ví dụ: <code>Locale.US</code> và <code>Locale.CHINESE</code>.</p>
+
+      <p>Một điểm quan trọng cần lưu ý về <code>Locale</code> là không phải lúc nào nó cũng có giá trị cho tất cả các
+      chi tiết của vị trí mà nó đại diện. Ví dụ, <code>Locale.CHINESE</code> là một Locale
+      chỉ đại diện cho ngôn ngữ tiếng Trung (CHINESE). Lệnh gọi <code>Locale.CHINESE.getCountry()</code> sẽ trả về
+      một chuỗi rỗng (không phải <code>null</code>). Tương tự, lệnh gọi <code>getLanguage()</code> trên một Locale được dựng bằng
+      <code>new Locale.Builder().setRegion("US").build()</code> sẽ trả về <code>""</code>.</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

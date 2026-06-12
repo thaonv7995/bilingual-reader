@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 2: Tên endpoint quan trọng</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page pre.code-block {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 2mm;
+      background: transparent;
+      border: none;
+      font-size: 9.5pt;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .sidebar-note {
+      margin: 0 0 2.5mm;
+      padding: 3mm 3.5mm;
+      background: #fff4cc;
+      border: 0.35pt solid #e6d9a8;
+    }
+    .prose-page.chapter-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #476b85;
+    }
+    .prose-page.chapter-page .sidebar-note p {
+      margin: 0 0 2.5mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .sidebar-note p:last-child {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page .sidebar-note ol.manning-numbered {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page .sidebar-note ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.38;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page .sidebar-note ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page .sidebar-note ol.manning-numbered .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0076.html">← Trước</a>
+    <a href="page_0078.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">52</span>
+        <span class="rh-center">CHƯƠNG 2 <em>Xây dựng microservice với Spring Boot</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">(như được biểu thị bằng cú pháp <code>{parameterName}</code>) tới các tham số của phương thức. Trong ví dụ code từ listing 2.4, bạn đang ánh xạ hai tham số từ URL, <code>organizationId</code> và <code>licenseId</code>, tới hai biến cấp tham số trong phương thức:</p>
+
+      <pre class="code-block"><code>@PathVariable(&quot;organizationId&quot;) String organizationId,
+@PathVariable(&quot;licenseId&quot;)   String licenseId)</code></pre>
+
+      <aside class="sidebar-note" aria-label="Tên endpoint quan trọng">
+        <h3>Tên endpoint quan trọng</h3>
+        <p>Trước khi đi quá xa trên con đường viết microservice, hãy đảm bảo bạn (và có thể cả các nhóm khác trong tổ chức) thiết lập các chuẩn cho các endpoint sẽ được expose qua dịch vụ của mình. URL (Uniform Resource Locator) của microservice nên được dùng để truyền đạt rõ ràng mục đích của dịch vụ, các tài nguyên mà dịch vụ quản lý, và các quan hệ tồn tại giữa các tài nguyên được quản lý trong dịch vụ. Tôi thấy các hướng dẫn sau hữu ích khi đặt tên endpoint dịch vụ:</p>
+        <ol class="manning-numbered">
+          <li><strong class="run-in">Dùng tên URL rõ ràng để thể hiện tài nguyên mà dịch vụ đại diện</strong>&mdash;Việc có định dạng chuẩn khi định nghĩa URL sẽ giúp API của bạn trực quan và dễ dùng hơn. Hãy nhất quán trong quy ước đặt tên.</li>
+          <li><strong class="run-in">Dùng URL để thiết lập quan hệ giữa các tài nguyên</strong>&mdash;Thường thì bạn sẽ có quan hệ cha-con giữa các tài nguyên trong microservice, trong đó tài nguyên con không tồn tại bên ngoài ngữ cảnh của tài nguyên cha (do đó bạn có thể không có microservice riêng cho tài nguyên con). Dùng URL để thể hiện các quan hệ này. Nhưng nếu URL của bạn thường quá dài và lồng nhau nhiều tầng, microservice có thể đang cố gắng làm quá nhiều việc.</li>
+          <li><strong class="run-in">Thiết lập sớm một sơ đồ versioning cho URL</strong>&mdash;URL và các endpoint tương ứng đại diện cho một hợp đồng giữa chủ sở hữu dịch vụ và người dùng dịch vụ. Một mẫu phổ biến là thêm số phiên bản vào đầu tất cả endpoint. Hãy thiết lập sơ đồ versioning sớm và bám theo nó. Rất khó để bổ sung versioning cho URL sau khi đã có nhiều consumer đang dùng chúng.</li>
+        </ol>
+      </aside>
+
+      <p>Đến lúc này bạn đã có thứ có thể gọi là một dịch vụ. Từ cửa sổ dòng lệnh, vào thư mục dự án nơi bạn đã tải code mẫu và chạy lệnh Maven sau:</p>
+
+      <pre class="code-block"><code>mvn spring-boot:run</code></pre>
+
+      <p>Ngay khi bạn nhấn phím Return, bạn sẽ thấy Spring Boot khởi chạy máy chủ Tomcat nhúng và bắt đầu lắng nghe trên cổng 8080.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0077_fig_2_4.png" width="1313" height="1330" alt="Hình 2.4 — Dịch vụ licensing khởi động thành công">
+        <figcaption><strong>Hình 2.4</strong><br>Dịch vụ licensing khởi động thành công</figcaption>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

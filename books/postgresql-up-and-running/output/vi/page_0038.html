@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 2: Quản trị cơ sở dữ liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p.object-term {
+      margin: 2mm 0 0;
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+      line-height: 1.2;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def {
+      margin: 0 0 3mm;
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.object-def code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 3mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0037.html">← Trước</a>
+    <a href="page_0039.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <p class="object-term">effective_cache_size</p>
+      <p class="object-def">Một ước lượng về lượng bộ nhớ bạn mong đợi sẽ có sẵn trong bộ nhớ đệm của hệ điều hành và Post‐
+      greSQL. Cài đặt này không ảnh hưởng đến việc phân bổ thực tế, nhưng trình lập kế hoạch truy vấn sử dụng cài đặt này để đoán xem liệu các bước trung gian và đầu ra truy vấn có vừa với RAM hay không. Nếu bạn đặt cài đặt này thấp hơn nhiều so với RAM có sẵn, trình lập kế hoạch có thể bỏ qua việc sử dụng chỉ mục. Với một máy chủ chuyên dụng, việc đặt <code>effective_cache_size</code> bằng một nửa hoặc nhiều hơn bộ nhớ onboard của bạn sẽ là một khởi đầu tốt. Các thay đổi yêu cầu ít nhất phải tải lại.</p>
+
+      <p class="object-term">work_mem</p>
+      <p class="object-def">Kiểm soát lượng bộ nhớ tối đa được phân bổ cho các hoạt động như sắp xếp,
+      kết nối băm, và quét bảng. Cài đặt tối ưu phụ thuộc vào cách bạn sử dụng cơ sở dữ liệu, bạn có bao nhiêu bộ nhớ để dành, và liệu máy chủ của bạn có được dành riêng cho PostgreSQL hay không. Nếu bạn có nhiều người dùng chạy các truy vấn đơn giản, bạn muốn cài đặt này tương đối thấp. Mức độ cao mà bạn đặt cài đặt này cũng phụ thuộc vào lượng RAM bạn có ngay từ đầu. Một bài viết hay để đọc về work_mem là <a href="http://bit.ly/15SWsHh" class="accent-word">Hiểu về work_mem</a>. Các thay đổi yêu cầu ít nhất phải tải lại.</p>
+
+      <p class="object-term">maintenance_work_mem</p>
+      <p class="object-def">Tổng bộ nhớ được phân bổ cho các hoạt động bảo trì như dọn dẹp (xóa các bản ghi đã được đánh dấu để xóa). Bạn không nên đặt nó cao hơn khoảng 1 GB. Tải lại sau khi thay đổi.</p>
+
+      <p>Các cài đặt này cũng có thể được thiết lập ở cấp cơ sở dữ liệu, người dùng và chức năng. Ví dụ,
+      bạn có thể muốn đặt <code>work_mem</code> cao hơn cho một người sử dụng SQL thông minh đang chạy các truy vấn phức tạp.</p>
+
+      <p>Tương tự, nếu bạn có một chức năng mà yêu cầu sắp xếp nhiều, bạn có thể tăng cài đặt <code>work_mem</code>
+      chỉ cho nó.</p>
+
+      <p>Mới trong PostgreSQL 9.4 là khả năng thay đổi cài đặt bằng cách sử dụng lệnh SQL mới <code>ALTER SYSTEM</code>. Ví dụ, để đặt <code>work_mem</code> toàn cục, hãy nhập lệnh sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>ALTER</strong> <strong>SYSTEM</strong> <strong>set</strong> <strong>work_mem</strong> = 8192;</code></pre>
+      </figure>
+
+      <p>Tùy thuộc vào cài đặt cụ thể được thay đổi, bạn có thể cần khởi động lại dịch vụ. Nếu chỉ cần
+      tải lại nó, đây là một lệnh tiện lợi:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code><strong>SELECT</strong> pg_reload_conf();</code></pre>
+      </figure>
+
+      <p>PostgreSQL ghi lại các thay đổi được thực hiện thông qua <code>ALTER SYSTEM</code> trong một tệp ghi đè gọi là
+      <code>postgresql.auto.conf</code>, không trực tiếp vào <code>postgresql.conf</code>.</p>
+
+      <p class="no-indent"><strong class="run-in">“Tôi đã chỉnh sửa tệp postgresql.conf của mình và bây giờ máy chủ của tôi bị hỏng.”</strong> Cách dễ nhất để tìm ra bạn đã làm hỏng điều gì là xem tệp nhật ký, nằm ở
+      gốc của thư mục dữ liệu, hoặc trong thư mục con <code>pg_log</code>. Mở tệp mới nhất và đọc những gì
+      dòng cuối cùng nói. Lỗi được nâng cao thường tự giải thích.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">20<span class="sep">|</span>Chương 2: Quản trị cơ sở dữ liệu</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 24: Triển khai Bản địa hóa (Localization)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 8mm 0 3mm;
+      font-family: var(--font-display);
+      font-size: 14pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: 14pt;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10.8pt;
+      background: #e8f0f8;
+      padding: 0 0.4mm;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0729.html">← Trước</a>
+    <a href="page_0731.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">730</span>
+      </header>
+
+      <p class="no-indent">vùng của người dùng và sử dụng resource bundle dành riêng cho vùng đó để dịch các thông báo.</p>
+
+      <p>Cách tiếp cận này cho phép mã nguồn ứng dụng được viết theo cách hoàn toàn độc lập với ngôn ngữ,
+      và cũng cho phép việc tạo ra các resource bundle đặc trưng cho vùng được đảm nhận bởi một đội ngũ
+      am hiểu ngôn ngữ địa phương. Một ứng dụng như vậy không đòi hỏi bất kỳ sự thay đổi mã nguồn nào khi chuyển đổi
+      sang các vùng khác nhau và do đó, được gọi là đã được "quốc tế hóa". Tái cấu trúc một ứng dụng để
+      loại bỏ bất kỳ mã cứng (hardcoding) đặc trưng cho vùng nào khỏi mã nguồn ứng dụng được gọi là
+      "<strong>quốc tế hóa (internationalization)</strong>" hoặc gọi tắt là "i18n" (vì có 18 ký tự giữa chữ i và n trong
+      từ internationalization), và quá trình tạo cũng như đóng gói các tệp dành riêng cho vùng,
+      tức là các resource bundle, cho một vùng hoặc ngôn ngữ cụ thể của ứng dụng được gọi là
+      "<strong>bản địa hóa (localization)</strong>".</p>
+
+      <h3 class="section-title">24.1.1 Phát hiện Locale của người dùng<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Thông tin đặc trưng về vùng (trong ngữ cảnh này, từ vùng và quốc gia được sử dụng thay thế cho nhau) và
+      ngôn ngữ của người dùng được ghi nhận bởi lớp <code>java.util.Locale</code>. Nó có một vài
+      phương thức như <code>getCountry()</code> và <code>getLanguage()</code> trả về các chi tiết cụ thể của
+      vùng mà nó đại diện. Bạn không cần phải biết giá trị thực tế mà các phương thức này
+      trả về cho bất kỳ locale nào, nhưng hãy lưu ý rằng hầu hết các phương thức này đều trả về các mã được định nghĩa rõ ràng. Ví
+      dụ, chúng trả về <code>"en"</code> và <code>"US"</code> cho ngôn ngữ và quốc gia nếu <code>Locale</code> đại diện cho một
+      vùng nói tiếng Anh ở Mỹ. Lưu ý rằng ngôn ngữ là một chuỗi từ 2 đến 8 ký tự
+      viết thường và quốc gia là một chuỗi gồm 2 hoặc 3 ký tự viết hoa.</p>
+
+      <p>Một <code>Locale</code> cũng ghi nhận một "category" (danh mục) cho biết liệu thông tin locale này dành cho
+      việc tùy chỉnh hiển thị giao diện người dùng hoặc tùy chỉnh đầu ra dạng văn bản do ứng dụng tạo ra. Danh mục
+      này được đại diện bởi một enum lồng tĩnh được định nghĩa trong <code>Locale</code> có tên là <code>Category</code>. Nó có
+      chỉ hai hằng số - <code>DISPLAY</code> and <code>FORMAT</code>. <code>Category</code> sẽ hữu ích khi ứng dụng cần
+      phân biệt giữa hai loại tùy chỉnh này. Ví dụ, một ứng dụng có thể
+      muốn hiển thị các trình điều khiển giao diện người dùng bằng ngôn ngữ địa phương là tiếng Hindi nhưng lại muốn tạo báo cáo bằng tiếng Anh. Tuy
+      nhiên, đối với mục đích của kỳ thi OCP, sự phân biệt này không quan trọng nhưng cần được ghi nhớ
+      khi xây dựng một ứng dụng chuyên nghiệp. Ngoài ra, hãy nhớ rằng bất cứ khi nào category không được</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

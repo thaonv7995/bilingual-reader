@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 17: Biểu thức Lambda và Tham chiếu phương thức</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 12pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0337.html">← Trước</a>
+    <a href="page_0339.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">338</span>
+      </header>
+
+      <p class="no-indent">tham chiếu phương thức (method reference) vì chúng mang lại nhiều cơ hội hơn nữa để loại bỏ mã boilerplate mà
+      trình biên dịch có thể dễ dàng suy luận từ ngữ cảnh.</p>
+
+      <p>Ví dụ, đây là câu lệnh mà bạn đã thấy trước đó để in tất cả các phần tử của một
+      danh sách:&nbsp;<code>list.forEach( obj -&gt; System.out.println(obj) );</code>&nbsp;Nó sử dụng một biểu thức Lambda (Lambda expression) để
+      tạo phương thức <code>accept</code>&nbsp;của interface&nbsp;<code>Consumer</code>. Trong Lambda này, tất cả những gì chúng ta làm chỉ là
+      tạo một biến có tên <code>obj</code>&nbsp;và sau đó truyền nó vào phương thức <code>println</code>&nbsp;của <code>System.out</code>.
+      Biến này không phục vụ mục đích nào khác ngoài việc làm trung gian để truyền một tham chiếu đối tượng (object reference) đến
+      phương thức. Chúng ta thậm chí không quan tâm đến tên của biến đó.&nbsp;</p>
+
+      <p>Bây giờ, hãy xem câu lệnh này:&nbsp;<code>list.forEach(System.out::println);</code>&nbsp;Tại đây, về mặt bản chất, chúng ta đang
+      yêu cầu trình biên dịch sử dụng phương thức <code>println</code>&nbsp;của <code>System.out</code>&nbsp;để tạo mã cho
+      đối tượng <code>Consumer</code> (Consumer object) được mong đợi bởi phương thức <code>forEach</code>. Trình biên dịch biết rằng phương thức
+      <code>accept</code>&nbsp;của <code>Consumer</code> được tạo ra sẽ được truyền một phần tử của danh sách làm đối số. Vì
+      <code>println</code>&nbsp;cũng mong đợi một đối số, trình biên dịch có thể dễ dàng suy luận để
+      tự động tạo ra mã truyền phần tử nhận được bởi phương thức <code>accept</code>&nbsp;xuống
+      phương thức <code>println</code>.</p>
+
+      <p>Đó là hầu như tất cả những gì tham chiếu phương thức (method reference) thực hiện. Bạn báo cho trình biên dịch biết phương thức nào bạn
+      muốn sử dụng bằng cú pháp <strong>dấu hai chấm kép (double colon)</strong> và nếu phương thức đó mong đợi bất kỳ đối số nào,
+      trình biên dịch sẽ tự động lấy các giá trị có sẵn trong ngữ cảnh và truyền chúng làm
+      đối số cho phương thức mà bạn quan tâm. Điểm duy nhất cần lưu ý là trình biên dịch phải
+      có khả năng xác định chính xác phương thức bạn muốn gọi một cách <strong>không mơ hồ (unambiguously)</strong> và phải
+      có thể gọi nó bằng thông tin có sẵn trong ngữ cảnh, nghĩa là trình biên dịch phải
+      có khả năng xác định đối tượng mà phương thức sẽ được gọi trên đó (còn gọi là tham chiếu đích - target reference) và
+      trình biên dịch phải có khả năng xác định các giá trị có thể được truyền làm đối số cho phương thức.&nbsp;</p>
+
+      <h3 class="section-title section-title--sub">Xác định phương thức<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Điều này rất dễ dàng bởi vì tên phương thức được viết ở phía bên phải của <code>::</code>&nbsp;trong một biểu thức tham chiếu phương thức.
+      Ví dụ, trong <code>System.out::println</code>, <code>println</code>&nbsp;là tên phương thức.&nbsp; Nếu bạn
+      muốn tạo một thể hiện (instance) của một lớp (class), tên phương thức giả định trong trường hợp đó sẽ là <code>new</code>. Vì vậy,
+      <code>String::new</code>&nbsp;sẽ có nghĩa là bạn muốn tạo một</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL &bull; JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

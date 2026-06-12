@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Listing 5.12 ThreadLocalConfiguration</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.action-step-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: uppercase;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.action-step-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.code-snippet {
+      margin: 0;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 0;
+    }
+    .prose-page.chapter-page .listing-annotated--512 .listing-callouts {
+      padding-top: 22mm;
+    }
+    .prose-page.chapter-page .listing-annotated--512 .listing-callout:nth-child(1) {
+      margin-bottom: 13mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing .listing-annotated {
+      margin: 0;
+    }
+    .prose-page.chapter-page p + figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0174.html">← Prev</a>
+    <a href="page_0176.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">150</span>
+        <span class="rh-center">CHƯƠNG 5 <em>Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Khi một lời gọi được thực hiện tới phương thức được Hystrix bảo vệ, Hystrix và Spring Cloud sẽ khởi tạo một thể hiện của lớp <code>DelegatingUserContextCallable</code>, truyền vào lớp <code>Callable</code> thường được gọi bởi luồng do Hystrix command pool quản lý. Trong listing trước, lớp <code>Callable</code> này được lưu trong thuộc tính Java tên là <code>delegate</code>. Về mặt khái niệm, bạn có thể coi thuộc tính <code>delegate</code> như là con trỏ tới phương thức được bảo vệ bởi annotation <code>@HystrixCommand</code>.</p>
+
+      <p>Ngoài lớp <code>Callable</code> được ủy quyền, Spring Cloud cũng truyền theo đối tượng <code>UserContext</code> từ luồng cha đã khởi tạo lời gọi. Khi hai giá trị này được thiết lập tại thời điểm tạo thể hiện <code>DelegatingUserContextCallable</code>, phần xử lý thực sự sẽ diễn ra trong phương thức <code>call()</code> của lớp bạn.</p>
+
+      <p>Việc đầu tiên cần làm trong phương thức <code>call()</code> là thiết lập <code>UserContext</code> qua phương thức <code>UserContextHolder.setContext()</code>. Hãy nhớ, phương thức <code>setContext()</code> lưu đối tượng <code>UserContext</code> trong biến <code>ThreadLocal</code> riêng của luồng đang chạy. Sau khi <code>UserContext</code> được thiết lập, bạn gọi phương thức <code>call()</code> của lớp <code>Callable</code> được ủy quyền. Lời gọi <code>delegate.call()</code> này sẽ gọi phương thức được bảo vệ bởi annotation <code>@HystrixCommand</code>.</p>
+
+      <h4 class="action-step-title">Cấu hình Spring Cloud để dùng chiến lược đồng thời Hystrix tùy chỉnh của bạn</h4>
+
+      <p>Giờ bạn đã có <code>HystrixConcurrencyStrategy</code> thông qua lớp <code>ThreadLocalAwareStrategy</code> và lớp <code>Callable</code> được định nghĩa qua lớp <code>DelegatingUserContextCallable</code>, bạn cần kết nối chúng vào Spring Cloud và Hystrix. Để làm điều này, bạn sẽ định nghĩa một lớp cấu hình mới. Cấu hình này, gọi là <code>ThreadLocalConfiguration</code>, được trình bày trong listing sau đây.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 5.12</strong><br>Kết nối lớp <code>HystrixConcurrencyStrategy</code> tùy chỉnh vào Spring Cloud</figcaption>
+        <div class="listing-annotated listing-annotated--512" aria-label="Listing 5.12 mã có chú thích">
+          <figure class="code-snippet">
+            <pre class="code-block"><code>package com.thoughtmechanix.licenses.hystrix;
+
+//Imports removed for conciseness
+@Configuration
+public class ThreadLocalConfiguration {
+  @Autowired(required = false)
+  private HystrixConcurrencyStrategy existingConcurrencyStrategy;
+
+  @PostConstruct
+  public void init() {
+    // Keeps references of existing Hystrix plugins.
+    HystrixEventNotifier eventNotifier =
+    ➥ HystrixPlugins
+         .getInstance()
+         .getEventNotifier();
+    HystrixMetricsPublisher metricsPublisher =
+    ➥ HystrixPlugins
+         .getInstance()
+         .getMetricsPublisher();
+    HystrixPropertiesStrategy propertiesStrategy =
+    ➥ HystrixPlugins
+         .getInstance()
+         .getPropertiesStrategy();</code></pre>
+          </figure>
+          <div class="listing-callouts" aria-label="Chú thích Listing 5.12">
+            <p class="listing-callout">Khi đối tượng cấu hình được khởi tạo, nó sẽ autowire <code>HystrixConcurrencyStrategy</code> hiện có.</p>
+            <p class="listing-callout">Vì bạn đang đăng ký chiến lược đồng thời mới, bạn sẽ lấy tất cả các thành phần Hystrix khác rồi đặt lại plugin Hystrix.</p>
+          </div>
+        </div>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

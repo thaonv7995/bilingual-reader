@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 8: Writing Functions — Triggers and Trigger Functions</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 15.8pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page p.qual-term {
+      margin: 1.5mm 0 0.5mm 6mm;
+      font-weight: 700;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.qual-desc {
+      margin: 0 0 2mm 12mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0162.html">← Prev</a>
+    <a href="page_0164.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">163</span>
+      </header>
+
+      <p class="qual-desc no-indent">ing. The higher you set the cost, the more computation the planner will assume the
+      function needs.</p>
+
+      <p class="qual-term">ROWS</p>
+      <p class="qual-desc">Applies only to functions returning sets of records. This value provides an estimate
+      of how many rows will be returned. The planner will take this value into consideration
+      when coming up with the best strategy.</p>
+
+      <p class="qual-term">SECURITY DEFINER</p>
+      <p class="qual-desc">This causes execution to take place within the security context of the owner of the
+      function. If omitted, the function executes under the context of the user calling the
+      function. This qualifier is useful for giving people rights to update a table via a
+      function when they do not have direct update privileges.</p>
+
+      <h3 class="subsection-title">Triggers and Trigger Functions</h3>
+      <p class="no-indent">No database of merit should lack triggers, which automatically detect and handle
+      changes in data. PostgreSQL allows you to attach triggers to both tables and views.</p>
+
+      <p>Triggers can actuate at both the statement level and the row level. Statement triggers
+      run once per SQL statement, whereas row triggers run for each row affected by the SQL.
+      For example, if you execute an UPDATE statement that affects 1,500 rows, a statement-
+      level update trigger will fire only once, whereas the row-level trigger can fire up to 1,500
+      times.</p>
+
+      <p>You can further refine the timing of the trigger by making a distinction between <strong>BEFORE</strong>,
+      <strong>AFTER</strong>, and <strong>INSTEAD OF</strong> triggers. A <strong>BEFORE</strong> trigger fires prior to the execution of
+      the statement, giving you a chance to cancel or back up data before the change. An <strong>AFTER</strong>
+      trigger fires after statement execution, giving you a chance to retrieve the new data
+      values. <strong>AFTER</strong> triggers are often used for logging or replication purposes. <strong>INSTEAD OF</strong>
+      triggers execute in lieu of the statement. You can attach <strong>BEFORE</strong> and <strong>AFTER</strong> triggers only
+      to tables, and <strong>INSTEAD OF</strong> triggers only to views.</p>
+
+      <p>You can also adorn a trigger with a <strong>WHEN</strong> condition to control which rows being updated
+      will fire the trigger, or an <strong>UPDATE OF</strong> <code>columns_list</code> clause to have the trigger fire only
+      if certain columns are updated. To gain a more nuanced understanding of the interplay
+      between triggers and the underlying statement, see the official documentation: <span class="accent-word">Overview
+      of Trigger Behavior</span>. We also demonstrated a view-based trigger in <span class="accent-word">Example 7-4</span>.</p>
+
+      <p>PostgreSQL offers specialized functions to handle triggers. These are called trigger functions
+      and behave like any other function and have the same basic structure. Where they
+      differ is in the input parameter and the output type. A trigger function never takes an
+      argument, because internally the function already has access to the data and can modify
+      it.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Anatomy of PostgreSQL Functions<span class="sep">|</span>145</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

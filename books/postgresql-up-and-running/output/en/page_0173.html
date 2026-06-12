@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 8: Writing Functions — PL/Python and PL/V8</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0 0 0 4mm;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page p a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page p.lang-def em {
+      font-style: italic;
+    }
+    .prose-page.chapter-page p.lang-def-body {
+      padding-left: 5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0172.html">← Prev</a>
+    <a href="page_0174.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">173</span>
+      </header>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-13.</strong> Using Python function in a query</figcaption>
+        <pre class="code-block"><code>SELECT search_term, left(postgresql_help_search(search_term), 125) As result
+FROM (VALUES ('regexp_match'),('pg_trgm'),('tsvector')) As x(search_term);</code></pre>
+      </figure>
+
+      <p class="no-indent">Recall that PL/Python is an untrusted language, without a trusted counterpart. This
+      means only superusers can write functions using PL/Python, and the function can in&shy;teract
+      with the file system of the OS. <span class="accent-word">Example 8-14</span> takes advantage of the untrusted
+      nature of PL/Python to retrieve file listings from a directory. Keep in mind that from
+      the perspective of the OS, a PL/Python function runs under the context of the post&shy;gres
+      user account created during installation, so you need to be sure that this account
+      has adequate access to the relevant directories.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Example 8-14.</strong> List files in directories</figcaption>
+        <pre class="code-block"><code>CREATE OR REPLACE FUNCTION list_incoming_files()
+RETURNS SETOF text AS
+$$
+import os
+return os.listdir('/incoming')
+$$
+LANGUAGE 'plpython2u' VOLATILE SECURITY DEFINER;</code></pre>
+      </figure>
+
+      <p>Run the function in <span class="accent-word">Example 8-14</span> with the following query:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>    SELECT filename
+    FROM list_incoming_files() As filename
+    WHERE filename ILIKE '%.csv'</code></pre>
+      </figure>
+
+      <h3 class="section-title">Writing PL/V8, PL/CoffeeScript, and PL/LiveScript Functions</h3>
+
+      <p class="no-indent"><a href="http://code.google.com/p/plv8js/wiki/PLV8">PL/V8</a> (aka PL/JavaScript) is a trusted language built atop the <a href="http://code.google.com/p/v8/">Google V8</a> engine. It
+      allows you to write functions in JavaScript and interface with the JSON data type. It is
+      not part of the core PostgreSQL offering, so you won&rsquo;t find it in most popular Post&shy;greSQL
+      distributions except Heroku. You can always compile it from source. For Win&shy;dows,
+      we&rsquo;ve built <a href="http://bit.ly/1u09x5B">PL/V8 extension windows binaries</a>. You can download them from our
+      Postgres OnLine site for <a href="http://bit.ly/1q2h6xo">PostgreSQL 9.2</a>, and from our Postgres OnLine site for <a href="http://bit.ly/1IamTXq">Post&shy;greSQL 9.3</a>
+      (both 32-bit and 64-bit).</p>
+
+      <p>Although you can compile PL/V8 version 9.1, we strongly suggest that you upgrade to
+      9.2, with native JSON support, instead.</p>
+
+      <p>When you add PL/V8 binaries to your PostgreSQL setup, you get not one, but three
+      JavaScript-related languages:</p>
+
+      <p class="no-indent lang-def"><em>PL/V8 (plv8)</em></p>
+      <p class="no-indent lang-def-body">This is the basic language that serves as the basis for the other two JavaScript lan&shy;guages.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Writing PL/V8, PL/CoffeeScript, and PL/LiveScript Functions<span class="sep">|</span>155</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

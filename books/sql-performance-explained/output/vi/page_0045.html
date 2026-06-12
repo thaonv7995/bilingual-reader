@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Các truy vấn tham số hóa</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page .sidebar-note {
+      margin: 3.5mm 0 0;
+      padding: 3.5mm 4mm 4mm;
+      background: #e6e7e8;
+      border: 0.35pt solid var(--book-rule);
+    }
+
+    .prose-page .sidebar-note h3 {
+      margin: 0 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 14pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .prose-page .sidebar-note p {
+      text-indent: 0;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">45</span>
+      </header>
+      <p class="chapter-running-head">Các truy vấn tham số hóa</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Không sử dụng tham số ràng buộc giống như biên dịch lại một chương trình mỗi lần.</p>
+      </aside>
+
+      <p class="no-indent">Quyết định xây dựng một kế hoạch thực thi chuyên biệt hoặc tổng quát đặt ra một tình huống khó xử cho cơ sở dữ liệu. Hoặc là nỗ lực được thực hiện để đánh giá tất cả các biến thể kế hoạch có thể cho mỗi lần thực thi nhằm luôn nhận được kế hoạch thực thi tốt nhất hoặc tiết kiệm chi phí tối ưu hóa và sử dụng một kế hoạch thực thi đã được lưu trữ bất cứ khi nào có thể&mdash;chấp nhận rủi ro khi sử dụng một kế hoạch thực thi không tối ưu. Vấn đề là cơ sở dữ liệu không biết liệu chu trình tối ưu hóa đầy đủ có cung cấp một kế hoạch thực thi khác mà không thực sự thực hiện tối ưu hóa đầy đủ. Các nhà cung cấp cơ sở dữ liệu cố gắng giải quyết tình huống này bằng các phương pháp heuristic&mdash;nhưng với thành công rất hạn chế.</p>
+
+      <p>Với tư cách là nhà phát triển, bạn có thể sử dụng tham số ràng buộc một cách có chủ đích để giúp giải quyết tình huống khó xử này. Nghĩa là, bạn nên luôn sử dụng tham số ràng buộc ngoại trừ các giá trị mà <em>sẽ</em> ảnh hưởng đến kế hoạch thực thi.</p>
+
+      <p>Các mã trạng thái phân bố không đồng đều như &ldquo;todo&rdquo; và &ldquo;done&rdquo; là một ví dụ tốt. Số lượng mục &ldquo;done&rdquo; thường vượt quá số lượng bản ghi &ldquo;todo&rdquo; gấp nhiều lần. Việc sử dụng một chỉ mục chỉ có ý nghĩa khi tìm kiếm các mục &ldquo;todo&rdquo; trong trường hợp đó. Phân vùng là một ví dụ khác&mdash;nghĩa là, nếu bạn chia các bảng và chỉ mục qua nhiều khu vực lưu trữ. Các giá trị thực tế sau đó có thể ảnh hưởng đến các phân vùng nào cần được quét. Hiệu suất của các truy vấn <code>LIKE</code> cũng có thể bị ảnh hưởng bởi các tham số ràng buộc như chúng ta sẽ thấy trong phần tiếp theo.</p>
+
+      <aside class="sidebar-note">
+        <h3>Mẹo</h3>
+        <p>Trong thực tế, chỉ có một vài trường hợp mà các giá trị thực tế ảnh hưởng đến kế hoạch thực thi. Do đó, bạn nên sử dụng tham số ràng buộc nếu có nghi ngờ&mdash;chỉ để ngăn chặn các cuộc tấn công SQL injection.</p>
+      </aside>
+
+      <p>Các đoạn mã sau đây cho thấy cách sử dụng tham số ràng buộc trong các ngôn ngữ lập trình khác nhau.</p>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">35</p>
+    </article>
+  </main>
+</body>
+</html>

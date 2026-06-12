@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 5: Kiểu Dữ Liệu (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page ol.listing-annotations {
+      margin: 0 0 3mm 6mm;
+      padding: 0;
+      list-style: none;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page ol.listing-annotations li {
+      margin: 0 0 1.5mm;
+      padding: 0 0 0 6mm;
+      text-indent: -6mm;
+      text-align: left;
+    }
+    .prose-page.chapter-page ol.listing-annotations .marker {
+      display: inline-block;
+      width: 5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      text-align: center;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text code {
+      font-size: 9.1pt;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p.callout-item {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      font-size: 9.5pt;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page .callout-num {
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1;
+      margin-right: 1mm;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0112.html">← Trước</a>
+    <a href="page_0114.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">113</span>
+      </header>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>[1,)
+("2013-01-05 10:00:00","2013-08-13 14:00:00"]</code></pre>
+      </figure>
+
+      <ol class="listing-annotations" aria-label="Chú thích ví dụ 5-19">
+        <li><span class="marker" aria-hidden="true">❶</span> Một khoảng thời gian giữa 2013-01-05 và 2013-08-13 bao gồm. Lưu ý về
+        việc chuẩn hóa ở giới hạn trên.</li>
+        <li><span class="marker" aria-hidden="true">❷</span> Một khoảng thời gian lớn hơn 2013-01-05 và nhỏ hơn hoặc bằng 2013-08-13.
+        Lưu ý về việc chuẩn hóa.</li>
+        <li><span class="marker" aria-hidden="true">❸</span> Một số nguyên lớn hơn 0 và nhỏ hơn hoặc bằng vô cùng. Lưu ý về
+        việc chuẩn hóa.</li>
+        <li><span class="marker" aria-hidden="true">❹</span> Một dấu thời gian lớn hơn 2013-01-05 10:00 và nhỏ hơn hoặc bằng 2013-08-13
+        14:00:00.</li>
+      </ol>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0113_icon_tip.png" width="43" height="57" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Các thời điểm trong PostgreSQL có thể nhận giá trị <code>-infinity</code> và
+        <code>infinity</code>. Để đồng nhất và theo quy ước, chúng tôi đề xuất rằng bạn luôn sử dụng <code>[</code> cho cái trước và <code>)</code> cho cái sau khi bạn
+        có sự lựa chọn: <code>tsrange</code> và <code>tstzrange</code>.</p>
+      </div>
+
+      <p>Các khoảng cũng có thể được định nghĩa bằng cách sử dụng các hàm tạo khoảng, có cùng tên với khoảng và có thể nhận hai hoặc ba tham số. Đây là một ví dụ:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT daterange('2013-01-05','infinity','[]');</code></pre>
+      </figure>
+
+      <p>Tham số thứ ba chỉ định giới hạn. Nếu bị bỏ qua, <code>[)</code> là mặc định. Chúng tôi đề xuất rằng
+      bạn luôn bao gồm phần tử thứ ba để rõ ràng, vì mặc định không rõ ràng.</p>
+
+      <h3 class="subsection-title">Định Nghĩa Bảng Với Các Khoảng</h3>
+      <p class="no-indent">Các khoảng thời gian tạm thời rất phổ biến. Giả sử bạn có một bảng việc làm lưu trữ lịch sử việc làm. Thay vì tạo ngày bắt đầu và kết thúc, bạn có thể thiết kế một bảng như được hiển thị trong <span class="accent-word">Ví dụ 5-20</span>. Trong ví dụ này, chúng tôi thêm một chỉ mục vào cột khoảng thời gian để tăng tốc độ truy vấn sử dụng cột khoảng của chúng tôi.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-20.</strong> Bảng với khoảng thời gian</figcaption>
+        <pre class="code-block"><code>CREATE TABLE employment (id serial PRIMARY KEY, employee varchar(20), period daterange);
+CREATE INDEX idx_employment_period ON employment USING gist (period);
+INSERT INTO employment (employee, period)
+VALUES ('Alex', '[2012-04-24, infinity)'::daterange), ('Sonia', '[2011-04-24,
+2012-06-01)'::daterange), ('Leo', '[2012-06-20, 2013-04-20)'::daterange), ('Regi
+na', '[2012-06-20, 2013-04-20)'::daterange);</code></pre>
+      </figure>
+
+      <p class="callout-item no-indent"><span class="callout-num" aria-hidden="true">❶</span> Thêm một chỉ mục GiST vào trường khoảng.</p>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Các Kiểu Khoảng<span class="sep">|</span>95</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

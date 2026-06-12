@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 8: Yêu cầu về bộ nhớ đệm và mục 8.1.1</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.5mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page p + ol.manning-numbered,
+    .prose-page.chapter-page ol.manning-numbered + p,
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0254.html">← Trước</a>
+    <a href="page_0256.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">230</span>
+        <span class="rh-center">CHƯƠNG 8 <em>Kiến trúc hướng sự kiện với Spring Cloud Stream</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">thông tin từ organization service. Khi xem xét các mẫu sử dụng dữ liệu tổ chức, bạn thấy dữ liệu tổ chức hiếm khi thay đổi và hầu hết các lần đọc dữ liệu từ organization service đều được thực hiện theo khóa chính của bản ghi tổ chức. Nếu bạn có thể lưu các lần đọc dữ liệu tổ chức vào bộ nhớ đệm mà không phải chịu chi phí truy cập cơ sở dữ liệu, bạn có thể cải thiện đáng kể thời gian phản hồi của các lời gọi licensing service.</p>
+
+      <p>Khi xem xét việc triển khai một giải pháp bộ nhớ đệm, bạn nhận ra mình có ba yêu cầu cốt lõi:</p>
+
+      <ol class="manning-numbered" aria-label="Ba yêu cầu cốt lõi về bộ nhớ đệm">
+        <li><strong class="run-in">Dữ liệu trong bộ nhớ đệm cần nhất quán trên mọi instance của licensing service&mdash;</strong>Điều này có nghĩa là bạn không thể lưu dữ liệu trong bộ nhớ đệm cục bộ bên trong licensing service vì bạn muốn đảm bảo rằng cùng một dữ liệu tổ chức được đọc bất kể instance dịch vụ nào truy cập.</li>
+        <li><strong class="run-in">Bạn không thể lưu dữ liệu tổ chức trong bộ nhớ của container lưu trữ licensing service&mdash;</strong>Container thời gian chạy lưu trữ dịch vụ của bạn thường bị giới hạn về kích thước và có thể truy cập dữ liệu theo các mẫu truy cập khác nhau. Một bộ nhớ đệm cục bộ có thể gây thêm độ phức tạp vì bạn phải đảm bảo bộ nhớ đệm cục bộ được đồng bộ với tất cả các dịch vụ khác trong cluster.</li>
+        <li><strong class="run-in">Khi một bản ghi tổ chức thay đổi qua thao tác cập nhật hoặc xóa, bạn muốn licensing service nhận biết rằng đã có thay đổi trạng thái trong organization service&mdash;</strong>Sau đó licensing service nên vô hiệu hóa mọi dữ liệu đã lưu trong bộ nhớ đệm cho tổ chức cụ thể đó và loại bỏ nó khỏi bộ nhớ đệm.</li>
+      </ol>
+
+      <p>Hãy xem xét hai cách tiếp cận để triển khai các yêu cầu này. Cách tiếp cận thứ nhất sẽ triển khai các yêu cầu trên bằng mô hình request-response đồng bộ. Khi trạng thái tổ chức thay đổi, licensing service và organization service giao tiếp qua lại thông qua các REST endpoint của chúng. Cách tiếp cận thứ hai sẽ để organization service phát ra một sự kiện bất đồng bộ (message) thông báo rằng dữ liệu organization service đã thay đổi. Với cách tiếp cận thứ hai, organization service sẽ publish một message vào queue cho biết một bản ghi tổ chức đã được cập nhật hoặc xóa. Licensing service sẽ lắng nghe thông qua thành phần trung gian, nhận thấy một sự kiện tổ chức đã xảy ra, và xóa dữ liệu tổ chức khỏi bộ nhớ đệm của nó.</p>
+
+      <h4 class="subsection-title">8.1.1 Sử dụng cách tiếp cận request-response đồng bộ để thông báo thay đổi trạng thái</h4>
+
+      <p class="no-indent">Đối với bộ nhớ đệm dữ liệu tổ chức, bạn sẽ dùng Redis (<a href="http://redis.io/">http://redis.io/</a>), một cơ sở dữ liệu lưu trữ key-value phân tán. Hình 8.1 cung cấp cái nhìn tổng quan cấp cao về cách xây dựng giải pháp bộ nhớ đệm bằng mô hình lập trình request-response đồng bộ truyền thống.</p>
+
+      <p>Trong hình 8.1, khi người dùng gọi licensing service, licensing service cũng cần tra cứu dữ liệu tổ chức. Licensing service trước tiên sẽ kiểm tra để lấy tổ chức mong muốn theo ID của nó từ cluster Redis. Nếu licensing service không tìm thấy dữ liệu tổ chức, nó sẽ gọi organization service bằng REST endpoint</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

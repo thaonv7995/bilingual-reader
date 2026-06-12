@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 4: Using pgAdmin (cont.)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 2mm auto 1.5mm;
+      max-width: 48%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 1mm;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0092.html">← Trước</a>
+    <a href="page_0094.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">93</span>
+      </header>
+
+      <p class="no-indent">Nếu bạn chọn chạy các công việc theo lô, cú pháp phải cụ thể cho hệ điều hành đang chạy công việc.
+      Ví dụ, nếu pgAgent của bạn đang chạy trên Windows, các công việc theo lô của bạn nên có các lệnh DOS hợp lệ. Nếu bạn đang trên Linux, các công việc theo lô của bạn nên có các lệnh shell hoặc Bash hợp lệ.</p>
+
+      <p>Các bước được thực hiện theo thứ tự chữ cái, và bạn có thể quyết định loại hành động nào bạn muốn thực hiện khi thành công hoặc thất bại của từng bước. Bạn có tùy chọn vô hiệu hóa các bước mà nên giữ nguyên nhưng bạn không muốn xóa vì bạn có thể kích hoạt lại chúng sau này.</p>
+
+      <p>Khi bạn đã chuẩn bị các bước, hãy tiến hành thiết lập một lịch trình để chạy chúng. Bạn có thể thiết lập các lịch trình phức tạp với màn hình lập lịch. Bạn thậm chí có thể thiết lập nhiều lịch trình.</p>
+
+      <p>Nếu bạn đã cài đặt pgAgent trên nhiều máy chủ và có tất cả chúng đều trỏ đến cùng một cơ sở dữ liệu pgAgent, tất cả các tác nhân này theo mặc định sẽ thực hiện tất cả các công việc.</p>
+
+      <p>Nếu bạn muốn chạy công việc chỉ trên một máy cụ thể, hãy điền vào trường tác nhân máy chủ khi tạo công việc. Các tác nhân chạy trên các máy chủ khác sẽ bỏ qua công việc nếu nó không khớp với tên máy chủ của chúng.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0093_icon_tip.png" width="43" height="57" alt="Mẹo">
+        </figure>
+        <p class="callout-text">pgAgent bao gồm hai phần: dữ liệu định nghĩa các công việc và ghi lại công việc. Thông tin ghi lại nằm trong lược đồ pgAgent,
+        thường là trong cơ sở dữ liệu postgres; các tác nhân công việc truy vấn các công việc để tìm công việc tiếp theo để chạy và sau đó chèn thông tin ghi lại liên quan vào cơ sở dữ liệu. Thông thường, cả máy chủ PostgreSQL giữ dữ liệu và tác nhân công việc thực hiện các công việc đều nằm trên cùng một máy chủ, nhưng điều này không bắt buộc. Thêm vào đó, một máy chủ PostgreSQL duy nhất có thể phục vụ nhiều tác nhân công việc nằm trên các máy chủ khác nhau.</p>
+      </div>
+
+      <p>Một công việc đã được hình thành đầy đủ được hiển thị trong <span class="accent-word">Hình 4-19</span>.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0093_fig_4_19.png" width="1246" height="244" alt="Hình 4-19. Các công việc pgAgent trong pgAdmin">
+        <figcaption>Hình 4-19. Các công việc pgAgent trong pgAdmin</figcaption>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Lập lịch công việc với pgAgent<span class="sep">|</span>75</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

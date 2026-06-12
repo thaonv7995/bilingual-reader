@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub + h3.section-title.section-title--sub {
+      margin-top: 4mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0670.html">← Trước</a>
+    <a href="page_0672.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">671</span>
+      </header>
+
+      <p class="no-indent">chỉ là <code>simpleinterest</code> để giảm bớt sự rườm rà và giúp dễ dàng chạy thử mã nguồn mà tôi sắp trình bày ở đây. Chúng ta cũng hãy quyết định rằng FQCN của lớp (class) chúng ta sẽ là <code>simpleinterest.SimpleInterestCalculator</code>&nbsp;thay vì <code>com.abc.finance.calculators.simpleinterest.SimpleInterestCalculator</code>&nbsp;vì cùng lý do đó. Lưu ý rằng không có mối quan hệ nào giữa tên module và (các) tên package của (các) lớp (class) chứa trong module đó. Tuy nhiên, vì cả hai đều tuân theo quy ước đặt tên miền ngược, chúng rất có thể sẽ giống nhau.</p>
+
+      <p>Kỳ thi yêu cầu bạn phải có khả năng xác định các tên module hợp lệ và không hợp lệ. Như đã giải thích ở trên, các quy tắc đặt tên cho một module cũng giống như các quy tắc đặt tên cho một package. Do đó, ví dụ, các tên sau đây là những tên module hợp lệ: <code>a</code>&nbsp;(độ dài không quan trọng),&nbsp;<code>_m</code>&nbsp;(có thể bắt đầu bằng và chứa dấu _),&nbsp;<code>n$</code>&nbsp;(có thể bắt đầu bằng và chứa dấu $),&nbsp;<code>x1</code>&nbsp;(có thể chứa chữ số) và <code>a.b</code>&nbsp;(có thể chứa dấu chấm) nhưng những tên sau đây là không hợp lệ: <code>1x</code>&nbsp;(không thể bắt đầu bằng chữ số),&nbsp;<code>a-b</code>&nbsp;(không thể chứa dấu gạch ngang), và <code>a..b</code>&nbsp;(không thể chứa các dấu chấm liên tiếp).</p>
+
+      <h3 class="section-title section-title--sub">Bộ mô tả module<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Bạn có nhớ tôi đã nói về việc thiếu một cách thức chính thức nào để mô tả một package không? Đây chính là điểm mà một module khác biệt so với một package. Bộ mô tả module là cách thức chính thức để mô tả một module. Mỗi module phải có một bộ mô tả module chỉ định tên của module, những gì nó cung cấp và những gì nó yêu cầu. Một bộ mô tả module không gì khác ngoài một tệp có tên là <code>module-info.java</code>. Đúng vậy, phần mở rộng của tệp là <code>java</code>. Nó là một tệp Java sẽ được biên dịch để tạo ra một tệp class có tên là <code>module-info.class</code>. Khi chúng ta nói về một module, đó thường là bộ mô tả mà chúng ta đề cập đến. Thật vậy, bản thân module là một chiếc hộp đen và bộ mô tả module là tất cả những gì người dùng cần quan tâm. Trong trường hợp của chúng ta, nội dung của bộ mô tả module sẽ như sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>//in file module-info.java
+module simpleinterest{
+}</code></pre>
+      </figure>
+
+      <p>Không có nhiều thứ trong bộ mô tả module này. Tất cả những gì nó chỉ ra là đây là một module tên là <code>simpleinterest</code>. Nhưng dù sao thì nó vẫn là một bộ mô tả module hợp lệ và nó minh họa</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

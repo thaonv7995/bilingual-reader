@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 13: Triển khai tính kế thừa (Inheritance)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--minor {
+      font-size: 12pt;
+      line-height: 1.42;
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon,
+    .prose-page.ocp-chapter-page p.no-indent .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet {
+      margin: 0 0 3.2mm;
+    }
+
+    .prose-page.ocp-chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 3mm 4mm;
+      background: #e8eef5;
+      border-left: 0.8mm solid #1e40af;
+      font-size: 9.8pt;
+      line-height: 1.35;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page p code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0118.html">← Trước</a>
+    <a href="page_0120.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">119</span>
+      </header>
+
+      <p class="no-indent">và không phải là một <code>Mango</code> lúc runtime. Vì vậy, về cơ bản, chúng ta vừa đánh lừa compiler chấp nhận đoạn mã bằng cách đưa ra một cam kết giả. Đành rằng chúng ta đã lừa được compiler, nhưng chúng ta không thể lừa được JVM. JVM biết rõ <code>f1</code> thực sự trỏ đến loại đối tượng (object) nào và nó sẽ không cho phép việc ép kiểu từ <code>f1</code> sang <code>Mango</code> thành công. JVM sẽ ném ra một <code>ClassCastException</code> khi thực thi dòng này.</p>
+
+      <p>JVM về bản chất là hàng phòng ngự thứ hai chống lại việc vi phạm tính an toàn kiểu (type safety) của Java. Nó kiểm tra lúc runtime những gì mà compiler không thể kiểm tra lúc compile time. Nếu JVM nhận thấy một biến tham chiếu đang được ép kiểu sang một kiểu không thỏa mãn phép kiểm tra is-a đối với Lớp (Class) của Đối tượng (Object) mà biến đó đang trỏ tới, nó sẽ ném ra một <code>ClassCastException</code>. Nhờ vậy, tính an toàn kiểu (type safety) của chương trình không bao giờ bị xâm phạm.</p>
+
+      <p>Đánh lừa compiler trong trường hợp này không có nghĩa là bạn có thể đánh lừa compiler bằng cách đưa ra một cam kết giả trong mọi lúc. Hãy quan sát đoạn mã sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>Mango m = new Mango();
+Apple a = (Apple) m;</code></pre>
+      </figure>
+
+      <p>Compiler từ chối đoạn mã trên bất kể việc bạn cam kết rằng <code>m</code> sẽ trỏ đến một <code>Apple</code> lúc runtime. Thực ra, compiler không hề "mù tịt". Nó biết chắc chắn rằng không có cách nào <code>m</code> có thể trỏ đến một <code>Apple</code> vì Lớp (Class) được khai báo của <code>m</code> là <code>Mango</code> và không có mối quan hệ is-a giữa <code>Mango</code> và <code>Apple</code>. Nó biết rằng bất cứ thứ gì là <code>Mango</code> không bao giờ có thể là <code>Apple</code>, và vì thế nó lật tẩy trò lừa của bạn. Do đó, để một phép ép kiểu vượt qua quá trình biên dịch, phép ép kiểu đó ít nhất phải hợp lý!</p>
+
+      <h3 class="section-title section-title--minor">Ép kiểu một tham chiếu sang một Interface (Giao diện)<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p class="no-indent">Compiler rất dễ dàng xác định xem liệu một tham chiếu của một Lớp (Class) này có thể trỏ tới một Đối tượng (Object) của một Lớp (Class) khác hay không, bởi vì một Lớp (Class) chỉ có thể kế thừa tối đa một Lớp (Class) khác. Do đó, nếu Lớp (Class) được đề cập trong phép ép kiểu là một Lớp con (Subclass) của Lớp (Class) được khai báo của tham chiếu đó, compiler biết rằng phép ép kiểu có thể thành công lúc runtime.</p>
+
+      <p>Mọi chuyện không hề dễ dàng như vậy đối với các Interface (Giao diện). Vì một Lớp (Class) vừa có thể kế thừa một Lớp (Class) và vừa có thể triển khai (implement) đồng thời bao nhiêu Interface (Giao diện) tùy ý, compiler không thể loại trừ các trường hợp một tham chiếu không bao giờ trỏ tới một thực thể (instance) của một Lớp (Class) triển khai</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

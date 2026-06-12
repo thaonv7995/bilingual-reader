@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Sử dụng Spring Cloud configuration server với hệ thống tệp</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .listing-annotated {
+      display: grid;
+      grid-template-columns: minmax(0, 52%) minmax(0, 48%);
+      gap: 0 2mm;
+      margin: 0 0 2.5mm;
+      align-items: start;
+    }
+    .prose-page.chapter-page .listing-annotated figure.listing {
+      max-width: 100%;
+    }
+    .prose-page.chapter-page .listing-callouts {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-top: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      background: #e8e8e8;
+      border: 0.35pt solid #bbb;
+      font-size: 9.5pt;
+      line-height: 1.32;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(1) {
+      margin-bottom: 8mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(2) {
+      margin-bottom: 10mm;
+    }
+    .prose-page.chapter-page .listing-callout:nth-child(3) {
+      margin-bottom: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0099.html">← Trước</a>
+    <a href="page_0101.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">75</span>
+        <span class="rh-center">Xây dựng máy chủ cấu hình Spring Cloud</span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Tiếp theo, bạn sẽ thiết lập Spring Cloud configuration server với ví dụ đơn giản nhất của chúng ta: hệ thống tệp.</p>
+
+      <h4 class="subsection-title">3.2.2 Sử dụng Spring Cloud configuration server với hệ thống tệp</h4>
+
+      <p>Spring Cloud configuration server sử dụng một mục trong tệp <code>confsvr/src/main/resources/application.yml</code> để trỏ đến kho sẽ chứa dữ liệu cấu hình ứng dụng. Thiết lập kho dựa trên hệ thống tệp là cách dễ nhất để thực hiện việc này.</p>
+
+      <p>Để làm điều này, hãy thêm thông tin sau vào tệp <code>application.yml</code> của máy chủ cấu hình. Bảng liệt kê sau đây trình bày nội dung tệp <code>application.yml</code> của Spring Cloud configuration server.</p>
+
+      <div class="listing-annotated">
+        <figure class="listing">
+          <figcaption><strong>Listing 3.3</strong><br>Tệp <code>application.yml</code> của Spring Cloud configuration</figcaption>
+          <pre class="code-block"><code>server:
+    port: 8888
+spring:
+   profiles:
+      active: native
+   cloud:
+      config:
+        server:
+            native:
+              searchLocations: file:///Users/johncarnell1/book/
+                native_cloud_apps/ch4-config-managment/confsvr/src/main/
+                resources/config/licensingservice</code></pre>
+        </figure>
+        <div class="listing-callouts" aria-label="Chú thích cho Listing 3.3">
+          <p class="listing-callout">Cổng mà Spring Cloud configuration server sẽ lắng nghe</p>
+          <p class="listing-callout">Kho back end (hệ thống tệp) được dùng để lưu trữ cấu hình</p>
+          <p class="listing-callout">Đường dẫn đến nơi các tệp cấu hình được lưu trữ</p>
+        </div>
+      </div>
+
+      <p>Trong tệp cấu hình ở bảng liệt kê này, bạn bắt đầu bằng cách cho máy chủ cấu hình biết số cổng mà nó nên lắng nghe cho mọi yêu cầu cấu hình:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>server:
+   port: 8888</code></pre>
+      </figure>
+
+      <p>Vì bạn đang dùng hệ thống tệp để lưu trữ thông tin cấu hình ứng dụng, bạn cần yêu cầu Spring Cloud configuration server chạy với profile &ldquo;native&rdquo;:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>profiles:
+   active: native</code></pre>
+      </figure>
+
+      <p>Phần cuối cùng trong tệp <code>application.yml</code> cung cấp cho Spring Cloud configuration thư mục nơi dữ liệu ứng dụng được lưu:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>server:
+   native:
+      searchLocations: file:///Users/johncarnell1/book/spmia_code/chapter3-
+     code/confsvr/src/main/resources/config</code></pre>
+      </figure>
+
+      <p>Tham số quan trọng trong mục cấu hình là thuộc tính <code>searchLocations</code>. Thuộc tính này cung cấp danh sách các thư mục được phân tách bằng dấu phẩy cho mỗi</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 5: Lợi ích của circuit breaker và Hystrix</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page ol.manning-numbered {
+      margin: 0 0 2.8mm;
+      padding: 0;
+      list-style: none;
+      counter-reset: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li {
+      position: relative;
+      margin: 0 0 1.5mm;
+      padding-left: 5mm;
+      text-align: justify;
+      text-indent: 0;
+      counter-increment: manning-num;
+    }
+    .prose-page.chapter-page ol.manning-numbered li::before {
+      content: counter(manning-num);
+      position: absolute;
+      left: 0;
+      top: 0.2mm;
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #cc7919;
+    }
+    .prose-page.chapter-page ol.manning-numbered .run-in {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0150.html">← Trước</a>
+    <a href="page_0152.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">126</span>
+        <span class="rh-center">CHƯƠNG 5 <em>Khi sự cố xảy ra: các mẫu khả năng phục hồi phía client với Spring Cloud và Netflix</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">Service B vẫn sẽ nhận lỗi từ cuộc gọi, nhưng Service B sẽ không bị chiếm dụng tài nguyên (tức là thread hoặc pool kết nối của chính nó) để chờ Service C hoàn thành. Nếu cuộc gọi tới Service C bị circuit breaker hết thời gian chờ, circuit breaker sẽ bắt đầu theo dõi số lần lỗi đã xảy ra.</p>
+
+      <p>Nếu đủ nhiều lỗi trên dịch vụ xảy ra trong một khoảng thời gian nhất định, circuit breaker sẽ kích hoạt mạch và mọi cuộc gọi tới Service C sẽ thất bại mà không thực sự gọi Service C.</p>
+
+      <p class="no-indent">Việc kích hoạt mạch này cho phép ba điều xảy ra:</p>
+
+      <ol class="manning-numbered" aria-label="Những gì việc kích hoạt mạch cho phép">
+        <li>Service B lập tức biết có vấn đề mà không phải chờ timeout từ circuit breaker.</li>
+        <li>Service B giờ có thể chọn hoặc thất bại hoàn toàn, hoặc thực hiện hành động bằng một bộ mã thay thế (fallback).</li>
+        <li>Service C sẽ được cơ hội phục hồi vì Service B không gọi nó trong khi circuit breaker đã được kích hoạt. Điều này cho phép Service C có không gian thở và giúp ngăn chặn hiệu ứng sụp đổ dây chuyền xảy ra khi một dịch vụ suy giảm.</li>
+      </ol>
+
+      <p>Cuối cùng, circuit breaker sẽ thỉnh thoảng cho phép các cuộc gọi đi qua tới một dịch vụ đang suy giảm, và nếu các cuộc gọi đó thành công đủ số lần liên tiếp, circuit breaker sẽ tự đặt lại.</p>
+
+      <p class="no-indent">Điều quan trọng mà pattern circuit breaker mang lại là khả năng cho các cuộc gọi từ xa</p>
+
+      <ol class="manning-numbered" aria-label="Lợi ích của pattern circuit breaker">
+        <li><strong class="run-in">Fail fast</strong>&mdash;Khi một dịch vụ từ xa đang suy giảm, ứng dụng sẽ fail fast và ngăn các vấn đề cạn kiệt tài nguyên thường làm sập toàn bộ ứng dụng. Trong hầu hết tình huống sự cố, tốt hơn là một phần bị down thay vì down hoàn toàn.</li>
+        <li><strong class="run-in">Fail gracefully</strong>&mdash;Bằng cách timeout và fail fast, pattern circuit breaker cho nhà phát triển ứng dụng khả năng thất bại êm áo hoặc tìm cơ chế thay thế để thực hiện ý định của người dùng. Ví dụ, nếu người dùng đang cố lấy dữ liệu từ một nguồn dữ liệu, và nguồn dữ liệu đó đang suy giảm dịch vụ, thì nhà phát triển ứng dụng có thể thử lấy dữ liệu đó từ một vị trí khác.</li>
+        <li><strong class="run-in">Recover seamlessly</strong>&mdash;Với pattern circuit breaker đóng vai trò trung gian, circuit breaker có thể định kỳ kiểm tra xem tài nguyên được yêu cầu đã trở lại hoạt động chưa và kích hoạt lại quyền truy cập mà không cần can thiệp của con người.</li>
+      </ol>
+
+      <p>Trong một ứng dụng cloud quy mô lớn với hàng trăm dịch vụ, việc phục hồi êm áo này rất quan trọng vì nó có thể giảm đáng kể thời gian cần thiết để khôi phục dịch vụ và giảm đáng kể rủi ro một operator mệt mỏi hoặc kỹ sư ứng dụng gây thêm vấn đề lớn hơn khi can thiệp trực tiếp (khởi động lại một dịch vụ lỗi) trong quá trình khôi phục dịch vụ.</p>
+
+      <h4 class="subsection-title">5.3 Giới thiệu Hystrix</h4>
+
+      <p>Việc xây dựng triển khai của các pattern circuit breaker, fallback và bulkhead đòi hỏi am hiểu sâu về thread và quản lý thread. Thành thật mà nói, việc viết</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

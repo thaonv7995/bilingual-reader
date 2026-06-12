@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chương 3: Khởi động máy chủ cấu hình</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .callout-note {
+      margin: 0 0 2.5mm;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .callout-note p {
+      margin: 0;
+      text-indent: 0;
+      text-align: justify;
+    }
+    .prose-page.chapter-page .callout-label {
+      font-family: var(--font-ui);
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #476b85;
+      margin-right: 0.5em;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      margin-top: 1.5mm;
+      font-size: 9.5pt;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .prose-page.chapter-page figure.diagram + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0100.html">← Trước</a>
+    <a href="page_0102.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">76</span>
+        <span class="rh-center">CHƯƠNG 3 <em>Kiểm soát cấu hình với Spring Cloud configuration server</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">ứng dụng sẽ có các thuộc tính được quản lý bởi máy chủ cấu hình. Trong ví dụ trước, bạn chỉ cấu hình licensing service.</p>
+
+      <aside class="callout-note" aria-label="Lưu ý">
+        <p class="no-indent"><strong class="callout-label">LƯU Ý</strong> Hãy lưu ý rằng nếu bạn dùng phiên bản Spring Cloud Config dựa trên hệ thống tệp cục bộ, bạn sẽ cần sửa thuộc tính <code>spring.cloud.config.server.native.searchLocations</code> để phản ánh đường dẫn tệp cục bộ của bạn khi chạy mã cục bộ.</p>
+      </aside>
+
+      <p>Bạn đã hoàn thành đủ công việc để khởi động máy chủ cấu hình. Hãy khởi động máy chủ cấu hình bằng lệnh <code>mvn spring-boot:run</code>. Máy chủ sẽ hiển thị màn hình splash của Spring Boot trên dòng lệnh. Nếu bạn truy cập <code>http://localhost:8888/licensingservice/default</code> trên trình duyệt, bạn sẽ thấy payload JSON được trả về với tất cả các thuộc tính có trong tệp <code>licensingservice.yml</code>. Hình 3.4 cho thấy kết quả khi gọi endpoint này.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0101_fig_3_4.png" width="1313" height="662" alt="Hình 3.4 — Truy xuất thông tin cấu hình mặc định cho licensing service">
+        <figcaption><strong>Hình 3.4</strong><br>Truy xuất thông tin cấu hình mặc định cho licensing service</figcaption>
+      </figure>
+
+      <p class="no-indent">Nếu bạn muốn xem thông tin cấu hình cho môi trường licensing service dựa trên dev, hãy gọi endpoint GET <code>http://localhost:8888/licensingservice/dev</code>. Hình 3.5 cho thấy kết quả khi gọi endpoint này.</p>
+
+      <p>Nếu bạn nhìn kỹ, bạn sẽ thấy rằng khi gọi endpoint dev, bạn nhận về cả các thuộc tính cấu hình mặc định cho licensing service và cấu hình licensing service dev. Lý do Spring Cloud configuration trả về cả hai bộ thông tin cấu hình là vì Spring framework triển khai cơ chế phân cấp để giải quyết thuộc tính. Khi Spring Framework</p>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

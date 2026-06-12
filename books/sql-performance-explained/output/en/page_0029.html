@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL Performance Explained — Slow Indexes, Part II</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    .prose-page {
+      font-size: 10pt;
+      line-height: 1.45;
+      padding: 12mm var(--book-margin-x) 16mm;
+    }
+
+    .prose-page .running-head {
+      margin: 0 0 3mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      color: var(--book-ink);
+    }
+
+    .prose-page .chapter-running-head {
+      margin: 0 0 4mm;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-indent: 0;
+    }
+
+    .prose-page code {
+      font-family: "Inconsolata", "Courier New", Courier, monospace;
+      font-size: 9.5pt;
+      font-weight: 400;
+    }
+
+    .prose-page figure.code-snippet,
+    .prose-page figure.listing {
+      margin: 0 0 3.5mm;
+    }
+
+    .prose-page figure.listing figcaption {
+      margin: 0 0 2mm;
+      font-size: 10pt;
+      font-weight: 700;
+      text-indent: 0;
+    }
+
+    .prose-page figure.code-snippet pre.code-block,
+    .prose-page figure.listing pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+
+    .chapter-rule {
+      border: none;
+      border-top: 0.35pt solid var(--book-rule);
+      margin: 0;
+      height: 0;
+    }
+
+    .chapter-rule--foot {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 14mm;
+    }
+
+    .prose-page .page-folio {
+      position: absolute;
+      bottom: 12mm;
+      right: var(--book-margin-x);
+      left: auto;
+      margin: 0;
+      text-align: right;
+      font-family: var(--font-ui);
+      font-size: 10pt;
+      font-variant: small-caps;
+      font-style: normal;
+    }
+
+    @media print {
+      .book-page {
+        height: 296mm;
+      }
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">SQL Performance Explained</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">29</span>
+      </header>
+      <p class="chapter-running-head">Slow Indexes, Part II</p>
+
+      <p class="no-indent">Changing an index might have unpleasant side effects as well. In our example, it is the internal telephone directory application that has become very slow since the merger. The first analysis identified the following query as the cause for the slowdown:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT first_name, last_name, subsidiary_id, phone_number
+  FROM employees
+ WHERE last_name  = 'WINAND'
+   AND subsidiary_id = 30;</code></pre>
+      </figure>
+
+      <p>The execution plan is:</p>
+
+      <figure class="listing">
+        <figcaption>Example&nbsp;2.1.&nbsp;Execution Plan with Revised Primary Key Index</figcaption>
+        <pre class="code-block"><code>---------------------------------------------------------------
+|Id |Operation                   | Name         | Rows | Cost |
+---------------------------------------------------------------
+| 0 |SELECT STATEMENT            |              |    1 |   <strong>30</strong> |
+|*1 | TABLE ACCESS BY INDEX ROWID| EMPLOYEES    |    1 |   30 |
+|*2 |  <strong>INDEX RANGE SCAN</strong>          | <strong>EMPLOYEES_PK</strong> |   40 |    2 |
+---------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+  1 - filter("LAST_NAME"='WINAND')
+  2 - access("SUBSIDIARY_ID"=30)</code></pre>
+      </figure>
+
+      <p>The execution plan uses an index and has an overall cost value of 30. So far, so good. It is however suspicious that it uses the index we just changed&mdash;that is enough reason to suspect that our index change caused the performance problem, especially when bearing the old index definition in mind&mdash;it started with the <code>EMPLOYEE_ID</code> column which is not part of the <strong>where</strong> clause at all. The query could not use that index before.</p>
+
+      <p>For further analysis, it would be nice to compare the execution plan before and after the change. To get the original execution plan, we could just deploy the old index definition again, however most databases offer a simpler method to prevent using an index for a specific query. The following example uses an Oracle <em>optimizer hint</em> for that purpose.</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT <strong>/*+ NO_INDEX(EMPLOYEES EMPLOYEE_PK) */</strong>
+       first_name, last_name, subsidiary_id, phone_number
+  FROM employees
+ WHERE last_name  = 'WINAND'
+   AND subsidiary_id = 30;</code></pre>
+      </figure>
+
+      <hr class="chapter-rule chapter-rule--foot" aria-hidden="true">
+      <p class="page-folio">19</p>
+    </article>
+  </main>
+</body>
+</html>

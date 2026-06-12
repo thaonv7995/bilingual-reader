@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 9: Tối ưu hóa hiệu suất truy vấn — Tránh SELECT *</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 5mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + figure.code-snippet {
+      margin-top: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 0 auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 0.5mm;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0 0 0 5mm;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page figure.code-snippet--sql pre.code-block {
+      font-size: 9pt;
+      line-height: 1.2;
+      padding: 0;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page figure.code-snippet pre.code-block code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page figure.code-snippet--sql pre.code-block code {
+      font-size: 9pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0192.html">← Trước</a>
+    <a href="page_0194.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">193</span>
+      </header>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0193_fig_9_6.png" width="1246" height="83" alt="Hình 9-6. Kế hoạch đồ họa của việc loại bỏ các truy vấn con">
+        <figcaption>Hình 9-6. Kế hoạch đồ họa của việc loại bỏ các truy vấn con</figcaption>
+      </figure>
+
+      <p class="no-indent">Hãy nhớ rằng chúng tôi không yêu cầu bạn tránh hoàn toàn các truy vấn con. Chúng tôi chỉ yêu cầu
+      bạn sử dụng chúng một cách thận trọng. Khi bạn sử dụng chúng, hãy chú ý đến cách bạn
+      tích hợp chúng vào truy vấn chính. Cuối cùng, hãy nhớ rằng một truy vấn con nên hoạt động
+      cùng với truy vấn chính, không độc lập với nó.</p>
+
+      <h3 class="section-title">Tránh SELECT *</h3>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT * là lãng phí. Nó giống như việc in ra một tài liệu 1.000 trang khi bạn chỉ cần
+10 trang.</code></pre>
+      </figure>
+
+      <p class="no-indent">Ngoài nhược điểm rõ ràng là làm tăng lưu lượng mạng, còn có hai
+      nhược điểm khác mà bạn có thể không nghĩ đến.</p>
+
+      <p>Đầu tiên, PostgreSQL lưu trữ các đối tượng blob và văn bản lớn bằng cách sử dụng TOAST (Kỹ thuật
+      Lưu trữ Thuộc tính Quá lớn). TOAST duy trì các bảng phụ để PostgreSQL lưu trữ dữ liệu
+      bổ sung này. Vì vậy, việc truy xuất một trường lớn có nghĩa là TOAST phải tập hợp dữ liệu từ
+      các hàng trên các bảng khác nhau. Hãy tưởng tượng về việc xử lý thêm nếu bảng của bạn chứa dữ liệu văn bản
+      có kích thước như "Chiến tranh và Hòa bình" và bạn thực hiện một SELECT * không cần thiết.</p>
+
+      <p>Thứ hai, khi bạn định nghĩa các view, bạn thường sẽ bao gồm nhiều cột hơn mức cần thiết.
+      Bạn thậm chí có thể sử dụng SELECT * bên trong một view. Điều này là dễ hiểu và
+      hoàn toàn hợp lý. PostgreSQL đủ thông minh để cho phép bạn yêu cầu tất cả các cột bạn muốn
+      trong định nghĩa view của bạn và thậm chí bao gồm các phép tính phức tạp hoặc các phép nối mà không bị
+      phạt, miễn là không có người dùng nào chạy một truy vấn tham chiếu đến các cột đó.</p>
+
+      <p>Để nhấn mạnh quan điểm của chúng tôi, hãy bao bọc cuộc điều tra của chúng tôi trong một view và sử dụng ví dụ truy vấn con chậm
+      từ <span class="accent-word">Ví dụ 9-12</span>:</p>
+
+      <figure class="code-snippet code-snippet--sql">
+        <pre class="code-block"><code>CREATE OR REPLACE VIEW vw_stats AS
+SELECT tract_id,
+    (SELECT COUNT(*) FROM census.facts As F WHERE F.tract_id = T.tract_id) As
+num_facts,
+    (SELECT COUNT(*)
+    FROM census.lu_fact_types As Y
+    WHERE Y.fact_type_id IN (
+        SELECT fact_type_id
+        FROM census.facts F
+        WHERE F.tract_id = T.tract_id
+    )</code></pre>
+      </figure>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Viết Truy vấn Tốt hơn<span class="sep">|</span>175</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

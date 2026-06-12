@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 23: Sử dụng Module</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title {
+      margin: 0 0 3mm;
+      font-family: var(--font-display);
+      font-size: 18pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub {
+      font-size: 14pt;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title .section-icon {
+      margin-left: 1.5mm;
+      color: #ea580c;
+      font-size: inherit;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page p + h3.section-title {
+      margin-top: 6mm;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title + p,
+    .prose-page.ocp-chapter-page h3.section-title + h3.section-title {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page h3.section-title.section-title--sub + h3.section-title.section-title--sub {
+      margin-top: 4mm;
+    }
+
+    .prose-page.ocp-chapter-page p code,
+    .prose-page.ocp-chapter-page h3.section-title code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0669.html">← Trước</a>
+    <a href="page_0671.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">670</span>
+      </header>
+
+      <p class="no-indent">Đây chính là lúc các module phát huy vai trò. Một module cung cấp một cách thức để phân phối chức năng trong một artifact duy nhất, bao gồm không chỉ mã nguồn mà còn cả thông tin về các dịch vụ mà mã nguồn đó cung cấp và bất kỳ dependency nào mà nó có thể có.</p>
+
+      <p>Do đó, nếu bạn là nhà phát triển của một chức năng nào đó, bạn vẫn sẽ tổ chức mã nguồn của mình thành các package. Nhưng sau đó, bạn cũng sẽ đóng gói tất cả các Lớp (Class) của mình (và bất kỳ Resource (Tài nguyên) nào khác như các tệp hình ảnh, tệp xml, hoặc tệp property) được sử dụng để triển khai chức năng này vào một file phân phối (deliverable) duy nhất cùng với phần mô tả về chức năng đó và các dependency của nó theo định dạng quy định dưới dạng một module. Nói cách khác, các module không phải là một sự thay thế cho các package mà là một phần bổ sung phía trên các package.</p>
+
+      <p>Hệ thống module Java (Java module system) là một chủ đề khá rộng lớn với các cuốn sách chuyên biệt được viết để bao quát nó. Tuy nhiên, kỳ thi OCP Java chỉ tập trung vào những điều cơ bản của hệ thống module Java.</p>
+
+      <h3 class="section-title section-title--sub">23.1.2 Khai báo một module<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Vì một module là một đơn vị chức năng logic dưới góc nhìn của người dùng, tốt nhất là trước tiên nên xác định chức năng mà chúng ta muốn phân phối dưới dạng một module. Ví dụ, giả sử chúng ta đang phát triển một ứng dụng tài chính và một trong các chức năng của nó là tính lãi đơn (simple interest). Chúng ta muốn phân phối trình tính lãi đơn này dưới dạng một module.</p>
+
+      <h3 class="section-title section-title--sub">Đặt tên cho một module<span class="section-icon" aria-hidden="true">☝</span></h3>
+
+      <p>Tên module tuân theo các quy tắc và quy ước tương tự như bạn đã thấy đối với việc đặt tên cho các package và Lớp (Class) trước đó. Do đó, một tên package hợp lệ sẽ là một tên module hợp lệ. Nói ngắn gọn, tên phải là một định danh Java (Java identifier) hợp lệ (do đó, các ký tự đặc biệt như dấu gạch ngang và dấu gạch chéo sẽ bị loại bỏ, nhưng dấu gạch dưới và dấu chấm thì được chấp nhận) và nó nên tuân theo mô hình tên miền ngược (reverse domain name pattern) để tránh xung đột tên. Lý tưởng nhất, tên module phải đủ tính mô tả để cho người dùng biết mục đích và/hoặc chức năng của module đó thay vì quá chung chung như <code>tools</code> hoặc <code>utils</code>. Vì vậy, <code>com.abc.finance.calculators.simpleinterest</code> sẽ là một cái tên phù hợp cho module của chúng ta.</p>
+
+      <p>Tuy nhiên, đối với mục đích của chương này, tôi sẽ đặt tên cho module là</p>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

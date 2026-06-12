@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 9: Query Performance Tuning — Tabular EXPLAIN and pg_stat_statements</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 1mm auto 1.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 0.5mm;
+    }
+    .prose-page.chapter-page ol.numbered {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+    }
+    .prose-page.chapter-page ol.numbered > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio-left {
+      position: absolute;
+      left: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio-left .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0183.html">← Prev</a>
+    <a href="page_0185.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">184</span>
+      </header>
+
+      <p class="no-indent">exclusive time (time consumed by the parent step) and inclusive time (the time of the
+      parent step plus its child steps).</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0184_fig_9_3.png" width="1246" height="380" alt="Figure 9-3. Tabular explain output">
+        <figcaption>Figure 9-3. Tabular explain output</figcaption>
+      </figure>
+
+      <p>Although the HTML table in <span class="accent-word">Figure 9-3</span> provides much the same information as our
+      plain-text output, the color coding and breakout of numbers makes it easier to see where
+      our estimates are off. For example, yellow, brown, and red highlight areas where you
+      should focus.</p>
+
+      <p>The rows x column is the expected number of rows, while the rows column shows the
+      actual number. This reveals that although our final step was expecting 192 records, it
+      received just one, and the bitmap scan returned 203 false positives caught by the recheck.
+      Bad row estimates often stem from out-of-date table statistics. It&rsquo;s always a good idea to
+      run an analysis on tables before a long query to update the statistics.</p>
+
+      <h3 class="subsection-title">Gathering Statistics on Statements</h3>
+
+      <p class="no-indent">The first step in optimizing performance is to determine which queries are bottlenecks.
+      One monitoring extension useful for getting a handle on your most costly queries is
+      <code>pg_stat_statements</code>. This extension provides metrics on running queries: which are the
+      most frequently run queries and how long each takes. Studying these metrics will help
+      you determine where you need to focus your query optimization efforts.</p>
+
+      <p><code>pg_stat_statements</code> comes packaged with most PostgreSQL distributions but must be
+      preloaded on startup to initiate its data-collection process:</p>
+
+      <ol class="numbered">
+        <li>In <code>postgresql.conf</code>, change <code>shared_preload_libraries = ''</code> to <code>shared_preload_libraries = 'pg_stat_statements'</code>.</li>
+        <li>In the customized options section of <code>postgresql.conf</code>, add the lines:</li>
+      </ol>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio-left no-indent">166<span class="sep">|</span>Chapter 9: Query Performance Tuning</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

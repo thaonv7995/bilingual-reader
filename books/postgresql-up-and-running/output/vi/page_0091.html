@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chương 4: Sử dụng pgAdmin (tiếp theo)</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.section-title {
+      margin: 4mm 0 2.5mm;
+      font-family: var(--font-ui);
+      font-size: 18.9pt;
+      font-weight: 700;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.section-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 4mm 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.diagram {
+      margin: 2mm auto 1.5mm;
+      max-width: 48%;
+    }
+    .prose-page.chapter-page figure.diagram img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .prose-page.chapter-page figure.diagram figcaption {
+      font-style: italic;
+      font-size: 10.5pt;
+      text-align: left;
+      margin-top: 1mm;
+    }
+    .prose-page.chapter-page p code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page a.accent-word,
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0090.html">← Trước</a>
+    <a href="page_0092.html">Tiếp theo →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">91</span>
+      </header>
+
+      <h3 class="section-title">Lập lịch công việc với pgAgent</h3>
+      <p class="no-indent">pgAgent là một tiện ích hữu ích để lập lịch các công việc PostgreSQL. Nhưng nó cũng có thể thực thi các
+      tập lệnh hàng loạt trong hệ điều hành, thay thế crontab trên Linux/Unix và trình lập lịch tác vụ trên Windows.
+      pgAgent còn tiến xa hơn: bạn có thể lập lịch các công việc chạy trên bất kỳ máy chủ nào khác bất kể
+      hệ điều hành. Tất cả những gì bạn cần làm là cài đặt dịch vụ pgAgent trên máy chủ và chỉ định nó sử dụng một
+      cơ sở dữ liệu PostgreSQL cụ thể với các bảng và hàm pgAgent đã được cài đặt. Máy chủ Post‐
+      greSQL không bắt buộc, nhưng các thư viện kết nối khách hàng thì có. Bởi vì
+      pgAgent được xây dựng trên PostgreSQL, bạn có lợi thế bổ sung là có
+      quyền truy cập vào tất cả các bảng điều khiển tác nhân. Nếu bạn cần sao chép một công việc phức tạp
+      nhiều lần, bạn có thể trực tiếp vào các bảng cơ sở dữ liệu và chèn các
+      bản ghi cho các công việc mới, bỏ qua giao diện pgAdmin.</p>
+
+      <p>Chúng tôi sẽ giúp bạn bắt đầu với pgAgent trong phần này. Hãy truy cập <span class="accent-word">Cài đặt pgAgent và thực hiện
+      sao lưu theo lịch</span> để xem thêm các ví dụ làm việc và chi tiết về cách thiết lập nó.</p>
+
+      <h3 class="subsection-title">Cài đặt pgAgent</h3>
+      <p class="no-indent">Bạn có thể tải pgAgent từ <span class="accent-word">pgAgent Download</span>. Nó cũng có sẵn qua EDB
+      Application Stackbuilder thường được sử dụng để cài đặt PostgreSQL trên Windows. Tập lệnh cài đặt SQL đóng gói tạo ra một sơ đồ mới có tên pgAgent trong cơ sở dữ liệu post
+      gres. Khi bạn kết nối với máy chủ của mình qua pgAdmin, bạn sẽ thấy một phần mới
+      có tên Jobs, như được hiển thị trong <span class="accent-word">Hình 4-17</span>.</p>
+
+      <figure class="diagram">
+        <img src="../assets/images/page_0091_fig_4_17.png" width="1246" height="250" alt="Hình 4-17. pgAdmin với pgAgent đã được cài đặt">
+        <figcaption>Hình 4-17. pgAdmin với pgAgent đã được cài đặt</figcaption>
+      </figure>
+
+      <p>Nếu bạn muốn pgAgent chạy các công việc hàng loạt trên các máy chủ bổ sung, hãy làm theo các bước tương tự,
+      ngoại trừ bạn không cần cài đặt lại tập lệnh SQL đóng gói với pgAgent. Hãy chú ý đặc biệt
+      đến cài đặt quyền truy cập của hệ điều hành cho tài khoản dịch vụ/daemon pgAgent. Đảm bảo rằng mỗi tác nhân có đủ quyền
+      để thực thi các công việc hàng loạt mà bạn sẽ lập lịch.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0091_icon_warning.png" width="92" height="87" alt="Cảnh báo">
+        </figure>
+        <p class="callout-text">Các công việc hàng loạt thường thất bại trong pgAgent ngay cả khi chúng có thể chạy tốt từ
+        dòng lệnh. Điều này thường do vấn đề quyền truy cập. pgAgent
+        luôn chạy dưới cùng một tài khoản với dịch vụ/daemon pgAgent. Nếu tài khoản này không có đủ quyền hoặc các
+        ánh xạ đường dẫn mạng cần thiết, các công việc sẽ thất bại.</p>
+      </div>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">Lập lịch công việc với pgAgent<span class="sep">|</span>73</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>

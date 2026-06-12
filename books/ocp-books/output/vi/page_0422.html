@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCP Java 17 &amp; 21 — Chương 19: Sử dụng API Vào/Ra (I/O) Java</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+
+    .prose-page.ocp-chapter-page {
+      padding: 10mm var(--book-margin-x) 14mm;
+      font-family: var(--font-display);
+      font-size: 12pt;
+      line-height: 1.42;
+      color: #111117;
+    }
+
+    .prose-page.ocp-chapter-page .running-head {
+      display: none;
+    }
+
+    .prose-page.ocp-chapter-page p {
+      margin: 0 0 3.2mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+
+    .prose-page.ocp-chapter-page p.no-indent {
+      text-indent: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table {
+      width: 100%;
+      margin: 0 0 4mm;
+      border-collapse: collapse;
+      font-size: 12pt;
+      line-height: 1.35;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table th,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td {
+      border: 0.25mm solid #888;
+      padding: 1.5mm 2mm;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table th {
+      font-weight: 700;
+      background: transparent;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td p {
+      margin: 0 0 2mm;
+      text-indent: 0;
+      text-align: left;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table td p:last-child {
+      margin-bottom: 0;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class th.nio-file-ref-table__type,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class td.nio-file-ref-table__type {
+      width: 52%;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class th.nio-file-ref-table__methods,
+    .prose-page.ocp-chapter-page table.nio-file-ref-table--class td.nio-file-ref-table__methods {
+      width: 48%;
+    }
+
+    .prose-page.ocp-chapter-page table.nio-file-ref-table code {
+      font-family: var(--font-mono);
+      font-size: 10.8pt;
+      color: #988970;
+      font-weight: 400;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 10mm;
+      display: block;
+      margin: 0;
+      padding-top: 2.5mm;
+      border-top: 0.25mm solid #c5c9d0;
+      text-align: center;
+      font-family: var(--font-ui);
+      font-size: 9.5pt;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #64704b;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span {
+      display: block;
+    }
+
+    .prose-page.ocp-chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Điều hướng trang">
+    <a href="page_0421.html">← Trước</a>
+    <a href="page_0423.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page ocp-chapter-page">
+      <header class="running-head" aria-hidden="true">
+        <span class="rh-left"></span>
+        <span class="rh-center"></span>
+        <span class="rh-right">422</span>
+      </header>
+
+      <table class="data-table nio-file-ref-table nio-file-ref-table--class">
+        <tbody>
+          <tr>
+            <td class="nio-file-ref-table__type">
+              <p><code>Files</code></p>
+              <p>Chỉ chứa các phương thức static thao tác trên các tệp và thư mục.</p>
+            </td>
+            <td class="nio-file-ref-table__methods">
+              <p>Các phương thức để sao chép, tạo, xóa và di chuyển các tệp cũng như thư mục.</p>
+              <p>Các phương thức để liệt kê một thư mục - <code>Stream&lt;Path&gt; list(Path dir)</code></p>
+              <p>Các phương thức để đọc dữ liệu ký tự như <code>Stream&lt;String&gt; lines(Path path)</code>,
+              <code>List&lt;String&gt; readAllLines(Path path)</code>, <code>String readString(Path p)</code></p>
+              <p>Các phương thức để duyệt cây thư mục - <code>Stream&lt;Path&gt; walk(Path start, int maxDepth,
+              FileVisitOption... options)</code> và <code>Stream&lt;Path&gt; walk(Path start,
+              FileVisitOption... options)</code></p>
+              <p>Các phương thức để đọc dữ liệu nhị phân như <code>byte[] readAllBytes(Path p)</code></p>
+              <p>Các phương thức để lấy các reader và writer dạng stream cho dữ liệu nhị phân và ký tự như:</p>
+              <p><code>InputStream newInputStream(Path path, OpenOption... options)</code>,
+              <code>OutputStream newOutputStream(Path path, OpenOption... options)</code>,
+              <code>newBufferedReader(Path path)</code>, và <code>newBufferedWriter(Path path,
+              OpenOption... options)</code></p>
+              <p>Các phương thức để ghi dữ liệu ký tự và dữ liệu nhị phân vào tệp như
+              <code>write(Path path, Iterable lines, OpenOption... options)</code>,
+              <code>writeString(Path path, CharSequence csq, OpenOption... options)</code>,
+              <code>write(Path path, byte[] bytes, OpenOption... options)</code></p>
+              <p>Một số phương thức <code>isXXX()</code> để kiểm tra các thuộc tính tệp như
+              <code>isRegularFile</code>, <code>isReadable</code>, <code>isWritable</code>,
+              <code>isHidden</code>, và <code>isSymbolicLink</code>.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <footer class="book-footer">
+        <span>ORACLE CERTIFIED PROFESSIONAL • JAVA SE 17 &amp; 21 CERTIFICATION</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

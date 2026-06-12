@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spring Microservices in Action — Chapter 10: Listing 10.6 Docker Hub push script</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 14mm;
+      font-size: 10.5pt;
+      line-height: 1.4;
+    }
+    .prose-page.chapter-page .running-head {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #333;
+    }
+    .prose-page.chapter-page .running-head .rh-center em {
+      font-style: italic;
+      font-weight: 600;
+    }
+    .prose-page.chapter-page h4.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #476b85;
+    }
+    .prose-page.chapter-page h4.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+      text-indent: 1.25em;
+    }
+    .prose-page.chapter-page p.no-indent {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1.5mm;
+      padding-left: 1.25em;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block,
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      font-size: 9pt;
+      line-height: 1.22;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+    }
+    .prose-page.chapter-page p + h4.subsection-title,
+    .prose-page.chapter-page h4.subsection-title + p,
+    .prose-page.chapter-page p + figure.listing,
+    .prose-page.chapter-page figure.listing + p,
+    .prose-page.chapter-page p + figure.code-snippet,
+    .prose-page.chapter-page figure.code-snippet + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .book-footer {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 4mm;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #262626;
+    }
+    .prose-page.chapter-page .book-footer span:empty {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0346.html">← Prev</a>
+    <a href="page_0348.html">Next →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">322</span>
+        <span class="rh-center">CHAPTER 10 <em>Deploying your microservices</em></span>
+        <span class="rh-right"></span>
+      </header>
+
+      <p class="no-indent">This Maven command executes the parent Maven <code>spmia-chapter10-code/pom.xml</code> file for all of the services in the chapter 10 code repository. The parent <code>pom.xml</code> executes the individual Maven <code>pom.xml</code> for each service. Each individual service builds the service source code, executes any unit and integration tests, and then packages the service into an executable jar.</p>
+
+      <p>The last thing that happens in the Maven build is the creation of a Docker container image that&rsquo;s pushed to the local Docker repository running on your Travis build machine. The creation of the Docker image is carried out using the Spotify Docker plugin (<a href="https://github.com/spotify/docker-maven-plugin">https://github.com/spotify/docker-maven-plugin</a>). If you&rsquo;re interested in how the Spotify Docker plug-in works within the build process, please refer to appendix A, &ldquo;Setting up your desktop environment&rdquo;. The Maven build process and the Docker configuration are explained there.</p>
+
+      <h4 class="subsection-title">10.6.6 Pushing the images to Docker Hub</h4>
+
+      <p class="no-indent">At this point in the build, the services have been compiled and packaged and a Docker container image has been created on the Travis build machine. You&rsquo;re now going to push the Docker container image to a central Docker repository via your <code>travis_scripts/deploy_to_docker_hub.sh</code> script. A Docker repository is like a Maven repository for your created Docker images. Docker images can be tagged and uploaded to it, and other projects can download and use the images.</p>
+
+      <p>For this code example, you&rsquo;re going to use the Docker hub (<a href="https://hub.docker.com/">https://hub.docker.com/</a>). The following listing shows the commands used in the <code>travis_scripts/deploy_to_docker_hub.sh</code> script.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Listing 10.6</strong><br>Pushing created Docker images to Docker Hub</figcaption>
+        <pre class="code-block"><code>echo "Pushing service docker images to docker hub ...."
+docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+docker push johncarnell/tmx-authentication-service:$BUILD_NAME
+docker push johncarnell/tmx-licensing-service:$BUILD_NAME
+docker push johncarnell/tmx-organization-service:$BUILD_NAME
+docker push johncarnell/tmx-confsvr:$BUILD_NAME
+docker push johncarnell/tmx-eurekasvr:$BUILD_NAME
+docker push johncarnell/tmx-zuulsvr:$BUILD_NAME</code></pre>
+      </figure>
+
+      <p class="no-indent">The flow of this shell script is straightforward. The first thing you have to do is log in to Docker hub using the Docker command line-tools and the user credentials of the Docker Hub account the images are going to be pushed to. Remember, your credentials for Docker Hub are stored as encrypted environment variables:</p>
+
+      <figure class="code-snippet" aria-label="Docker Hub login command">
+        <pre class="code-block"><code>docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD</code></pre>
+      </figure>
+
+      <p>Once the script has logged in, the code will push each individual microservice&rsquo;s Docker image residing in the local Docker repository running on the Travis build server, to the Docker Hub repository:</p>
+
+      <figure class="code-snippet" aria-label="Docker push example command">
+        <pre class="code-block"><code>docker push johncarnell/tmx-confsvr:$BUILD_NAME</code></pre>
+      </figure>
+
+      <footer class="book-footer">
+        <span>M A N N I N G</span>
+        <span></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

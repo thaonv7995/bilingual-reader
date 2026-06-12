@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Trang 31 — Nguyên tắc thiết kế và Mẫu thiết kế</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page .book-footer {
+      position: absolute;
+      bottom: 8mm;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      font-size: 9pt;
+      color: #444;
+      display: flex;
+      justify-content: space-between;
+    }
+    .prose-page figure.diagram svg {
+      display: block;
+      width: 100%;
+      max-width: 95mm;
+      height: auto;
+      margin: 0 auto;
+    }
+    .prose-page figure.diagram svg text {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <main class="book-page book-page--sheet">
+    <nav class="page-nav" aria-label="Điều hướng trang">
+      <a href="page_0030.html">← Trước</a>
+      <a href="page_0032.html">Tiếp →</a>
+    </nav>
+    <article class="sheet-flow prose-page">
+      <header class="running-head">
+        <span class="rh-left">www.objectmentor.com</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">31</span>
+      </header>
+
+      <p class="no-indent">Ví dụ, hãy xét lớp bộ tổng hợp âm thanh (music synthesizer). Lớp cơ sở dịch đầu vào MIDI thành tập các lệnh gọi EmitVoice nguyên thủy do lớp dẫn xuất triển khai. Lưu ý rằng hàm EmitVoice của lớp dẫn xuất sẽ hữu ích tự nó. Thật không may, nó bị gắn chặt không thể tách rời với lớp MusicSynthesizer và hàm PlayMidi. Không có cách nào truy cập phương thức PlayVoice mà không kéo theo lớp cơ sở. Ngoài ra, không có cách nào tạo các triển khai khác nhau của hàm PlayMidi dùng cùng hàm EmitVoice. Nói ngắn gọn, hệ phân cấp bị ghép chặt quá mức.</p>
+
+      <figure class="diagram">
+        <svg viewBox="0 0 220 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hình 2-34 Hệ phân cấp ghép chặt kém">
+          <defs>
+            <marker id="fig234-inherit" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto">
+              <path d="M0,10 L5,0 L10,10 Z" fill="white" stroke="black" stroke-width="1"/>
+            </marker>
+          </defs>
+          <rect x="65" y="8" width="90" height="62" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="65" y1="28" x2="155" y2="28" stroke="black" stroke-width="1"/>
+          <line x1="65" y1="42" x2="155" y2="42" stroke="black" stroke-width="1"/>
+          <text x="110" y="20" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="110" y="30" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer</text>
+          <text x="110" y="38" text-anchor="middle" font-size="8">{abstract}</text>
+          <text x="72" y="54" font-size="8">+ PlayMidi</text>
+          <text x="72" y="64" font-size="8" font-style="italic">- EmitVoice</text>
+          <line x1="110" y1="70" x2="110" y2="118" stroke="black" stroke-width="1" marker-end="url(#fig234-inherit)"/>
+          <rect x="58" y="118" width="104" height="38" fill="white" stroke="black" stroke-width="1"/>
+          <line x1="58" y1="136" x2="162" y2="136" stroke="black" stroke-width="1"/>
+          <text x="110" y="130" text-anchor="middle" font-size="9" font-weight="bold">Music</text>
+          <text x="110" y="140" text-anchor="middle" font-size="9" font-weight="bold">Synthesizer_I</text>
+          <text x="66" y="152" font-size="8">+ EmitVoice</text>
+        </svg>
+        <figcaption><strong>Hình 2-34</strong><br>Hệ phân cấp ghép chặt kém</figcaption>
+      </figure>
+
+      <p>Mẫu BRIDGE giải quyết vấn đề này bằng cách tạo sự tách biệt mạnh giữa giao diện và triển khai. Hình 2-35 cho thấy cách hoạt động. Lớp MusicSynthesizer chứa hàm PlayMidi trừu tượng được MusicSynthesizer_I triển khai. Nó gọi hàm EmitVoice được triển khai trong MusicSynthesizer để ủy quyền cho giao diện VoiceEmitter. Giao diện này được VoiceEmitter_I triển khai và phát ra các âm thanh cần thiết.</p>
+      <p>Giờ có thể triển khai cả EmitVoice và PlayMidi độc lập với nhau. Hai hàm đã được tách rời. Có thể gọi EmitVoice mà không kéo theo toàn bộ gánh nặng MusicSynthesizer, và PlayMidi có thể được triển khai theo nhiều cách khác nhau trong khi vẫn dùng cùng hàm EmitVoice.</p>
+
+      <footer class="book-footer">
+        <span>Robert C. Martin</span>
+        <span>Copyright (c) 2000 by Robert C. Martin. All Rights Reserved.</span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

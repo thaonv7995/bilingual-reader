@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PostgreSQL: Up and Running — Chapter 5: Data Types — Outputting JSON</title>
+  <link rel="stylesheet" href="../assets/book.css">
+  <link rel="stylesheet" href="../assets/page-tokens.css">
+  <link rel="stylesheet" href="../assets/prose-page.css">
+  <link rel="stylesheet" href="../assets/code-page.css">
+  <link rel="stylesheet" href="../assets/figures-page.css">
+  <style>
+    @media print {
+      .book-page { height: 296mm; }
+    }
+    .prose-page.chapter-page {
+      padding: 8mm var(--book-margin-x) 16mm;
+      font-size: 10.5pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page p {
+      margin: 0 0 3mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page h3.subsection-title {
+      margin: 0 0 2mm;
+      font-family: var(--font-ui);
+      font-size: 11.6pt;
+      font-weight: 600;
+      line-height: 1.15;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .prose-page.chapter-page h3.subsection-title + p {
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet {
+      margin: 0 0 2.5mm;
+      padding: 0;
+    }
+    .prose-page.chapter-page figure.code-snippet pre.code-block {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: none;
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .prose-page.chapter-page figure.listing {
+      margin: 0 0 2.5mm;
+      max-width: 100%;
+    }
+    .prose-page.chapter-page figure.listing figcaption {
+      margin: 0 0 1mm;
+      font-size: 9.5pt;
+      font-weight: 700;
+      font-style: italic;
+      text-align: left;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page figure.listing figcaption strong {
+      font-weight: 700;
+      font-style: italic;
+    }
+    .prose-page.chapter-page figure.listing pre.code-block {
+      margin: 0;
+      padding: 1.5mm 2mm;
+      font-size: 9pt;
+      line-height: 1.2;
+      background: transparent;
+      border-left: none;
+    }
+    .prose-page.chapter-page ul.bullets {
+      margin: 0 0 3mm 1.1em;
+      padding: 0;
+      list-style: disc;
+    }
+    .prose-page.chapter-page ul.bullets > li {
+      margin: 0 0 2.5mm;
+      text-align: justify;
+    }
+    .prose-page.chapter-page p code,
+    .prose-page.chapter-page li code {
+      font-family: var(--font-mono, "Ubuntu Mono", monospace);
+      font-size: 10pt;
+    }
+    .prose-page.chapter-page span.accent-word {
+      color: #990000;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page .icon-callout {
+      display: grid;
+      grid-template-columns: 14mm 1fr;
+      column-gap: 3mm;
+      align-items: start;
+      margin: 2mm 0 3mm;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon {
+      margin: 0;
+      padding: 0;
+    }
+    .prose-page.chapter-page .icon-callout figure.callout-icon img {
+      display: block;
+      width: 12mm;
+      height: auto;
+    }
+    .prose-page.chapter-page .icon-callout p.callout-text {
+      margin: 0;
+      text-indent: 0;
+      font-size: 9.6pt;
+      line-height: 1.38;
+    }
+    .prose-page.chapter-page .chapter-bottom-rule {
+      position: absolute;
+      left: var(--book-margin-x);
+      right: var(--book-margin-x);
+      bottom: 18mm;
+      margin: 0;
+      border: none;
+      border-top: 0.25mm solid #232323;
+    }
+    .prose-page.chapter-page .chapter-folio {
+      position: absolute;
+      right: var(--book-margin-x);
+      bottom: 12mm;
+      margin: 0;
+      font-family: var(--font-ui);
+      font-size: 9pt;
+      font-weight: 600;
+      font-style: normal;
+      text-align: right;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .chapter-folio .sep {
+      margin: 0 1.5mm;
+    }
+    .prose-page.chapter-page .page-folio {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6mm;
+      margin: 0;
+      font-style: normal;
+      font-size: 10pt;
+      text-align: center;
+      text-indent: 0;
+    }
+    .prose-page.chapter-page .page-folio a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    .prose-page.chapter-page > .book-footer {
+      display: none;
+    }
+  </style>
+</head>
+<body class="book-standalone">
+  <nav class="page-nav" aria-label="Page navigation">
+    <a href="page_0116.html">← Trước</a>
+    <a href="page_0118.html">Tiếp →</a>
+  </nav>
+  <main class="book-page book-page--sheet">
+    <article class="sheet-flow prose-page chapter-page">
+      <header class="running-head">
+        <span class="rh-left">PostgreSQL: Up and Running</span>
+        <span class="rh-center"></span>
+        <span class="rh-right">117</span>
+      </header>
+
+      <p class="no-indent">các toán tử cùng nhau. <code>jsonb</code>, mà chúng ta sẽ đề cập ngay, có cùng các toán tử, nhưng chúng
+      là bí danh cho <code>jsonb_object_field</code>, <code>jsonb_array_element</code>, và vân vân.</p>
+
+      <div class="icon-callout">
+        <figure class="diagram callout-icon">
+          <img src="../assets/images/page_0117_icon_tip.png" width="50" height="48" alt="Mẹo">
+        </figure>
+        <p class="callout-text">Mảng trong JSON bắt đầu từ số không. Mảng trong PostgreSQL bắt đầu từ số một.</p>
+      </div>
+
+      <h3 class="subsection-title">Xuất JSON</h3>
+      <p class="no-indent">Ngoài việc có thể truy vấn dữ liệu JSON, bạn có thể chuyển đổi dữ liệu khác thành JSON. Trong
+      các ví dụ tiếp theo, chúng tôi sẽ minh họa việc sử dụng các hàm tích hợp của JSON để tạo ra các đối tượng JSON.</p>
+
+      <p><span class="accent-word">Ví dụ 5-27</span> minh họa việc sử dụng <code>row_to_json</code> để chuyển đổi một tập hợp các cột trong
+      mỗi bản ghi từ bảng mà chúng tôi đã tạo và tải trong <span class="accent-word">Ví dụ 5-23</span>.</p>
+
+      <figure class="listing">
+        <figcaption><strong>Ví dụ 5-27.</strong> Chuyển đổi các hàng thành các đối tượng JSON riêng lẻ (cần phiên bản 9.3 trở lên)</figcaption>
+        <pre class="code-block"><code>SELECT row_to_json(f) As x
+FROM (SELECT id, profile-&gt;&gt;'name' As name FROM families_j) As f;
+           x
+-------------------------
+ {"id":1,"name":"Gomez"}</code></pre>
+      </figure>
+
+      <p>Để xuất mỗi hàng trong bảng families của chúng tôi dưới dạng JSON, đoạn mã sau hoạt động trong phiên bản 9.2
+      và các phiên bản sau:</p>
+
+      <figure class="code-snippet">
+        <pre class="code-block"><code>SELECT row_to_json(f) FROM families_j As f;</code></pre>
+      </figure>
+
+      <p>Việc sử dụng một hàng như một trường đầu ra trong một truy vấn là một tính năng độc đáo của PostgreSQL. Nó rất
+      tiện lợi để tạo ra các đối tượng JSON phức tạp. Chúng tôi mô tả thêm về nó trong <span class="accent-word">“Các loại hợp thành
+      trong truy vấn” trên trang 128</span>, và <span class="accent-word">Ví dụ 7-16</span> minh họa việc sử dụng <code>array_agg</code> và <code>ar‐
+      ray_to_json</code> để xuất một tập hợp các hàng dưới dạng một đối tượng JSON duy nhất. Trong phiên bản 9.3, chúng tôi có
+      hàm <code>json_agg</code> trong tay. Chúng tôi sẽ minh họa việc sử dụng nó trong <span class="accent-word">Ví dụ 7-17</span>.</p>
+
+      <h3 class="subsection-title">JSON nhị phân: jsonb</h3>
+      <p class="no-indent">Mới trong PostgreSQL 9.4 là kiểu dữ liệu <code>jsonb</code>. Nó có các toán tử cùng tên như kiểu <code>json</code>
+      và các hàm có tên tương tự, cộng với một số hàm bổ sung. Có một vài sự khác biệt chính giữa các kiểu dữ liệu <code>jsonb</code> và <code>json</code>:</p>
+
+      <ul class="bullets">
+        <li><code>jsonb</code> được lưu trữ nội bộ dưới dạng một đối tượng nhị phân và không duy trì định dạng
+        của văn bản JSON gốc như kiểu <code>json</code> làm. Các khoảng trắng không được bảo tồn, số-</li>
+      </ul>
+
+      <hr class="chapter-bottom-rule" aria-hidden="true">
+      <p class="chapter-folio no-indent">JSON<span class="sep">|</span>99</p>
+      <p class="page-folio no-indent"><a href="http://www.it-ebooks.info">www.it-ebooks.info</a></p>
+
+      <footer class="book-footer" aria-hidden="true"><span></span><span></span></footer>
+    </article>
+  </main>
+</body>
+</html>
