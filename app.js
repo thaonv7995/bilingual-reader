@@ -15,30 +15,88 @@ const DEFAULT_SETTINGS = {
   model: 'gpt-4o-mini',
 };
 
-function App() {
-  // Sync initial navigation state from URL hash
-  const getInitialRoute = () => {
-    const hash = window.location.hash;
-    if (!hash) return { book: null, page: 1 };
-    const readMatch = hash.match(/^#\/read\/([^/]+)(?:\/page\/(\d+))?$/);
-    if (readMatch) {
-      const slug = readMatch[1];
-      const pageNum = readMatch[2] ? parseInt(readMatch[2], 10) : 1;
-      // BOOKS is a global defined in books.js
-      const book = typeof BOOKS !== 'undefined' ? BOOKS.find(b => b.slug === slug) : null;
-      if (book) {
-        return { book, page: pageNum };
-      }
-    }
-    return { book: null, page: 1 };
-  };
+const HIGHLIGHT_COLORS = [
+  { id: 'yellow', value: '#fde68a', label: 'Vàng' },
+  { id: 'blue', value: '#93c5fd', label: 'Xanh' },
+  { id: 'pink', value: '#f9a8d4', label: 'Hồng' },
+  { id: 'green', value: '#86efac', label: 'Xanh lá' },
+];
 
+const PARAGRAPH_SELECTOR = 'p, .chapter-start, .no-indent, h1, h2, h3, li';
+
+let highlightAppContext = null;
+
+function getSavedProgress(slug) {
+  try {
+    const saved = localStorage.getItem(`bilingual.reader.progress.${slug}`);
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return null;
+}
+
+function getRelativeTime(timestamp) {
+  const now = Date.now();
+  const diffMs = now - timestamp;
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'Vừa xong';
+  if (diffMins < 60) return `${diffMins} phút trước`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} giờ trước`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `${diffDays} ngày trước`;
+  const diffMonths = Math.floor(diffDays / 30);
+  return `${diffMonths} tháng trước`;
+}
+
+function generateHighlightId() {
+  return `hl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function loadHighlights(slug) {
+  try {
+    const saved = localStorage.getItem(`bilingual.reader.highlights.${slug}`);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed.highlights || [];
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveHighlights(slug, highlights) {
+  localStorage.setItem(`bilingual.reader.highlights.${slug}`, JSON.stringify({ highlights }));
+}
+
+function getInitialRoute() {
+  const hash = window.location.hash;
+  if (!hash) return { book: null, page: 1, viewMode: null };
+  const readMatch = hash.match(/^#\/read\/([^/]+)(?:\/page\/(\d+))?$/);
+  if (readMatch) {
+    const slug = readMatch[1];
+    const savedProgress = getSavedProgress(slug);
+    const pageNum = readMatch[2]
+      ? parseInt(readMatch[2], 10)
+      : (savedProgress?.page || 1);
+    const book = typeof BOOKS !== 'undefined' ? BOOKS.find(b => b.slug === slug) : null;
+    if (book) {
+      return {
+        book,
+        page: pageNum,
+        viewMode: savedProgress?.viewMode || null,
+      };
+    }
+  }
+  return { book: null, page: 1, viewMode: null };
+}
+
+function App() {
   const initialRoute = getInitialRoute();
 
   // --- Navigation & Book State ---
   const [activeBook, setActiveBook] = useState(initialRoute.book);
   const [page, setPage] = useState(initialRoute.page);
   const [viewMode, setViewMode] = useState(() => {
+    if (initialRoute.viewMode) return initialRoute.viewMode;
     return localStorage.getItem('bilingual.reader.viewMode') || 'en';
   }); // 'en' | 'vi' | 'split'
   const [layoutMode, setLayoutMode] = useState(() => {
@@ -82,6 +140,8 @@ function App() {
     return localStorage.getItem('bilingual.reader.chatOpen') === 'true';
   });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false);
+  const [bookHighlights, setBookHighlights] = useState([]);
 
   // --- API & Settings State ---
   const [settings, setSettings] = useState(() => {
@@ -163,6 +223,28 @@ function App() {
   useEffect(() => {
     localStorage.setItem('bilingual.reader.chatOpen', chatOpen);
   }, [chatOpen]);
+
+  // --- Auto-save Reading Progress ---
+  useEffect(() => {
+    if (activeBook && page > 0) {
+      const progressData = {
+        page,
+        viewMode,
+        lastRead: Date.now()
+      };
+      localStorage.setItem(`bilingual.reader.progress.${activeBook.slug}`, JSON.stringify(progressData));
+    }
+  }, [activeBook, page, viewMode]);
+
+  useEffect(() => {
+    if (activeBook) {
+      setBookHighlights(loadHighlights(activeBook.slug));
+    } else {
+      setBookHighlights([]);
+      removeAllReaderHighlightUI();
+      setHighlightsPanelOpen(false);
+    }
+  }, [activeBook]);
 
   useEffect(() => {
     localStorage.setItem('bilingual.reader.chatWidth', chatWidth);
@@ -316,6 +398,7 @@ function App() {
     const handleParentClick = (e) => {
       if (!e.target.closest('.reader-iframe')) {
         clearAllHighlights();
+        removeAllReaderHighlightUI();
       }
     };
     window.addEventListener('click', handleParentClick);
@@ -496,8 +579,9 @@ function App() {
   const handleIframeLoad = (e) => {
     scaleIframes();
     try {
-      const iframeWin = e.target.contentWindow;
-      const doc = e.target.contentDocument || iframeWin.document;
+      const iframeEl = e.target;
+      const iframeWin = iframeEl.contentWindow;
+      const doc = iframeEl.contentDocument || iframeWin.document;
       if (doc) {
         doc.documentElement.style.overflow = 'hidden';
         doc.body.style.overflow = 'hidden';
@@ -506,15 +590,19 @@ function App() {
         const nav = doc.querySelector('.page-nav');
         if (nav) nav.style.display = 'none';
 
-        const isEnglish = e.target.classList.contains('en-pane-iframe');
-        // Inject bilingual highlight CSS (pass isEnglish to differentiate highlight color)
+        const isEnglish = iframeEl.classList.contains('en-pane-iframe');
+        const lang = isEnglish ? 'en' : 'vi';
         injectHighlightCSS(doc, isEnglish);
 
         // Segment sentences in the document
         segmentDocSentences(doc);
 
+        if (activeBook) {
+          applyStoredHighlights(doc, activeBook.slug, page, lang);
+        }
+
         // Register highlighting listeners inside the iframe
-        registerIframeHighlightListeners(iframeWin, doc);
+        registerIframeHighlightListeners(iframeWin, doc, iframeEl, lang);
 
         // Listen for keys inside the iframe to slide pages
         doc.addEventListener('keydown', (event) => {
@@ -532,6 +620,105 @@ function App() {
     }
   };
 
+  const createHighlight = (selectionInfo, lang, color, note = '') => {
+    if (!activeBook || !selectionInfo) return;
+    const highlight = {
+      id: generateHighlightId(),
+      page,
+      lang,
+      color,
+      text: selectionInfo.text,
+      startOffset: selectionInfo.startOffset,
+      endOffset: selectionInfo.endOffset,
+      paragraphIndex: selectionInfo.paragraphIndex,
+      note: note || '',
+      createdAt: Date.now(),
+    };
+    const next = [...bookHighlights, highlight];
+    saveHighlights(activeBook.slug, next);
+    setBookHighlights(next);
+    reapplyHighlightsInIframes(activeBook.slug, page, lang);
+    document.querySelectorAll('.reader-iframe').forEach(iframe => {
+      iframe.contentWindow?.getSelection()?.removeAllRanges();
+    });
+    removeAllReaderHighlightUI();
+    return highlight;
+  };
+
+  const updateHighlight = (id, updates) => {
+    if (!activeBook) return;
+    const next = bookHighlights.map(h => h.id === id ? { ...h, ...updates } : h);
+    saveHighlights(activeBook.slug, next);
+    setBookHighlights(next);
+    const target = next.find(h => h.id === id);
+    if (target) {
+      reapplyHighlightsInIframes(activeBook.slug, target.page, target.lang);
+    }
+    removeAllReaderHighlightUI();
+  };
+
+  const deleteHighlight = (id) => {
+    if (!activeBook) return;
+    const target = bookHighlights.find(h => h.id === id);
+    const next = bookHighlights.filter(h => h.id !== id);
+    saveHighlights(activeBook.slug, next);
+    setBookHighlights(next);
+    if (target) {
+      reapplyHighlightsInIframes(activeBook.slug, target.page, target.lang);
+    }
+    removeAllReaderHighlightUI();
+  };
+
+  useEffect(() => {
+    if (!activeBook) {
+      highlightAppContext = null;
+      return;
+    }
+    highlightAppContext = {
+      slug: activeBook.slug,
+      page,
+      setBookHighlights,
+      createHighlight,
+      updateHighlight,
+      deleteHighlight,
+    };
+    return () => {
+      highlightAppContext = null;
+    };
+  }, [activeBook, page, bookHighlights]);
+
+  const jumpToHighlight = (highlight) => {
+    if (!highlight || !activeBook) return;
+    removeAllReaderHighlightUI();
+    setPage(highlight.page);
+    setTimeout(() => {
+      const iframe = document.querySelector(highlight.lang === 'en' ? '.en-pane-iframe' : '.vi-pane-iframe');
+      if (iframe && iframe.contentDocument) {
+        const mark = iframe.contentDocument.querySelector(`mark.reader-highlight[data-highlight-id="${highlight.id}"]`);
+        if (mark) {
+          mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          mark.classList.add('reader-highlight--pulse');
+          setTimeout(() => mark.classList.remove('reader-highlight--pulse'), 1200);
+        }
+      }
+    }, 350);
+  };
+
+  const groupedHighlights = useMemo(() => {
+    const groups = {};
+    bookHighlights.forEach(h => {
+      if (!groups[h.page]) groups[h.page] = [];
+      groups[h.page].push(h);
+    });
+    return Object.keys(groups)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map(pageNum => ({
+        page: pageNum,
+        items: groups[pageNum].sort((a, b) => a.createdAt - b.createdAt),
+      }));
+  }, [bookHighlights]);
+
   // --- Router hash controller ---
   useEffect(() => {
     function handleHashChange() {
@@ -546,13 +733,19 @@ function App() {
       const readMatch = hash.match(/^#\/read\/([^/]+)(?:\/page\/(\d+))?$/);
       if (readMatch) {
         const slug = readMatch[1];
-        const pageNum = readMatch[2] ? parseInt(readMatch[2], 10) : 1;
+        const savedProgress = getSavedProgress(slug);
+        const pageNum = readMatch[2]
+          ? parseInt(readMatch[2], 10)
+          : (savedProgress?.page || 1);
 
         // Find book in BOOKS array (defined in books.js)
         const book = BOOKS.find(b => b.slug === slug);
         if (book) {
           setActiveBook(book);
           setPage(pageNum);
+          if (savedProgress?.viewMode && !readMatch[2]) {
+            setViewMode(savedProgress.viewMode);
+          }
         } else {
           // Fallback if book slug not found
           window.location.hash = '#/';
@@ -1026,11 +1219,19 @@ Instructions:
           <div class="books-grid">
             ${paginatedBooks.map(book => {
               const hasCover = !!book.cover;
+              const progress = getSavedProgress(book.slug);
+              const hasProgress = progress && progress.page > 1;
               return html`
                 <div class="book-card" key=${book.slug} onClick=${() => {
-                  setActiveBook(book);
-                  setPage(1);
-                  setViewMode('en');
+                  if (progress) {
+                    setActiveBook(book);
+                    setPage(progress.page);
+                    setViewMode(progress.viewMode || 'en');
+                  } else {
+                    setActiveBook(book);
+                    setPage(1);
+                    setViewMode('en');
+                  }
                 }}>
                   <div class="book-card__cover-wrapper">
                     ${hasCover
@@ -1042,13 +1243,16 @@ Instructions:
                         </div>
                       `
                     }
+                    ${hasProgress && html`
+                      <div class="book-card__last-read">🕐 ${getRelativeTime(progress.lastRead)}</div>
+                    `}
                   </div>
                   <div class="book-card__content">
                     <h3 class="book-card__title">${book.title}</h3>
                     <div class="book-card__author">Tác giả: ${book.author}</div>
                     <p class="book-card__desc">${book.description}</p>
                     <div class="book-card__footer">
-                      <span>📖 ${book.pageCount} trang</span>
+                      <span>📖 ${hasProgress ? `${progress.page}/${book.pageCount} trang` : `${book.pageCount} trang`}</span>
                       <span class="book-card__badge">Bilingual</span>
                     </div>
                   </div>
@@ -1081,6 +1285,49 @@ Instructions:
   }
 
   // --- Render Settings Modal ---
+  function renderHighlightsPanel() {
+    if (!highlightsPanelOpen) return null;
+
+    return html`
+      <div class="highlights-panel">
+        <div class="highlights-panel__header">
+          <span class="highlights-panel__title">🖍 Highlights (${bookHighlights.length})</span>
+          <button class="nav-btn" onClick=${() => setHighlightsPanelOpen(false)}>✕</button>
+        </div>
+        <div class="highlights-panel__body">
+          ${bookHighlights.length === 0 && html`
+            <div class="highlights-panel__empty">
+              Chưa có highlight nào.<br />
+              Bôi đen text trong trang sách để bắt đầu.
+            </div>
+          `}
+          ${groupedHighlights.map(group => html`
+            <div class="highlights-panel__group" key=${group.page}>
+              <div class="highlights-panel__group-title">Trang ${group.page}</div>
+              ${group.items.map(item => html`
+                <button
+                  key=${item.id}
+                  class="highlights-panel__item"
+                  onClick=${() => jumpToHighlight(item)}
+                >
+                  <span
+                    class="highlights-panel__item-color"
+                    style=${{ backgroundColor: item.color }}
+                  />
+                  <span class="highlights-panel__item-content">
+                    <span class="highlights-panel__item-text">${item.text}</span>
+                    ${item.note && html`<span class="highlights-panel__item-note">${item.note}</span>`}
+                    <span class="highlights-panel__item-meta">${item.lang.toUpperCase()}</span>
+                  </span>
+                </button>
+              `)}
+            </div>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
   function renderSettingsModal() {
     return html`
       <div class="modal-backdrop" onClick=${() => setSettingsOpen(false)}>
@@ -1255,6 +1502,13 @@ Instructions:
             </button>
           </div>
 
+          <button class=${`btn-icon ${highlightsPanelOpen ? 'active' : ''}`} onClick=${() => setHighlightsPanelOpen(v => !v)} title="Highlights & Ghi chú">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </button>
+
           <button class=${`btn-icon ${chatOpen ? 'active' : ''}`} onClick=${() => setChatOpen(!chatOpen)} title="Trợ lý AI">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -1273,7 +1527,10 @@ Instructions:
         </div>
       </div>
 
-      <div class=${`reader-workspace ${chatOpen ? 'chat-open' : ''}`}>
+      <div
+        class=${`reader-workspace ${chatOpen ? 'chat-open' : ''} ${highlightsPanelOpen ? 'highlights-open' : ''}`}
+        style=${chatOpen ? { '--chat-width': `${chatWidth}px` } : {}}
+      >
         <div class=${`reader-panes layout-${layoutMode}`}>
           
           <!-- English Pane -->
@@ -1296,6 +1553,8 @@ Instructions:
             </div>
           `}
         </div>
+
+        ${renderHighlightsPanel()}
 
         <!-- Chat Sidebar Drawer -->
         <div class=${`chat-sidebar ${isResizing ? 'is-resizing' : ''}`} style=${chatOpen ? { width: `${chatWidth}px` } : { width: '0px', borderLeft: 'none', overflow: 'hidden' }}>
@@ -1532,8 +1791,8 @@ function injectHighlightCSS(doc, isEnglish) {
   style.id = 'bilingual-highlight-style';
   
   const highlightColor = isEnglish 
-    ? 'rgba(56, 189, 248, 0.18)' // Softer sky blue for English
-    : 'rgba(250, 204, 21, 0.20)'; // Softer yellow for Vietnamese
+    ? 'rgba(56, 189, 248, 0.18)'
+    : 'rgba(250, 204, 21, 0.20)';
     
   const hoverColor = isEnglish
     ? 'rgba(56, 189, 248, 0.08)'
@@ -1552,8 +1811,402 @@ function injectHighlightCSS(doc, isEnglish) {
     .sentence-node.highlight-sync {
       background-color: ${highlightColor} !important;
     }
+    mark.reader-highlight {
+      border-radius: 3px;
+      padding: 0 1px;
+      cursor: pointer;
+      position: relative;
+      color: inherit;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    mark.reader-highlight[data-has-note="true"]::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #2563eb;
+      border: 1px solid #fff;
+    }
+    mark.reader-highlight--pulse {
+      animation: readerHighlightPulse 1.2s ease;
+    }
+    @keyframes readerHighlightPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+      50% { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.35); }
+    }
+    .reader-highlight-toolbar {
+      position: fixed;
+      z-index: 9999;
+      transform: translate(-50%, -100%);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 7px;
+      background: rgba(17, 24, 39, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+      animation: readerToolbarIn 0.15s ease;
+    }
+    .reader-highlight-toolbar__colors {
+      display: flex;
+      gap: 4px;
+    }
+    .reader-highlight-toolbar__color {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      padding: 0;
+    }
+    .reader-highlight-toolbar__color:hover {
+      transform: scale(1.1);
+    }
+    .reader-highlight-toolbar__icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .reader-highlight-toolbar__icon:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .reader-highlight-sticky {
+      position: fixed;
+      z-index: 9999;
+      width: 168px;
+      min-height: 68px;
+      background: linear-gradient(160deg, #fef9c3 0%, #fde68a 55%, #fcd34d 100%);
+      border: 1px solid rgba(180, 130, 0, 0.35);
+      border-radius: 1px 1px 1px 0;
+      box-shadow: 1px 2px 0 rgba(180, 130, 0, 0.15), 3px 5px 12px rgba(0, 0, 0, 0.2);
+      padding: 8px 8px 4px;
+      transform: rotate(-1.5deg);
+      animation: readerStickyIn 0.2s ease;
+    }
+    .reader-highlight-sticky__input {
+      width: 100%;
+      min-height: 48px;
+      background: transparent;
+      border: none;
+      resize: none;
+      font-family: 'Segoe Print', 'Comic Sans MS', cursive, sans-serif;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #422006;
+      outline: none;
+      padding: 0;
+    }
+    .reader-highlight-sticky__input::placeholder {
+      color: rgba(66, 32, 6, 0.45);
+    }
+    .reader-highlight-sticky__footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 2px;
+      margin-top: 2px;
+    }
+    .reader-highlight-sticky__btn {
+      background: transparent;
+      border: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: rgba(66, 32, 6, 0.55);
+      cursor: pointer;
+      padding: 0;
+    }
+    .reader-highlight-sticky__btn:hover {
+      background: rgba(66, 32, 6, 0.08);
+      color: #422006;
+    }
+    .reader-highlight-sticky__btn--save {
+      font-weight: 700;
+      color: rgba(66, 32, 6, 0.75);
+    }
+    @keyframes readerToolbarIn {
+      from { opacity: 0; transform: translate(-50%, calc(-100% + 4px)); }
+      to { opacity: 1; transform: translate(-50%, -100%); }
+    }
+    @keyframes readerStickyIn {
+      from { opacity: 0; transform: rotate(-1.5deg) scale(0.92); }
+      to { opacity: 1; transform: rotate(-1.5deg) scale(1); }
+    }
   `;
   doc.head.appendChild(style);
+}
+
+function getParagraphs(doc) {
+  const article = doc.querySelector('article') || doc.body;
+  return Array.from(article.querySelectorAll(PARAGRAPH_SELECTOR));
+}
+
+function getSelectionInfo(doc, selection) {
+  if (!selection || selection.isCollapsed) return null;
+  const text = selection.toString().trim();
+  if (!text) return null;
+
+  const range = selection.getRangeAt(0);
+  let container = range.commonAncestorContainer;
+  if (container.nodeType === 3) container = container.parentElement;
+  const paragraph = container.closest(PARAGRAPH_SELECTOR);
+  if (!paragraph) return null;
+
+  const paragraphs = getParagraphs(doc);
+  const paragraphIndex = paragraphs.indexOf(paragraph);
+  if (paragraphIndex === -1) return null;
+
+  const preRange = doc.createRange();
+  preRange.selectNodeContents(paragraph);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  const startOffset = preRange.toString().length;
+  const endOffset = startOffset + range.toString().length;
+
+  return { paragraphIndex, startOffset, endOffset, text: range.toString() };
+}
+
+function wrapTextRange(doc, paragraph, startOffset, endOffset, highlightData) {
+  const walker = doc.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+  let charCount = 0;
+  let startNode = null;
+  let startNodeOffset = 0;
+  let endNode = null;
+  let endNodeOffset = 0;
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const nodeLen = node.textContent.length;
+    if (startNode === null && charCount + nodeLen > startOffset) {
+      startNode = node;
+      startNodeOffset = startOffset - charCount;
+    }
+    if (endNode === null && charCount + nodeLen >= endOffset) {
+      endNode = node;
+      endNodeOffset = endOffset - charCount;
+      break;
+    }
+    charCount += nodeLen;
+  }
+
+  if (!startNode || !endNode) return false;
+
+  const range = doc.createRange();
+  range.setStart(startNode, startNodeOffset);
+  range.setEnd(endNode, endNodeOffset);
+
+  const mark = doc.createElement('mark');
+  mark.className = 'reader-highlight';
+  mark.dataset.highlightId = highlightData.id;
+  mark.style.backgroundColor = highlightData.color;
+  if (highlightData.note) {
+    mark.dataset.hasNote = 'true';
+    mark.title = highlightData.note;
+  }
+
+  try {
+    range.surroundContents(mark);
+  } catch (e) {
+    const contents = range.extractContents();
+    mark.appendChild(contents);
+    range.insertNode(mark);
+  }
+  return true;
+}
+
+function applyStoredHighlights(doc, slug, pageNum, lang) {
+  const highlights = loadHighlights(slug)
+    .filter(h => h.page === pageNum && h.lang === lang)
+    .sort((a, b) => {
+      if (a.paragraphIndex !== b.paragraphIndex) {
+        return a.paragraphIndex - b.paragraphIndex;
+      }
+      return b.startOffset - a.startOffset;
+    });
+
+  const paragraphs = getParagraphs(doc);
+  highlights.forEach(h => {
+    const paragraph = paragraphs[h.paragraphIndex];
+    if (!paragraph) return;
+    wrapTextRange(doc, paragraph, h.startOffset, h.endOffset, h);
+  });
+}
+
+function reapplyHighlightsInIframes(slug, pageNum, lang) {
+  const selector = lang === 'en' ? '.en-pane-iframe' : '.vi-pane-iframe';
+  const iframe = document.querySelector(selector);
+  if (!iframe?.contentDocument) return;
+  const doc = iframe.contentDocument;
+  removeReaderHighlightUI(doc);
+  doc.querySelectorAll('mark.reader-highlight').forEach(el => {
+    const parent = el.parentNode;
+    while (el.firstChild) parent.insertBefore(el.firstChild, el);
+    parent.removeChild(el);
+  });
+  segmentDocSentences(doc);
+  applyStoredHighlights(doc, slug, pageNum, lang);
+}
+
+function removeReaderHighlightUI(doc) {
+  if (!doc) return;
+  doc.querySelectorAll('.reader-highlight-toolbar, .reader-highlight-sticky').forEach(el => el.remove());
+}
+
+function removeAllReaderHighlightUI() {
+  document.querySelectorAll('.reader-iframe').forEach(iframe => {
+    if (iframe.contentDocument) removeReaderHighlightUI(iframe.contentDocument);
+  });
+}
+
+function showReaderStickyNote(doc, anchorRect, options) {
+  doc.querySelectorAll('.reader-highlight-sticky').forEach(el => el.remove());
+
+  const noteEl = doc.createElement('div');
+  noteEl.className = 'reader-highlight-sticky';
+  const noteWidth = 168;
+  let noteX = anchorRect.right + 6;
+  if (noteX + noteWidth > doc.documentElement.clientWidth - 8) {
+    noteX = Math.max(8, anchorRect.left - noteWidth - 6);
+  }
+  noteEl.style.left = `${noteX}px`;
+  noteEl.style.top = `${anchorRect.top}px`;
+
+  const textarea = doc.createElement('textarea');
+  textarea.className = 'reader-highlight-sticky__input';
+  textarea.placeholder = 'Ghi chú...';
+  textarea.value = options.note || '';
+
+  const footer = doc.createElement('div');
+  footer.className = 'reader-highlight-sticky__footer';
+
+  const cancelBtn = doc.createElement('button');
+  cancelBtn.className = 'reader-highlight-sticky__btn';
+  cancelBtn.type = 'button';
+  cancelBtn.title = 'Hủy';
+  cancelBtn.textContent = '✕';
+  cancelBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    noteEl.remove();
+  });
+
+  const saveBtn = doc.createElement('button');
+  saveBtn.className = 'reader-highlight-sticky__btn reader-highlight-sticky__btn--save';
+  saveBtn.type = 'button';
+  saveBtn.title = 'Lưu';
+  saveBtn.textContent = '✓';
+
+  const handleSave = () => {
+    const text = textarea.value;
+    if (options.mode === 'create') {
+      highlightAppContext?.createHighlight?.(options.selectionInfo, options.lang, options.color, text);
+    } else {
+      highlightAppContext?.updateHighlight?.(options.highlightId, { note: text });
+    }
+    noteEl.remove();
+  };
+
+  saveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handleSave();
+  });
+
+  textarea.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Escape') noteEl.remove();
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSave();
+    }
+  });
+
+  footer.appendChild(cancelBtn);
+  footer.appendChild(saveBtn);
+  noteEl.appendChild(textarea);
+  noteEl.appendChild(footer);
+  noteEl.addEventListener('mousedown', (e) => e.stopPropagation());
+  doc.body.appendChild(noteEl);
+  textarea.focus();
+}
+
+function showReaderHighlightToolbar(doc, anchorRect, options) {
+  removeReaderHighlightUI(doc);
+
+  const toolbar = doc.createElement('div');
+  toolbar.className = 'reader-highlight-toolbar';
+  toolbar.style.left = `${anchorRect.left + anchorRect.width / 2}px`;
+  toolbar.style.top = `${anchorRect.top - 6}px`;
+
+  const colors = doc.createElement('div');
+  colors.className = 'reader-highlight-toolbar__colors';
+
+  HIGHLIGHT_COLORS.forEach(c => {
+    const btn = doc.createElement('button');
+    btn.type = 'button';
+    btn.className = 'reader-highlight-toolbar__color';
+    btn.style.backgroundColor = c.value;
+    btn.title = c.label;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (options.mode === 'create') {
+        highlightAppContext?.createHighlight?.(options.selectionInfo, options.lang, c.value);
+      } else {
+        highlightAppContext?.updateHighlight?.(options.highlightId, { color: c.value });
+      }
+    });
+    colors.appendChild(btn);
+  });
+  toolbar.appendChild(colors);
+
+  const noteBtn = doc.createElement('button');
+  noteBtn.type = 'button';
+  noteBtn.className = 'reader-highlight-toolbar__icon';
+  noteBtn.title = 'Ghi chú';
+  noteBtn.textContent = '📝';
+  noteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toolbar.remove();
+    const existing = options.highlightId && highlightAppContext?.slug
+      ? loadHighlights(highlightAppContext.slug).find(h => h.id === options.highlightId)
+      : null;
+    showReaderStickyNote(doc, anchorRect, {
+      mode: options.mode,
+      lang: options.lang,
+      selectionInfo: options.selectionInfo,
+      highlightId: options.highlightId,
+      color: existing?.color || HIGHLIGHT_COLORS[0].value,
+      note: existing?.note || '',
+    });
+  });
+  toolbar.appendChild(noteBtn);
+
+  if (options.mode === 'edit') {
+    const delBtn = doc.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'reader-highlight-toolbar__icon';
+    delBtn.title = 'Xóa';
+    delBtn.textContent = '🗑';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      highlightAppContext?.deleteHighlight?.(options.highlightId);
+    });
+    toolbar.appendChild(delBtn);
+  }
+
+  toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
+  doc.body.appendChild(toolbar);
 }
 
 function highlightSentenceAcrossIframes(sentenceId) {
@@ -1587,12 +2240,54 @@ function clearAllHighlights() {
   });
 }
 
-function registerIframeHighlightListeners(iframeWin, doc) {
+function registerIframeHighlightListeners(iframeWin, doc, iframeEl, lang) {
+  doc.addEventListener('mousedown', (e) => {
+    if (e.target.closest('mark.reader-highlight, .reader-highlight-toolbar, .reader-highlight-sticky')) return;
+    removeReaderHighlightUI(doc);
+  });
+
   doc.addEventListener('mouseup', (e) => {
     setTimeout(() => {
       const selection = iframeWin.getSelection();
       const selectedText = selection.toString().trim();
-      
+      const clickedMark = e.target.closest('mark.reader-highlight');
+
+      if (clickedMark) {
+        const highlightId = clickedMark.dataset.highlightId;
+        const rect = clickedMark.getBoundingClientRect();
+        showReaderHighlightToolbar(doc, rect, {
+          mode: 'edit',
+          lang,
+          highlightId,
+        });
+        if (highlightAppContext?.slug) {
+          const existing = loadHighlights(highlightAppContext.slug).find(h => h.id === highlightId);
+          if (existing?.note) {
+            showReaderStickyNote(doc, rect, {
+              mode: 'edit',
+              highlightId,
+              lang,
+              note: existing.note,
+            });
+          }
+        }
+        selection.removeAllRanges();
+        return;
+      }
+
+      if (selectedText.length > 2) {
+        const selectionInfo = getSelectionInfo(doc, selection);
+        if (selectionInfo) {
+          const rect = selection.getRangeAt(0).getBoundingClientRect();
+          showReaderHighlightToolbar(doc, rect, {
+            mode: 'create',
+            lang,
+            selectionInfo,
+          });
+        }
+        return;
+      }
+
       let sentenceNode = null;
       if (selectedText.length > 0) {
         const node = selection.anchorNode;
@@ -1602,11 +2297,12 @@ function registerIframeHighlightListeners(iframeWin, doc) {
       } else {
         sentenceNode = e.target.closest('.sentence-node');
       }
-      
+
       if (sentenceNode) {
         const sentenceId = sentenceNode.dataset.sentenceId;
         highlightSentenceAcrossIframes(sentenceId);
       } else {
+        removeReaderHighlightUI(doc);
         clearAllHighlights();
       }
     }, 10);
