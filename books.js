@@ -54,6 +54,14 @@ const BOOKS = [
     pageCount: 108,
     description: "A satirical allegorical novella reflecting events leading up to the Russian Revolution and the Stalinist era of the Soviet Union. A timeless classic about power, corruption, and equality.",
     cover: "books/animal-farm-by-george-orwell/output/assets/cover.jpg"
+  },
+  {
+    slug: "english-idioms-in-use-intermediate",
+    title: "English Idioms In Use Intermediate",
+    author: "Michael McCarthy & Felicity O'Dell",
+    pageCount: 181,
+    description: "Vocabulary explanations and practice for intermediate level (B1-B2) learners of English. Perfect for both self-study and classroom activities.",
+    cover: "books/english-idioms-in-use-intermediate/output/assets/images/page_0001_cover_full.png"
   }
 ];
 

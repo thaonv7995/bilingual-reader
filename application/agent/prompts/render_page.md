@@ -26,6 +26,15 @@ Stylesheets (relative to page file):
 
 `body.book-standalone` → `main.book-page.book-page--sheet` → `article.sheet-flow.prose-page`
 
+## Crucial Quality Rule: Fit Exactly One A4 Sheet (No Overflow)
+
+Every page HTML must fit onto exactly one A4 sheet without vertical or horizontal overflow or scrollbars.
+If the PDF page is very dense (contains many text paragraphs, list items, dialogue blocks, or exercises), you MUST:
+- Reduce the padding of `.prose-page` (e.g., `8mm var(--book-margin-x) 10mm !important` or down to `5mm` if extremely dense).
+- Reduce vertical margins between sections/blocks (e.g., `.exercise-block { margin-bottom: 3mm; }`).
+- Reduce font-size of list items or body text slightly (e.g., down to `9.5pt` or `9pt` for dense exercises) and tighten line-height (e.g., `1.3` to `1.35`) and item margins (e.g., `1.5mm` down to `0.8mm`).
+- Minimize headings size and margins.
+
 ## After you write HTML
 
 Agent (or user) runs post-render on the book — see FIDELITY-RULES § Rule 4 & 7:
@@ -34,4 +43,5 @@ Agent (or user) runs post-render on the book — see FIDELITY-RULES § Rule 4 & 
 
 ## Done when
 
-Side-by-side with `source.pdf`: correct **order**, **block types**, **chrome**, **listings**, **figures**, **math**; page N only.
+Side-by-side with `source.pdf`: correct **order**, **block types**, **chrome**, **listings**, **figures**, **math**; page N only. Must fit onto exactly one A4 page without clipping or overflow.
+

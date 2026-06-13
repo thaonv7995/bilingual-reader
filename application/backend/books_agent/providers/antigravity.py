@@ -64,16 +64,24 @@ class AntigravityProvider(Provider):
         phase: AgentPhase,
         page: int,
     ) -> list[str]:
+        import os
         prompt = session_dir / "prompt.md"
         repo = repo_root()
-        return [
+        cmd = [
             binary,
             "--print",
             "--dangerously-skip-permissions",
+        ]
+        model = os.environ.get("ANTIGRAVITY_MODEL")
+        if model:
+            cmd.extend(["--model", model])
+        cmd.extend([
             "--add-dir",
             str(book_root),
             "--add-dir",
             str(repo),
             "-p",
             f"@{prompt}",
-        ]
+        ])
+        return cmd
+
