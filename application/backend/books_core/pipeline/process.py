@@ -1,0 +1,172 @@
+"""2-step pipeline: page-pdf → AI render_page."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from books_agent.session import prepare_session, run_agent
+from books_core.compile.gates import PipelineGateError, require_page_pdf
+from books_core.paths import BookPaths
+from books_core.pipeline.status import (
+    append_live_log,
+    clear_live_log,
+    read_process_status,
+    write_process_status,
+)
+from books_core.validation import validate_draft_html
+
+
+def _published_ready(book: BookPaths, page: int, lang: str | None = None) -> bool:
+    lang = lang or book.default_lang()
+    published = book.page_lang_html(page, lang)
+    if published.is_file() and published.stat().st_size > 0:
+        try:
+            validate_draft_html(published.read_text(encoding="utf-8"))
+            return True
+        except Exception:
+            pass
+    final = book.final_html(page, lang)
+    if final.is_file() and final.stat().st_size > 0:
+        try:
+            validate_draft_html(final.read_text(encoding="utf-8"))
+            return True
+        except Exception:
+            pass
+    return False
+
+
+def _agent_failure_message(page: int, phase: str, result: dict[str, Any]) -> str:
+    stderr = (result.get("stderr") or "").strip()
+    stdout = (result.get("stdout") or "").strip()
+    log_path = result.get("log_path") or "agent/log.txt"
+    combined = f"{stderr}\n{stdout}".lower()
+    if "authentication required" in combined and "cursor" in combined:
+        return (
+            f"Page {page}: Cursor agent chưa đăng nhập. "
+            "Chạy: cursor agent login — hoặc thêm CURSOR_API_KEY vào application/.env"
+        )
+    if "authentication required" in combined or "not logged in" in combined:
+        return (
+            f"Page {page}: agent {phase} cần đăng nhập CLI ({result.get('provider', '')}). "
+            f"Xem log: {log_path}"
+        )
+    tail = stderr or stdout or "see agent log"
+    if len(tail) > 400:
+        tail = tail[:400] + "…"
+    return f"Page {page}: agent {phase} failed (exit {result.get('exit_code')}). {tail} — log: {log_path}"
+
+
+def _run_agent_step(
+    book: BookPaths,
+    page: int,
+    phase: str,
+    provider: str,
+    *,
+    timeout_s: int,
+) -> dict[str, Any]:
+    write_process_status(
+        book,
+        page,
+        state="running",
+        step=phase,
+        provider=provider,
+        message=f"Agent {phase}…",
+    )
+    prepare_session(book, page, phase)
+    result = run_agent(book, page, phase, provider, timeout_s=timeout_s)
+    if result.get("exit_code") != 0:
+        err = _agent_failure_message(page, phase, result)
+        write_process_status(
+            book,
+            page,
+            state="failed",
+            step=phase,
+            provider=provider,
+            error=err,
+        )
+        raise RuntimeError(err)
+    append_live_log(book, page, f"Completed {phase}")
+    return result
+
+
+def process_page(
+    book: BookPaths,
+    page: int,
+    provider: str,
+    *,
+    timeout_s: int = 3600,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Run page-pdf → render_page for one page."""
+    require_page_pdf(book, page)
+    lang = book.default_lang()
+    clear_live_log(book, page)
+    write_process_status(
+        book,
+        page,
+        state="running",
+        step="starting",
+        provider=provider,
+        message="Pipeline: page PDF → AI render",
+    )
+    steps_run: list[str] = ["page-pdf"]
+
+    try:
+        if force or not _published_ready(book, page, lang):
+            _run_agent_step(
+                book,
+                page,
+                "render_page",
+                provider,
+                timeout_s=timeout_s,
+            )
+            steps_run.append("render_page")
+            if not _published_ready(book, page, lang):
+                raise PipelineGateError(
+                    f"Page {page}: AI render finished but output/{lang}/page_{page:04d}.html "
+                    f"or final.{lang}.html is missing or invalid."
+                )
+
+        out_path = book.page_lang_html(page, lang)
+        if not out_path.is_file():
+            out_path = book.final_html(page, lang)
+
+        write_process_status(
+            book,
+            page,
+            state="done",
+            step="done",
+            provider=provider,
+            message=f"Done — {out_path.name}",
+        )
+        append_live_log(book, page, "Pipeline complete")
+        return {
+            "ok": True,
+            "page": page,
+            "steps_run": steps_run,
+            "output": str(out_path.relative_to(book.root)),
+        }
+    except Exception as exc:
+        write_process_status(
+            book,
+            page,
+            state="failed",
+            step=read_process_status(book, page).get("step", "failed"),
+            provider=provider,
+            error=str(exc),
+        )
+        raise
+
+
+process_page_minimal = process_page
+
+
+def list_pending_render_pages(book: BookPaths) -> list[int]:
+    pending: list[int] = []
+    for page in range(1, book.estimate_page_count() + 1):
+        if not book.source_page_pdf(page).is_file():
+            continue
+        if _published_ready(book, page):
+            continue
+        pending.append(page)
+    return pending
