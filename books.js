@@ -62,6 +62,14 @@ const BOOKS = [
     pageCount: 181,
     description: "Vocabulary explanations and practice for intermediate level (B1-B2) learners of English. Perfect for both self-study and classroom activities.",
     cover: "books/english-idioms-in-use-intermediate/output/assets/images/page_0001_cover_full.png"
+  },
+  {
+    slug: "english-idioms-in-use-advanced",
+    title: "English Idioms In Use Advanced",
+    author: "Michael McCarthy & Felicity O'Dell",
+    pageCount: 183,
+    description: "Vocabulary explanations and practice for advanced level (C1-C2) learners of English. Perfect for both self-study and classroom activities.",
+    cover: null
   }
 ];
 
