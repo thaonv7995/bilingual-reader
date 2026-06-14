@@ -123,8 +123,33 @@ function App() {
   }, []);
 
   const sortedBooks = useMemo(() => {
-    return typeof BOOKS !== 'undefined' ? [...BOOKS].reverse() : [];
-  }, []);
+    if (typeof BOOKS === 'undefined') return [];
+    const books = [...BOOKS];
+    // Treat the BOOKS array index as a virtual "addedAt" time.
+    // We convert it to a comparable numeric value by spacing indices apart
+    // enough so a lastRead timestamp (ms) can overtake it only when it is
+    // genuinely more recent than the book's relative add-order.
+    // Strategy: assign each book a base score = its index * 1 (relative order).
+    // Assign lastRead from localStorage as an absolute ms timestamp.
+    // To make them comparable we normalise: the newest book gets a base score
+    // equal to Date.now() so that any lastRead older than "now" will be
+    // beaten by the most-recently-added book unless the lastRead is even newer.
+    const n = books.length;
+    const now = Date.now();
+    // Space each book's "virtual add time" 1 second apart, with the last book = now
+    const addedTimes = books.map((_, i) => now - (n - 1 - i) * 1000);
+
+    return books
+      .map((book, i) => {
+        const progress = getSavedProgress(book.slug);
+        const lastRead = progress?.lastRead ?? 0;
+        // The effective sort key is the larger of: when it was added vs when it was last read
+        const sortKey = Math.max(addedTimes[i], lastRead);
+        return { book, sortKey };
+      })
+      .sort((a, b) => b.sortKey - a.sortKey)
+      .map(({ book }) => book);
+  }, [activeBook]);
 
   const pageSize = cols * 3;
   const totalPages = Math.ceil(sortedBooks.length / pageSize);
