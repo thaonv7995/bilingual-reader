@@ -32,7 +32,28 @@ books/
     output/
       en/page_*.html  ← 1 HTML mỗi trang (kết quả render)
       book.html       ← gộp tất cả trang (sau assemble)
+---
+
+## Quy trình chuẩn: Batch Process sử dụng Hệ thống Authen (Không dùng API Key)
+
+Để đảm bảo tuân thủ bảo mật và sử dụng đúng hạ tầng, **không được sử dụng API Key trực tiếp dưới bất kỳ hình thức nào**. Mọi tiến trình render và dịch thuật phải chạy thông qua CLI `agy` của hệ thống (sử dụng cơ chế OAuth/Authentication có sẵn).
+
+Để xử lý sách một cách tối ưu và song song (EN + VI):
+
+```bash
+# Thiết lập model sử dụng (khuyên dùng gemini-3.5-flash)
+export ANTIGRAVITY_MODEL="gemini-3.5-flash"
+
+# Chạy batch processor (sử dụng agy CLI với authen hệ thống)
+application/.venv/bin/python application/backend/scripts/batch_processor.py --book books/my-book --translate --threads 4
 ```
+
+Lệnh trên tự động:
+1. Gọi CLI `agy` song song bằng nhiều luồng (threads) để render các trang tiếng Anh.
+2. Dịch các trang sang tiếng Việt thông qua CLI `agy` (với model cấu hình qua `ANTIGRAVITY_MODEL`).
+3. Tự động chạy toàn bộ pipeline post-render (extract figures, upgrade layout, fix margins, v.v.).
+4. Tự động assemble thành `book.html` và `book.vi.html`.
+---
 
 ## Lệnh assemble
 

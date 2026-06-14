@@ -18,42 +18,29 @@ class AntigravityProvider(Provider):
         base = detect_binary(self.id, self.label, self.binary_names)
         if not base.installed or not base.path:
             return base
+        
+        # Check if the OAuth token file exists to verify log in status instantly
+        token_path = Path.home() / ".gemini/antigravity-cli/antigravity-oauth-token"
+        if token_path.is_file():
+            return base
+            
+        # Fallback to a quick command run if token file is not found
         try:
             proc = subprocess.run(
                 [
                     base.path,
-                    "--print",
-                    "--dangerously-skip-permissions",
-                    "-p",
-                    "Reply with exactly: pong",
+                    "--version",
                 ],
                 stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
-                timeout=45,
+                timeout=3,
                 cwd=str(repo_root()),
             )
-            combined = (proc.stdout or "") + (proc.stderr or "")
-            lower = combined.lower()
-            if "not logged into antigravity" in lower or (
-                "not logged in" in lower and "pong" not in lower
-            ):
-                return DetectResult(
-                    id=self.id,
-                    label=self.label,
-                    installed=True,
-                    path=base.path,
-                    version=base.version,
-                    runnable=False,
-                    message=(
-                        "Antigravity chưa đăng nhập. Trong terminal chạy `agy`, "
-                        "hoàn tất Google Sign-In, rồi thử Process lại."
-                    ),
-                )
-        except subprocess.TimeoutExpired:
-            pass
-        except (FileNotFoundError, OSError):
-            pass
+            if proc.returncode != 0:
+                base.runnable = False
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            base.runnable = False
         return base
 
     def build_run_command(

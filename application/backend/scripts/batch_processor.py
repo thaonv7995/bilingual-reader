@@ -81,10 +81,15 @@ Write the translated HTML to: `output/vi/page_{page_str}.html`
         agy_bin,
         "--print",
         "--dangerously-skip-permissions",
+    ]
+    model = os.environ.get("ANTIGRAVITY_MODEL")
+    if model:
+        cmd.extend(["--model", model])
+    cmd.extend([
         "--add-dir", str(book.root),
         "--add-dir", str(repo_root()),
         "-p", f"@{prompt_path}"
-    ]
+    ])
 
     try:
         proc = subprocess.run(

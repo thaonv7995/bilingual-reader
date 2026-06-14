@@ -34,7 +34,7 @@ class CursorProvider(Provider):
                 stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
-                timeout=20,
+                timeout=2,
             )
             combined = (proc.stdout or "") + (proc.stderr or "")
             lower = combined.lower()
