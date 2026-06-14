@@ -168,3 +168,43 @@ body.book-full .book-sheet .book-page.book-page--sheet {
     display: none;
   }
 }
+
+/* ===== OVERFLOW-GUARD: prevent text from being clipped at page bottom ===== */
+
+/* Ensure the sheet itself always clips */
+.book-page--sheet {
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+/* Hard clip on the flow container */
+.sheet-flow {
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+/* Soft fade-out at bottom: fades out any content approaching the page edge.
+   Starts 25mm from bottom so footer area is already protected. */
+.book-page--sheet::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 12mm;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--book-paper, var(--paper, #fffdf8)) 60%, transparent) 40%,
+    var(--book-paper, var(--paper, #fffdf8)) 75%
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Standard prose page: always leave 10mm bottom clearance */
+.prose-page {
+  padding-bottom: 10mm !important;
+}
+
+/* ===================================================================== */
