@@ -30,7 +30,7 @@ def _replace_img_in_figure(html: str, fig_id: str, info: dict) -> str:
 
     # Match figure block containing this fig_id in figcaption or alt
     pattern = (
-        rf'(<figure class="diagram">.*?<img\s+)[^>]+(>.*?'
+        rf'(<figure class="diagram"[^>]*>.*?<img\s+)[^>]+(>.*?'
         rf'(?:Figure|Hình)\s+{re.escape(fig_id)}.*?</figure>)'
     )
 

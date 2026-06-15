@@ -18,9 +18,9 @@ You are the **page HTML builder** for **one PDF page**.
 **`output/<lang>/page_NNNN.html`**
 
 Stylesheets (relative to page file):
-- Always: `../assets/book.css`, `page-tokens.css`, `prose-page.css`
-- If code/listings: `code-page.css`
-- If figures/math: `figures-page.css`
+- Always: `../assets/book.css`, `../assets/page-tokens.css`, `../assets/prose-page.css`
+- If code/listings: `../assets/code-page.css`
+- If figures/math: `../assets/figures-page.css`
 
 ## Shell
 
@@ -35,6 +35,14 @@ If the PDF page is very dense (contains many text paragraphs, list items, dialog
 - Reduce font-size of list items or body text slightly (e.g., down to `9.5pt` or `9pt` for dense exercises) and tighten line-height (e.g., `1.3` to `1.35`) and item margins (e.g., `1.5mm` down to `0.8mm`).
 - Minimize headings size and margins.
 
+## Efficiency & Speed Directives (CRITICAL)
+
+To avoid timing out, DO NOT perform redundant exploratory tool calls:
+- Do NOT read the stylesheets (`book.css`, `prose-page.css`, etc.) repeatedly. They are already standard.
+- Do NOT read other pages' HTML files for boilerplate.
+- Do NOT perform manual figures/images searches if no figures are present in the PDF text.
+- Render the `source.pdf` to image, extract text, and write the output HTML immediately in 3-5 steps.
+
 ## After you write HTML
 
 Agent (or user) runs post-render on the book — see FIDELITY-RULES § Rule 4 & 7:
@@ -44,4 +52,5 @@ Agent (or user) runs post-render on the book — see FIDELITY-RULES § Rule 4 & 
 ## Done when
 
 Side-by-side with `source.pdf`: correct **order**, **block types**, **chrome**, **listings**, **figures**, **math**; page N only. Must fit onto exactly one A4 page without clipping or overflow.
+
 

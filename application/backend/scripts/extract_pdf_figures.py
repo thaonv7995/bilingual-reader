@@ -11,7 +11,7 @@ from pathlib import Path
 import fitz
 
 
-FIGURE_RE = re.compile(r"^Figure\s+(\d+[-.]\d+)", re.I)
+FIGURE_RE = re.compile(r"^Figure\s+(\d+[-.]\d+)\.", re.I)
 
 
 def _figure_labels(page: fitz.Page) -> list[tuple[str, str, fitz.Rect]]:
@@ -54,6 +54,17 @@ def _drawing_band(page: fitz.Page, y0: float, y1: float) -> fitz.Rect | None:
         if r.y1 < y0 or r.y0 > y1:
             continue
         if r.width < 8 and r.height < 8:
+            continue
+        band = r if band is None else band | r
+    return band
+
+
+def _image_band(page: fitz.Page, y0: float, y1: float) -> fitz.Rect | None:
+    """Bounding box of embedded images between y0 and y1."""
+    band: fitz.Rect | None = None
+    for info in page.get_image_info():
+        r = fitz.Rect(info["bbox"])
+        if r.y1 < y0 or r.y0 > y1:
             continue
         band = r if band is None else band | r
     return band
@@ -137,12 +148,17 @@ def extract_figures(
                 footer_y,
             )
 
-            art_above = _drawing_band(page, above_y0, above_y1) or _diagram_text_band(
-                page, above_y0, above_y1
-            )
-            art_below = _drawing_band(page, below_y0, below_y1) or _diagram_text_band(
-                page, below_y0, below_y1
-            )
+            art_above = None
+            for band_func in (_drawing_band, _image_band, _diagram_text_band):
+                res = band_func(page, above_y0, above_y1)
+                if res:
+                    art_above = res if art_above is None else art_above | res
+
+            art_below = None
+            for band_func in (_drawing_band, _image_band, _diagram_text_band):
+                res = band_func(page, below_y0, below_y1)
+                if res:
+                    art_below = res if art_below is None else art_below | res
 
             def _gap_to_caption(art: fitz.Rect) -> float:
                 if art.y1 <= cap_y0:
