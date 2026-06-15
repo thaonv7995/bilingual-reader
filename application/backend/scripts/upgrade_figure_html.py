@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 def _fig_id_from_caption(html: str) -> str | None:
-    m = re.search(r"Figure\s+(\d+[-.]\d+)", html, re.I)
+    m = re.search(r"Figure\s+([A-Za-z\d]+[-.]\d+)", html, re.I)
     return m.group(1) if m else None
 
 

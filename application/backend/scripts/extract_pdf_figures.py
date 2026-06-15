@@ -11,7 +11,7 @@ from pathlib import Path
 import fitz
 
 
-FIGURE_RE = re.compile(r"^Figure\s+(\d+[-.]\d+)\.", re.I)
+FIGURE_RE = re.compile(r"^Figure\s+([A-Za-z\d]+[-.]\d+)\.", re.I)
 
 
 def _figure_labels(page: fitz.Page) -> list[tuple[str, str, fitz.Rect]]:
@@ -122,7 +122,7 @@ def extract_figures(
         matrix = fitz.Matrix(scale, scale)
 
         margin_x = 28
-        header_bottom = 130.0
+        header_bottom = 50.0
 
         for i, (fig_id, label, caption_rect) in enumerate(labels):
             cap_y0 = caption_rect.y0

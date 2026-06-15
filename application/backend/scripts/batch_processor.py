@@ -73,6 +73,11 @@ Write the translated HTML to: `output/vi/page_{page_str}.html`
 3. **No text expansion / overflow**: Keep translations concise. Ensure the entire page still fits on exactly ONE A4 sheet in print preview, exactly mirroring the layout of the English page.
 4. **Glossary rules**: Follow the terminology rules in `books/{slug}/translation/glossary-vi.md`.
 5. **No markdown tags or extra talk**: Output only the complete valid HTML file, writing it to `output/vi/page_{page_str}.html`. Do not reply with extra messages.
+
+## Efficiency & Speed Directives (CRITICAL)
+To avoid timing out, DO NOT perform redundant exploratory tool calls:
+- Do NOT read any stylesheets, other pages' HTML, or search other directories.
+- Translate the input English HTML and write the translated output HTML to output/vi/page_{page_str}.html immediately in 1-2 steps.
 """
     prompt_path.write_text(prompt_content, encoding="utf-8")
 

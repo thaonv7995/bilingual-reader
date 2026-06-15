@@ -12,12 +12,12 @@ from pathlib import Path
 def _figure_ids_in_html(html: str) -> list[str]:
     ids: list[str] = []
     for m in re.finditer(
-        r"<figcaption>[^<]*(?:Figure|Hình)\s+(\d+[-.]\d+)",
+        r"<figcaption>[^<]*(?:Figure|Hình)\s+([A-Za-z\d]+[-.]\d+)",
         html,
         flags=re.IGNORECASE,
     ):
         ids.append(m.group(1))
-    for m in re.finditer(r'alt="(?:Figure|Hình)\s+(\d+[-.]\d+)"', html, flags=re.IGNORECASE):
+    for m in re.finditer(r'alt="(?:Figure|Hình)\s+([A-Za-z\d]+[-.]\d+)"', html, flags=re.IGNORECASE):
         if m.group(1) not in ids:
             ids.append(m.group(1))
     return ids
@@ -30,8 +30,8 @@ def _replace_img_in_figure(html: str, fig_id: str, info: dict) -> str:
 
     # Match figure block containing this fig_id in figcaption or alt
     pattern = (
-        rf'(<figure class="diagram"[^>]*>.*?<img\s+)[^>]+(>.*?'
-        rf'(?:Figure|Hình)\s+{re.escape(fig_id)}.*?</figure>)'
+        rf'(<figure class="diagram"[^>]*>(?:(?!</figure>).)*?<img\s+)[^>]+(>(?:(?!</figure>).)*?'
+        rf'(?:Figure|Hình)\s+{re.escape(fig_id)}(?:(?!</figure>).)*?</figure>)'
     )
 
     def repl(m: re.Match[str]) -> str:
