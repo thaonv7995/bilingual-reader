@@ -105,8 +105,24 @@ Write the translated HTML to: `output/vi/page_{page_str}.html`
             return {"ok": False, "page": page, "error": err}
 
         if not vi_html.is_file() or vi_html.stat().st_size == 0:
-            err = f"Translation completed but vi/page.html was not written. Stderr: {proc.stderr}\nStdout: {proc.stdout}"
-            return {"ok": False, "page": page, "error": err}
+            # Fallback: Extract HTML from stdout if the subagent printed it instead of saving
+            stdout_text = proc.stdout or ""
+            html_content = ""
+            match = re.search(r"```html\s*(.*?)\s*```", stdout_text, re.DOTALL | re.IGNORECASE)
+            if match:
+                html_content = match.group(1).strip()
+            else:
+                match_any = re.search(r"```\s*(.*?)\s*```", stdout_text, re.DOTALL)
+                if match_any:
+                    html_content = match_any.group(1).strip()
+                else:
+                    html_content = stdout_text.strip()
+
+            if html_content.startswith("<!DOCTYPE html>") or "<html" in html_content:
+                vi_html.write_text(html_content, encoding="utf-8")
+            else:
+                err = f"Translation completed but vi/page.html was not written and stdout did not contain valid HTML. Stderr: {proc.stderr}\nStdout: {proc.stdout}"
+                return {"ok": False, "page": page, "error": err}
 
         # Success!
         return {"ok": True, "page": page}
@@ -218,6 +234,7 @@ def main() -> int:
     print("Assembling EN book...")
     books_cli_bin = str(Path(_BACKEND).parent / ".venv" / "bin" / "books-cli")
     cmd_assemble_en = [
+        py_bin,
         books_cli_bin,
         "assemble",
         "--book", str(book_root),
@@ -230,6 +247,7 @@ def main() -> int:
     if args.translate:
         print("Assembling VI book...")
         cmd_assemble_vi = [
+            py_bin,
             books_cli_bin,
             "assemble",
             "--book", str(book_root),
