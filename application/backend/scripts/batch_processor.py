@@ -81,10 +81,9 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
 """
     prompt_path.write_text(prompt_content, encoding="utf-8")
 
-    # Run agy command
     cmd = [
         agy_bin,
-        "--print",
+        "--print-timeout", "15m",
         "--dangerously-skip-permissions",
     ]
     model = os.environ.get("ANTIGRAVITY_MODEL")
@@ -93,7 +92,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
     cmd.extend([
         "--add-dir", str(book.root),
         "--add-dir", str(repo_root()),
-        "-p", f"@{prompt_path}"
+        "--print", f"@{prompt_path}"
     ])
 
     try:
@@ -102,7 +101,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
             stdin=subprocess.DEVNULL,
             capture_output=True,
             text=True,
-            timeout=300,  # 5 min timeout
+            timeout=900,  # 15 min timeout
             cwd=str(book.root)
         )
         if proc.returncode != 0:

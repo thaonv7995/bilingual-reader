@@ -56,7 +56,7 @@ class AntigravityProvider(Provider):
         repo = repo_root()
         cmd = [
             binary,
-            "--print",
+            "--print-timeout", "15m",
             "--dangerously-skip-permissions",
         ]
         model = os.environ.get("ANTIGRAVITY_MODEL")
@@ -67,7 +67,7 @@ class AntigravityProvider(Provider):
             str(book_root),
             "--add-dir",
             str(repo),
-            "-p",
+            "--print",
             f"@{prompt}",
         ])
         return cmd
