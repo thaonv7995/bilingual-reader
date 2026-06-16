@@ -11,7 +11,7 @@ from pathlib import Path
 import fitz
 
 
-FIGURE_RE = re.compile(r"^Figure\s+([A-Za-z\d]+[-.]\d+)\.", re.I)
+FIGURE_RE = re.compile(r"^Figure\s+([A-Za-z\d]+(?:[-.]\d+)?)[:.]", re.I)
 
 
 def _figure_labels(page: fitz.Page) -> list[tuple[str, str, fitz.Rect]]:
@@ -50,6 +50,11 @@ def _drawing_band(page: fitz.Page, y0: float, y1: float) -> fitz.Rect | None:
     """Bounding box of vector drawings between y0 and y1."""
     band: fitz.Rect | None = None
     for path in page.get_drawings():
+        # Ignore text highlights: solid fills without stroke color, height 10-20pt
+        if path.get("type") == "f" and path.get("color") is None:
+            r = fitz.Rect(path["rect"])
+            if 10 <= r.height <= 20:
+                continue
         r = fitz.Rect(path["rect"])
         if r.y1 < y0 or r.y0 > y1:
             continue
