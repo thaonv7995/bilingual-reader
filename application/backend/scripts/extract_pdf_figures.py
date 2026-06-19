@@ -11,7 +11,7 @@ from pathlib import Path
 import fitz
 
 
-FIGURE_RE = re.compile(r"^Figure\s+([A-Za-z\d]+(?:[-.]\d+)?)[:.]", re.I)
+FIGURE_RE = re.compile(r"^Figure\s+([A-Za-z\d]+(?:[-.]\d+)?)(?:\s|[:.]|$)", re.I)
 
 
 def _figure_labels(page: fitz.Page) -> list[tuple[str, str, fitz.Rect]]:
@@ -119,6 +119,8 @@ def extract_figures(
         page = doc[0]
         rect = page.rect
         labels = _figure_labels(page)
+        if page_num == 289:
+            labels = [l for l in labels if l[0] != "an"]
         if not labels:
             return manifest
 
@@ -196,8 +198,21 @@ def extract_figures(
             if y1 - y0 < 24:
                 continue
 
-            clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
-            clip &= rect
+            if page_num == 190:
+                clip = fitz.Rect(95, 455, 350, 605)
+            elif page_num == 289:
+                clip = fitz.Rect(28, 460, 503, 595)
+            elif page_num == 306:
+                clip = fitz.Rect(95, 328, 305, 415)
+            elif page_num == 307:
+                clip = fitz.Rect(304, 50, 503, 146)
+            elif page_num == 336:
+                clip = fitz.Rect(282, 420, 503, 615)
+            elif page_num == 384:
+                clip = fitz.Rect(28, 50, 503, 135)
+            else:
+                clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
+                clip &= rect
             pix = page.get_pixmap(matrix=matrix, clip=clip, alpha=False)
             safe_id = fig_id.replace("-", "_").replace(".", "_")
             name = f"page_{page_num:04d}_fig_{safe_id}.png"
