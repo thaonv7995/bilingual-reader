@@ -45,9 +45,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
 
 ## After you write HTML
 
-Agent (or user) runs post-render on the book — see FIDELITY-RULES § Rule 4 & 7:
-
-- `extract_pdf_figures.py` → `upgrade_figure_html.py` → `fix_book_layout.py` → `validate_page_fidelity.py`
+DO NOT run any post-render scripts (such as `extract_pdf_figures.py`, `upgrade_figure_html.py`, `fix_book_layout.py`, or `validate_page_fidelity.py`) yourself. These scripts are run automatically by the main orchestrator after you finish. Running them yourself as background tasks will cause your process to exit early and fail. Simply write the completed HTML file and finish.
 
 ## Done when
 
