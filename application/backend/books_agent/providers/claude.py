@@ -20,4 +20,11 @@ class ClaudeProvider(Provider):
         page: int,
     ) -> list[str]:
         prompt = session_dir / "prompt.md"
-        return [binary, "-p", f"@{prompt}", "--add-dir", str(book_root)]
+        return [
+            binary,
+            "-p",
+            f"@{prompt}",
+            "--add-dir",
+            str(book_root),
+            "--dangerously-skip-permissions",
+        ]

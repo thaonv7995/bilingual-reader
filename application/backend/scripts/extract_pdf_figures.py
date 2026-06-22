@@ -217,11 +217,34 @@ def extract_figures(
                 430: [("1", "", fitz.Rect(52.5, 493.0, 352.5, 700.0))],
                 431: [("1", "", fitz.Rect(52.5, 295.0, 352.5, 502.0))]
         }
-        if page_num in hardcoded_pages:
+        if page_num in hardcoded_pages and "the-lean-startup" not in str(pdf_path):
             if "domain-driven-design" in str(pdf_path) and page_num in (197, 198):
                 pass
             else:
                 labels = hardcoded_pages[page_num]
+
+        if "the-lean-startup" in str(pdf_path) and page_num == 26:
+            labels = [("1", "", fitz.Rect(10, 0, 243, 184))]
+        elif "the-lean-startup" in str(pdf_path) and page_num == 27:
+            labels = [("1", "", fitz.Rect(10, 0, 243, 188))]
+        elif "the-lean-startup" in str(pdf_path) and page_num == 28:
+            labels = [("1", "", fitz.Rect(10, 0, 243, 187))]
+        elif "the-lean-startup" in str(pdf_path) and page_num == 33:
+            labels = [
+                ("1", "", fitz.Rect(49.92, 0.0, 202.56, 123.84)),
+                ("2", "", fitz.Rect(30.0, 190.0, 250.0, 331.0))
+            ]
+        elif "the-lean-startup" in str(pdf_path) and page_num == 81:
+            labels = [("1", "", fitz.Rect(10, 0, 242, 172))]
+        elif "the-lean-startup" in str(pdf_path) and page_num == 123:
+            labels = [("1", "", fitz.Rect(10, 0, 243, 214))]
+        elif "the-lean-startup" in str(pdf_path) and page_num == 129:
+            labels = [("1", "", fitz.Rect(5, 90, 247, 290))]
+        elif "the-lean-startup" in str(pdf_path) and page_num == 199:
+            labels = [("1", "", fitz.Rect(10, 10, 242, 148))]
+        elif "the-lean-startup" in str(pdf_path) and page_num == 207:
+            labels = [("1", "", fitz.Rect(10, 155, 242, 304))]
+
 
         if not labels:
             return manifest
@@ -302,7 +325,27 @@ def extract_figures(
                 continue
 
             pix = None
-            if page_num == 29:
+            if "the-lean-startup" in str(pdf_path) and page_num in (26, 27, 28, 33, 81, 123, 129, 207):
+                if page_num == 26:
+                    clip = fitz.Rect(10, 0, 243, 184)
+                elif page_num == 27:
+                    clip = fitz.Rect(10, 0, 243, 188)
+                elif page_num == 28:
+                    clip = fitz.Rect(10, 0, 243, 187)
+                elif page_num == 81:
+                    clip = fitz.Rect(10, 0, 242, 172)
+                elif page_num == 123:
+                    clip = fitz.Rect(10, 0, 243, 214)
+                elif page_num == 129:
+                    clip = fitz.Rect(5, 90, 247, 290)
+                elif page_num == 207:
+                    clip = fitz.Rect(10, 150, 242, 305)
+                elif page_num == 33:
+                    if fig_id == "1":
+                        clip = fitz.Rect(49.92, 0.0, 202.56, 123.84)
+                    else:
+                        clip = fitz.Rect(30.0, 190.0, 250.0, 331.0)
+            elif page_num == 29:
                 if fig_id == "1.4":
                     clip = fitz.Rect(28, 250, 548, 465)
                 elif fig_id == "1.5":
