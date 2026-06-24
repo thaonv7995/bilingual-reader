@@ -53,6 +53,47 @@ Lệnh trên tự động:
 2. Dịch các trang sang tiếng Việt thông qua CLI `agy` (với model cấu hình qua `ANTIGRAVITY_MODEL`).
 3. Tự động chạy toàn bộ pipeline post-render (extract figures, upgrade layout, fix margins, v.v.).
 4. Tự động assemble thành `book.html` và `book.vi.html`.
+
+### Khi quota gần hết hoặc đã hết
+
+Nếu muốn xử lý theo kiểu có thể resume an toàn thay vì đập thẳng toàn bộ batch:
+
+```bash
+application/.venv/bin/python application/backend/scripts/quota_resume_runner.py \
+  --book books/my-book \
+  --translate \
+  --threads 4 \
+  --batch-size 8 \
+  --run-post-pipeline
+```
+
+Runner này sẽ:
+1. Chỉ khởi động một batch nhỏ mỗi lần.
+2. Ghi state vào `books/my-book/work/quota_resume/state.json`.
+3. Khi gặp lỗi kiểu quota / rate-limit, chuyển sang trạng thái `pending_quota`.
+4. Sinh sẵn:
+   - `books/my-book/work/quota_resume/run.sh`
+   - `books/my-book/work/quota_resume/install-cron.txt`
+5. Chỉ chạy post-render + assemble sau khi toàn bộ pending pages đã hoàn tất.
+
+Muốn chạy polling liên tục:
+
+```bash
+application/.venv/bin/python application/backend/scripts/quota_resume_runner.py \
+  --book books/my-book \
+  --translate \
+  --threads 4 \
+  --batch-size 8 \
+  --run-post-pipeline \
+  --watch
+```
+
+Muốn cài cron từ template đã sinh:
+
+```bash
+bash application/backend/scripts/install_quota_resume_cron.sh \
+  books/my-book/work/quota_resume/install-cron.txt
+```
 ---
 
 ## Lệnh assemble
@@ -103,4 +144,3 @@ application/.venv/bin/books-cli pack --book books/animal-farm-by-george-orwell -
 2. Chọn tab **Sách** (Books).
 3. Sử dụng khung kéo thả tệp hoặc nhấn nút duyệt để chọn tệp `tên-sách.bkb` đã tạo ở bước 1.
 4. Quá trình tải lên và giải nén (unpack) sẽ diễn ra hoàn toàn tự động trên máy chủ, đi kèm với thanh tiến trình tải lên trực quan. Sau khi tải lên thành công, sách sẽ hiển thị trong tủ sách của thư viện.
-
