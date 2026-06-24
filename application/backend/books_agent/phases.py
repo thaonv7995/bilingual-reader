@@ -10,6 +10,6 @@ PROMPT_FILES: dict[AgentPhase, str] = {
     "render_page": "render_page.md",
 }
 
-OUTPUT_ARTIFACTS: dict[AgentPhase, str] = {
+OUTPUT_FILES: dict[AgentPhase, str] = {
     "render_page": "output/{lang}/page_NNNN.html",
 }

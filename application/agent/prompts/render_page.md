@@ -42,6 +42,10 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
 - Do NOT read other pages' HTML files for boilerplate.
 - Do NOT perform manual figures/images searches if no figures are present in the PDF text.
 - Render the `source.pdf` to image, extract text, and write the output HTML immediately in 3-5 steps.
+- **CRITICAL**: Do NOT render, extract, or view other PDF pages (like checking TOC page numbers on page 10, 15, etc.). You must focus ONLY on page N.
+- **CRITICAL**: Do NOT write custom Python scripts or run pixel-level crop analysis for logos/images unless explicitly instructed. If there are no images in the PDF text, just write standard text HTML.
+- **CRITICAL**: Do NOT run broad grep searches on completed books or check other directories.
+- **CRITICAL**: Always write the output HTML file with `IsArtifact: false` (i.e. do NOT set `IsArtifact: true` as it is forbidden and will fail because the output directory is outside the CLI brain).
 
 ## After you write HTML
 

@@ -110,8 +110,40 @@ class Provider(ABC):
             ]
             for t in threads:
                 t.start()
+            import time
+            import json
+            from books_core.validation import validate_draft_html
+
+            expected_output = None
             try:
-                proc.wait(timeout=timeout_s)
+                context_path = session_dir / "context.json"
+                if context_path.is_file():
+                    ctx_data = json.loads(context_path.read_text(encoding="utf-8"))
+                    lang = ctx_data.get("lang")
+                    expected_output = book_root / "output" / lang / f"page_{page:04d}.html"
+            except Exception:
+                pass
+
+            completed_successfully = False
+            try:
+                start_time = time.time()
+                while proc.poll() is None:
+                    if expected_output and expected_output.is_file() and expected_output.stat().st_size > 0:
+                        try:
+                            content = expected_output.read_text(encoding="utf-8")
+                            validate_draft_html(content)
+                            completed_successfully = True
+                            proc.terminate()
+                            try:
+                                proc.wait(timeout=2)
+                            except subprocess.TimeoutExpired:
+                                proc.kill()
+                            break
+                        except Exception:
+                            pass
+                    time.sleep(1)
+                    if timeout_s and (time.time() - start_time > timeout_s):
+                        raise subprocess.TimeoutExpired(cmd, timeout_s)
             except subprocess.TimeoutExpired as exc:
                 proc.kill()
                 proc.wait()
@@ -120,7 +152,10 @@ class Provider(ABC):
                 raise exc
             for t in threads:
                 t.join(timeout=5)
-            returncode = proc.returncode if proc.returncode is not None else -1
+            if completed_successfully or proc.returncode == 0:
+                returncode = 0
+            else:
+                returncode = proc.returncode if proc.returncode is not None else -1
         except subprocess.TimeoutExpired as exc:
             log = session_dir / "log.txt"
             log.write_text(f"TIMEOUT\n{exc}\n", encoding="utf-8")

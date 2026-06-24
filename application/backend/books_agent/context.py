@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from books_agent.phase_pack import phase_skill_pack
-from books_agent.phases import OUTPUT_ARTIFACTS, PROMPT_FILES, AgentPhase
+from books_agent.phases import OUTPUT_FILES, PROMPT_FILES, AgentPhase
 from books_core.paths import BookPaths
 from books_core.repo import repo_root, skills_root
 
@@ -65,7 +65,7 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
         "phase": phase,
         "page": page,
         "lang": lang,
-        "output_artifact": OUTPUT_ARTIFACTS[phase].replace("{lang}", lang),
+        "output_file": OUTPUT_FILES[phase].replace("{lang}", lang),
         "paths": paths,
         "skills": skills,
         "skill_pack": skill_pack,
@@ -104,7 +104,7 @@ work: work/page_{nn}/
 
 Open folder: `{book.root}`
 
-Required output: `{ctx["output_artifact"]}` under `work/page_{nn}/` or `pages/{ctx["lang"]}/`.
+Required output: `{ctx["output_file"]}` under `work/page_{nn}/` or `pages/{ctx["lang"]}/`.
 
 """
     return header + base + body

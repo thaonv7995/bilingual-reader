@@ -78,6 +78,7 @@ Write the translated HTML to: `output/vi/page_{page_str}.html`
 To avoid timing out, DO NOT perform redundant exploratory tool calls:
 - Do NOT read any stylesheets, other pages' HTML, or search other directories.
 - Translate the input English HTML and write the translated output HTML to output/vi/page_{page_str}.html immediately in 1-2 steps.
+- **CRITICAL**: Always write the output HTML file with `IsArtifact: false` (i.e. do NOT set `IsArtifact: true` as it is forbidden and will fail because the output directory is outside the CLI brain).
 """
     prompt_path.write_text(prompt_content, encoding="utf-8")
 
@@ -96,16 +97,62 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
     ])
 
     try:
-        proc = subprocess.run(
+        proc = subprocess.Popen(
             cmd,
             stdin=subprocess.DEVNULL,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=900,  # 15 min timeout
             cwd=str(book.root)
         )
-        if proc.returncode != 0:
-            err = f"agy failed with code {proc.returncode}. Stderr: {proc.stderr}\nStdout: {proc.stdout}"
+        
+        stdout_chunks = []
+        stderr_chunks = []
+        import threading
+        def pump(pipe, chunks):
+            for line in pipe:
+                chunks.append(line)
+        t_out = threading.Thread(target=pump, args=(proc.stdout, stdout_chunks), daemon=True)
+        t_err = threading.Thread(target=pump, args=(proc.stderr, stderr_chunks), daemon=True)
+        t_out.start()
+        t_err.start()
+
+        import time
+        from books_core.validation import validate_draft_html
+        start_time = time.time()
+        completed_successfully = False
+        timeout_s = 900
+        while proc.poll() is None:
+            if vi_html.is_file() and vi_html.stat().st_size > 0:
+                try:
+                    content = vi_html.read_text(encoding="utf-8")
+                    validate_draft_html(content)
+                    completed_successfully = True
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                    break
+                except Exception:
+                    pass
+            time.sleep(1)
+            if time.time() - start_time > timeout_s:
+                proc.kill()
+                proc.wait()
+                raise subprocess.TimeoutExpired(cmd, timeout_s)
+
+        t_out.join(timeout=2)
+        t_err.join(timeout=2)
+        
+        proc.stdout = "".join(stdout_chunks)
+        proc.stderr = "".join(stderr_chunks)
+        returncode = proc.returncode if proc.returncode is not None else 0
+        if completed_successfully:
+            returncode = 0
+
+        if returncode != 0 and not vi_html.is_file():
+            err = f"agy failed with code {returncode}. Stderr: {proc.stderr}\nStdout: {proc.stdout}"
             return {"ok": False, "page": page, "error": err}
 
         if not vi_html.is_file() or vi_html.stat().st_size == 0:
