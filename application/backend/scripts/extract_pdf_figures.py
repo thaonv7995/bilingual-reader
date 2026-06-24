@@ -133,6 +133,12 @@ def extract_figures(
         
         # Fallback for pages that have hardcoded clips but no standard "Figure" text label
         hardcoded_pages = {
+                5: [("1", "", fitz.Rect(210, 465, 292, 545))],
+                27: [("1", "", fitz.Rect(69, 317, 226, 452))],
+                35: [("1", "", fitz.Rect(69, 317, 226, 452))],
+                39: [("1", "", fitz.Rect(69, 317, 226, 452))],
+                45: [("1", "", fitz.Rect(69, 317, 226, 452))],
+                55: [("1", "", fitz.Rect(69, 317, 226, 452))],
                 29: [("1.4", "Figure 1.4", fitz.Rect(28, 250, 548, 465)), ("1.5", "Figure 1.5", fitz.Rect(28, 35, 548, 170))],
                 30: [("1.6", "Figure 1.6", fitz.Rect(28, 310, 548, 545))],
                 31: [("1", "Figure 1", fitz.Rect(28, 415, 503, 585))],
@@ -215,7 +221,14 @@ def extract_figures(
                 398: [("16.12", "Figure 16.12. A typical interaction", fitz.Rect(106.5, 43.558, 481.5, 301.902))],
                 411: [("16.25", "Figure 16.25. The user places a lot in the next machine and logs the move into the computer.", fitz.Rect(28.0, 78.0, 548.0, 356.0))],
                 430: [("1", "", fitz.Rect(52.5, 493.0, 352.5, 700.0))],
-                431: [("1", "", fitz.Rect(52.5, 295.0, 352.5, 502.0))]
+                431: [("1", "", fitz.Rect(52.5, 295.0, 352.5, 502.0))],
+                71: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                81: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                93: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                105: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                113: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                131: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                361: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))]
         }
         if page_num in hardcoded_pages and "the-lean-startup" not in str(pdf_path):
             if "domain-driven-design" in str(pdf_path) and page_num in (197, 198):
@@ -325,7 +338,9 @@ def extract_figures(
                 continue
 
             pix = None
-            if "the-lean-startup" in str(pdf_path) and page_num in (26, 27, 28, 33, 81, 123, 129, 207):
+            if page_num == 5:
+                clip = fitz.Rect(210, 465, 292, 545)
+            elif "the-lean-startup" in str(pdf_path) and page_num in (26, 27, 28, 33, 81, 123, 129, 207):
                 if page_num == 26:
                     clip = fitz.Rect(10, 0, 243, 184)
                 elif page_num == 27:
@@ -643,6 +658,8 @@ def extract_figures(
                 clip = fitz.Rect(52.5, 493.0, 352.5, 700.0)
             elif page_num == 431:
                 clip = fitz.Rect(52.5, 295.0, 352.5, 502.0)
+            elif page_num in (27, 35, 45, 55, 71, 81, 93, 105, 113, 131, 361):
+                clip = fitz.Rect(69.0, 317.0, 226.0, 452.0)
             else:
                 clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
                 clip &= rect
@@ -661,8 +678,15 @@ def extract_figures(
                 except Exception:
                     pass
 
-            if pix_width is None or pix_height is None:
+            if pix_width is None or pix_height is None or page_num == 93:
                 if pix is None:
+                    if page_num in (27, 35, 45, 71, 93, 361):
+                        for block in page.get_text("dict")["blocks"]:
+                            if block["type"] == 0:
+                                for line in block["lines"]:
+                                    for span in line["spans"]:
+                                        page.add_redact_annot(span["bbox"])
+                        page.apply_redactions(images=0, graphics=0)
                     pix = page.get_pixmap(matrix=matrix, clip=clip, alpha=False)
                 pix.save(str(out_path))
                 pix_width, pix_height = pix.width, pix.height
