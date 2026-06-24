@@ -343,6 +343,39 @@ Examples of scripts that should not be casually invoked from the wrong layer inc
 
 If the task is page rendering, produce the page artifact correctly and let the orchestrator handle downstream phases unless the user explicitly requests otherwise.
 
+## Parallelism, Quota, And Resume Rules
+
+This repository may benefit from parallel page work, but parallelism must be controlled by quota awareness rather than optimism.
+
+When processing multiple pages, books, translations, or validation jobs:
+
+- prefer bounded parallel batches over fully unbounded fan-out
+- check current quota, rate-limit behavior, and recent failure patterns before increasing concurrency
+- reduce concurrency immediately if the backend starts returning quota, overload, or eligibility-related errors
+- do not keep hammering the same endpoint after quota exhaustion has already been established
+
+If model or API quota is near exhaustion:
+
+- prioritize the highest-value or currently in-flight pages first
+- avoid starting large new batches that are unlikely to finish
+- leave clear progress markers showing which pages are done, in progress, blocked, or pending
+- preserve enough state so the next run can continue from the remaining pages instead of redoing accepted work
+
+If quota is exhausted:
+
+- move the remaining work into an explicit pending state
+- record the blocker, the observed error, the expected reset or retry condition, and the exact next resume step
+- prefer resuming from the first unfinished page or task rather than re-running the full pipeline
+
+For long-running book operations where quota recovery is the only blocker, it is acceptable to prepare a lightweight scheduled re-check, such as cron, that:
+
+- checks whether quota has recovered
+- resumes only the next safe batch
+- appends progress logs instead of overwriting them
+- stops or backs off again if quota is still unavailable
+
+Do not create background retry loops that continuously burn requests without decision logic. Recovery logic must be rate-aware, stateful, and resumable.
+
 ## Scope Discipline
 
 Keep edits tightly scoped to the user's request.
