@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -93,6 +94,11 @@ def run_agent(
         else:
             append_live_log(book, page, chunk.rstrip() if chunk.startswith("[") else chunk)
 
+        # Print to stdout in real-time so that batch_processor and server can stream it to the Web UI
+        clean_chunk = chunk.rstrip()
+        if clean_chunk and os.environ.get("BOOKS_SILENT_WORKERS") != "1":
+            print(f"[Page {page:02d}] {clean_chunk}", flush=True)
+
         stripped = chunk.strip()
         if stripped.startswith("▶ ") or stripped.startswith("✓ "):
             label = stripped[2:].strip()
@@ -114,6 +120,11 @@ def run_agent(
     cmd_preview = provider.build_run_command(det.path or "", book.root, adir, ph, page)
     append_live_log(book, page, f"$ {' '.join(cmd_preview)}")
     append_live_log(book, page, f"Running {provider_id} agent ({ph})…")
+    
+    # Print start events to stdout in real-time
+    if os.environ.get("BOOKS_SILENT_WORKERS") != "1":
+        print(f"[Page {page:02d}] $ {' '.join(cmd_preview)}", flush=True)
+        print(f"[Page {page:02d}] Running {provider_id} agent ({ph})...", flush=True)
     if provider_id == "cursor":
         from books_agent.providers.cursor_run import run_cursor_agent
 

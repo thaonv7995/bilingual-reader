@@ -209,6 +209,8 @@ def init_state(
     pending_pages: list[int],
 ) -> dict[str, Any]:
     data = load_json(path)
+    failed_pages = data.get("failed_pages", {})
+    failed_pages = {k: v for k, v in failed_pages.items() if int(k) in pending_pages}
     data.update({
         "book": str(book.root),
         "start_page": args.start_page,
@@ -220,7 +222,7 @@ def init_state(
         "run_post_pipeline": args.run_post_pipeline,
         "pending_pages": pending_pages,
         "completed_pages": data.get("completed_pages", []),
-        "failed_pages": data.get("failed_pages", {}),
+        "failed_pages": failed_pages,
         "status": data.get("status", "ready"),
         "last_blocker": data.get("last_blocker"),
         "last_error_excerpt": data.get("last_error_excerpt"),

@@ -154,6 +154,14 @@ def cmd_unpack(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_serve(args: argparse.Namespace) -> int:
+    import uvicorn
+    from books_cli.server import app
+    print(f"Starting Books HTML Web Studio on http://{args.host}:{args.port}")
+    uvicorn.run(app, host=args.host, port=args.port)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="books-cli",
@@ -163,6 +171,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p_status = sub.add_parser("status", help="Book pipeline summary")
     p_status.add_argument("--book", required=True)
+
     p_status.add_argument("--json", action="store_true")
     p_status.set_defaults(func=cmd_status)
 
@@ -229,6 +238,13 @@ def main(argv: list[str] | None = None) -> int:
     p_unpack.add_argument("--bkb", required=True, help="Path to .bkb archive file")
     p_unpack.add_argument("--dest", required=True, help="Destination parent directory (e.g. books/)")
     p_unpack.set_defaults(func=cmd_unpack)
+
+    p_serve = sub.add_parser("serve", help="Start the Web UI & backend server")
+    p_serve.add_argument("--host", default="0.0.0.0", help="Binding host")
+    p_serve.add_argument("--port", type=int, default=8765, help="Port to run server on")
+    p_serve.set_defaults(func=cmd_serve)
+
+
 
     p_doc = sub.add_parser("doctor", help="Detect agent CLIs")
     p_doc.set_defaults(func=cmd_doctor)

@@ -1,0 +1,24 @@
+#!/usr/bin/expect -f
+set stty_init "cols 1000"
+spawn agy
+
+expect "Select login method:" {
+    send "1\r"
+}
+
+# Match the URL but exclude escape characters and bell characters used in terminal hyperlinks
+expect -re "(https://accounts.google.com\[^\r\n \007\033]+)" {
+    puts "\nURL_FOUND_HERE:$expect_out(1,string)\n"
+}
+
+expect "uthorization code..." {
+    set code [gets stdin]
+    send "$code\r"
+}
+
+expect ">" {
+    send "exit\r"
+}
+
+set timeout 5
+expect eof

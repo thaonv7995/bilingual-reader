@@ -31,6 +31,42 @@ def get_agy_binary() -> str:
     raise FileNotFoundError("Could not find agy binary on PATH or common locations.")
 
 
+def get_translation_error_details(proc, vi_html, agy_log_path: Path) -> str:
+    stderr = (proc.stderr or "").strip()
+    stdout = (proc.stdout or "").strip()
+    
+    log_content = ""
+    if agy_log_path.is_file():
+        try:
+            log_text = agy_log_path.read_text(encoding="utf-8", errors="replace")
+            log_lines = log_text.splitlines()
+            if log_lines:
+                log_content = "\n[agy.log tail]:\n" + "\n".join(log_lines[-25:])
+        except Exception:
+            pass
+            
+    validation_err = ""
+    if vi_html.is_file():
+        try:
+            content = vi_html.read_text(encoding="utf-8")
+            from books_core.validation import validate_draft_html
+            validate_draft_html(content)
+        except Exception as e:
+            validation_err = f"\n[validation error]: {e}"
+            
+    parts = []
+    if stderr:
+        parts.append(f"Stderr: {stderr}")
+    if stdout:
+        parts.append(f"Stdout: {stdout}")
+    if log_content:
+        parts.append(log_content)
+    if validation_err:
+        parts.append(validation_err)
+        
+    return "\n".join(parts) if parts else "No additional error output found."
+
+
 def translate_page(book: BookPaths, page: int, agy_bin: str) -> dict:
     page_str = f"{page:04d}"
     en_html = book.page_lang_html(page, "en")
@@ -82,10 +118,12 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
 """
     prompt_path.write_text(prompt_content, encoding="utf-8")
 
+    agy_log_path = agent_dir / "agy.log"
     cmd = [
         agy_bin,
         "--print-timeout", "15m",
         "--dangerously-skip-permissions",
+        "--log-file", str(agy_log_path),
     ]
     model = os.environ.get("ANTIGRAVITY_MODEL")
     if model:
@@ -95,6 +133,19 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
         "--add-dir", str(repo_root()),
         "--print", f"@{prompt_path}"
     ])
+
+    from books_core.pipeline.status import write_process_status, append_live_log, append_stream_chunk
+
+    write_process_status(
+        book,
+        page,
+        state="running",
+        step="translate",
+        provider="antigravity",
+        message="Translating page EN → VI...",
+    )
+    append_live_log(book, page, f"$ {' '.join(cmd)}")
+    append_live_log(book, page, f"Running translation agent...")
 
     try:
         proc = subprocess.Popen(
@@ -109,11 +160,25 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
         stdout_chunks = []
         stderr_chunks = []
         import threading
-        def pump(pipe, chunks):
+        
+        def pump_out(pipe, chunks):
             for line in pipe:
                 chunks.append(line)
-        t_out = threading.Thread(target=pump, args=(proc.stdout, stdout_chunks), daemon=True)
-        t_err = threading.Thread(target=pump, args=(proc.stderr, stderr_chunks), daemon=True)
+                append_stream_chunk(book, page, line)
+                clean_line = line.rstrip()
+                if clean_line and os.environ.get("BOOKS_SILENT_WORKERS") != "1":
+                    print(f"[Page {page:02d}] [VI] {clean_line}", flush=True)
+
+        def pump_err(pipe, chunks):
+            for line in pipe:
+                chunks.append(line)
+                append_live_log(book, page, f"[stderr] {line.rstrip()}")
+                clean_line = line.rstrip()
+                if clean_line and os.environ.get("BOOKS_SILENT_WORKERS") != "1":
+                    print(f"[Page {page:02d}] [VI ERR] {clean_line}", flush=True)
+
+        t_out = threading.Thread(target=pump_out, args=(proc.stdout, stdout_chunks), daemon=True)
+        t_err = threading.Thread(target=pump_err, args=(proc.stderr, stderr_chunks), daemon=True)
         t_out.start()
         t_err.start()
 
@@ -152,7 +217,17 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
             returncode = 0
 
         if returncode != 0 and not vi_html.is_file():
-            err = f"agy failed with code {returncode}. Stderr: {proc.stderr}\nStdout: {proc.stdout}"
+            details = get_translation_error_details(proc, vi_html, agy_log_path)
+            err = f"agy failed with code {returncode}.\n{details}"
+            write_process_status(
+                book,
+                page,
+                state="failed",
+                step="translate",
+                provider="antigravity",
+                error=err,
+            )
+            append_live_log(book, page, f"Translation failed: {err}")
             return {"ok": False, "page": page, "error": err}
 
         if not vi_html.is_file() or vi_html.stat().st_size == 0:
@@ -172,36 +247,151 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
             if html_content.startswith("<!DOCTYPE html>") or "<html" in html_content:
                 vi_html.write_text(html_content, encoding="utf-8")
             else:
-                err = f"Translation completed but vi/page.html was not written and stdout did not contain valid HTML. Stderr: {proc.stderr}\nStdout: {proc.stdout}"
+                details = get_translation_error_details(proc, vi_html, agy_log_path)
+                err = f"Translation completed but vi/page.html was not written and stdout did not contain valid HTML.\n{details}"
+                write_process_status(
+                    book,
+                    page,
+                    state="failed",
+                    step="translate",
+                    provider="antigravity",
+                    error=err,
+                )
+                append_live_log(book, page, f"Translation failed: {err}")
                 return {"ok": False, "page": page, "error": err}
 
+        # Final validation check
+        try:
+            content = vi_html.read_text(encoding="utf-8")
+            validate_draft_html(content)
+        except Exception as e:
+            details = get_translation_error_details(proc, vi_html, agy_log_path)
+            err = f"Translation completed but output vi/page.html failed validation: {e}\n{details}"
+            write_process_status(
+                book,
+                page,
+                state="failed",
+                step="translate",
+                provider="antigravity",
+                error=err,
+            )
+            append_live_log(book, page, f"Translation failed: {err}")
+            return {"ok": False, "page": page, "error": err}
+
         # Success!
+        write_process_status(
+            book,
+            page,
+            state="done",
+            step="done",
+            provider="antigravity",
+            message="Done — translation complete",
+        )
+        append_live_log(book, page, "Translation complete")
         return {"ok": True, "page": page}
     except Exception as e:
-        return {"ok": False, "page": page, "error": str(e)}
+        import traceback
+        err_tb = f"{e}\n{traceback.format_exc()}"
+        write_process_status(
+            book,
+            page,
+            state="failed",
+            step="translate",
+            provider="antigravity",
+            error=err_tb,
+        )
+        append_live_log(book, page, f"Translation error: {err_tb}")
+        return {"ok": False, "page": page, "error": err_tb}
 
 
-def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: bool, provider: str = "antigravity") -> dict:
+def parse_pages_spec(spec: str, max_page: int) -> list[int]:
+    """Parse pages spec like '1-5', '3', '1,3,5' into a list of integers."""
+    # Normalize different dash characters (en-dash, em-dash) to standard hyphen
+    spec = spec.replace("–", "-").replace("—", "-")
+    pages = set()
+    for part in spec.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "-" in part:
+            try:
+                start, end = map(int, part.split("-"))
+                for p in range(start, min(end + 1, max_page + 1)):
+                    pages.add(p)
+            except ValueError:
+                continue
+        else:
+            try:
+                p = int(part)
+                if 1 <= p <= max_page:
+                    pages.add(p)
+            except ValueError:
+                continue
+    return sorted(list(pages))
+
+
+def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: bool, provider: str = "antigravity", force: bool = False) -> dict:
+    import time
+    
     # 1. Render EN page
     en_html = book.page_lang_html(page, "en")
-    render_ok = True
-    if not en_html.is_file() or en_html.stat().st_size == 0:
-        try:
-            res = process_page(book, page, provider=provider)
-            render_ok = res.get("ok", False)
-        except Exception as e:
-            return {"ok": False, "page": page, "phase": "render", "error": str(e)}
-
-    if not render_ok:
-        return {"ok": False, "page": page, "phase": "render", "error": "Render returned not OK"}
+    render_ok = False
+    
+    if not force and en_html.is_file() and en_html.stat().st_size > 0:
+        render_ok = True
+    else:
+        max_retries = 3
+        backoff = 5.0
+        last_error = ""
+        for attempt in range(max_retries):
+            try:
+                res = process_page(book, page, provider=provider, force=force)
+                if res.get("ok"):
+                    render_ok = True
+                    break
+                else:
+                    last_error = "Render returned not OK"
+            except Exception as e:
+                import traceback
+                last_error = f"{e}\n{traceback.format_exc()}"
+                
+            if attempt < max_retries - 1:
+                print(f"[Page {page:02d}] [RETRY] Render failed: {last_error}. Retrying in {backoff}s (attempt {attempt+2}/{max_retries})...", flush=True)
+                time.sleep(backoff)
+                backoff *= 2.0
+                
+        if not render_ok:
+            return {"ok": False, "page": page, "phase": "render", "error": last_error}
 
     # 2. Translate to VI page
     if translate:
         vi_html = book.page_lang_html(page, "vi")
-        if not vi_html.is_file() or vi_html.stat().st_size == 0:
-            res = translate_page(book, page, agy_bin)
-            if not res.get("ok"):
-                return {"ok": False, "page": page, "phase": "translate", "error": res.get("error")}
+        if not force and vi_html.is_file() and vi_html.stat().st_size > 0:
+            pass
+        else:
+            translate_ok = False
+            max_retries = 3
+            backoff = 5.0
+            last_error = ""
+            for attempt in range(max_retries):
+                try:
+                    res = translate_page(book, page, agy_bin)
+                    if res.get("ok"):
+                        translate_ok = True
+                        break
+                    else:
+                        last_error = res.get("error", "Unknown error")
+                except Exception as e:
+                    import traceback
+                    last_error = f"{e}\n{traceback.format_exc()}"
+                
+                if attempt < max_retries - 1:
+                    print(f"[Page {page:02d}] [RETRY] Translation failed: {last_error}. Retrying in {backoff}s (attempt {attempt+2}/{max_retries})...", flush=True)
+                    time.sleep(backoff)
+                    backoff *= 2.0
+                    
+            if not translate_ok:
+                return {"ok": False, "page": page, "phase": "translate", "error": last_error}
 
     return {"ok": True, "page": page}
 
@@ -211,6 +401,8 @@ def main() -> int:
     parser.add_argument("--book", required=True, help="Path to book folder")
     parser.add_argument("--start-page", type=int, default=1, help="Start page")
     parser.add_argument("--end-page", type=int, help="End page")
+    parser.add_argument("--pages", help="Specific pages/ranges to process, e.g. '1-5', '3', '1,3,5'")
+    parser.add_argument("--force", action="store_true", help="Force re-render and re-translate existing pages")
     parser.add_argument("--threads", type=int, default=8, help="Number of parallel threads")
     parser.add_argument("--translate", action="store_true", help="Also translate pages to VI")
     parser.add_argument("--provider", default="antigravity", choices=["antigravity", "cursor", "codex", "claude"], help="Provider for rendering")
@@ -220,27 +412,36 @@ def main() -> int:
     book = BookPaths.open(book_root)
     page_count = args.end_page if args.end_page else book.estimate_page_count()
 
-    print(f"Processing book: {book_root.name} (pages {args.start_page} to {page_count})")
+    if args.pages:
+        print(f"Processing book: {book_root.name} (specific pages: {args.pages})")
+    else:
+        print(f"Processing book: {book_root.name} (pages {args.start_page} to {page_count})")
     
     agy_bin = get_agy_binary() if args.translate else ""
     
-    # Identify pages that need processing
+    # Identify pages to process
+    if args.pages:
+        candidate_pages = parse_pages_spec(args.pages, page_count)
+    else:
+        candidate_pages = list(range(args.start_page, page_count + 1))
+        
     pages_to_process = []
-    for page in range(args.start_page, page_count + 1):
+    for page in candidate_pages:
         en_html = book.page_lang_html(page, "en")
         vi_html = book.page_lang_html(page, "vi")
-        need_render = not en_html.is_file() or en_html.stat().st_size == 0
-        need_translate = args.translate and (not vi_html.is_file() or vi_html.stat().st_size == 0)
+        need_render = args.force or not en_html.is_file() or en_html.stat().st_size == 0
+        need_translate = args.translate and (args.force or not vi_html.is_file() or vi_html.stat().st_size == 0)
         
         if need_render or need_translate:
             pages_to_process.append(page)
 
     if pages_to_process:
         print(f"Starting rendering & translation for {len(pages_to_process)} pages using {args.threads} threads...")
+        os.environ["BOOKS_SILENT_WORKERS"] = "1"
         errors = {}
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             future_to_page = {
-                executor.submit(process_single_page, book, p, agy_bin, args.translate, args.provider): p
+                executor.submit(process_single_page, book, p, agy_bin, args.translate, args.provider, args.force): p
                 for p in pages_to_process
             }
             for future in as_completed(future_to_page):
@@ -250,10 +451,18 @@ def main() -> int:
                     if res.get("ok"):
                         print(f"  ✓ Processed Page {p} (EN & VI complete)")
                     else:
-                        print(f"  ✗ Failed Page {p} during {res.get('phase')}: {res.get('error')}")
+                        print(f"\n======================================================================")
+                        print(f"✗ ERROR ON PAGE {p} DURING PHASE: {res.get('phase').upper()}")
+                        print(f"----------------------------------------------------------------------")
+                        print(res.get('error'))
+                        print(f"======================================================================\n", flush=True)
                         errors[p] = f"{res.get('phase')}: {res.get('error')}"
                 except Exception as e:
-                    print(f"  ✗ Failed Page {p}: {e}")
+                    print(f"\n======================================================================")
+                    print(f"✗ ERROR ON PAGE {p}:")
+                    print(f"----------------------------------------------------------------------")
+                    print(str(e))
+                    print(f"======================================================================\n", flush=True)
                     errors[p] = str(e)
         
         if errors:
@@ -262,13 +471,17 @@ def main() -> int:
         print("All pages already processed and translated.")
 
     # 3. Post-render and assembly pipeline
-    print("Running post-render and assembly scripts...")
     py_bin = sys.executable or "python3"
     scripts_dir = _BACKEND / "scripts"
 
+    # For extract_pdf_figures.py, pass the specific pages we processed to speed it up!
+    extract_args = []
+    if args.pages:
+        extract_args = [str(p) for p in candidate_pages]
+
     # Runs scripts in sequence
     post_scripts = [
-        ("extract_pdf_figures.py", []),
+        ("extract_pdf_figures.py", extract_args),
         ("upgrade_figure_html.py", []),
         ("refresh_figure_images.py", []),
         ("fix_book_layout.py", []),
@@ -278,12 +491,16 @@ def main() -> int:
     for script_name, extra_args in post_scripts:
         script_path = scripts_dir / script_name
         if script_path.is_file():
-            print(f"Running {script_name}...")
             cmd = [py_bin, str(script_path), str(book_root)] + extra_args
-            subprocess.run(cmd, check=False)
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+            if res.returncode != 0:
+                print(f"\n======================================================================")
+                print(f"✗ ERROR RUNNING POST-RENDER SCRIPT: {script_name}")
+                print(f"----------------------------------------------------------------------")
+                print(res.stdout)
+                print(f"======================================================================\n", flush=True)
 
     # Assemble EN
-    print("Assembling EN book...")
     books_cli_bin = str(Path(_BACKEND).parent / ".venv" / "bin" / "books-cli")
     cmd_assemble_en = [
         py_bin,
@@ -293,11 +510,16 @@ def main() -> int:
         "--lang", "en",
         "--output", "book.html"
     ]
-    subprocess.run(cmd_assemble_en, check=False)
+    res_en = subprocess.run(cmd_assemble_en, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+    if res_en.returncode != 0:
+        print(f"\n======================================================================")
+        print(f"✗ ERROR ASSEMBLING EN BOOK:")
+        print(f"----------------------------------------------------------------------")
+        print(res_en.stdout)
+        print(f"======================================================================\n", flush=True)
 
     # Assemble VI
     if args.translate:
-        print("Assembling VI book...")
         cmd_assemble_vi = [
             py_bin,
             books_cli_bin,
@@ -306,12 +528,23 @@ def main() -> int:
             "--lang", "vi",
             "--output", "book.vi.html"
         ]
-        subprocess.run(cmd_assemble_vi, check=False)
+        res_vi = subprocess.run(cmd_assemble_vi, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+        if res_vi.returncode != 0:
+            print(f"\n======================================================================")
+            print(f"✗ ERROR ASSEMBLING VI BOOK:")
+            print(f"----------------------------------------------------------------------")
+            print(res_vi.stdout)
+            print(f"======================================================================\n", flush=True)
 
     # Validate again
-    print("Final validation...")
     cmd_val = [py_bin, str(scripts_dir / "validate_page_fidelity.py"), str(book_root), "--lang", "all"]
-    subprocess.run(cmd_val, check=False)
+    res_val = subprocess.run(cmd_val, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+    if res_val.returncode != 0:
+        print(f"\n======================================================================")
+        print(f"✗ ERROR DURING FINAL VALIDATION:")
+        print(f"----------------------------------------------------------------------")
+        print(res_val.stdout)
+        print(f"======================================================================\n", flush=True)
 
     print("Batch processing complete!")
     return 0

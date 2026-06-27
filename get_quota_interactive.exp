@@ -1,0 +1,42 @@
+#!/usr/bin/expect -f
+# Disable timeout or set it long enough
+set timeout 10
+set stty_init "cols 1000"
+
+spawn agy
+
+# Wait for the REPL prompt
+expect {
+    ">" {
+        # Send the models command
+        send "models\r"
+        
+        # We need to capture everything after models until the next prompt
+        # We'll just wait for "esc to cancel" or the next ">"
+        expect {
+            "esc to cancel" {
+                # Press ESC to exit the models view
+                send "\x1b"
+                expect ">" {
+                    send "/exit\r"
+                }
+            }
+            ">" {
+                send "/exit\r"
+            }
+            timeout {
+                send "/exit\r"
+            }
+        }
+    }
+    "Select login method:" {
+        # Not logged in at all
+        exit 1
+    }
+    timeout {
+        exit 1
+    }
+}
+
+expect eof
+exit 0

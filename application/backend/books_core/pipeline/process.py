@@ -35,6 +35,31 @@ def _published_ready(book: BookPaths, page: int, lang: str | None = None) -> boo
     return False
 
 
+def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
+    published = book.page_lang_html(page, lang)
+    if published.is_file():
+        if published.stat().st_size == 0:
+            return f"{published.name} is empty (0 bytes)"
+        try:
+            validate_draft_html(published.read_text(encoding="utf-8"))
+            return None  # Valid!
+        except Exception as e:
+            return f"{published.name} failed validation: {e}"
+
+    final = book.final_html(page, lang)
+    if final.is_file():
+        if final.stat().st_size == 0:
+            return f"{final.name} is empty (0 bytes)"
+        try:
+            validate_draft_html(final.read_text(encoding="utf-8"))
+            return None  # Valid!
+        except Exception as e:
+            return f"{final.name} failed validation: {e}"
+
+    return "output HTML file is missing"
+
+
+
 def _agent_failure_message(page: int, phase: str, result: dict[str, Any]) -> str:
     stderr = (result.get("stderr") or "").strip()
     stdout = (result.get("stdout") or "").strip()
@@ -121,10 +146,10 @@ def process_page(
                 timeout_s=timeout_s,
             )
             steps_run.append("render_page")
-            if not _published_ready(book, page, lang):
+            err_msg = check_published_errors(book, page, lang)
+            if err_msg:
                 raise PipelineGateError(
-                    f"Page {page}: AI render finished but output/{lang}/page_{page:04d}.html "
-                    f"or final.{lang}.html is missing or invalid."
+                    f"Page {page}: AI render finished but {err_msg}."
                 )
 
         out_path = book.page_lang_html(page, lang)
@@ -147,13 +172,15 @@ def process_page(
             "output": str(out_path.relative_to(book.root)),
         }
     except Exception as exc:
+        import traceback
+        err_tb = f"{exc}\n{traceback.format_exc()}"
         write_process_status(
             book,
             page,
             state="failed",
             step=read_process_status(book, page).get("step", "failed"),
             provider=provider,
-            error=str(exc),
+            error=err_tb,
         )
         raise
 

@@ -134,6 +134,18 @@ def render_page_direct(book: BookPaths, page: int) -> bool:
     # Ensure output directory exists
     en_html.parent.mkdir(parents=True, exist_ok=True)
     en_html.write_text(html_content, encoding="utf-8")
+    
+    # Validate HTML
+    from books_core.validation import validate_draft_html
+    try:
+        validate_draft_html(html_content)
+    except Exception as e:
+        try:
+            en_html.unlink()
+        except OSError:
+            pass
+        raise RuntimeError(f"Rendered Page {page} (EN) failed validation: {e}")
+
     print(f"  ✓ Rendered Page {page} (EN)")
     return True
 
@@ -189,6 +201,18 @@ Translate all visible English content in the original page to natural and accura
 
     vi_html.parent.mkdir(parents=True, exist_ok=True)
     vi_html.write_text(html_content, encoding="utf-8")
+    
+    # Validate HTML
+    from books_core.validation import validate_draft_html
+    try:
+        validate_draft_html(html_content)
+    except Exception as e:
+        try:
+            vi_html.unlink()
+        except OSError:
+            pass
+        raise RuntimeError(f"Translated Page {page} (VI) failed validation: {e}")
+
     print(f"  ✓ Translated Page {page} (VI)")
     return True
 
@@ -200,7 +224,9 @@ def process_page_direct(book: BookPaths, page: int, translate: bool) -> dict:
             translate_page_direct(book, page)
         return {"ok": True, "page": page}
     except Exception as e:
-        return {"ok": False, "page": page, "error": str(e)}
+        import traceback
+        err_tb = f"{e}\n{traceback.format_exc()}"
+        return {"ok": False, "page": page, "error": err_tb}
 
 
 def main() -> int:

@@ -133,7 +133,26 @@ def extract_figures(
         
         # Fallback for pages that have hardcoded clips but no standard "Figure" text label
         hardcoded_pages = {
+                3: [("1", "", fitz.Rect(45.5, 114.5, 572.5, 616.5))],
+                4: [("1", "", fitz.Rect(325.0, 261.0, 600.0, 436.0)),
+                    ("2", "", fitz.Rect(326.0, 408.5, 601.0, 583.0)),
+                    ("3", "", fitz.Rect(45.0, 640.0, 160.0, 680.0))],
                 5: [("1", "", fitz.Rect(210, 465, 292, 545))],
+                7: [("1", "", fitz.Rect(70.5, 117.0, 532.5, 410.5))],
+                13: [("1", "", fitz.Rect(200.0, 465.0, 420.0, 615.0))],
+                14: [],
+                15: [],
+                16: [],
+                17: [],
+                18: [],
+                19: [],
+                21: [],
+                22: [],
+                23: [
+                    ("1", "", fitz.Rect(254.0, 60.0, 575.5, 261.0)),
+                    ("2", "", fitz.Rect(32.5, 248.5, 575.0, 574.0)),
+                    ("3", "", fitz.Rect(34.5, 545.5, 321.0, 729.5))
+                ],
                 27: [("1", "", fitz.Rect(69, 317, 226, 452))],
                 35: [("1", "", fitz.Rect(69, 317, 226, 452))],
                 39: [("1", "", fitz.Rect(69, 317, 226, 452))],
@@ -157,6 +176,11 @@ def extract_figures(
                 220: [("1", "Figure 1", fitz.Rect(101, 560, 474, 582))],
                 244: [("1", "Figure 1", fitz.Rect(28, 476, 503, 576))],
                 248: [("1", "Figure 1", fitz.Rect(28, 385, 503, 588))],
+                241: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                257: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                277: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                355: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                469: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
                 289: [("10.8", "Figure 10.8", fitz.Rect(28, 50, 503, 144))],
                 306: [("1", "Figure 1", fitz.Rect(100.0, 40.0, 488.0, 248.0))],
                 307: [("1", "Figure 1", fitz.Rect(100.0, 40.0, 488.0, 335.0))],
@@ -190,6 +214,7 @@ def extract_figures(
                 207: [("9.14", "Figure 9.14. A model applying a SPECIFICATION for validation", fitz.Rect(28.0, 168.0, 548.0, 350.0))],
                 209: [("9.15", "Figure 9.15. The interaction between REPOSITORY and SPECIFICATION", fitz.Rect(100.0, 451.0, 488.0, 710.0))],
                 213: [("1", "", fitz.Rect(106.5, 43.558, 481.5, 181.742))],
+                227: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
                 229: [("1", "", fitz.Rect(28, 35, 548, 305))],
                 233: [("10.10", "", fitz.Rect(106.5, 43.5, 481.5, 457.0))],
                 237: [("1", "", fitz.Rect(28, 35, 548, 205)), ("10.13", "Figure 10.13.", fitz.Rect(258.0, 422.64, 330.85, 432.40))],
@@ -228,10 +253,87 @@ def extract_figures(
                 105: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
                 113: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
                 131: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
-                361: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))]
+                147: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                159: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                187: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                311: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                329: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                361: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                371: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                381: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                395: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                407: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                415: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                427: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                433: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                445: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                451: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                479: [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))],
+                505: [
+                    ("logo", "", fitz.Rect(201.0, 135.0, 223.5, 160.0)),
+                    ("cover_how_linux_works", "", fitz.Rect(57.218, 168.0, 136.386, 273.015)),
+                    ("cover_wicked_cool", "", fitz.Rect(189.492, 168.04, 268.932, 273.015)),
+                    ("cover_cpp_crash", "", fitz.Rect(321.731, 168.055, 401.16, 273.015)),
+                    ("cover_learn_robotics", "", fitz.Rect(57.218, 361.655, 136.647, 466.615)),
+                    ("cover_eloquent_js", "", fitz.Rect(189.492, 361.615, 268.921, 466.574)),
+                    ("cover_linux_basics", "", fitz.Rect(321.731, 361.6, 401.202, 466.615)),
+                ]
         }
         if page_num in hardcoded_pages and "the-lean-startup" not in str(pdf_path):
             if "domain-driven-design" in str(pdf_path) and page_num in (197, 198):
+                pass
+            elif "the-linux-command-line" in str(pdf_path) and page_num in (197, 213, 227, 241, 257, 277, 311, 329, 355, 381, 407, 415, 427, 433, 445, 451, 469):
+                labels = [("1", "", fitz.Rect(69.0, 317.0, 226.0, 452.0))]
+            elif "the-linux-command-line" in str(pdf_path) and page_num == 336:
+                labels = [("22.1", "Figure 22-1. Viewing a2ps output", fitz.Rect(121.5, 369.0, 454.15, 381.0))]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 5:
+                labels = [
+                    ("1", "", fitz.Rect(70.5, 120.0, 533.0, 415.5)),
+                    ("2", "", fitz.Rect(70.5, 428.0, 533.0, 722.5))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 7:
+                labels = [
+                    ("1", "", fitz.Rect(70.5, 117.0, 532.5, 410.5))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 14:
+                labels = [
+                    ("1", "", fitz.Rect(49.5, 63.5, 553.5, 386.5)),
+                    ("2", "", fitz.Rect(49.5, 388.5, 553.5, 710.0))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 18:
+                labels = [
+                    ("1", "", fitz.Rect(70.5, 65.0, 533.0, 385.5))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 19:
+                labels = [
+                    ("1", "", fitz.Rect(70.5, 65.0, 533.0, 381.0))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 15:
+                labels = [
+                    ("1", "", fitz.Rect(52.0, 100.0, 550.0, 405.0))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 16:
+                labels = [
+                    ("1", "", fitz.Rect(248.5, 108.0, 583.0, 316.5))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 17:
+                labels = [
+                    ("1", "", fitz.Rect(70.5, 329.0, 533.0, 623.5))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 21:
+                labels = [
+                    ("1", "", fitz.Rect(250.5, 94.0, 585.0, 302.5)),
+                    ("2", "", fitz.Rect(250.5, 285.0, 585.0, 493.5)),
+                    ("3", "", fitz.Rect(30.0, 488.5, 289.0, 702.5))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 22:
+                labels = [
+                    ("1", "", fitz.Rect(43.0, 60.5, 293.0, 378.0)),
+                    ("2", "", fitz.Rect(342.5, 157.5, 515.5, 330.5)),
+                    ("3", "", fitz.Rect(42.0, 418.5, 279.0, 727.5)),
+                    ("4", "", fitz.Rect(263.5, 418.5, 602.0, 727.5))
+                ]
+            elif "the-linux-command-line" in str(pdf_path):
                 pass
             else:
                 labels = hardcoded_pages[page_num]
@@ -338,8 +440,44 @@ def extract_figures(
                 continue
 
             pix = None
-            if page_num == 5:
+            if page_num == 4:
+                if fig_id == "1":
+                    clip = fitz.Rect(325.0, 261.0, 600.0, 436.0)
+                elif fig_id == "2":
+                    clip = fitz.Rect(326.0, 408.5, 601.0, 583.0)
+                elif fig_id == "3":
+                    clip = fitz.Rect(45.0, 640.0, 160.0, 680.0)
+            elif page_num == 3:
+                clip = fitz.Rect(45.5, 114.5, 572.5, 616.5)
+            elif page_num == 5:
                 clip = fitz.Rect(210, 465, 292, 545)
+            elif page_num == 7:
+                clip = fitz.Rect(70.5, 117.0, 532.5, 410.5)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 14:
+                if fig_id == "1":
+                    clip = fitz.Rect(49.5, 63.5, 553.5, 386.5)
+                else:
+                    clip = fitz.Rect(49.5, 388.5, 553.5, 710.0)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 16:
+                clip = fitz.Rect(248.5, 108.0, 583.0, 316.5)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 22:
+                if fig_id == "1":
+                    clip = fitz.Rect(43.0, 60.5, 293.0, 378.0)
+                elif fig_id == "2":
+                    clip = fitz.Rect(342.5, 157.5, 515.5, 330.5)
+                elif fig_id == "3":
+                    clip = fitz.Rect(42.0, 418.5, 279.0, 727.5)
+                else:
+                    clip = fitz.Rect(263.5, 418.5, 602.0, 727.5)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 23:
+                if fig_id == "1":
+                    clip = fitz.Rect(254.0, 60.0, 575.5, 261.0)
+                elif fig_id == "2":
+                    clip = fitz.Rect(32.5, 248.5, 575.0, 544.0)
+                else:
+                    clip = fitz.Rect(34.5, 552.0, 321.0, 715.0)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 18:
+                clip = fitz.Rect(70.5, 65.0, 533.0, 385.5)
             elif "the-lean-startup" in str(pdf_path) and page_num in (26, 27, 28, 33, 81, 123, 129, 207):
                 if page_num == 26:
                     clip = fitz.Rect(10, 0, 243, 184)
@@ -489,6 +627,21 @@ def extract_figures(
                 clip = fitz.Rect(28, 110, 503, 315)
             elif page_num == 92:
                 clip = fitz.Rect(28, 390, 503, 568)
+            elif page_num == 505:
+                if fig_id == "logo":
+                    clip = fitz.Rect(201.0, 135.0, 222.8, 159.0)
+                elif fig_id == "cover_how_linux_works":
+                    clip = fitz.Rect(57.218, 168.0, 136.386, 273.015)
+                elif fig_id == "cover_wicked_cool":
+                    clip = fitz.Rect(189.492, 168.04, 268.932, 273.015)
+                elif fig_id == "cover_cpp_crash":
+                    clip = fitz.Rect(321.731, 168.055, 401.16, 273.015)
+                elif fig_id == "cover_learn_robotics":
+                    clip = fitz.Rect(57.218, 361.655, 136.647, 466.615)
+                elif fig_id == "cover_eloquent_js":
+                    clip = fitz.Rect(189.492, 361.615, 268.921, 466.574)
+                elif fig_id == "cover_linux_basics":
+                    clip = fitz.Rect(321.731, 361.6, 401.202, 466.615)
             elif page_num == 97:
                 if fig_id == "1":
                     clip = fitz.Rect(52, 123, 353, 350)
@@ -552,7 +705,10 @@ def extract_figures(
                     clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
                     clip &= rect
             elif page_num == 336:
-                clip = fitz.Rect(282, 420, 503, 615)
+                if "the-linux-command-line" in str(pdf_path):
+                    clip = fitz.Rect(28, 158, 476, 385)
+                else:
+                    clip = fitz.Rect(282, 420, 503, 615)
             elif page_num == 384:
                 clip = fitz.Rect(28, 50, 503, 135)
             elif page_num == 164:
@@ -577,7 +733,10 @@ def extract_figures(
             elif page_num == 198 and "domain-driven-design" not in str(pdf_path):
                 clip = fitz.Rect(95, 50, 305, 255)
             elif page_num == 197 and "domain-driven-design" not in str(pdf_path):
-                clip = fitz.Rect(91, 435, 467, 598)
+                if "the-linux-command-line" in str(pdf_path):
+                    clip = fitz.Rect(69.0, 317.0, 226.0, 452.0)
+                else:
+                    clip = fitz.Rect(91, 435, 467, 598)
             elif page_num == 375:
                 clip = fitz.Rect(28, 43.5, 548, 332.0)
             elif page_num == 376:
@@ -628,7 +787,7 @@ def extract_figures(
                 clip = fitz.Rect(28, 168, 548, 350)
             elif page_num == 209:
                 clip = fitz.Rect(95, 202, 492, 470)
-            elif page_num == 213:
+            elif page_num == 213 and "the-linux-command-line" not in str(pdf_path):
                 clip = fitz.Rect(100, 35, 488, 190)
             elif page_num == 233:
                 clip = fitz.Rect(106.5, 43.5, 481.5, 457.0)
@@ -654,11 +813,20 @@ def extract_figures(
                 else:
                     clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
                     clip &= rect
+            elif page_num == 15:
+                clip = fitz.Rect(52.0, 100.0, 550.0, 405.0)
+            elif page_num == 21:
+                if fig_id == "1":
+                    clip = fitz.Rect(250.5, 94.0, 585.0, 302.5)
+                elif fig_id == "2":
+                    clip = fitz.Rect(250.5, 285.0, 585.0, 493.5)
+                elif fig_id == "3":
+                    clip = fitz.Rect(30.0, 488.5, 289.0, 702.5)
             elif page_num == 430:
                 clip = fitz.Rect(52.5, 493.0, 352.5, 700.0)
             elif page_num == 431:
                 clip = fitz.Rect(52.5, 295.0, 352.5, 502.0)
-            elif page_num in (27, 35, 45, 55, 71, 81, 93, 105, 113, 131, 361):
+            elif page_num in (27, 35, 45, 55, 71, 81, 93, 105, 113, 131, 147, 159, 213, 227, 311, 329, 361, 371, 381, 395, 407, 415, 427, 433, 445, 451, 479):
                 clip = fitz.Rect(69.0, 317.0, 226.0, 452.0)
             else:
                 clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
@@ -680,7 +848,7 @@ def extract_figures(
 
             if pix_width is None or pix_height is None or page_num == 93:
                 if pix is None:
-                    if page_num in (27, 35, 45, 71, 93, 361):
+                    if page_num in (4, 15, 27, 35, 45, 71, 93, 213, 227, 311, 329, 361, 371, 381, 395, 407, 415, 427, 445, 451, 479):
                         for block in page.get_text("dict")["blocks"]:
                             if block["type"] == 0:
                                 for line in block["lines"]:
