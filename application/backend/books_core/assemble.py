@@ -82,6 +82,96 @@ def assemble_book_html(
             f"</section>"
         )
 
+    ipa_style = ""
+    if lang == "en-ipa":
+        ipa_style = """
+  <style>
+    /* IPA Interlinear Translation Styles */
+    .word-wrapper {
+      display: inline-flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      vertical-align: top !important;
+      margin-left: -0.03em !important;
+      margin-right: -0.03em !important;
+      line-height: 1.1 !important;
+      text-indent: 0 !important;
+    }
+    .en-word {
+      display: block !important;
+    }
+    .ipa-word {
+      display: block !important;
+      font-size: 0.74em !important;
+      color: var(--book-ink, #111111) !important;
+      font-family: Arial, Helvetica, sans-serif !important;
+      text-transform: none !important;
+      font-weight: normal !important;
+      font-style: italic !important;
+      margin-top: 0.5mm !important;
+      user-select: none !important;
+      text-align: center !important;
+    }
+    .book-page p, 
+    .book-page li, 
+    .book-page h1, 
+    .book-page h2, 
+    .book-page h3, 
+    .book-page h4, 
+    .book-page h5, 
+    .book-page h6, 
+    .book-page div:not(.toc-list):not(.toc-frontmatter):not(.toc-chapters):not(.toc-section):not(.word-wrapper) {
+      line-height: 2.1 !important;
+      text-align: left !important;
+    }
+    .book-page.book-page--sheet {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: auto !important;
+    }
+    .sheet-flow {
+      height: auto !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .ipa-sub-sheet {
+      box-sizing: border-box;
+      width: 210mm;
+      height: 297mm;
+      padding: 20mm 20mm 15mm 20mm;
+      position: relative;
+      background: white;
+      box-shadow: 0 16px 44px rgba(15, 23, 42, 0.18);
+      margin: 0 auto 10mm auto;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    @media print {
+      .ipa-sub-sheet {
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: always !important;
+      }
+      .book-page {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        page-break-after: avoid !important;
+        page-break-before: avoid !important;
+      }
+    }
+  </style>"""
+
     combined = f"""<!doctype html>
 <html lang="{lang}">
 <head>
@@ -92,7 +182,7 @@ def assemble_book_html(
     @media print {{
       .book-page {{ height: 296mm; }}
     }}
-  </style>
+  </style>{ipa_style}
 </head>
 <body class="book-standalone book-full">
   <main class="book-full__main">

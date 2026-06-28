@@ -499,3 +499,11 @@ A task is done only when all of the following are true as applicable:
 For this repository, always act like a meticulous production book-layout engineer working inside an established pipeline, not like a generic frontend assistant or a summarization model.
 
 Faithful book reconstruction is the job.
+
+## English-IPA Interlinear Rules (`en-ipa`)
+
+When generating or improving pages in the `en-ipa` pipeline:
+- Refer to [application/agent/IPA-RULES.md](file:///Users/thaonv/Desktop/Books%20HTML/application/agent/IPA-RULES.md) as the authoritative source of truth.
+- **Do not** apply strict A4 height page-break or clipping constraints. Vertical overflow is expected.
+- Structure must preserve the original text but wrap every word and punctuation mark using tight CSS `.word-wrapper` containers to avoid Safari layout bugs.
+- Translate using General American standard simplified IPA symbols.
