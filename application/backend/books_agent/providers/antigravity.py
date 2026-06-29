@@ -12,7 +12,7 @@ from books_core.repo import repo_root
 class AntigravityProvider(Provider):
     id = "antigravity"
     label = "Antigravity CLI"
-    binary_names = ["antigravity", "agy"]
+    binary_names = ["agy", "antigravity"]
 
     def detect(self) -> DetectResult:
         base = detect_binary(self.id, self.label, self.binary_names)
