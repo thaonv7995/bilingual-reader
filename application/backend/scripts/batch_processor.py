@@ -21,6 +21,7 @@ if str(_BACKEND) not in sys.path:
 from books_core.paths import BookPaths
 from books_core.pipeline.process import process_page
 from books_core.repo import repo_root
+from books_core.extract.service import run_page_pdf
 
 
 def get_agy_binary() -> str:
@@ -345,6 +346,12 @@ def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: boo
         last_error = ""
         for attempt in range(max_retries):
             try:
+                # Proactively ensure page PDF is extracted
+                try:
+                    run_page_pdf(book, page, force=force)
+                except Exception as pe:
+                    print(f"[Page {page:02d}] Warning: failed to extract page PDF: {pe}", flush=True)
+                
                 res = process_page(book, page, provider=provider, force=force)
                 if res.get("ok"):
                     render_ok = True
