@@ -1602,27 +1602,76 @@
             const dropzone = document.getElementById('dropzone');
             const originalHTML = dropzone.innerHTML;
             dropzone.style.pointerEvents = 'none';
-            dropzone.innerHTML = `
-                <div class="loading-spinner" style="width:40px; height:40px; border:3px solid rgba(255,255,255,0.05); border-top-color:var(--accent-primary); border-radius:50%; margin:0 auto 1.5rem auto;"></div>
-                <p style="font-size:1.1rem; font-weight:500; color:var(--text-secondary);">Uploading and ingesting PDF...</p>
-            `;
             
-            const fd = new FormData(); fd.append("file", file);
+            function updateUploadProgress(percent, statusText) {
+                dropzone.innerHTML = `
+                    <div style="width: 100%; max-width: 250px; margin: 0 auto;">
+                        <div class="loading-spinner" style="width:40px; height:40px; border:3px solid rgba(255,255,255,0.05); border-top-color:var(--accent-primary); border-radius:50%; margin:0 auto 1.5rem auto;"></div>
+                        <p style="font-size:1.1rem; font-weight:500; color:var(--text-secondary); margin-bottom: 0.5rem;">${statusText}</p>
+                        <div class="progress-track" style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; margin-top: 10px;">
+                            <div class="progress-bar" style="width: ${percent}%; height: 100%; background: var(--gradient-primary); border-radius: 99px; transition: width 0.1s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            updateUploadProgress(0, "Preparing upload...");
+            
+            const fd = new FormData(); 
+            fd.append("file", file);
+            
             try {
-                const res = await api("/api/upload", { method:"POST", body:fd });
-                if(res.ok) { 
-                    closeModal('uploadModal'); 
-                    showToast("Book uploaded and ingested successfully!", "success");
-                    fetchLibrary(); 
-                }
-                else showToast("Upload failed", "error");
-            } catch(e) { showToast("Error uploading", "error"); }
-            
-            // Restore dropzone
-            dropzone.style.pointerEvents = 'auto';
-            dropzone.innerHTML = originalHTML;
-            fi.value = '';
-            lucide.createIcons();
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "/api/upload", true);
+                xhr.setRequestHeader("Authorization", `Bearer ${localStorage.getItem("studio_token")}`);
+                
+                // Track upload progress
+                xhr.upload.addEventListener("progress", (e) => {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 100);
+                        if (percent < 100) {
+                            updateUploadProgress(percent, `Uploading PDF (${percent}%)`);
+                        } else {
+                            updateUploadProgress(100, "Ingesting and splitting PDF...");
+                        }
+                    }
+                });
+                
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        dropzone.style.pointerEvents = 'auto';
+                        dropzone.innerHTML = originalHTML;
+                        fi.value = '';
+                        lucide.createIcons();
+                        
+                        if (xhr.status === 401) {
+                            logoutStudio();
+                            return;
+                        }
+                        
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            closeModal('uploadModal'); 
+                            showToast("Book uploaded and ingested successfully!", "success");
+                            fetchLibrary();
+                        } else {
+                            let errorMsg = "Upload failed";
+                            try {
+                                const err = JSON.parse(xhr.responseText);
+                                if (err && err.detail) errorMsg += `: ${err.detail}`;
+                            } catch(_) {}
+                            showToast(errorMsg, "error");
+                        }
+                    }
+                };
+                
+                xhr.send(fd);
+            } catch(e) { 
+                showToast("Error uploading", "error"); 
+                dropzone.style.pointerEvents = 'auto';
+                dropzone.innerHTML = originalHTML;
+                fi.value = '';
+                lucide.createIcons();
+            }
         }
 
         // Edit/Delete

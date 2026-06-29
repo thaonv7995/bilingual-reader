@@ -652,9 +652,20 @@ async def upload_pdf(file: UploadFile = File(...)):
     inbox.mkdir(parents=True, exist_ok=True)
     temp_path = inbox / file.filename
     
-    logger.info(f"Saving uploaded file to {temp_path}")
-    with open(temp_path, "wb") as f:
-        f.write(await file.read())
+    logger.info(f"Saving uploaded file to {temp_path} in chunked mode")
+    try:
+        with open(temp_path, "wb") as f:
+            while True:
+                # Read file in 1MB chunks to avoid memory spikes
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                f.write(chunk)
+    except Exception as e:
+        logger.error(f"Failed to write uploaded file chunk: {e}")
+        if temp_path.is_file():
+            temp_path.unlink()
+        raise HTTPException(status_code=500, detail=f"File upload write error: {str(e)}")
         
     try:
         result = ingest_pdf(temp_path)
@@ -662,6 +673,9 @@ async def upload_pdf(file: UploadFile = File(...)):
         return {"success": True, "book": result}
     except Exception as e:
         logger.error(f"Ingestion failed: {e}")
+        # Clean up the file if ingestion failed
+        if temp_path.is_file():
+            temp_path.unlink()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/books/{slug}/status")
@@ -987,6 +1001,16 @@ def pack_book_endpoint(slug: str):
     if not book_path.is_dir():
         raise HTTPException(status_code=404, detail="Book not found")
     try:
+        book = BookPaths.open(book_path)
+        # Assemble EN and VI before packing to make sure they are up-to-date
+        try:
+            from books_core.assemble import assemble_book_html
+            assemble_book_html(book, "en")
+            if (book.pages_dir("vi")).is_dir():
+                assemble_book_html(book, "vi")
+        except Exception as ae:
+            logger.warning(f"Pre-pack assembly warning: {ae}")
+            
         bkb_dest = books_dir() / "bkbs" / f"{slug}.bkb"
         result = pack_book(book_path, bkb_dest)
         response_cache.clear(slug)
@@ -1001,7 +1025,27 @@ def download_packed_book(slug: str):
     
     target_path = bkb_path2 if bkb_path2.is_file() else bkb_path1
     if not target_path.is_file():
-        raise HTTPException(status_code=404, detail="Packed book (.bkb) file not found. Please run pack or process the book first.")
+        # Try to pack on the fly if the book folder exists and has output
+        book_path = books_dir() / slug
+        if book_path.is_dir() and (book_path / "output").is_dir():
+            try:
+                book = BookPaths.open(book_path)
+                try:
+                    from books_core.assemble import assemble_book_html
+                    assemble_book_html(book, "en")
+                    if (book.pages_dir("vi")).is_dir():
+                        assemble_book_html(book, "vi")
+                except Exception as ae:
+                    logger.warning(f"On-the-fly pre-pack assembly warning: {ae}")
+                
+                bkb_dest = books_dir() / "bkbs" / f"{slug}.bkb"
+                pack_book(book_path, bkb_dest)
+                target_path = bkb_dest
+            except Exception as e:
+                logger.error(f"On-the-fly packing failed: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to generate packed book on the fly: {str(e)}")
+        else:
+            raise HTTPException(status_code=404, detail="Packed book (.bkb) file not found. Please process the book first.")
         
     return FileResponse(
         path=str(target_path),
@@ -1037,6 +1081,16 @@ def delete_book(slug: str):
         raise HTTPException(status_code=400, detail="Cannot delete book while processing is running")
     try:
         shutil.rmtree(book_path)
+        
+        # Clean up any packed bilingual book (.bkb) files
+        bkb_file1 = books_dir() / f"{slug}.bkb"
+        if bkb_file1.is_file():
+            bkb_file1.unlink()
+            
+        bkb_file2 = books_dir() / "bkbs" / f"{slug}.bkb"
+        if bkb_file2.is_file():
+            bkb_file2.unlink()
+            
         response_cache.clear(slug)
         return {"success": True}
     except Exception as e:
