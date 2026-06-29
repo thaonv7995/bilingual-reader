@@ -358,8 +358,7 @@ async def refresh_quota_cache_async():
     _quota_cache["is_updating"] = True
     try:
         agy_bin = get_agy_binary()
-        import os
-        script_path = os.path.join(os.path.dirname(__file__), "fetch_quota_tmux.sh")
+        script_path = str(Path(repo_root()) / "fetch_quota_tmux.sh")
         
         proc = await asyncio.create_subprocess_exec(
             script_path, agy_bin,

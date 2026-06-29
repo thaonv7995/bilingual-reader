@@ -1144,7 +1144,7 @@
                         <div id="quotaBox">
                             <div class="stat-item"><span class="stat-label">Status</span><span class="stat-val" id="q-status">Checking...</span></div>
                         </div>
-                        <button class="btn btn-secondary" onclick="fetchQuota(true)" style="margin-top:1.5rem; width:100%;"><i data-lucide="refresh-cw"></i> Refresh Quota</button>
+                        <button id="refreshQuotaBtn" class="btn btn-secondary" onclick="fetchQuota(true)" style="margin-top:1.5rem; width:100%;"><i data-lucide="refresh-cw"></i> Refresh Quota</button>
                     </div>
                 </div>
             </div>
@@ -2031,14 +2031,28 @@
         }
 
         async function fetchQuota(force = false) {
+            const btn = document.getElementById('refreshQuotaBtn');
+            const box = document.getElementById('quotaBox');
+            
+            // Only show button loading indicator if explicitly clicked (force = true)
+            if (force && btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner" style="width:14px; height:14px; border:2px solid rgba(255,255,255,0.05); border-top-color:var(--text-primary); border-radius:50%; display:inline-block; margin-right:6px;"></span> Refreshing...';
+            }
+            
+            // If the box currently contains loading/checking/error or is completely empty, render a loading state inside it.
+            // But if it already contains valid quota HTML (i.e. groups or limits), DO NOT clear it! Keep the old data visible.
+            const currentHTML = box.innerHTML;
+            const hasExistingData = currentHTML.includes('quota-group-card') || currentHTML.includes('quota-limit-item');
+            if (!hasExistingData) {
+                box.innerHTML = `<div class="stat-item"><span class="stat-label">Status</span><span class="stat-val">Loading quota from AGY...</span></div>`;
+            }
+            
             try {
-                const box = document.getElementById('quotaBox');
-                if (force || box.innerHTML.includes('Checking...') || box.innerHTML.includes('Loading') || box.innerHTML.includes('Failed') || box.innerHTML.includes('Error')) {
-                    box.innerHTML = `<div class="stat-item"><span class="stat-label">Status</span><span class="stat-val">Loading quota from AGY...</span></div>`;
-                }
                 const url = force ? "/api/auth/quota?force=true" : "/api/auth/quota";
                 const res = await api(url);
                 const data = await res.json();
+                
                 if(data.success && data.quota) {
                     let ageText = data.age !== undefined ? ` (Updated ${data.age}s ago)` : '';
                     let html = `<div style="font-size:0.875rem; color:var(--text-secondary); margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; width:100%;">
@@ -2070,14 +2084,26 @@
                     });
                     box.innerHTML = html;
                 } else {
-                    if (force || box.innerHTML.includes('Status') || box.innerHTML.includes('Loading') || box.innerHTML.includes('Error')) {
+                    // Only overwrite box with error if we don't have existing quota data
+                    if (!hasExistingData) {
                         box.innerHTML = `<div class="stat-item"><span class="stat-label">Status</span><span class="stat-val" style="color:var(--accent-danger);">${data.error || 'Failed to fetch'}</span></div>`;
+                    } else {
+                        showToast(`Failed to update quota: ${data.error || 'Unknown error'}`, "error");
                     }
                 }
                 lucide.createIcons();
             } catch(e) {
-                if (force || box.innerHTML.includes('Status') || box.innerHTML.includes('Loading')) {
+                if (!hasExistingData) {
                     box.innerHTML = `<div class="stat-item"><span class="stat-label">Error</span><span class="stat-val">Failed to fetch</span></div>`;
+                } else {
+                    showToast("Error updating quota data", "error");
+                }
+            } finally {
+                // Restore button state
+                if (force && btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="refresh-cw"></i> Refresh Quota';
+                    lucide.createIcons();
                 }
             }
         }
