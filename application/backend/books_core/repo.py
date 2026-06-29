@@ -5,6 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 
+import os
+
+
 def repo_root() -> Path:
     here = Path(__file__).resolve()
     return here.parents[3]
@@ -15,8 +18,24 @@ def application_root() -> Path:
 
 
 def default_library_root() -> Path:
-    """All books live under repo-root books/."""
-    return repo_root() / "books"
+    """All books live under repo-root books/ by default, or fallback if read-only."""
+    if "BOOKS_LIBRARY_ROOT" in os.environ:
+        return Path(os.environ["BOOKS_LIBRARY_ROOT"]).expanduser().resolve()
+        
+    default_path = repo_root() / "books"
+    
+    # Check if default path is writable (or can be created with write access)
+    try:
+        default_path.mkdir(parents=True, exist_ok=True)
+        test_file = default_path / ".write_test"
+        test_file.touch()
+        test_file.unlink()
+        return default_path
+    except (OSError, PermissionError):
+        # Fallback to user home directory if root directory is read-only for current user
+        fallback_path = Path.home() / ".local" / "share" / "books-studio" / "books"
+        fallback_path.mkdir(parents=True, exist_ok=True)
+        return fallback_path
 
 
 def default_data_root() -> Path:
