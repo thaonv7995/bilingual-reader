@@ -38,24 +38,62 @@ Chi tiết cấu trúc sách: [books/README.md](books/README.md) · Agent skill:
 
 ---
 
-## Triển khai trên Debian Server (Deployment)
+## Cài đặt & Triển khai (Installation & Deployment)
 
-Để triển khai ứng dụng trên máy chủ Debian, thực hiện lệnh sau (tự động clone/pull code mới nhất từ GitHub và thiết lập dịch vụ chạy ngầm `systemd` tự động):
+Ứng dụng hỗ trợ cài đặt, cập nhật và gỡ bỏ nhanh trên **Debian/Ubuntu** và **macOS** thông qua một script cài đặt duy nhất.
+
+### 1. Cài đặt nhanh bằng lệnh `curl`
+
+Chạy lệnh sau trên terminal của bạn để tự động cài đặt phiên bản mới nhất từ GitHub Releases:
 
 ```bash
-# Clone dự án và chạy thiết lập dịch vụ (chỉ cần chạy lần đầu)
-git clone https://github.com/thaonv7995/bilingual-reader.git && cd bilingual-reader && chmod +x deploy.sh && ./deploy.sh
-
-# Từ các lần sau, muốn cập nhật code mới và khởi động lại dịch vụ, chỉ cần chạy:
-./deploy.sh
+curl -fsSL https://raw.githubusercontent.com/thaonv7995/bilingual-reader/main/install.sh | bash
 ```
 
-Dịch vụ chạy nền với tên `bilingual-reader` tại cổng `27099`. Bạn có thể quản lý dịch vụ qua các lệnh sau:
+* **Cài đặt cấp độ User thường (Khuyên dùng):** Nếu chạy lệnh không dùng `sudo`, ứng dụng sẽ được cài đặt riêng cho User hiện hành tại `~/.local/share/books-studio` và tạo liên kết dòng lệnh tại `~/.local/bin/books-studio`.
+* **Cài đặt cấp hệ thống (System-wide):** Nếu chạy với quyền root (`sudo`), ứng dụng sẽ được cài đặt tại `/opt/books-studio` và liên kết dòng lệnh tại `/usr/local/bin/books-studio`.
+
+### 2. Cập nhật phiên bản mới nhất (Update)
+
+Để cập nhật ứng dụng lên phiên bản mới nhất từ GitHub mà **giữ nguyên toàn bộ dữ liệu sách (`books/`)** đã tải lên của bạn, chạy lệnh:
 
 ```bash
-# Xem trạng thái dịch vụ
-sudo systemctl status bilingual-reader
+books-studio --update
+```
 
-# Xem log trực tiếp
-sudo journalctl -u bilingual-reader -f
+### 3. Gỡ bỏ ứng dụng (Uninstall)
+
+Để xóa hoàn toàn ứng dụng, dừng các tiến trình đang chạy và dọn dẹp các thư mục liên quan, chạy lệnh:
+
+```bash
+books-studio --uninstall
+```
+
+---
+
+## Khởi chạy ứng dụng (Running)
+
+Sau khi cài đặt thành công, khởi chạy Web Studio từ bất kỳ thư mục nào bằng lệnh:
+
+```bash
+books-studio
+```
+
+* Ứng dụng mặc định chạy trên cổng `8765`. Bạn truy cập qua trình duyệt: `http://localhost:8765`.
+* Để đổi cổng chạy, sử dụng tham số `--port`, ví dụ: `books-studio --port 9000`.
+* **Yêu cầu:** Đảm bảo máy chủ đã cài đặt `agy` CLI (Antigravity CLI).
+
+---
+
+## Cài đặt thủ công từ Source Code (Local Setup)
+
+Nếu bạn clone repository này về máy và muốn thiết lập nhanh môi trường phát triển cục bộ:
+
+```bash
+# Cấp quyền thực thi và chạy script setup
+chmod +x setup_debian.sh
+./setup_debian.sh
+
+# Khởi chạy Web Studio cục bộ
+./run_studio.sh
 ```
