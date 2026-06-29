@@ -281,6 +281,27 @@ case "\$1" in
     status|--status)
         status_service
         ;;
+    update|--update)
+        if [ -f "$INSTALL_DIR/install.sh" ]; then
+            echo "Running local install.sh with --update..."
+            bash "$INSTALL_DIR/install.sh" --update
+        else
+            echo "Downloading and running latest installer..."
+            curl -fsSL https://raw.githubusercontent.com/$GITHUB_REPO/main/install.sh | bash -s -- --update
+        fi
+        ;;
+    uninstall|--uninstall)
+        if [ -f "$INSTALL_DIR/install.sh" ]; then
+            bash "$INSTALL_DIR/install.sh" --uninstall
+        else
+            stop_service
+            echo "Removing installation folder at $INSTALL_DIR..."
+            rm -rf "$INSTALL_DIR"
+            echo "Removing symlink..."
+            rm -f "$BIN_DIR/$APP_NAME"
+            echo "Uninstalled."
+        fi
+        ;;
     *)
         # Default behavior: run in foreground
         exec "\$VENV_BIN" serve "\$@"
