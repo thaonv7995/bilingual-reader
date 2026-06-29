@@ -1527,8 +1527,24 @@
         // PDF Cover Renderer
         const coverCache = {};
         async function renderCover(slug, canvasId) {
-            if(coverCache[slug]) return; // Already rendered or rendering
-            coverCache[slug] = true;
+            if (coverCache[slug] === 'rendering') return;
+            
+            if (typeof coverCache[slug] === 'string') {
+                // Instantly restore from cache
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                const img = new Image();
+                img.onload = () => {
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = coverCache[slug];
+                return;
+            }
+            
+            coverCache[slug] = 'rendering';
             try {
                 const url = `/books/${slug}/input/original.pdf?token=${localStorage.getItem('studio_token')}`;
                 const loadingTask = pdfjsLib.getDocument(url);
@@ -1537,13 +1553,20 @@
                 const scale = 1.0;
                 const viewport = page.getViewport({scale});
                 const canvas = document.getElementById(canvasId);
-                if(!canvas) return;
+                if(!canvas) {
+                    coverCache[slug] = null;
+                    return;
+                }
                 const context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
                 await page.render({canvasContext: context, viewport: viewport}).promise;
+                
+                // Cache the rendered image data URL
+                coverCache[slug] = canvas.toDataURL();
             } catch(e) {
                 console.error("Failed to render cover for", slug, e);
+                coverCache[slug] = null;
                 const cvs = document.getElementById(canvasId);
                 if(cvs) { cvs.style.display = 'none'; cvs.nextElementSibling.style.display = 'flex'; }
             }
