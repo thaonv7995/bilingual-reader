@@ -79,6 +79,26 @@ get_latest_release_url() {
     echo "$download_url"
 }
 
+stop_existing_server() {
+    echo -e "\n${BLUE}=== Stopping Existing Instances ===${NC}"
+    if [ "$EUID" -eq 0 ] && [ -f /etc/systemd/system/books-studio.service ]; then
+        echo "Stopping systemd service..."
+        systemctl stop books-studio 2>/dev/null || true
+    else
+        if [ -f "$INSTALL_DIR/books-studio.pid" ]; then
+            local pid
+            pid=$(cat "$INSTALL_DIR/books-studio.pid")
+            if kill -0 "$pid" 2>/dev/null; then
+                echo "Stopping background process (PID: $pid)..."
+                kill "$pid" 2>/dev/null || true
+                sleep 1
+            fi
+            rm -f "$INSTALL_DIR/books-studio.pid"
+        fi
+        pkill -u "$USER" -f "books-cli serve" 2>/dev/null || true
+    fi
+}
+
 do_install() {
     echo -e "${BLUE}=== Starting Installation ===${NC}"
     echo -e "Target Directory: ${GREEN}$INSTALL_DIR${NC}"
@@ -87,7 +107,10 @@ do_install() {
     # 1. Install system packages
     install_dependencies
 
-    # 2. Download and extract
+    # 2. Stop any running server
+    stop_existing_server
+
+    # 3. Download and extract
     echo -e "\n${BLUE}=== Downloading Application Code ===${NC}"
     local download_url
     download_url=$(get_latest_release_url)
@@ -98,9 +121,14 @@ do_install() {
     curl -L "$download_url" -o "$temp_tar"
     
     echo -e "Extracting archive to target directory..."
-    # Clear directory but preserve user books directory if updating
+    # Preserve user books directory if updating
     if [ -d "$INSTALL_DIR/books" ]; then
+        rm -rf "/tmp/$APP_NAME-books-backup"
         mv "$INSTALL_DIR/books" "/tmp/$APP_NAME-books-backup"
+    fi
+    # Preserve credentials if updating
+    if [ -f "$INSTALL_DIR/.credentials" ]; then
+        cp "$INSTALL_DIR/.credentials" "/tmp/$APP_NAME-credentials-backup"
     fi
     
     # Extract tarball
@@ -112,11 +140,15 @@ do_install() {
         rm -rf "$INSTALL_DIR/books"
         mv "/tmp/$APP_NAME-books-backup" "$INSTALL_DIR/books"
     fi
+    # Restore credentials if backed up
+    if [ -f "/tmp/$APP_NAME-credentials-backup" ]; then
+        mv "/tmp/$APP_NAME-credentials-backup" "$INSTALL_DIR/.credentials"
+    fi
     
     # Cleanup temp tar
     rm -f "$temp_tar"
 
-    # 3. Setup Python venv and install
+    # 4. Setup Python venv and install
     echo -e "\n${BLUE}=== Configuring Virtual Environment ===${NC}"
     local venv_path="$INSTALL_DIR/application/.venv"
     python3 -m venv "$venv_path"
@@ -130,34 +162,201 @@ do_install() {
     # Make utility scripts executable
     chmod +x "$INSTALL_DIR"/*.exp "$INSTALL_DIR"/*.sh "$INSTALL_DIR"/application/backend/books_cli/bin/* 2>/dev/null || true
 
-    # 4. Create launcher symlink
+    # 5. Generate / Load Credentials
+    local creds_file="$INSTALL_DIR/.credentials"
+    local username="admin"
+    local password
+    local session_token
+    
+    if [ -f "$creds_file" ]; then
+        echo -e "Loading existing credentials..."
+        # Extract variables from credentials file manually to avoid shell execution limits
+        username=$(grep STUDIO_USERNAME "$creds_file" | cut -d'"' -f2)
+        password=$(grep STUDIO_PASSWORD "$creds_file" | cut -d'"' -f2)
+        session_token=$(grep STUDIO_SESSION_TOKEN "$creds_file" | cut -d'"' -f2)
+    else
+        echo -e "Generating random credentials..."
+        password=$(python3 -c "import secrets; print(secrets.token_urlsafe(12))")
+        session_token=$(python3 -c "import secrets; print(secrets.token_hex(24))")
+        cat << EOF > "$creds_file"
+export STUDIO_USERNAME="$username"
+export STUDIO_PASSWORD="$password"
+export STUDIO_SESSION_TOKEN="$session_token"
+EOF
+        chmod 600 "$creds_file"
+    fi
+
+    # 6. Create Control / Launcher Wrapper
     echo -e "\n${BLUE}=== Creating Executable Wrapper ===${NC}"
     mkdir -p "$BIN_DIR"
     local wrapper_path="$INSTALL_DIR/run_studio.sh"
     
+    # Detect if systemd should be configured
+    local using_systemd=false
+    if [ "$EUID" -eq 0 ] && command -v systemctl >/dev/null 2>&1; then
+        using_systemd=true
+    fi
+
     cat << EOF > "$wrapper_path"
 #!/bin/bash
+# Wrapper to control Books HTML Studio (start/stop/status/restart)
 export BOOKS_STUDIO_ROOT="$INSTALL_DIR"
 export PATH="$INSTALL_DIR/application/backend/books_cli/bin:\$PATH"
-exec "$venv_path/bin/books-cli" serve "\$@"
+if [ -f "$INSTALL_DIR/.credentials" ]; then
+    source "$INSTALL_DIR/.credentials"
+fi
+
+PID_FILE="$INSTALL_DIR/books-studio.pid"
+LOG_FILE="$INSTALL_DIR/books-studio.log"
+VENV_BIN="$INSTALL_DIR/application/.venv/bin/books-cli"
+USING_SYSTEMD=$using_systemd
+
+stop_service() {
+    if \$USING_SYSTEMD; then
+        echo "Stopping books-studio systemd service..."
+        systemctl stop books-studio 2>/dev/null || true
+    else
+        if [ -f "\$PID_FILE" ]; then
+            local pid
+            pid=\$(cat "\$PID_FILE")
+            if kill -0 "\$pid" 2>/dev/null; then
+                echo "Stopping books-studio process (PID: \$pid)..."
+                kill "\$pid" 2>/dev/null || true
+                sleep 1
+            fi
+            rm -f "\$PID_FILE"
+        fi
+        pkill -u "\$USER" -f "books-cli serve" 2>/dev/null || true
+    fi
+}
+
+start_service() {
+    if \$USING_SYSTEMD; then
+        echo "Starting books-studio systemd service..."
+        systemctl start books-studio
+    else
+        if [ -f "\$PID_FILE" ]; then
+            local pid
+            pid=\$(cat "\$PID_FILE")
+            if kill -0 "\$pid" 2>/dev/null; then
+                echo "books-studio is already running (PID: \$pid)."
+                return
+            fi
+        fi
+        echo "Starting books-studio in background..."
+        nohup "\$VENV_BIN" serve > "\$LOG_FILE" 2>&1 &
+        echo \$! > "\$PID_FILE"
+        sleep 2
+    fi
+}
+
+status_service() {
+    if \$USING_SYSTEMD; then
+        systemctl status books-studio
+    else
+        if [ -f "\$PID_FILE" ]; then
+            local pid
+            pid=\$(cat "\$PID_FILE")
+            if kill -0 "\$pid" 2>/dev/null; then
+                echo "books-studio is running (PID: \$pid)"
+                return 0
+            fi
+        fi
+        echo "books-studio is stopped."
+        return 1
+    fi
+}
+
+case "\$1" in
+    stop|--stop)
+        stop_service
+        ;;
+    start|--start)
+        start_service
+        ;;
+    restart|--restart)
+        stop_service
+        start_service
+        ;;
+    status|--status)
+        status_service
+        ;;
+    *)
+        # Default behavior: run in foreground
+        exec "\$VENV_BIN" serve "\$@"
+        ;;
+esac
 EOF
     chmod +x "$wrapper_path"
     
-    # Remove old symlink if exists
+    # Remove old symlink and create new one
     rm -f "$BIN_DIR/$APP_NAME"
     ln -s "$wrapper_path" "$BIN_DIR/$APP_NAME"
 
-    # Adjust path if user local bin directory is not in PATH
-    if [ "$EUID" -ne 0 ] && [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-        echo -e "${YELLOW}[!] Warning: $HOME/.local/bin is not in your PATH environment variable.${NC}"
-        echo -e "    Please add this line to your ~/.bashrc or ~/.zshrc file:"
-        echo -e "    ${BLUE}export PATH=\"\$HOME/.local/bin:\$PATH\"${NC}"
+    # 7. Setup Daemon (systemd or background)
+    local service_type=""
+    local run_pid=""
+    if $using_systemd; then
+        echo -e "\n${BLUE}=== Configuring systemd Service ===${NC}"
+        service_type="systemd"
+        cat << EOF > /etc/systemd/system/books-studio.service
+[Unit]
+Description=Books HTML Web Studio
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$INSTALL_DIR
+Environment=BOOKS_STUDIO_ROOT=$INSTALL_DIR
+Environment=PATH=$INSTALL_DIR/application/backend/books_cli/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=$INSTALL_DIR/run_studio.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        systemctl daemon-reload
+        systemctl enable books-studio
+        systemctl restart books-studio
+        run_pid=$(systemctl show -p MainPID books-studio | cut -d= -f2)
+    else
+        echo -e "\n${BLUE}=== Starting Service in Background ===${NC}"
+        service_type="background process"
+        "$wrapper_path" --start
+        if [ -f "$INSTALL_DIR/books-studio.pid" ]; then
+            run_pid=$(cat "$INSTALL_DIR/books-studio.pid")
+        fi
     fi
 
-    echo -e "\n${GREEN}[✔] $APP_NAME installed successfully!${NC}"
-    echo -e "To start the studio, run:"
-    echo -e "  ${BLUE}$APP_NAME${NC}"
-    echo
+    # Retrieve Host IP
+    local local_ip
+    local_ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    if [ -z "$local_ip" ]; then
+        local_ip="127.0.0.1"
+    fi
+
+    # 8. Render Summary Report Table
+    echo -e "\n${GREEN}[✔] Installation completed successfully!${NC}"
+    echo -e "${BLUE}=================================================================${NC}"
+    echo -e "                   BOOKS HTML WEB STUDIO SUMMARY                 "
+    echo -e "${BLUE}=================================================================${NC}"
+    printf "  %-18s : %s\n" "Status" "RUNNING (PID: $run_pid)"
+    printf "  %-18s : %s\n" "Daemon Type" "$service_type"
+    printf "  %-18s : %s\n" "Studio Web URL" "http://$local_ip:8765"
+    printf "  %-18s : %s\n" "Login Username" "$username"
+    printf "  %-18s : %s\n" "Login Password" "$password"
+    printf "  %-18s : %s\n" "Session Token" "$session_token"
+    printf "  %-18s : %s\n" "Install Path" "$INSTALL_DIR"
+    printf "  %-18s : %s\n" "Command Utility" "$BIN_DIR/$APP_NAME"
+    echo -e "${BLUE}=================================================================${NC}"
+    echo -e "  To manage the background service, you can run:"
+    echo -e "    * Stop:    ${YELLOW}$APP_NAME --stop${NC}"
+    echo -e "    * Start:   ${YELLOW}$APP_NAME --start${NC}"
+    echo -e "    * Restart: ${YELLOW}$APP_NAME --restart${NC}"
+    echo -e "    * Status:  ${YELLOW}$APP_NAME --status${NC}"
+    echo -e "${BLUE}=================================================================${NC}\n"
 }
 
 do_update() {
@@ -167,7 +366,6 @@ do_update() {
         exit 1
     fi
     do_install
-    echo -e "${GREEN}[✔] $APP_NAME updated successfully!${NC}"
 }
 
 do_uninstall() {
@@ -179,9 +377,15 @@ do_uninstall() {
         exit 0
     fi
 
-    # Kill any running books-cli serve processes first
-    echo "Stopping any active instances..."
-    pkill -f "books-cli serve" || true
+    # Stop and remove daemon
+    stop_existing_server
+    
+    if [ "$EUID" -eq 0 ] && [ -f /etc/systemd/system/books-studio.service ]; then
+        echo "Removing systemd service..."
+        systemctl disable books-studio 2>/dev/null || true
+        rm -f /etc/systemd/system/books-studio.service
+        systemctl daemon-reload
+    fi
 
     echo "Removing installation folder at $INSTALL_DIR..."
     rm -rf "$INSTALL_DIR"
