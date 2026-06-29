@@ -27,7 +27,18 @@ app.mount("/books", StaticFiles(directory=str(books_dir())), name="books")
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    return Response(status_code=204)
+    svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <defs>
+            <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#3b82f6"/>
+                <stop offset="100%" stop-color="#8b5cf6"/>
+            </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="none"/>
+        <path d="M20 25 C 20 15, 45 15, 50 25 C 55 15, 80 15, 80 25 L 80 80 C 80 70, 55 70, 50 80 C 45 70, 20 70, 20 80 Z" fill="url(#g)"/>
+        <path d="M50 25 L 50 80" stroke="#ffffff" stroke-width="3" opacity="0.3"/>
+    </svg>"""
+    return Response(content=svg, media_type="image/svg+xml")
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
