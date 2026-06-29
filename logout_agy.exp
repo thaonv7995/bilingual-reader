@@ -1,15 +1,36 @@
 #!/usr/bin/expect -f
+set timeout 15
 set stty_init "cols 1000"
-spawn agy
+set agy_bin [lindex $argv 0]
+if { $agy_bin == "" } {
+    set agy_bin "agy"
+}
+spawn $agy_bin
 
 expect {
     "Select login method:" {
         # Already logged out
         exit 0
     }
-    ">" {
+    "Antigravity CLI" {
+        expect ">"
+        sleep 1
         send "/logout\r"
-        expect eof
-        exit 0
+        expect {
+            "Select login method:" {
+                exit 0
+            }
+            -re "\[yY\]/\[nN\]" {
+                send "y\r"
+                exp_continue
+            }
+            timeout {
+                exit 1
+            }
+        }
+    }
+    timeout {
+        exit 1
     }
 }
+expect eof

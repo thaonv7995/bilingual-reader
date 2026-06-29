@@ -148,15 +148,40 @@ def extract_figures(
                 19: [],
                 21: [],
                 22: [],
+                41: [],
+                43: [],
+                42: [],
+                44: [],
+                26: [("1", "", fitz.Rect(213.5, 415.5, 586.0, 645.0))],
                 23: [
                     ("1", "", fitz.Rect(254.0, 60.0, 575.5, 261.0)),
                     ("2", "", fitz.Rect(32.5, 248.5, 575.0, 574.0)),
                     ("3", "", fitz.Rect(34.5, 545.5, 321.0, 729.5))
                 ],
-                27: [("1", "", fitz.Rect(69, 317, 226, 452))],
-                35: [("1", "", fitz.Rect(69, 317, 226, 452))],
+                24: [
+                    ("1", "", fitz.Rect(30.0, 568.0, 267.0, 722.0)),
+                    ("2", "", fitz.Rect(333.0, 568.0, 570.5, 722.0))
+                ],
+                25: [
+                    ("1", "", fitz.Rect(354.0, 127.5, 558.0, 244.0)),
+                    ("2", "", fitz.Rect(217.5, 445.0, 571.5, 720.5))
+                ],
+                27: [("1", "", fitz.Rect(80, 410, 522, 688))],
+                28: [
+                    ("1", "", fitz.Rect(86.0, 86.5, 516.5, 349.0)),
+                    ("2", "", fitz.Rect(86.0, 399.0, 516.5, 661.5))
+                ],
+                35: [("1", "", fitz.Rect(48.0, 511.0, 559.0, 714.0))],
+                37: [("1", "", fitz.Rect(45.5, 135.5, 556.0, 245.0))],
+                38: [("1", "", fitz.Rect(190.5, 427.0, 411.5, 580.5))],
                 39: [("1", "", fitz.Rect(69, 317, 226, 452))],
-                45: [("1", "", fitz.Rect(69, 317, 226, 452))],
+                40: [
+                    ("1", "", fitz.Rect(45.5, 377.5, 297.5, 519.5)),
+                    ("2", "", fitz.Rect(306.0, 377.5, 558.0, 519.5)),
+                    ("3", "", fitz.Rect(45.5, 522.5, 297.5, 664.0)),
+                    ("4", "", fitz.Rect(305.5, 522.5, 557.5, 664.0))
+                ],
+                45: [],
                 55: [("1", "", fitz.Rect(69, 317, 226, 452))],
                 29: [("1.4", "Figure 1.4", fitz.Rect(28, 250, 548, 465)), ("1.5", "Figure 1.5", fitz.Rect(28, 35, 548, 170))],
                 30: [("1.6", "Figure 1.6", fitz.Rect(28, 310, 548, 545))],
@@ -333,6 +358,42 @@ def extract_figures(
                     ("3", "", fitz.Rect(42.0, 418.5, 279.0, 727.5)),
                     ("4", "", fitz.Rect(263.5, 418.5, 602.0, 727.5))
                 ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 29:
+                labels = [
+                    ("1.4", "Figure 1.4", fitz.Rect(85.0, 100.0, 518.0, 370.0)),
+                    ("1.5", "Figure 1.5", fitz.Rect(85.0, 455.0, 518.0, 725.5))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 30:
+                labels = [
+                    ("1.6", "Figure 1.6", fitz.Rect(85.0, 185.0, 518.0, 705.0))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 31:
+                labels = [
+                    ("1", "Figure 1", fitz.Rect(45.0, 125.0, 562.0, 540.0))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 39:
+                labels = [
+                    ("1", "", fitz.Rect(49.5, 63.5, 553.5, 384.5)),
+                    ("2", "", fitz.Rect(49.5, 386.5, 553.5, 707.5))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 40:
+                labels = [
+                    ("1", "", fitz.Rect(45.5, 377.5, 297.5, 519.5)),
+                    ("2", "", fitz.Rect(306.0, 377.5, 558.0, 519.5)),
+                    ("3", "", fitz.Rect(45.5, 522.5, 297.5, 664.0)),
+                    ("4", "", fitz.Rect(305.5, 522.5, 557.5, 664.0))
+                ]
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num in (41, 42, 43, 44, 45):
+                labels = [
+                    ("1", "", fitz.Rect(45.5, 113.0, 297.5, 254.5)),
+                    ("2", "", fitz.Rect(306.0, 113.0, 558.0, 254.5)),
+                    ("3", "", fitz.Rect(45.5, 257.5, 297.5, 399.5)),
+                    ("4", "", fitz.Rect(306.0, 257.5, 558.0, 399.5)),
+                    ("5", "", fitz.Rect(45.5, 402.0, 297.5, 544.0)),
+                    ("6", "", fitz.Rect(306.0, 402.0, 558.0, 544.0)),
+                    ("7", "", fitz.Rect(45.5, 547.0, 297.5, 688.5)),
+                    ("8", "", fitz.Rect(305.5, 547.0, 557.5, 688.5))
+                ]
             elif "the-linux-command-line" in str(pdf_path):
                 pass
             else:
@@ -476,6 +537,22 @@ def extract_figures(
                     clip = fitz.Rect(32.5, 248.5, 575.0, 544.0)
                 else:
                     clip = fitz.Rect(34.5, 552.0, 321.0, 715.0)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 24:
+                if fig_id == "1":
+                    clip = fitz.Rect(30.0, 568.0, 267.0, 722.0)
+                else:
+                    clip = fitz.Rect(333.0, 568.0, 570.5, 722.0)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 25:
+                if fig_id == "1":
+                    clip = fitz.Rect(354.0, 127.5, 558.0, 244.0)
+                else:
+                    clip = fitz.Rect(217.5, 445.0, 571.5, 720.5)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 26:
+                clip = fitz.Rect(213.5, 415.5, 586.0, 645.0)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 30:
+                clip = fitz.Rect(85.0, 185.0, 518.0, 705.0)
+            elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 37:
+                clip = fitz.Rect(45.5, 135.5, 556.0, 245.0)
             elif "an-entire-mba-in-1-book" in str(pdf_path) and page_num == 18:
                 clip = fitz.Rect(70.5, 65.0, 533.0, 385.5)
             elif "the-lean-startup" in str(pdf_path) and page_num in (26, 27, 28, 33, 81, 123, 129, 207):
@@ -498,7 +575,7 @@ def extract_figures(
                         clip = fitz.Rect(49.92, 0.0, 202.56, 123.84)
                     else:
                         clip = fitz.Rect(30.0, 190.0, 250.0, 331.0)
-            elif page_num == 29:
+            elif page_num == 29 and "an-entire-mba-in-1-book" not in str(pdf_path):
                 if fig_id == "1.4":
                     clip = fitz.Rect(28, 250, 548, 465)
                 elif fig_id == "1.5":
@@ -512,13 +589,13 @@ def extract_figures(
                     else:
                         clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
                         clip &= rect
-            elif page_num == 30:
+            elif page_num == 30 and "an-entire-mba-in-1-book" not in str(pdf_path):
                 if fig_id == "1.6":
                     clip = fitz.Rect(28, 310, 548, 545)
                 else:
                     clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
                     clip &= rect
-            elif page_num == 31:
+            elif page_num == 31 and "an-entire-mba-in-1-book" not in str(pdf_path):
                 clip = fitz.Rect(28, 415, 503, 585)
             elif page_num == 237:
                 if fig_id == "1":
@@ -621,6 +698,8 @@ def extract_figures(
                 else:
                     clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
                     clip &= rect
+            elif page_num == 38:
+                clip = fitz.Rect(190.5, 427.0, 411.5, 580.5)
             elif page_num == 87:
                 clip = fitz.Rect(28, 110, 548, 345)
             elif page_num == 91:
@@ -822,11 +901,39 @@ def extract_figures(
                     clip = fitz.Rect(250.5, 285.0, 585.0, 493.5)
                 elif fig_id == "3":
                     clip = fitz.Rect(30.0, 488.5, 289.0, 702.5)
+            elif page_num == 40:
+                if fig_id == "1":
+                    clip = fitz.Rect(45.5, 377.5, 297.5, 519.5)
+                elif fig_id == "2":
+                    clip = fitz.Rect(306.0, 377.5, 558.0, 519.5)
+                elif fig_id == "3":
+                    clip = fitz.Rect(45.5, 522.5, 297.5, 664.0)
+                elif fig_id == "4":
+                    clip = fitz.Rect(305.5, 522.5, 557.5, 664.0)
+            elif page_num in (41, 42, 43, 44, 45):
+                if fig_id == "1":
+                    clip = fitz.Rect(45.5, 113.0, 297.5, 254.5)
+                elif fig_id == "2":
+                    clip = fitz.Rect(306.0, 113.0, 558.0, 254.5)
+                elif fig_id == "3":
+                    clip = fitz.Rect(45.5, 257.5, 297.5, 399.5)
+                elif fig_id == "4":
+                    clip = fitz.Rect(306.0, 257.5, 558.0, 399.5)
+                elif fig_id == "5":
+                    clip = fitz.Rect(45.5, 402.0, 297.5, 544.0)
+                elif fig_id == "6":
+                    clip = fitz.Rect(306.0, 402.0, 558.0, 544.0)
+                elif fig_id == "7":
+                    clip = fitz.Rect(45.5, 547.0, 297.5, 688.5)
+                elif fig_id == "8":
+                    clip = fitz.Rect(305.5, 547.0, 557.5, 688.5)
             elif page_num == 430:
                 clip = fitz.Rect(52.5, 493.0, 352.5, 700.0)
             elif page_num == 431:
                 clip = fitz.Rect(52.5, 295.0, 352.5, 502.0)
-            elif page_num in (27, 35, 45, 55, 71, 81, 93, 105, 113, 131, 147, 159, 213, 227, 311, 329, 361, 371, 381, 395, 407, 415, 427, 433, 445, 451, 479):
+            elif page_num == 35:
+                clip = fitz.Rect(48.0, 511.0, 559.0, 714.0)
+            elif page_num in (27, 55, 71, 81, 93, 105, 113, 131, 147, 159, 213, 227, 311, 329, 361, 371, 381, 395, 407, 415, 427, 433, 445, 451, 479):
                 clip = fitz.Rect(69.0, 317.0, 226.0, 452.0)
             else:
                 clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
@@ -848,7 +955,7 @@ def extract_figures(
 
             if pix_width is None or pix_height is None or page_num == 93:
                 if pix is None:
-                    if page_num in (4, 15, 27, 35, 45, 71, 93, 213, 227, 311, 329, 361, 371, 381, 395, 407, 415, 427, 445, 451, 479):
+                    if page_num in (4, 15, 26, 27, 35, 71, 93, 213, 227, 311, 329, 361, 371, 381, 395, 407, 415, 427, 445, 451, 479):
                         for block in page.get_text("dict")["blocks"]:
                             if block["type"] == 0:
                                 for line in block["lines"]:

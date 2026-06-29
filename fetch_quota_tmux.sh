@@ -1,11 +1,13 @@
 #!/bin/bash
 SESSION_NAME="agy_quota_fetch"
 
+AGY_BIN="${1:-agy}"
+
 # Kill any existing session with this name
 tmux kill-session -t $SESSION_NAME 2>/dev/null
 
 # Start a new detached tmux session running agy
-tmux new-session -d -s $SESSION_NAME -x 1000 -y 100 "agy"
+tmux new-session -d -s $SESSION_NAME -x 1000 -y 100 "$AGY_BIN"
 
 # Wait a moment for agy to load and show the prompt
 sleep 4

@@ -76,6 +76,44 @@ running_processes: Dict[str, asyncio.subprocess.Process] = {}
 # slug -> list of string logs
 process_logs: Dict[str, List[str]] = {}
 
+# --- Caching Layer to prevent massive disk scanning lag ---
+class ResponseCache:
+    def __init__(self):
+        self.library_cache = None
+        self.library_cache_time = 0.0
+        self.status_cache = {}  # slug -> (timestamp, data)
+
+    def get_library(self, ttl=4.0):
+        now = time.time()
+        if self.library_cache is not None and (now - self.library_cache_time < ttl):
+            return self.library_cache
+        return None
+
+    def set_library(self, data):
+        self.library_cache = data
+        self.library_cache_time = time.time()
+
+    def get_status(self, slug, ttl=2.0):
+        now = time.time()
+        if slug in self.status_cache:
+            ts, data = self.status_cache[slug]
+            if now - ts < ttl:
+                return data
+        return None
+
+    def set_status(self, slug, data):
+        self.status_cache[slug] = (time.time(), data)
+
+    def clear(self, slug=None):
+        self.library_cache = None
+        self.library_cache_time = 0.0
+        if slug:
+            self.status_cache.pop(slug, None)
+        else:
+            self.status_cache.clear()
+
+response_cache = ResponseCache()
+
 class LoginSession:
     def __init__(self):
         self.process: Optional[asyncio.subprocess.Process] = None
@@ -229,6 +267,138 @@ def is_agy_authenticated(force: bool = False) -> bool:
         studio_state.update_auth(logged_in=False)
         
     return _auth_cache["logged_in"]
+# Quota memory cache
+_quota_cache = {
+    "data": None,
+    "last_updated": 0.0,
+    "is_updating": False
+}
+
+def parse_quota_output(output: str) -> dict:
+    quota = {"account": "", "groups": []}
+    
+    acc_match = re.search(r'Account:\s*([^\n]+)', output)
+    if acc_match:
+        quota["account"] = acc_match.group(1).strip()
+        
+    lines = output.split('\n')
+    current_group = None
+    current_limit = None
+    
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        
+        # Group (e.g. GEMINI MODELS)
+        if re.match(r'^[A-Z0-9\s]+$', stripped) and len(stripped) > 0 and i + 1 < len(lines) and "Models within this group:" in lines[i+1]:
+            if current_group:
+                if current_limit:
+                    current_group["limits"].append(current_limit)
+                    current_limit = None
+                quota["groups"].append(current_group)
+            
+            group_name = stripped
+            models_str = lines[i+1].split("Models within this group:")[1].strip()
+            current_group = {"name": group_name, "models": models_str, "limits": []}
+            i += 2
+            continue
+            
+        # Limit (e.g. Weekly Limit)
+        if current_group and re.match(r'^[A-Za-z\s]+Limit$', stripped):
+            if current_limit:
+                current_group["limits"].append(current_limit)
+            
+            limit_name = stripped
+            if i + 1 < len(lines) and "[" in lines[i+1] and "%" in lines[i+1]:
+                pct_match = re.search(r'([0-9\.]+)\%', lines[i+1])
+                pct = float(pct_match.group(1)) if pct_match else 0.0
+                
+                desc = lines[i+2].strip() if i + 2 < len(lines) else ""
+                
+                color = "#22c55e" # Green
+                if pct < 10:
+                    color = "#ef4444" # Red
+                elif pct < 30:
+                    color = "#f59e0b" # Orange
+                    
+                current_limit = {
+                    "name": limit_name,
+                    "percent": pct,
+                    "color": color,
+                    "info": desc
+                }
+                i += 3
+                continue
+        
+        i += 1
+        
+    if current_group:
+        if current_limit:
+            current_group["limits"].append(current_limit)
+        quota["groups"].append(current_group)
+        
+    return quota
+
+async def refresh_quota_cache_async():
+    global _quota_cache
+    if _quota_cache["is_updating"]:
+        return
+    _quota_cache["is_updating"] = True
+    try:
+        agy_bin = get_agy_binary()
+        import os
+        script_path = os.path.join(os.path.dirname(__file__), "fetch_quota_tmux.sh")
+        
+        proc = await asyncio.create_subprocess_exec(
+            script_path, agy_bin,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await proc.communicate()
+        
+        if proc.returncode == 0:
+            output = stdout.decode('utf-8', errors='replace')
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            output = ansi_escape.sub('', output)
+            
+            quota = parse_quota_output(output)
+            if quota["account"] or quota["groups"]:
+                _quota_cache["data"] = {
+                    "success": True,
+                    "quota": quota
+                }
+                _quota_cache["last_updated"] = time.time()
+                if quota["account"]:
+                    studio_state.update_auth(logged_in=True, email=quota["account"])
+            else:
+                err = "Failed to parse quota from CLI."
+                if "Eligibility check failed" in output:
+                    err = "Eligibility check failed. Re-authenticate AGY CLI."
+                elif "trust" in output.lower():
+                    err = "AGY CLI is blocked by a workspace trust prompt."
+                _quota_cache["data"] = {"success": False, "error": err}
+        else:
+            _quota_cache["data"] = {"success": False, "error": "Failed to retrieve quota"}
+    except Exception as e:
+        logger.error(f"Error updating quota cache: {e}")
+        _quota_cache["data"] = {"success": False, "error": f"Error parsing quota: {str(e)}"}
+    finally:
+        _quota_cache["is_updating"] = False
+
+async def background_quota_updater():
+    await asyncio.sleep(5)
+    while True:
+        try:
+            if is_agy_authenticated(force=False):
+                await refresh_quota_cache_async()
+        except Exception as e:
+            logger.error(f"Error in background quota updater: {e}")
+        await asyncio.sleep(30)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(background_quota_updater())
 
 @app.get("/api/auth/status")
 def get_auth_status(force: bool = False):
@@ -239,113 +409,38 @@ def get_auth_status(force: bool = False):
         "status": login_session.status,
         "oauth_url": login_session.oauth_url
     }
+
 @app.get("/api/auth/quota")
-def get_auth_quota():
+async def get_auth_quota(force: bool = False):
+    global _quota_cache
     if not is_agy_authenticated(force=False):
         return {"success": False, "error": "Not authenticated"}
     
-    agy_bin = get_agy_binary()
-    try:
-        import os
-        script_path = os.path.join(os.path.dirname(__file__), "fetch_quota_tmux.sh")
-        proc = subprocess.run(
-            [script_path],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=10
-        )
-        if proc.returncode != 0:
-            return {"success": False, "error": "Failed to retrieve quota"}
+    import time
+    now = time.time()
+    
+    if force:
+        await refresh_quota_cache_async()
+    elif (_quota_cache["data"] is None or now - _quota_cache["last_updated"] > 120) and not _quota_cache["is_updating"]:
+        if _quota_cache["data"] is None:
+            await refresh_quota_cache_async()
+        else:
+            asyncio.create_task(refresh_quota_cache_async())
             
-        output = proc.stdout
+    if _quota_cache["data"] is not None:
+        res = dict(_quota_cache["data"])
+        res["age"] = int(time.time() - _quota_cache["last_updated"])
+        return res
         
-        # Clean ANSI codes
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        output = ansi_escape.sub('', output)
-        
-        quota = {"account": "", "groups": []}
-        
-        acc_match = re.search(r'Account:\s*([^\n]+)', output)
-        if acc_match:
-            quota["account"] = acc_match.group(1).strip()
-            
-        lines = output.split('\n')
-        current_group = None
-        current_limit = None
-        
-        i = 0
-        while i < len(lines):
-            line = lines[i]
-            
-            # Group (e.g. GEMINI MODELS)
-            if re.match(r'^[A-Z0-9\s]+$', line.strip()) and len(line.strip()) > 0 and i + 1 < len(lines) and "Models within this group:" in lines[i+1]:
-                if current_group:
-                    if current_limit:
-                        current_group["limits"].append(current_limit)
-                        current_limit = None
-                    quota["groups"].append(current_group)
-                
-                group_name = line.strip()
-                models_str = lines[i+1].split("Models within this group:")[1].strip()
-                current_group = {"name": group_name, "models": models_str, "limits": []}
-                i += 2
-                continue
-                
-            # Limit (e.g. Weekly Limit)
-            if current_group and re.match(r'^[A-Za-z\s]+Limit$', line.strip()):
-                if current_limit:
-                    current_group["limits"].append(current_limit)
-                
-                limit_name = line.strip()
-                if i + 1 < len(lines) and "[" in lines[i+1] and "%" in lines[i+1]:
-                    pct_match = re.search(r'([0-9\.]+)\%', lines[i+1])
-                    pct = float(pct_match.group(1)) if pct_match else 0.0
-                    used = round(100.0 - pct, 2)
-                    
-                    desc = lines[i+2].strip() if i + 2 < len(lines) else ""
-                    
-                    color = "#22c55e" # Green
-                    if used > 90:
-                        color = "#ef4444" # Red
-                    elif used > 75:
-                        color = "#f59e0b" # Orange
-                        
-                    current_limit = {
-                        "name": limit_name,
-                        "percent": used,
-                        "color": color,
-                        "info": desc
-                    }
-                    i += 3
-                    continue
-            
-            i += 1
-            
-        if current_group:
-            if current_limit:
-                current_group["limits"].append(current_limit)
-            quota["groups"].append(current_group)
-            
-        if not quota["account"] and not quota["groups"]:
-            if "Eligibility check failed" in output:
-                return {"success": False, "error": "Eligibility check failed. Re-authenticate AGY CLI."}
-            elif "trust" in output.lower():
-                return {"success": False, "error": "AGY CLI is blocked by a workspace trust prompt."}
-            else:
-                return {"success": False, "error": "Failed to parse quota from CLI."}
-
-        return {"success": True, "quota": quota}
-    except Exception as e:
-        return {"success": False, "error": f"Error parsing quota: {str(e)}"}
+    return {"success": False, "error": "Quota cache is being populated, please wait a moment."}
 @app.post("/api/auth/logout_agy")
 def logout_agy_cli():
     try:
         # Run expect script to automate agy /logout
         script_path = Path(repo_root()) / "logout_agy.exp"
         if script_path.exists():
-            subprocess.run(["expect", str(script_path)], timeout=10)
+            agy_bin = get_agy_binary()
+            subprocess.run(["expect", str(script_path), agy_bin], timeout=10)
         
         token_file = get_token_path()
         if token_file.exists():
@@ -378,11 +473,18 @@ async def start_auth_login():
     
     try:
         script_path = Path(repo_root()) / "login_agy.exp"
+        env = dict(os.environ)
+        env["BROWSER"] = "true %s"
+        # Prepend dummy open binary directory to PATH to suppress server-side browser open
+        dummy_bin_dir = str(Path(__file__).parent / "bin")
+        env["PATH"] = f"{dummy_bin_dir}{os.pathsep}{env.get('PATH', '')}"
+        
         proc = await asyncio.create_subprocess_exec(
-            "expect", str(script_path),
+            "expect", str(script_path), agy_bin,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
+            env=env,
         )
         login_session.process = proc
     except Exception as e:
@@ -483,8 +585,31 @@ async def verify_auth_code(payload: dict):
             "logs": "".join(login_session.logs)
         }
 
+@app.post("/api/auth/cancel_login")
+async def cancel_auth_login():
+    global login_session
+    if login_session.process and login_session.process.returncode is None:
+        try:
+            logger.info("Killing active agy login session due to user cancellation")
+            login_session.process.kill()
+            await login_session.process.wait()
+        except Exception as e:
+            logger.warning(f"Error killing login session: {e}")
+            pass
+    login_session.status = "idle"
+    login_session.oauth_url = None
+    login_session.process = None
+    return {"success": True}
+
 @app.get("/api/books")
 def list_books_endpoint():
+    has_any_running = len(running_processes) > 0
+    library_ttl = 1.0 if has_any_running else 5.0
+    
+    cached = response_cache.get_library(library_ttl)
+    if cached is not None:
+        return cached
+
     books_folder = books_dir()
     found = []
     if books_folder.is_dir():
@@ -517,7 +642,9 @@ def list_books_endpoint():
                 except Exception as e:
                     logger.warning(f"Error scanning book '{child.name}': {e}")
                     pass
-    return {"books": found}
+    res = {"books": found}
+    response_cache.set_library(res)
+    return res
 
 @app.post("/api/upload")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -531,6 +658,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         
     try:
         result = ingest_pdf(temp_path)
+        response_cache.clear()
         return {"success": True, "book": result}
     except Exception as e:
         logger.error(f"Ingestion failed: {e}")
@@ -538,6 +666,13 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 @app.get("/api/books/{slug}/status")
 def get_book_status_endpoint(slug: str):
+    is_running = slug in running_processes
+    status_ttl = 1.5 if is_running else 5.0
+    
+    cached = response_cache.get_status(slug, status_ttl)
+    if cached is not None:
+        return cached
+
     book_path = books_dir() / slug
     if not book_path.is_dir():
         raise HTTPException(status_code=404, detail="Book not found")
@@ -570,7 +705,7 @@ def get_book_status_endpoint(slug: str):
         pages_enriched.append(p)
         
     summary["pages"] = pages_enriched
-    summary["running"] = slug in running_processes
+    summary["running"] = is_running
     
     bkb_path1 = books_dir() / f"{slug}.bkb"
     bkb_path2 = books_dir() / "bkbs" / f"{slug}.bkb"
@@ -580,6 +715,7 @@ def get_book_status_endpoint(slug: str):
     summary["has_book_html"] = (book.output_dir / "book.html").is_file()
     summary["has_book_vi_html"] = (book.output_dir / "book.vi.html").is_file()
     
+    response_cache.set_status(slug, summary)
     return summary
 
 async def read_subprocess_output(slug: str, process: asyncio.subprocess.Process, book_path: Path):
@@ -745,6 +881,7 @@ async def process_book(slug: str, config: ProcessConfig):
         
         asyncio.create_task(read_subprocess_output(slug, process, book_path))
         
+        response_cache.clear(slug)
         return {"success": True, "message": "Processing started"}
     except Exception as e:
         logger.error(f"Failed to start process: {e}")
@@ -839,6 +976,7 @@ def stop_book_processing(slug: str):
         return {"success": False, "message": "No active process running"}
     try:
         process.terminate()
+        response_cache.clear(slug)
         return {"success": True, "message": "Terminate signal sent to batch processor"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -851,6 +989,7 @@ def pack_book_endpoint(slug: str):
     try:
         bkb_dest = books_dir() / "bkbs" / f"{slug}.bkb"
         result = pack_book(book_path, bkb_dest)
+        response_cache.clear(slug)
         return {"success": True, "archive": result["archive"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -883,6 +1022,7 @@ def update_book(slug: str, req: UpdateBookRequest):
         book_data = book.load_book_json()
         book_data["title"] = req.title
         book.book_json.write_text(json.dumps(book_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        response_cache.clear(slug)
         return {"success": True, "title": req.title}
     except Exception as e:
         logger.error(f"Failed to update book: {e}")
@@ -897,6 +1037,7 @@ def delete_book(slug: str):
         raise HTTPException(status_code=400, detail="Cannot delete book while processing is running")
     try:
         shutil.rmtree(book_path)
+        response_cache.clear(slug)
         return {"success": True}
     except Exception as e:
         logger.error(f"Failed to delete book: {e}")
