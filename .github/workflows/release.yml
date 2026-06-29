@@ -1,0 +1,62 @@
+name: Build and Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger on version tags (e.g. v1.0.0)
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Package and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Release Tarball
+        run: |
+          echo "Packaging application..."
+          # Clean up any build artifacts, caches or logs to keep release small
+          rm -rf application/.venv
+          rm -rf application/backend/books_core.egg-info
+          rm -rf .DS_Store application/.DS_Store application/backend/.DS_Store
+          
+          # Archive essential application folders and files
+          tar -czf books-studio.tar.gz \
+            application/ \
+            .agents/ \
+            login_agy.exp \
+            logout_agy.exp \
+            fetch_quota_tmux.sh \
+            install.sh \
+            README.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: books-studio.tar.gz
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Books HTML Web Studio ${{ github.ref_name }}
+            
+            To install or update this version, run the following command in your terminal:
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/install.sh | bash
+            ```
+            
+            To update an existing installation:
+            ```bash
+            books-studio --update
+            ```
+            
+            To uninstall:
+            ```bash
+            books-studio --uninstall
+            ```
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
