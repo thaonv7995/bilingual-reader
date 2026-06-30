@@ -117,6 +117,10 @@ def main(argv: list[str]) -> int:
         if assembled.is_file():
             all_issues.extend(_lint_assembled(assembled, book))
 
+    if page_count == 0:
+        print("FAIL No pages found or processed.")
+        return 1
+
     if all_issues:
         for msg in all_issues:
             print(f"FAIL {msg}")

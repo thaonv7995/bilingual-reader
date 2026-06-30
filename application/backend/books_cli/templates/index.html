@@ -1485,6 +1485,14 @@
             opts.headers["Authorization"] = `Bearer ${localStorage.getItem("studio_token")}`;
             const res = await fetch(path, opts);
             if(res.status===401) logoutStudio();
+            if(!res.ok) {
+                let msg = `API error ${res.status}`;
+                try {
+                    const data = await res.json();
+                    msg = data.detail || data.message || msg;
+                } catch(e) {}
+                throw new Error(msg);
+            }
             return res;
         }
 

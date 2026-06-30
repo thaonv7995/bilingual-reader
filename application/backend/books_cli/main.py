@@ -112,6 +112,10 @@ def cmd_page_pdf(args: argparse.Namespace) -> int:
     else:
         print("Provide --page N, --pages 1-20, or --pending", file=sys.stderr)
         return 2
+    if isinstance(out, dict) and out.get("ok") is False:
+        return 1
+    elif isinstance(out, list) and any(isinstance(x, dict) and x.get("ok") is False for x in out):
+        return 1
     return 0
 
 

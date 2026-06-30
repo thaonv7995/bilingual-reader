@@ -11,7 +11,16 @@ from books_core.paths import BookPaths
 
 
 def _step_done(path: Path) -> bool:
-    return path.is_file() and path.stat().st_size > 0
+    if not path.is_file() or path.stat().st_size == 0:
+        return False
+    if path.suffix == ".html":
+        try:
+            from books_core.validation import validate_draft_html
+            validate_draft_html(path.read_text(encoding="utf-8"))
+            return True
+        except Exception:
+            return False
+    return True
 
 
 def page_pipeline_status(book: BookPaths, page: int) -> dict[str, Any]:

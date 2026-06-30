@@ -219,26 +219,7 @@ class StudioState:
 studio_state = StudioState()
 
 def find_logged_in_email() -> Optional[str]:
-    # 1. Try to find the email in the most recent agy CLI log files
-    log_dir = Path.home() / ".gemini/antigravity-cli/log"
-    if log_dir.is_dir():
-        log_files = sorted(log_dir.glob("cli-*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
-        email_pattern = re.compile(r"authenticated successfully as ([a-zA-Z0-9\.\-\_\+]+@[a-zA-Z0-9\.\-]+)")
-        email_pattern_alt = re.compile(r"email=([a-zA-Z0-9\.\-\_\+]+@[a-zA-Z0-9\.\-]+)")
-        
-        for log_file in log_files[:10]:
-            try:
-                content = log_file.read_text(encoding="utf-8", errors="replace")
-                for line in content.splitlines():
-                    m = email_pattern.search(line)
-                    if m:
-                        return m.group(1)
-                    m = email_pattern_alt.search(line)
-                    if m:
-                        return m.group(1)
-            except Exception:
-                continue
-    return None
+    return "Connected account"
 
 _auth_cache = {"logged_in": False, "last_check": 0.0}
 
@@ -248,16 +229,6 @@ def is_agy_authenticated(force: bool = False) -> bool:
     if not force and (now - _auth_cache["last_check"] < 60.0):
         return _auth_cache["logged_in"]
         
-    # First, quick local check for token file
-    for token_file in get_token_paths():
-        if token_file.is_file() and token_file.stat().st_size > 0:
-            _auth_cache["logged_in"] = True
-            _auth_cache["last_check"] = now
-            email = find_logged_in_email()
-            studio_state.update_auth(logged_in=True, email=email)
-            return True
-        
-    # Second, check OS Keychain / secure keyring by executing a fast, non-interactive command
     agy_bin = get_agy_binary()
     try:
         proc = subprocess.run(
@@ -266,9 +237,9 @@ def is_agy_authenticated(force: bool = False) -> bool:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=5
+            timeout=8
         )
-        is_auth = (proc.returncode == 0) and any(m in proc.stdout for m in ["Gemini", "Claude", "GPT"])
+        is_auth = (proc.returncode == 0) and bool(proc.stdout.strip())
         _auth_cache["logged_in"] = is_auth
     except Exception:
         _auth_cache["logged_in"] = False
@@ -279,7 +250,7 @@ def is_agy_authenticated(force: bool = False) -> bool:
         email = find_logged_in_email()
         studio_state.update_auth(logged_in=True, email=email)
     else:
-        studio_state.update_auth(logged_in=False)
+        studio_state.update_auth(logged_in=False, email=None)
         
     return _auth_cache["logged_in"]
 # Quota memory cache
@@ -450,14 +421,15 @@ async def get_auth_quota(force: bool = False):
 @app.post("/api/auth/logout_agy")
 def logout_agy_cli():
     try:
-        # Run expect script to automate agy /logout if expect is installed
         script_path = Path(repo_root()) / "logout_agy.exp"
         if script_path.exists() and shutil.which("expect"):
             agy_bin = get_agy_binary()
             try:
-                subprocess.run(["expect", str(script_path), agy_bin], timeout=10)
+                result = subprocess.run(["expect", str(script_path), agy_bin], timeout=25, capture_output=True)
+                if result.returncode != 0:
+                    return {"success": False, "error": "AGY logout failed"}
             except Exception as e:
-                print(f"Warning: Failed to run expect script: {e}")
+                return {"success": False, "error": f"Failed to run expect script: {e}"}
         
         for token_file in get_token_paths():
             if token_file.exists():
@@ -465,6 +437,10 @@ def logout_agy_cli():
                     token_file.unlink()
                 except:
                     pass
+        
+        if is_agy_authenticated(force=True):
+            return {"success": False, "error": "AGY credential is still active"}
+            
         _auth_cache["logged_in"] = False
         _auth_cache["last_check"] = 0
         studio_state.update_auth(logged_in=False, email=None)
@@ -477,6 +453,9 @@ def logout_agy_cli():
 async def start_auth_login():
     global login_session
     
+    if is_agy_authenticated(force=True):
+        return {"success": True, "already_authenticated": True}
+        
     # Terminate any existing login process
     if login_session.process and login_session.process.returncode is None:
         try:
@@ -491,10 +470,14 @@ async def start_auth_login():
     agy_bin = get_agy_binary()
     logger.info(f"Spawning '{agy_bin} login' to fetch OAuth link")
     
+    import tempfile
+    url_file = tempfile.mktemp(prefix="agy_oauth_")
+    
     try:
         script_path = Path(repo_root()) / "login_agy.exp"
         env = dict(os.environ)
         env["BROWSER"] = "true %s"
+        env["AGY_OAUTH_URL_FILE"] = url_file
         # Prepend dummy open binary directory to PATH to suppress server-side browser open
         dummy_bin_dir = str(Path(__file__).parent / "bin")
         env["PATH"] = f"{dummy_bin_dir}{os.pathsep}{env.get('PATH', '')}"
@@ -512,28 +495,34 @@ async def start_auth_login():
         logger.error(f"Failed to start agy login process: {e}")
         return {"success": False, "error": f"Failed to start agy login: {str(e)}"}
 
-    # Scrape stdout to extract OAuth URL
-    url_found = False
-    for _ in range(300):  # read up to 300 lines to handle TUI output
-        if proc.returncode is not None:
-            break
-        try:
-            line_bytes = await asyncio.wait_for(proc.stdout.readline(), timeout=2.0)
+    async def drain_stdout():
+        while True:
+            line_bytes = await proc.stdout.readline()
             if not line_bytes:
                 break
             line = line_bytes.decode('utf-8', errors='replace')
             login_session.logs.append(line)
-            logger.info(f"agy-login stdout: {line.strip()}")
             
-            # Check for URL patterns
-            if "URL_FOUND_HERE:" in line:
-                login_session.oauth_url = line.split("URL_FOUND_HERE:")[1].strip()
+    asyncio.create_task(drain_stdout())
+
+    url_found = False
+    for _ in range(40):  # poll for 20 seconds (40 * 0.5s)
+        if Path(url_file).is_file():
+            url = Path(url_file).read_text().strip()
+            if url.startswith("http"):
+                login_session.oauth_url = url
                 login_session.status = "waiting_code"
                 url_found = True
                 break
-        except asyncio.TimeoutError:
-            continue
-            
+        if proc.returncode is not None:
+            break
+        await asyncio.sleep(0.5)
+        
+    try:
+        Path(url_file).unlink(missing_ok=True)
+    except Exception:
+        pass
+        
     if url_found:
         return {"success": True, "url": login_session.oauth_url}
     else:
@@ -545,7 +534,7 @@ async def start_auth_login():
         login_session.status = "failed"
         return {
             "success": False, 
-            "error": "Could not find OAuth URL in CLI output.", 
+            "error": "Could not extract OAuth URL within 20 seconds.", 
             "logs": "".join(login_session.logs)
         }
 
@@ -591,8 +580,8 @@ async def verify_auth_code(payload: dict):
             pass
         exit_code = -1
         
-    token_file = get_token_path()
-    if exit_code == 0 or (token_file.is_file() and token_file.stat().st_size > 0) or is_agy_authenticated(force=True):
+    has_token = any(f.is_file() and f.stat().st_size > 0 for f in get_token_paths())
+    if exit_code == 0 or has_token or is_agy_authenticated(force=True):
         login_session.status = "success"
         _auth_cache["logged_in"] = True
         _auth_cache["last_check"] = time.time()
@@ -636,7 +625,7 @@ def list_books_endpoint():
         for child in sorted(books_folder.iterdir()):
             if child.name.startswith("_") or child.name == "library.json":
                 continue
-            if child.is_dir() and BookPaths.open(child).source_pdf.is_file():
+            if child.is_dir() and BookPaths.open(child).book_json.is_file():
                 try:
                     summary = book_status_summary(BookPaths.open(child))
                     
@@ -898,7 +887,8 @@ async def process_book(slug: str, config: ProcessConfig):
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=str(repo_root()),
-            env=env
+            env=env,
+            start_new_session=True
         )
         
         # Persist initial status and logs in JSON state database
@@ -1009,7 +999,11 @@ def stop_book_processing(slug: str):
     if not process:
         return {"success": False, "message": "No active process running"}
     try:
-        process.terminate()
+        import os, signal
+        try:
+            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+        except Exception:
+            process.terminate()
         response_cache.clear(slug)
         return {"success": True, "message": "Terminate signal sent to batch processor"}
     except Exception as e:

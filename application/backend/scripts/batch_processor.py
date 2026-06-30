@@ -189,7 +189,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
         completed_successfully = False
         timeout_s = 900
         while proc.poll() is None:
-            if vi_html.is_file() and vi_html.stat().st_size > 0:
+            if vi_html.is_file() and vi_html.stat().st_mtime >= start_time - 1 and vi_html.stat().st_size > 0:
                 try:
                     content = vi_html.read_text(encoding="utf-8")
                     validate_draft_html(content)
@@ -404,6 +404,7 @@ def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: boo
 
 
 def main() -> int:
+    has_errors = False
     parser = argparse.ArgumentParser(description="Parallel render and translate pages")
     parser.add_argument("--book", required=True, help="Path to book folder")
     parser.add_argument("--start-page", type=int, default=1, help="Start page")
@@ -432,12 +433,30 @@ def main() -> int:
     else:
         candidate_pages = list(range(args.start_page, page_count + 1))
         
+    from books_core.validation import validate_draft_html
     pages_to_process = []
     for page in candidate_pages:
         en_html = book.page_lang_html(page, "en")
         vi_html = book.page_lang_html(page, "vi")
-        need_render = args.force or not en_html.is_file() or en_html.stat().st_size == 0
-        need_translate = args.translate and (args.force or not vi_html.is_file() or vi_html.stat().st_size == 0)
+        
+        en_valid = False
+        if en_html.is_file() and en_html.stat().st_size > 0:
+            try:
+                validate_draft_html(en_html.read_text(encoding="utf-8"))
+                en_valid = True
+            except Exception:
+                pass
+                
+        vi_valid = False
+        if vi_html.is_file() and vi_html.stat().st_size > 0:
+            try:
+                validate_draft_html(vi_html.read_text(encoding="utf-8"))
+                vi_valid = True
+            except Exception:
+                pass
+
+        need_render = args.force or not en_valid
+        need_translate = args.translate and (args.force or not vi_valid)
         
         if need_render or need_translate:
             pages_to_process.append(page)
@@ -474,6 +493,7 @@ def main() -> int:
         
         if errors:
             print(f"Processing finished with errors in {len(errors)} pages.")
+            has_errors = True
     else:
         print("All pages already processed and translated.")
 
@@ -542,6 +562,8 @@ def main() -> int:
             print(f"----------------------------------------------------------------------")
             print(res_vi.stdout)
             print(f"======================================================================\n", flush=True)
+            has_errors = True
+
 
     # Validate again
     cmd_val = [py_bin, str(scripts_dir / "validate_page_fidelity.py"), str(book_root), "--lang", "all"]
@@ -552,9 +574,10 @@ def main() -> int:
         print(f"----------------------------------------------------------------------")
         print(res_val.stdout)
         print(f"======================================================================\n", flush=True)
+        has_errors = True
 
     print("Batch processing complete!")
-    return 0
+    return 1 if has_errors else 0
 
 
 if __name__ == "__main__":

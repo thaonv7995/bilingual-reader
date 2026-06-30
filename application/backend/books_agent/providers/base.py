@@ -128,7 +128,7 @@ class Provider(ABC):
             try:
                 start_time = time.time()
                 while proc.poll() is None:
-                    if expected_output and expected_output.is_file() and expected_output.stat().st_size > 0:
+                    if expected_output and expected_output.is_file() and expected_output.stat().st_mtime >= start_time - 1 and expected_output.stat().st_size > 0:
                         try:
                             content = expected_output.read_text(encoding="utf-8")
                             validate_draft_html(content)

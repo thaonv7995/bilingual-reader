@@ -320,6 +320,12 @@ EOF
     if $using_systemd; then
         echo -e "\n${BLUE}=== Configuring systemd Service ===${NC}"
         service_type="systemd"
+        SERVICE_USER=${SUDO_USER:-root}
+        if [ "$SERVICE_USER" = "root" ]; then
+            SERVICE_HOME="/root"
+        else
+            SERVICE_HOME=$(eval echo ~$SERVICE_USER)
+        fi
         cat << EOF > /etc/systemd/system/books-studio.service
 [Unit]
 Description=Books HTML Web Studio
@@ -327,8 +333,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=root
+User=$SERVICE_USER
 WorkingDirectory=$INSTALL_DIR
+Environment=HOME=$SERVICE_HOME
 Environment=BOOKS_STUDIO_ROOT=$INSTALL_DIR
 Environment=PATH=$INSTALL_DIR/application/backend/books_cli/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=$INSTALL_DIR/run_studio.sh
