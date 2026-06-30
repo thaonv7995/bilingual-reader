@@ -446,11 +446,14 @@ async def get_auth_quota(force: bool = False):
 @app.post("/api/auth/logout_agy")
 def logout_agy_cli():
     try:
-        # Run expect script to automate agy /logout
+        # Run expect script to automate agy /logout if expect is installed
         script_path = Path(repo_root()) / "logout_agy.exp"
-        if script_path.exists():
+        if script_path.exists() and shutil.which("expect"):
             agy_bin = get_agy_binary()
-            subprocess.run(["expect", str(script_path), agy_bin], timeout=10)
+            try:
+                subprocess.run(["expect", str(script_path), agy_bin], timeout=10)
+            except Exception as e:
+                print(f"Warning: Failed to run expect script: {e}")
         
         token_file = get_token_path()
         if token_file.exists():
