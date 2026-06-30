@@ -507,6 +507,19 @@ async def start_auth_login():
 
     url_found = False
     for _ in range(40):  # poll for 20 seconds (40 * 0.5s)
+        # 1. Check if expect script captured it
+        for line in login_session.logs:
+            if "URL_FOUND_HERE:" in line:
+                url = line.split("URL_FOUND_HERE:")[1].strip()
+                if url.startswith("http"):
+                    login_session.oauth_url = url
+                    login_session.status = "waiting_code"
+                    url_found = True
+                    break
+        if url_found:
+            break
+            
+        # 2. Check if dummy browser script captured it
         if Path(url_file).is_file():
             url = Path(url_file).read_text().strip()
             if url.startswith("http"):
@@ -514,6 +527,7 @@ async def start_auth_login():
                 login_session.status = "waiting_code"
                 url_found = True
                 break
+                
         if proc.returncode is not None:
             break
         await asyncio.sleep(0.5)
