@@ -249,13 +249,13 @@ def is_agy_authenticated(force: bool = False) -> bool:
         return _auth_cache["logged_in"]
         
     # First, quick local check for token file
-    token_file = get_token_path()
-    if token_file.is_file() and token_file.stat().st_size > 0:
-        _auth_cache["logged_in"] = True
-        _auth_cache["last_check"] = now
-        email = find_logged_in_email()
-        studio_state.update_auth(logged_in=True, email=email)
-        return True
+    for token_file in get_token_paths():
+        if token_file.is_file() and token_file.stat().st_size > 0:
+            _auth_cache["logged_in"] = True
+            _auth_cache["last_check"] = now
+            email = find_logged_in_email()
+            studio_state.update_auth(logged_in=True, email=email)
+            return True
         
     # Second, check OS Keychain / secure keyring by executing a fast, non-interactive command
     agy_bin = get_agy_binary()
