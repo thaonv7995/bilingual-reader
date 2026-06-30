@@ -507,7 +507,7 @@ async def start_auth_login():
 
     # Scrape stdout to extract OAuth URL
     url_found = False
-    for _ in range(30):  # read up to 30 lines
+    for _ in range(300):  # read up to 300 lines to handle TUI output
         if proc.returncode is not None:
             break
         try:
