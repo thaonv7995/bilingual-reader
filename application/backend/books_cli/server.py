@@ -141,8 +141,12 @@ def get_agy_binary() -> str:
             return path
     return "agy"
 
-def get_token_path() -> Path:
-    return Path.home() / ".gemini/antigravity-cli/antigravity-oauth-token"
+def get_token_paths() -> list[Path]:
+    return [
+        Path.home() / ".gemini/antigravity-cli/antigravity-oauth-token",
+        Path.home() / ".gemini/antigravity-cli/jetski_state.pbtxt",
+        Path.home() / ".gemini/credentials.json"
+    ]
 
 # --- Persistent Studio State Database (JSON Store) ---
 class StudioState:
@@ -455,9 +459,12 @@ def logout_agy_cli():
             except Exception as e:
                 print(f"Warning: Failed to run expect script: {e}")
         
-        token_file = get_token_path()
-        if token_file.exists():
-            token_file.unlink()
+        for token_file in get_token_paths():
+            if token_file.exists():
+                try:
+                    token_file.unlink()
+                except:
+                    pass
         _auth_cache["logged_in"] = False
         _auth_cache["last_check"] = 0
         studio_state.update_auth(logged_in=False, email=None)
