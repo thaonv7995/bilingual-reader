@@ -8,9 +8,15 @@ spawn $agy_bin
 
 # (Removed "Select login method" as newer agy versions don't print it)
 
-# Match the URL but exclude escape characters and bell characters used in terminal hyperlinks
-expect -re "(https://accounts.google.com\[^\r\n \007\033]+)" {
-    puts "\nURL_FOUND_HERE:$expect_out(1,string)\n"
+# Handle optional "Select login method" prompt for some agy versions
+expect {
+    "Select login method" {
+        send "\r"
+        exp_continue
+    }
+    -re "(https://accounts.google.com\[^\r\n \007\033]+)" {
+        puts "\nURL_FOUND_HERE:$expect_out(1,string)\n"
+    }
 }
 
 set timeout -1
