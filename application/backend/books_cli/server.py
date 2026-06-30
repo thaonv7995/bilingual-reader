@@ -572,17 +572,8 @@ async def verify_auth_code(payload: dict):
         login_session.status = "failed"
         return {"success": False, "error": f"Failed to write to stdin: {str(e)}"}
         
-    # Read remaining stdout
-    try:
-        while True:
-            line_bytes = await asyncio.wait_for(login_session.process.stdout.readline(), timeout=3.0)
-            if not line_bytes:
-                break
-            line = line_bytes.decode('utf-8', errors='replace')
-            login_session.logs.append(line)
-            logger.info(f"agy-login post-verify: {line.strip()}")
-    except asyncio.TimeoutError:
-        pass
+    # Output is already being drained by the background task in start_auth_login
+    # Just wait a bit for the process to exit after providing the code
         
     try:
         exit_code = await asyncio.wait_for(login_session.process.wait(), timeout=8.0)
