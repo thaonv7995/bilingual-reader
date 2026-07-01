@@ -19,28 +19,24 @@ class AntigravityProvider(Provider):
         if not base.installed or not base.path:
             return base
         
-        # Check if the OAuth token file exists to verify log in status instantly
-        token_path = Path.home() / ".gemini/antigravity-cli/antigravity-oauth-token"
-        if token_path.is_file():
-            return base
-            
-        # Fallback to a quick command run if token file is not found
+        # A stale token/state file is not proof that the CLI can actually run.
+        # Probe the same authenticated command used by the Web Studio instead.
         try:
             proc = subprocess.run(
-                [
-                    base.path,
-                    "--version",
-                ],
+                [base.path, "models"],
                 stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
-                timeout=3,
+                timeout=8,
                 cwd=str(repo_root()),
             )
-            if proc.returncode != 0:
+            output = (proc.stdout or "") + (proc.stderr or "")
+            if proc.returncode != 0 or not any(name in output for name in ("Gemini", "Claude", "GPT")):
                 base.runnable = False
+                base.message = output.strip()[:300] or "Antigravity CLI is not authenticated or has no available models."
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
             base.runnable = False
+            base.message = "Could not verify Antigravity authentication with `agy models`."
         return base
 
     def build_run_command(
@@ -71,4 +67,3 @@ class AntigravityProvider(Provider):
             f"@{prompt}",
         ])
         return cmd
-

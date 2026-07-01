@@ -16,12 +16,13 @@ def test_antigravity_build_run_command_uses_print_mode(tmp_path: Path):
         "/usr/local/bin/agy",
         book_root,
         session_dir,
-        "review_extract",
+        "render_page",
         1,
     )
 
     assert cmd[0] == "/usr/local/bin/agy"
-    assert cmd[1:3] == ["--print", "--dangerously-skip-permissions"]
+    assert cmd[1:4] == ["--print-timeout", "15m", "--dangerously-skip-permissions"]
+    assert "--print" in cmd
     assert "--add-dir" in cmd
     assert str(book_root) in cmd
     assert cmd[-1] == f"@{prompt}"

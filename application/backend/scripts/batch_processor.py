@@ -493,7 +493,8 @@ def main() -> int:
         
         if errors:
             print(f"Processing finished with errors in {len(errors)} pages.")
-            has_errors = True
+            print("Skipping post-processing and assembly because rendering did not complete.")
+            return 1
     else:
         print("All pages already processed and translated.")
 
@@ -526,6 +527,7 @@ def main() -> int:
                 print(f"----------------------------------------------------------------------")
                 print(res.stdout)
                 print(f"======================================================================\n", flush=True)
+                has_errors = True
 
     # Assemble EN
     books_cli_bin = str(Path(_BACKEND).parent / ".venv" / "bin" / "books-cli")
@@ -544,6 +546,7 @@ def main() -> int:
         print(f"----------------------------------------------------------------------")
         print(res_en.stdout)
         print(f"======================================================================\n", flush=True)
+        has_errors = True
 
     # Assemble VI
     if args.translate:

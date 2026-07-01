@@ -152,10 +152,31 @@ class Provider(ABC):
                 raise exc
             for t in threads:
                 t.join(timeout=5)
+
+            # The process can write its output immediately before exiting, after
+            # the polling loop's last iteration. Validate once more before
+            # deciding whether an otherwise-zero exit was successful.
+            if not completed_successfully and expected_output and expected_output.is_file():
+                try:
+                    content = expected_output.read_text(encoding="utf-8")
+                    validate_draft_html(content)
+                    completed_successfully = expected_output.stat().st_mtime >= start_time - 1
+                except Exception:
+                    completed_successfully = False
+
             if completed_successfully or proc.returncode == 0:
                 returncode = 0
             else:
                 returncode = proc.returncode if proc.returncode is not None else -1
+
+            if returncode == 0 and expected_output and not completed_successfully:
+                diagnostic = (
+                    "Agent exited with code 0 but did not create a fresh, valid output file at "
+                    f"{expected_output}. Check authentication and the agent stdout/stderr above."
+                )
+                stderr_chunks.append(diagnostic + "\n")
+                emit(diagnostic, "system")
+                returncode = 3
         except subprocess.TimeoutExpired as exc:
             log = session_dir / "log.txt"
             log.write_text(f"TIMEOUT\n{exc}\n", encoding="utf-8")

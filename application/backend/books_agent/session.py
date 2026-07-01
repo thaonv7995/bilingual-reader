@@ -69,7 +69,7 @@ def run_agent(
         prepare_session(book, page, ph)
     provider = get_provider(provider_id)
     det = provider.detect()
-    if not det.installed:
+    if not det.installed or not det.runnable:
         raise RuntimeError(det.message)
     from books_core.pipeline.status import append_live_log
 
