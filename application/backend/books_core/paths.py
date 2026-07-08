@@ -20,7 +20,15 @@ class BookPaths:
     def open(cls, book_dir: str | Path) -> BookPaths:
         root = Path(book_dir).expanduser().resolve()
         if not root.is_dir():
-            raise NotADirectoryError(root)
+            from books_core.repo import books_dir as get_books_dir
+            try:
+                slug_dir = get_books_dir() / str(book_dir)
+                if slug_dir.is_dir():
+                    root = slug_dir
+                else:
+                    raise NotADirectoryError(root)
+            except Exception:
+                raise NotADirectoryError(root)
         return cls(root)
 
     # --- Top-level zones ---

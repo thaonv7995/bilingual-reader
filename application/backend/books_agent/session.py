@@ -27,12 +27,14 @@ def agent_dir(book: BookPaths, page: int) -> Path:
     return d
 
 
-def prepare_session(book: BookPaths, page: int, phase: str) -> dict[str, Any]:
+def prepare_session(book: BookPaths, page: int, phase: str, *, custom_prompt: str | None = None) -> dict[str, Any]:
     ph = _validate_phase(phase)
     book.ensure_work_page(page)
     require_agent_phase(book, page, ph)
     adir = agent_dir(book, page)
     ctx = build_context(book, page, ph)
+    if custom_prompt:
+        ctx["custom_prompt"] = custom_prompt
     prompt = build_prompt_markdown(book, page, ph, ctx)
 
     atomic_write_json(adir / "context.json", ctx)
@@ -61,12 +63,13 @@ def run_agent(
     provider_id: str,
     *,
     timeout_s: int | None = 3600,
+    custom_prompt: str | None = None,
 ) -> dict[str, Any]:
     ph = _validate_phase(phase)
     require_agent_phase(book, page, ph)
     adir = agent_dir(book, page)
-    if not (adir / "prompt.md").is_file():
-        prepare_session(book, page, ph)
+    if custom_prompt or not (adir / "prompt.md").is_file():
+        prepare_session(book, page, ph, custom_prompt=custom_prompt)
     provider = get_provider(provider_id)
     det = provider.detect()
     if not det.installed or not det.runnable:

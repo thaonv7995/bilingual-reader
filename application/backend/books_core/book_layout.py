@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 from books_core.io import atomic_write_json, atomic_write_text
 from books_core.paths import BookPaths, normalize_book_layout
@@ -99,3 +100,53 @@ def scaffold_book(
 """
     atomic_write_text(book.index_html, index)
     return book
+
+
+def repair_book(
+    book_dir: Path | str,
+    *,
+    force_assets: bool = False,
+) -> dict[str, Any]:
+    """
+    Repair a book's directory layout and assets:
+    1. Normalize layout (legacy flat layout to input/work/output)
+    2. Ensure standard directories are created
+    3. Copy missing/empty template CSS assets to output/assets/ (or force overwrite)
+    """
+    book_dir = Path(book_dir).expanduser().resolve()
+    # Normalize layout first in case it is in legacy layout
+    normalize_result = normalize_book_layout(book_dir)
+
+    book = BookPaths.open(book_dir)
+    book.ensure_book_dirs()
+
+    setup_tpl = skills_root() / "books-new-book-setup" / "templates"
+    pdf_tpl = skills_root() / "books-pdf-to-html" / "templates"
+    assets = book.output_dir / "assets"
+    assets.mkdir(parents=True, exist_ok=True)
+
+    repaired_assets = []
+
+    css_files = [
+        (setup_tpl / "book.css", assets / "book.css"),
+        (setup_tpl / "page-tokens.css", assets / "page-tokens.css"),
+        (pdf_tpl / "prose-page.css", assets / "prose-page.css"),
+        (pdf_tpl / "toc-page.css", assets / "toc-page.css"),
+        (pdf_tpl / "code-page.css", assets / "code-page.css"),
+        (pdf_tpl / "figures-page.css", assets / "figures-page.css"),
+    ]
+
+    for src, dest in css_files:
+        if not src.is_file():
+            continue
+        if force_assets or not dest.is_file() or dest.stat().st_size == 0:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+            repaired_assets.append(dest.name)
+
+    return {
+        "ok": True,
+        "book": str(book.root),
+        "moved": normalize_result.get("moved", []),
+        "repaired_assets": repaired_assets,
+    }

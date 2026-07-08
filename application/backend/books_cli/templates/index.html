@@ -1233,6 +1233,9 @@
                                 </div>
                                 <div style="display:flex; align-items:center; gap:0.5rem;">
                                     <button class="btn btn-secondary btn-icon" style="padding: 0.35rem 0.5rem;" title="Refresh Preview" onclick="refreshPreview()"><i data-lucide="refresh-cw" style="width:14px; height:14px;"></i></button>
+                                    <button class="btn btn-secondary" style="padding: 0.35rem 0.65rem; gap: 0.35rem; display: inline-flex; align-items: center; font-size: 0.85rem;" title="Repair Page with Custom Prompt" onclick="repairCurrentPage()">
+                                        <i data-lucide="wrench" style="width:14px; height:14px;"></i> Repair Page
+                                    </button>
                                     <div class="preview-tabs">
                                         <button class="preview-tab active" onclick="switchPreviewTab('side-by-side')" id="tab-side-by-side"><i data-lucide="columns"></i> Split View</button>
                                         <button class="preview-tab" onclick="switchPreviewTab('en')" id="tab-en"><i data-lucide="globe"></i> English</button>
@@ -1846,6 +1849,31 @@
             btn.disabled = false;
             btn.innerHTML = '<i data-lucide="play"></i> Start Pipeline';
             lucide.createIcons();
+        }
+
+        async function repairCurrentPage() {
+            if (!currentPreviewPage || !activeSlug) return;
+            const promptText = prompt("Enter custom instructions for repairing Page " + currentPreviewPage + " (e.g. 'Ensure table doesn\\'t overflow', 'Make font smaller'):");
+            if (promptText === null) return; // user cancelled
+            
+            showToast("Starting repair for Page " + currentPreviewPage + "...", "info");
+            try {
+                await api(`/api/books/${activeSlug}/process`, {
+                    method: "POST",
+                    headers: {"Content-Type":"application/json"},
+                    body: JSON.stringify({
+                        threads: 1,
+                        translate: document.getElementById('translateToggle').checked,
+                        force: true,
+                        pages: currentPreviewPage.toString(),
+                        custom_prompt: promptText || null
+                    })
+                });
+                showToast("Page repair started!", "success");
+                pollDetailStatus();
+            } catch(e) { 
+                showToast("Failed to start page repair", "error"); 
+            }
         }
 
         async function stopProcessing() {

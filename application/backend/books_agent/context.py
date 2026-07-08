@@ -93,6 +93,11 @@ work: work/page_{nn}/
 ---
 
 """
+    custom_prompt = ctx.get("custom_prompt")
+    custom_section = ""
+    if custom_prompt:
+        custom_section = f"\n## Custom Repair Instructions\n\n**CRITICAL**: Follow these specific instructions when rendering or repairing this page:\n\n{custom_prompt}\n\n"
+
     body = f"""
 ## Binding skill pack
 
@@ -114,4 +119,4 @@ Required output (exact path): `{ctx["output_file"]}` relative to `{book.root}`.
 Write the final HTML only to that canonical path. Do not write it under `work/` or legacy `pages/`.
 
 """
-    return header + base + body
+    return header + base + custom_section + body

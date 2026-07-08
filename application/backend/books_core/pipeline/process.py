@@ -88,6 +88,7 @@ def _run_agent_step(
     provider: str,
     *,
     timeout_s: int,
+    custom_prompt: str | None = None,
 ) -> dict[str, Any]:
     write_process_status(
         book,
@@ -97,8 +98,8 @@ def _run_agent_step(
         provider=provider,
         message=f"Agent {phase}…",
     )
-    prepare_session(book, page, phase)
-    result = run_agent(book, page, phase, provider, timeout_s=timeout_s)
+    prepare_session(book, page, phase, custom_prompt=custom_prompt)
+    result = run_agent(book, page, phase, provider, timeout_s=timeout_s, custom_prompt=custom_prompt)
     if result.get("exit_code") != 0:
         err = _agent_failure_message(page, phase, result)
         write_process_status(
@@ -121,6 +122,7 @@ def process_page(
     *,
     timeout_s: int = 3600,
     force: bool = False,
+    custom_prompt: str | None = None,
 ) -> dict[str, Any]:
     """Run page-pdf → render_page for one page."""
     require_page_pdf(book, page)
@@ -137,13 +139,14 @@ def process_page(
     steps_run: list[str] = ["page-pdf"]
 
     try:
-        if force or not _published_ready(book, page, lang):
+        if force or not _published_ready(book, page, lang) or custom_prompt:
             _run_agent_step(
                 book,
                 page,
                 "render_page",
                 provider,
                 timeout_s=timeout_s,
+                custom_prompt=custom_prompt,
             )
             steps_run.append("render_page")
             err_msg = check_published_errors(book, page, lang)

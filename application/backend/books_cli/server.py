@@ -80,6 +80,7 @@ class ProcessConfig(BaseModel):
     translate: bool = True
     force: bool = False
     pages: Optional[str] = None
+    custom_prompt: Optional[str] = None
 
 # Cache for active tasks and logs
 # slug -> asyncio.subprocess.Process
@@ -879,6 +880,8 @@ async def process_book(slug: str, config: ProcessConfig):
         cmd.append("--force")
     if config.pages:
         cmd.extend(["--pages", config.pages])
+    if config.custom_prompt:
+        cmd.extend(["--custom-prompt", config.custom_prompt])
 
     logger.info(f"Spawning batch processor: {' '.join(cmd)}")
     
@@ -1035,6 +1038,20 @@ def pack_book_endpoint(slug: str):
         response_cache.clear(slug)
         return {"success": True, "archive": result["archive"]}
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/books/{slug}/repair")
+def repair_book_endpoint(slug: str):
+    book_path = books_dir() / slug
+    if not book_path.is_dir():
+        raise HTTPException(status_code=404, detail="Book not found")
+    try:
+        from books_core.book_layout import repair_book
+        result = repair_book(book_path)
+        response_cache.clear(slug)
+        return result
+    except Exception as e:
+        logger.error(f"Repair failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/books/{slug}/download")

@@ -331,14 +331,14 @@ def parse_pages_spec(spec: str, max_page: int) -> list[int]:
     return sorted(list(pages))
 
 
-def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: bool, provider: str = "antigravity", force: bool = False) -> dict:
+def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: bool, provider: str = "antigravity", force: bool = False, custom_prompt: str | None = None) -> dict:
     import time
     
     # 1. Render EN page
     en_html = book.page_lang_html(page, "en")
     render_ok = False
     
-    if not force and en_html.is_file() and en_html.stat().st_size > 0:
+    if not force and not custom_prompt and en_html.is_file() and en_html.stat().st_size > 0:
         render_ok = True
     else:
         max_retries = 3
@@ -352,7 +352,7 @@ def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: boo
                 except Exception as pe:
                     print(f"[Page {page:02d}] Warning: failed to extract page PDF: {pe}", flush=True)
                 
-                res = process_page(book, page, provider=provider, force=force)
+                res = process_page(book, page, provider=provider, force=force, custom_prompt=custom_prompt)
                 if res.get("ok"):
                     render_ok = True
                     break
@@ -414,6 +414,7 @@ def main() -> int:
     parser.add_argument("--threads", type=int, default=8, help="Number of parallel threads")
     parser.add_argument("--translate", action="store_true", help="Also translate pages to VI")
     parser.add_argument("--provider", default="antigravity", choices=["antigravity", "cursor", "codex", "claude"], help="Provider for rendering")
+    parser.add_argument("--custom-prompt", help="Custom prompt instruction for page rendering")
     args = parser.parse_args()
 
     book_root = Path(args.book).resolve()
@@ -455,8 +456,8 @@ def main() -> int:
             except Exception:
                 pass
 
-        need_render = args.force or not en_valid
-        need_translate = args.translate and (args.force or not vi_valid)
+        need_render = args.force or args.custom_prompt or not en_valid
+        need_translate = args.translate and (args.force or args.custom_prompt or not vi_valid)
         
         if need_render or need_translate:
             pages_to_process.append(page)
@@ -467,7 +468,7 @@ def main() -> int:
         errors = {}
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             future_to_page = {
-                executor.submit(process_single_page, book, p, agy_bin, args.translate, args.provider, args.force): p
+                executor.submit(process_single_page, book, p, agy_bin, args.translate, args.provider, args.force, args.custom_prompt): p
                 for p in pages_to_process
             }
             for future in as_completed(future_to_page):

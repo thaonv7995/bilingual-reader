@@ -22,6 +22,7 @@ from books_core.meta.reader import book_status_summary
 from books_core.paths import BookPaths
 from books_core.pipeline.process import process_page
 from books_core.package import pack_book, unpack_book
+from books_core.book_layout import repair_book
 
 
 def cmd_status(args: argparse.Namespace) -> int:
@@ -130,6 +131,13 @@ def cmd_assemble(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_repair(args: argparse.Namespace) -> int:
+    book = BookPaths.open(args.book)
+    out = repair_book(book.root, force_assets=bool(args.force_assets))
+    print(json.dumps(out, indent=2, ensure_ascii=False))
+    return 0
+
+
 def cmd_render(args: argparse.Namespace) -> int:
     book = BookPaths.open(args.book)
     page = int(args.page)
@@ -232,6 +240,18 @@ def main(argv: list[str] | None = None) -> int:
     p_assemble.add_argument("--lang", default="en")
     p_assemble.add_argument("--output", default="book.html")
     p_assemble.set_defaults(func=cmd_assemble)
+
+    p_repair = sub.add_parser(
+        "repair",
+        help="Repair missing/corrupt template assets and normalize book layout",
+    )
+    p_repair.add_argument("--book", required=True, help="Book directory path or slug")
+    p_repair.add_argument(
+        "--force-assets",
+        action="store_true",
+        help="Overwrite existing assets with original templates",
+    )
+    p_repair.set_defaults(func=cmd_repair)
 
     p_pack = sub.add_parser("pack", help="Pack a book into a .bkb archive")
     p_pack.add_argument("--book", required=True, help="Path to book directory")
