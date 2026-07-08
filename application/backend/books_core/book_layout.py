@@ -43,13 +43,12 @@ def scaffold_book(
 
     shutil.copy2(pdf_source, book.input_dir / "original.pdf")
 
-    setup_tpl = skills_root() / "books-new-book-setup" / "templates"
-    pdf_tpl = skills_root() / "books-pdf-to-html" / "templates"
+    tpl_dir = Path(__file__).parent / "templates"
     assets = book.output_dir / "assets"
-    _copy_if_exists(setup_tpl / "book.css", assets / "book.css")
-    _copy_if_exists(setup_tpl / "page-tokens.css", assets / "page-tokens.css")
+    _copy_if_exists(tpl_dir / "book.css", assets / "book.css")
+    _copy_if_exists(tpl_dir / "page-tokens.css", assets / "page-tokens.css")
     for name in ("prose-page.css", "toc-page.css", "code-page.css", "figures-page.css"):
-        _copy_if_exists(pdf_tpl / name, assets / name)
+        _copy_if_exists(tpl_dir / name, assets / name)
 
     from books_core.page_chrome import detect_page_chrome_from_pdf
 
@@ -178,19 +177,18 @@ def verify_book(
     book.ensure_book_dirs()
 
     # 2. Repair assets
-    setup_tpl = skills_root() / "books-new-book-setup" / "templates"
-    pdf_tpl = skills_root() / "books-pdf-to-html" / "templates"
+    tpl_dir = Path(__file__).parent / "templates"
     assets = book.output_dir / "assets"
     assets.mkdir(parents=True, exist_ok=True)
 
     repaired_assets = []
     css_files = [
-        (setup_tpl / "book.css", assets / "book.css"),
-        (setup_tpl / "page-tokens.css", assets / "page-tokens.css"),
-        (pdf_tpl / "prose-page.css", assets / "prose-page.css"),
-        (pdf_tpl / "toc-page.css", assets / "toc-page.css"),
-        (pdf_tpl / "code-page.css", assets / "code-page.css"),
-        (pdf_tpl / "figures-page.css", assets / "figures-page.css"),
+        (tpl_dir / "book.css", assets / "book.css"),
+        (tpl_dir / "page-tokens.css", assets / "page-tokens.css"),
+        (tpl_dir / "prose-page.css", assets / "prose-page.css"),
+        (tpl_dir / "toc-page.css", assets / "toc-page.css"),
+        (tpl_dir / "code-page.css", assets / "code-page.css"),
+        (tpl_dir / "figures-page.css", assets / "figures-page.css"),
     ]
 
     for src, dest in css_files:
