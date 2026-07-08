@@ -1,0 +1,170 @@
+:root {
+  --ink: #1f252d;
+  --muted: #667085;
+  --rule: #d8dde6;
+  --paper: #fffdf8;
+  --accent: #2457a6;
+  --a4-width: 210mm;
+  --a4-height: 297mm;
+  --print-body: 11.5pt;
+  --print-body-dense: 10.5pt;
+  --print-small: 9.5pt;
+}
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #e8e2d6;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.45;
+}
+
+a {
+  color: var(--accent);
+}
+
+.book-page {
+  width: var(--a4-width);
+  min-height: var(--a4-height);
+  margin: 22mm auto;
+  padding: 0;
+  background: var(--paper);
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.18);
+  position: relative;
+  overflow: hidden;
+}
+
+/* REQUIRED — books-pdf-to-html/a4-strict-contract.md */
+.book-page.book-page--sheet {
+  padding: 0;
+  width: var(--a4-width);
+  height: var(--a4-height);
+  min-height: var(--a4-height);
+  max-height: var(--a4-height);
+  overflow: hidden;
+}
+
+@media screen {
+  body.book-standalone {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--book-paper, var(--paper));
+  }
+
+  body.book-standalone .book-page.book-page--sheet {
+    margin: 0;
+    box-shadow: none;
+    flex-shrink: 0;
+  }
+
+  body.book-standalone .page-nav {
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    top: auto;
+    left: auto;
+    width: auto;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+    font: 12px Arial, Helvetica, sans-serif;
+    color: #333;
+    z-index: 20;
+  }
+}
+
+.sheet-flow {
+  box-sizing: border-box;
+  height: 297mm;
+  overflow: hidden;
+}
+
+.page-nav {
+  position: absolute;
+  left: 0;
+  top: -12mm;
+  display: flex;
+  gap: 9px;
+  font: 14px Arial, Helvetica, sans-serif;
+  color: #333;
+}
+
+figure {
+  margin: 0;
+}
+
+figure img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Full-book assemble (book.html / book.<lang>.html) */
+body.book-full {
+  display: block;
+  min-height: 100vh;
+  background: #e8e2d6;
+}
+
+body.book-full .book-full__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22mm;
+  padding: 22mm 0 28mm;
+}
+
+body.book-full .book-sheet .book-page.book-page--sheet {
+  margin: 0;
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.18);
+  flex-shrink: 0;
+}
+
+@media print {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  body.book-full .book-full__main {
+    display: block;
+    gap: 0;
+    padding: 0;
+  }
+
+  .book-page {
+    width: var(--a4-width);
+    height: 296mm;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  .book-sheet + .book-sheet .book-page,
+  .book-page + .book-page {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .page-nav {
+    display: none;
+  }
+}
