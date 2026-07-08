@@ -141,6 +141,7 @@ def process_page(
     custom_prompt: str | None = None,
 ) -> dict[str, Any]:
     """Run page-pdf → render_page for one page."""
+    book.ensure_book_dirs()
     require_page_pdf(book, page)
     lang = book.default_lang()
     clear_live_log(book, page)
