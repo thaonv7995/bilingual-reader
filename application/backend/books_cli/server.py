@@ -662,11 +662,11 @@ def list_books_endpoint():
     return res
 
 @app.post("/api/upload")
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...)):
     inbox = default_library_root() / "inbox"
     inbox.mkdir(parents=True, exist_ok=True)
     temp_path = inbox / file.filename
-    
+
     logger.info(f"Saving uploaded file to {temp_path} in chunked mode")
     try:
         with open(temp_path, "wb") as f:
@@ -681,7 +681,22 @@ async def upload_pdf(file: UploadFile = File(...)):
         if temp_path.is_file():
             temp_path.unlink()
         raise HTTPException(status_code=500, detail=f"File upload write error: {str(e)}")
-        
+
+    if file.filename.lower().endswith(".bkb"):
+        try:
+            from books_core.package import unpack_book
+            from books_core.repo import books_dir
+            res = unpack_book(temp_path, books_dir())
+            if temp_path.is_file():
+                temp_path.unlink()
+            response_cache.clear()
+            return {"success": True, "book": {"slug": res["slug"], "title": res.get("title") or res["slug"]}}
+        except Exception as e:
+            logger.error(f"BKB unpack failed: {e}")
+            if temp_path.is_file():
+                temp_path.unlink()
+            raise HTTPException(status_code=500, detail=f"BKB unpack error: {str(e)}")
+
     try:
         result = ingest_pdf(temp_path)
         response_cache.clear()
@@ -691,7 +706,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         # Clean up the file if ingestion failed
         if temp_path.is_file():
             temp_path.unlink()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Ingestion error: {str(e)}")
 
 @app.get("/api/books/{slug}/status")
 def get_book_status_endpoint(slug: str):

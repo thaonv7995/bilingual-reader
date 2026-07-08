@@ -1280,15 +1280,17 @@
 
     <!-- Upload Modal -->
     <div id="uploadModal" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header">
-                <h3 class="modal-title">Upload New Book</h3>
+                <h3 class="modal-title">Upload PDF or BKB</h3>
                 <button class="btn-icon" onclick="closeModal('uploadModal')"><i data-lucide="x"></i></button>
             </div>
-            <div id="dropzone" class="upload-area">
-                <i data-lucide="file-up" class="upload-icon" style="margin: 0 auto 1rem auto; display:block;"></i>
-                <p id="uploadLabel" style="font-size:1.1rem; font-weight:500;">Click or drag PDF here</p>
-                <input type="file" id="fileInput" accept=".pdf" style="display:none;">
+            <div class="upload-dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">
+                    <i data-lucide="upload-cloud"></i>
+                </div>
+                <p id="uploadLabel" style="font-size:1.1rem; font-weight:500;">Click or drag PDF or .bkb here</p>
+                <input type="file" id="fileInput" accept=".pdf,.bkb" style="display:none;">
             </div>
         </div>
     </div>
@@ -1662,7 +1664,8 @@
         fi.onchange = () => { if(fi.files[0]) handleUpload(fi.files[0]); };
         
         async function handleUpload(file) {
-            if(!file.name.endsWith('.pdf')) { showToast("PDF only", "warning"); return; }
+            const isBkb = file.name.toLowerCase().endsWith('.bkb');
+            if(!file.name.toLowerCase().endsWith('.pdf') && !isBkb) { showToast("PDF or BKB only", "warning"); return; }
             
             // Show loading state in dropzone
             const dropzone = document.getElementById('dropzone');
@@ -1696,9 +1699,9 @@
                     if (e.lengthComputable) {
                         const percent = Math.round((e.loaded / e.total) * 100);
                         if (percent < 100) {
-                            updateUploadProgress(percent, `Uploading PDF (${percent}%)`);
+                            updateUploadProgress(percent, `Uploading ${isBkb ? 'BKB' : 'PDF'} (${percent}%)`);
                         } else {
-                            updateUploadProgress(100, "Ingesting and splitting PDF...");
+                            updateUploadProgress(100, isBkb ? "Unpacking BKB archive..." : "Ingesting and splitting PDF...");
                         }
                     }
                 });
@@ -1717,7 +1720,7 @@
                         
                         if (xhr.status >= 200 && xhr.status < 300) {
                             closeModal('uploadModal'); 
-                            showToast("Book uploaded and ingested successfully!", "success");
+                            showToast(isBkb ? "BKB archive imported successfully!" : "Book uploaded and ingested successfully!", "success");
                             fetchLibrary();
                         } else {
                             let errorMsg = "Upload failed";
