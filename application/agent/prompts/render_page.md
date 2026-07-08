@@ -22,6 +22,20 @@ Stylesheets (relative to page file):
 - If code/listings: `../assets/code-page.css`
 - If figures/math: `../assets/figures-page.css`
 
+## Rules for Linking Stylesheets, Scripts, and Images (CRITICAL)
+
+To prevent resource loading issues (broken CSS, JS, or images), you MUST follow these constraints:
+1. **CSS Stylesheets**:
+   - Link ONLY standard stylesheets from the `../assets/` directory in the `<head>`: `../assets/book.css`, `../assets/page-tokens.css`, `../assets/prose-page.css`, and optionally `../assets/code-page.css` or `../assets/figures-page.css` based on page elements.
+   - Do NOT reference any other styles, remote web links, or ad-hoc custom CSS files.
+2. **Javascript (JS) Scripts**:
+   - Do NOT include any `<script>` tags, third-party trackers, or custom scripting unless it is a standard template requirement.
+3. **Images & Figure Assets**:
+   - Every `<img>` tag MUST point to a valid relative path starting with `../assets/images/` (e.g., `src="../assets/images/page_NNNN_fig_X.png"`).
+   - Before writing the HTML, check the contents of `output/assets/images/` to see if a cropped image already exists for this page (e.g., `page_0016_fig_1.png` for page 16). Use its exact filename in the `src` attribute.
+   - Do NOT append random junk characters or duplicate extensions to the image source (e.g. `page_0016_fig_1.png123` or `page_0016_fig_1.png.png`).
+   - If no image has been cropped yet, use the expected standard naming pattern (e.g., `../assets/images/page_NNNN_fig_1.png`) inside a proper `<figure>` block, so the automated figure extraction script can place it later.
+
 ## Shell
 
 `body.book-standalone` → `main.book-page.book-page--sheet` → `article.sheet-flow.prose-page`
