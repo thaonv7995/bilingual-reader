@@ -104,6 +104,7 @@ def scaffold_book(
 
 def _verify_html_assets(html_path: Path, html_content: str) -> list[str]:
     import re
+    import urllib.parse
     errors = []
 
     # 1. Stylesheets
@@ -111,31 +112,42 @@ def _verify_html_assets(html_path: Path, html_content: str) -> list[str]:
     for ref in css_refs:
         if ref.startswith(("http://", "https://", "//", "mailto:", "tel:")) or ref.startswith("#"):
             continue
-        # Strip query strings if present
-        clean_ref = ref.split("?")[0]
+        if " " in ref:
+            errors.append(f"CSS link contains unencoded spaces: '{ref}'")
+        clean_ref = urllib.parse.unquote(ref.split("?")[0])
         asset_path = (html_path.parent / clean_ref).resolve()
         if not asset_path.is_file():
             errors.append(f"Missing CSS: '{ref}'")
+        elif asset_path.stat().st_size == 0:
+            errors.append(f"Empty CSS: '{ref}'")
 
     # 2. Images
     img_refs = re.findall(r'<img\s+[^>]*src=["\']([^"\']+)["\']', html_content)
     for ref in img_refs:
         if ref.startswith(("http://", "https://", "//", "data:")) or ref.startswith("#"):
             continue
-        clean_ref = ref.split("?")[0]
+        if " " in ref:
+            errors.append(f"Image link contains unencoded spaces: '{ref}'")
+        clean_ref = urllib.parse.unquote(ref.split("?")[0])
         asset_path = (html_path.parent / clean_ref).resolve()
         if not asset_path.is_file():
             errors.append(f"Missing image: '{ref}'")
+        elif asset_path.stat().st_size == 0:
+            errors.append(f"Empty image file: '{ref}'")
 
     # 3. Scripts
     js_refs = re.findall(r'<script\s+[^>]*src=["\']([^"\']+)["\']', html_content)
     for ref in js_refs:
         if ref.startswith(("http://", "https://", "//")) or ref.startswith("#"):
             continue
-        clean_ref = ref.split("?")[0]
+        if " " in ref:
+            errors.append(f"JS link contains unencoded spaces: '{ref}'")
+        clean_ref = urllib.parse.unquote(ref.split("?")[0])
         asset_path = (html_path.parent / clean_ref).resolve()
         if not asset_path.is_file():
             errors.append(f"Missing JS: '{ref}'")
+        elif asset_path.stat().st_size == 0:
+            errors.append(f"Empty JS: '{ref}'")
 
     return errors
 
