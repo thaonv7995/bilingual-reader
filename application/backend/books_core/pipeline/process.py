@@ -41,7 +41,15 @@ def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
         if published.stat().st_size == 0:
             return f"{published.name} is empty (0 bytes)"
         try:
-            validate_draft_html(published.read_text(encoding="utf-8"))
+            content = published.read_text(encoding="utf-8")
+            validate_draft_html(content)
+            
+            # Verify CSS, JS, and image assets!
+            from books_core.book_layout import _verify_html_assets
+            asset_errors = _verify_html_assets(published, content)
+            if asset_errors:
+                return f"{published.name} has broken assets: " + "; ".join(asset_errors)
+                
             return None  # Valid!
         except Exception as e:
             return f"{published.name} failed validation: {e}"
@@ -51,7 +59,15 @@ def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
         if final.stat().st_size == 0:
             return f"{final.name} is empty (0 bytes)"
         try:
-            validate_draft_html(final.read_text(encoding="utf-8"))
+            content = final.read_text(encoding="utf-8")
+            validate_draft_html(content)
+            
+            # Verify CSS, JS, and image assets!
+            from books_core.book_layout import _verify_html_assets
+            asset_errors = _verify_html_assets(final, content)
+            if asset_errors:
+                return f"{final.name} has broken assets: " + "; ".join(asset_errors)
+                
             return None  # Valid!
         except Exception as e:
             return f"{final.name} failed validation: {e}"
