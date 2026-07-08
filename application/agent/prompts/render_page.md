@@ -65,6 +65,14 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
 
 DO NOT run any post-render scripts (such as `extract_pdf_figures.py`, `upgrade_figure_html.py`, `fix_book_layout.py`, or `validate_page_fidelity.py`) yourself. These scripts are run automatically by the main orchestrator after you finish. Running them yourself as background tasks will cause your process to exit early and fail. Simply write the completed HTML file and finish.
 
+## Self-Verification Steps (CRITICAL)
+
+After writing the HTML file, you MUST perform a self-verification pass using your file tools to ensure all resources load successfully:
+1. **Verify CSS Stylesheets**: Find every stylesheet link (e.g. `../assets/book.css`) in your written HTML. Verify that these files actually exist on disk in the corresponding `output/assets/` directory.
+2. **Verify Images & Figures**: For every `<img>` tag you wrote, resolve its relative path (e.g. `../assets/images/page_NNNN_fig_X.png`) and verify that the target image file exists on disk. If the image is not present yet but is required by the page layout, make sure the reference is clean and structured under a proper `<figure>` container so the pipeline can extract it later.
+3. **Verify Javascript**: Ensure no unexpected scripts or external links are present.
+4. **Immediate Fix**: If any file path is incorrect, broken (404), has unencoded spaces, or is missing, modify your HTML to fix the path before completing your work.
+
 ## Done when
 
 Side-by-side with `source.pdf`: correct **order**, **block types**, **chrome**, **listings**, **figures**, **math**; page N only. Must fit onto exactly one A4 page without clipping or overflow.
