@@ -149,8 +149,32 @@ class BookPaths:
         """Create input / work / output zones (no page folders)."""
         self.input_dir.mkdir(parents=True, exist_ok=True)
         self.work.mkdir(parents=True, exist_ok=True)
-        (self.output_dir / "assets" / "images").mkdir(parents=True, exist_ok=True)
+        assets = self.output_dir / "assets"
+        (assets / "images").mkdir(parents=True, exist_ok=True)
         self.pages_dir().mkdir(parents=True, exist_ok=True)
+
+        # Automatically populate standard CSS templates if missing or empty
+        try:
+            from books_core.repo import repo_root
+            skills_dir = repo_root() / ".cursor" / "skills"
+            setup_tpl = skills_dir / "books-new-book-setup" / "templates"
+            pdf_tpl = skills_dir / "books-pdf-to-html" / "templates"
+            
+            css_files = [
+                (setup_tpl / "book.css", assets / "book.css"),
+                (setup_tpl / "page-tokens.css", assets / "page-tokens.css"),
+                (pdf_tpl / "prose-page.css", assets / "prose-page.css"),
+                (pdf_tpl / "toc-page.css", assets / "toc-page.css"),
+                (pdf_tpl / "code-page.css", assets / "code-page.css"),
+                (pdf_tpl / "figures-page.css", assets / "figures-page.css"),
+            ]
+            for src, dest in css_files:
+                if src.is_file():
+                    if not dest.is_file() or dest.stat().st_size == 0:
+                        dest.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(src, dest)
+        except Exception:
+            pass
 
     def ensure_work_page(self, page: int) -> Path:
         d = self.page_work(page)
