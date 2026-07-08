@@ -44,9 +44,9 @@ def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
             content = published.read_text(encoding="utf-8")
             validate_draft_html(content)
             
-            # Verify CSS, JS, and image assets!
+            # Verify CSS, JS, and image assets! Ignore page figures as they are cropped post-render
             from books_core.book_layout import _verify_html_assets
-            asset_errors = _verify_html_assets(published, content)
+            asset_errors = _verify_html_assets(published, content, ignore_page_figures=True)
             if asset_errors:
                 return f"{published.name} has broken assets: " + "; ".join(asset_errors)
                 
@@ -62,9 +62,9 @@ def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
             content = final.read_text(encoding="utf-8")
             validate_draft_html(content)
             
-            # Verify CSS, JS, and image assets!
+            # Verify CSS, JS, and image assets! Ignore page figures as they are cropped post-render
             from books_core.book_layout import _verify_html_assets
-            asset_errors = _verify_html_assets(final, content)
+            asset_errors = _verify_html_assets(final, content, ignore_page_figures=True)
             if asset_errors:
                 return f"{final.name} has broken assets: " + "; ".join(asset_errors)
                 

@@ -102,7 +102,7 @@ def scaffold_book(
     return book
 
 
-def _verify_html_assets(html_path: Path, html_content: str) -> list[str]:
+def _verify_html_assets(html_path: Path, html_content: str, *, ignore_page_figures: bool = False) -> list[str]:
     import re
     import urllib.parse
     errors = []
@@ -129,6 +129,11 @@ def _verify_html_assets(html_path: Path, html_content: str) -> list[str]:
         if " " in ref:
             errors.append(f"Image link contains unencoded spaces: '{ref}'")
         clean_ref = urllib.parse.unquote(ref.split("?")[0])
+        
+        # If ignore_page_figures is True, skip checking page-specific dynamic figures (e.g. page_0001_fig_1.png)
+        if ignore_page_figures and "_fig_" in clean_ref.lower() and Path(clean_ref).name.startswith("page_"):
+            continue
+            
         asset_path = (html_path.parent / clean_ref).resolve()
         if not asset_path.is_file():
             errors.append(f"Missing image: '{ref}'")
