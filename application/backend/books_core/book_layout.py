@@ -207,43 +207,62 @@ def verify_book(
     invalid_pages_vi = []
 
     from books_core.validation import validate_draft_html
+    from concurrent.futures import ThreadPoolExecutor
 
     default_lang = book.default_lang()
+    vi_dir = book.pages_dir("vi")
+    has_vi = vi_dir.is_dir()
 
-    for page in range(1, page_count + 1):
+    def check_single_page(page: int) -> dict[str, list[Any]]:
+        res_dict = {
+            "missing_en": [],
+            "missing_vi": [],
+            "invalid_en": [],
+            "invalid_vi": []
+        }
         # Check EN
         en_path = book.page_lang_html(page, default_lang)
         if not en_path.is_file():
-            missing_pages_en.append(page)
+            res_dict["missing_en"].append(page)
         elif en_path.stat().st_size == 0:
-            invalid_pages_en.append(f"Page {page} ({default_lang}) is empty")
+            res_dict["invalid_en"].append(f"Page {page} ({default_lang}) is empty")
         else:
             try:
                 content = en_path.read_text(encoding="utf-8")
                 validate_draft_html(content)
                 asset_errors = _verify_html_assets(en_path, content)
                 for err in asset_errors:
-                    invalid_pages_en.append(f"Page {page} ({default_lang}) - {err}")
+                    res_dict["invalid_en"].append(f"Page {page} ({default_lang}) - {err}")
             except Exception as e:
-                invalid_pages_en.append(f"Page {page} ({default_lang}) invalid: {e}")
+                res_dict["invalid_en"].append(f"Page {page} ({default_lang}) invalid: {e}")
 
-        # Check VI if the vi directory exists or has files
-        vi_dir = book.pages_dir("vi")
-        if vi_dir.is_dir():
+        # Check VI
+        if has_vi:
             vi_path = book.page_lang_html(page, "vi")
             if not vi_path.is_file():
-                missing_pages_vi.append(page)
+                res_dict["missing_vi"].append(page)
             elif vi_path.stat().st_size == 0:
-                invalid_pages_vi.append(f"Page {page} (vi) is empty")
+                res_dict["invalid_vi"].append(f"Page {page} (vi) is empty")
             else:
                 try:
                     content = vi_path.read_text(encoding="utf-8")
                     validate_draft_html(content)
                     asset_errors = _verify_html_assets(vi_path, content)
                     for err in asset_errors:
-                        invalid_pages_vi.append(f"Page {page} (vi) - {err}")
+                        res_dict["invalid_vi"].append(f"Page {page} (vi) - {err}")
                 except Exception as e:
-                    invalid_pages_vi.append(f"Page {page} (vi) invalid: {e}")
+                    res_dict["invalid_vi"].append(f"Page {page} (vi) invalid: {e}")
+        return res_dict
+
+    # Run check in parallel using 12 threads
+    with ThreadPoolExecutor(max_workers=12) as executor:
+        results = list(executor.map(check_single_page, range(1, page_count + 1)))
+
+    for r in results:
+        missing_pages_en.extend(r["missing_en"])
+        missing_pages_vi.extend(r["missing_vi"])
+        invalid_pages_en.extend(r["invalid_en"])
+        invalid_pages_vi.extend(r["invalid_vi"])
 
     if missing_pages_en:
         warnings.append(f"Missing {len(missing_pages_en)} primary pages: {missing_pages_en[:10]}")
