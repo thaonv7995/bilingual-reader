@@ -49,14 +49,42 @@ def _replace_img_in_figure(html: str, fig_id: str, info: dict) -> str:
 def refresh_page(html_path: Path, manifest: dict[str, list]) -> bool:
     page_key = f"page_{int(html_path.stem.split('_')[1]):04d}"
     figs = {f["figure"]: f for f in manifest.get(page_key, [])}
-    if not figs:
-        return False
 
     html = html_path.read_text(encoding="utf-8")
     original = html
 
     for fig_id, info in figs.items():
         html = _replace_img_in_figure(html, fig_id, info)
+
+    # Clean up hallucinated/missing figures that were never extracted
+    def cleanup_missing_figures(match: re.Match[str]) -> str:
+        block = match.group(0)
+        src_m = re.search(r'src=["\']([^"\']+)["\']', block)
+        if not src_m:
+            return block
+        src = src_m.group(1)
+        if "page_" in src and "_fig_" in src:
+            import urllib.parse
+            clean_ref = urllib.parse.unquote(src.split("?")[0])
+            asset_path = (html_path.parent / clean_ref).resolve()
+            if not asset_path.is_file():
+                return ""  # Remove broken figure block
+        return block
+
+    html = re.sub(r'<figure[^>]*>.*?</figure>', cleanup_missing_figures, html, flags=re.DOTALL)
+    
+    # Also clean up standalone images if any were hallucinated outside a figure
+    def cleanup_missing_imgs(match: re.Match[str]) -> str:
+        src = match.group(1)
+        if "page_" in src and "_fig_" in src:
+            import urllib.parse
+            clean_ref = urllib.parse.unquote(src.split("?")[0])
+            asset_path = (html_path.parent / clean_ref).resolve()
+            if not asset_path.is_file():
+                return ""
+        return match.group(0)
+    
+    html = re.sub(r'<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*>', cleanup_missing_imgs, html)
 
     if "figures-page.css" not in html and figs:
         html = html.replace(
