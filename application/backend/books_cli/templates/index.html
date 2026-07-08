@@ -1324,6 +1324,24 @@
         </div>
     </div>
 
+    <!-- Repair Modal -->
+    <div id="repairModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Repair Page <span id="repairPageNum">--</span></h3>
+                <button class="btn-icon" onclick="closeModal('repairModal')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="form-group" style="margin-top: 1.25rem;">
+                <label class="form-label" style="margin-bottom:0.5rem; display:block;">Custom Repair Instructions</label>
+                <textarea id="repairPromptInput" class="form-input" rows="4" placeholder="e.g., 'Ensure the table doesn't overflow', 'Make font size 9pt to fit page', 'Align columns to the left'..." style="width: 100%; font-family: inherit; resize: vertical; padding: 0.5rem;"></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top: 1.5rem;">
+                <button class="btn btn-secondary" onclick="closeModal('repairModal')">Cancel</button>
+                <button id="submitRepairBtn" class="btn btn-primary" onclick="submitPageRepair()">Start Repair</button>
+            </div>
+        </div>
+    </div>
+
     <!-- AGY Auth Verification Modal -->
     <div id="verifyModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 450px;">
@@ -1852,10 +1870,16 @@
             lucide.createIcons();
         }
 
-        async function repairCurrentPage() {
+        function repairCurrentPage() {
             if (!currentPreviewPage || !activeSlug) return;
-            const promptText = prompt("Enter custom instructions for repairing Page " + currentPreviewPage + " (e.g. 'Ensure table doesn\\'t overflow', 'Make font smaller'):");
-            if (promptText === null) return; // user cancelled
+            document.getElementById('repairPageNum').innerText = currentPreviewPage;
+            document.getElementById('repairPromptInput').value = '';
+            openModal('repairModal');
+        }
+
+        async function submitPageRepair() {
+            const promptText = document.getElementById('repairPromptInput').value.trim();
+            closeModal('repairModal');
             
             showToast("Starting repair for Page " + currentPreviewPage + "...", "info");
             try {
