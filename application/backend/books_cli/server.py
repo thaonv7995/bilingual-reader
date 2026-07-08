@@ -1089,7 +1089,7 @@ async def verify_book_endpoint(slug: str):
         raise HTTPException(status_code=404, detail="Book not found")
     try:
         from books_core.book_layout import verify_book
-        result = verify_book(book_path)
+        result = verify_book(book_path, force_assets=True)
         
         broken = result.get("broken_pages", [])
         auto_repair_started = False
