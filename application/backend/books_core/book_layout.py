@@ -213,27 +213,34 @@ def verify_book(
     vi_dir = book.pages_dir("vi")
     has_vi = vi_dir.is_dir()
 
-    def check_single_page(page: int) -> dict[str, list[Any]]:
+    def check_single_page(page: int) -> dict[str, Any]:
         res_dict = {
+            "page": page,
             "missing_en": [],
             "missing_vi": [],
             "invalid_en": [],
-            "invalid_vi": []
+            "invalid_vi": [],
+            "is_broken": False
         }
         # Check EN
         en_path = book.page_lang_html(page, default_lang)
         if not en_path.is_file():
             res_dict["missing_en"].append(page)
+            res_dict["is_broken"] = True
         elif en_path.stat().st_size == 0:
             res_dict["invalid_en"].append(f"Page {page} ({default_lang}) is empty")
+            res_dict["is_broken"] = True
         else:
             try:
                 content = en_path.read_text(encoding="utf-8")
                 validate_draft_html(content)
                 asset_errors = _verify_html_assets(en_path, content)
-                for err in asset_errors:
-                    res_dict["invalid_en"].append(f"Page {page} ({default_lang}) - {err}")
+                if asset_errors:
+                    res_dict["is_broken"] = True
+                    for err in asset_errors:
+                        res_dict["invalid_en"].append(f"Page {page} ({default_lang}) - {err}")
             except Exception as e:
+                res_dict["is_broken"] = True
                 res_dict["invalid_en"].append(f"Page {page} ({default_lang}) invalid: {e}")
 
         # Check VI
@@ -241,16 +248,21 @@ def verify_book(
             vi_path = book.page_lang_html(page, "vi")
             if not vi_path.is_file():
                 res_dict["missing_vi"].append(page)
+                res_dict["is_broken"] = True
             elif vi_path.stat().st_size == 0:
                 res_dict["invalid_vi"].append(f"Page {page} (vi) is empty")
+                res_dict["is_broken"] = True
             else:
                 try:
                     content = vi_path.read_text(encoding="utf-8")
                     validate_draft_html(content)
                     asset_errors = _verify_html_assets(vi_path, content)
-                    for err in asset_errors:
-                        res_dict["invalid_vi"].append(f"Page {page} (vi) - {err}")
+                    if asset_errors:
+                        res_dict["is_broken"] = True
+                        for err in asset_errors:
+                            res_dict["invalid_vi"].append(f"Page {page} (vi) - {err}")
                 except Exception as e:
+                    res_dict["is_broken"] = True
                     res_dict["invalid_vi"].append(f"Page {page} (vi) invalid: {e}")
         return res_dict
 
@@ -258,11 +270,15 @@ def verify_book(
     with ThreadPoolExecutor(max_workers=12) as executor:
         results = list(executor.map(check_single_page, range(1, page_count + 1)))
 
+    broken_pages = []
     for r in results:
+        page = r["page"]
         missing_pages_en.extend(r["missing_en"])
         missing_pages_vi.extend(r["missing_vi"])
         invalid_pages_en.extend(r["invalid_en"])
         invalid_pages_vi.extend(r["invalid_vi"])
+        if r["is_broken"]:
+            broken_pages.append(page)
 
     if missing_pages_en:
         warnings.append(f"Missing {len(missing_pages_en)} primary pages: {missing_pages_en[:10]}")
@@ -324,4 +340,5 @@ def verify_book(
         "assembled_files": assembled_files,
         "warnings": warnings,
         "ready_to_pack": ready_to_pack,
+        "broken_pages": sorted(broken_pages),
     }

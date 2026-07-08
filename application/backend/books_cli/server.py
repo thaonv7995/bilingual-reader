@@ -868,14 +868,21 @@ async def read_subprocess_output(slug: str, process: asyncio.subprocess.Process,
     finally:
         running_processes.pop(slug, None)
 
-@app.post("/api/books/{slug}/process")
-async def process_book(slug: str, config: ProcessConfig):
+async def start_book_processing_impl(
+    slug: str,
+    pages: Optional[str] = None,
+    threads: int = 4,
+    translate: bool = True,
+    force: bool = False,
+    custom_prompt: Optional[str] = None,
+    log_prefix: str = "[SERVER]"
+) -> bool:
     book_path = books_dir() / slug
     if not book_path.is_dir():
-        raise HTTPException(status_code=404, detail="Book not found")
+        return False
         
     if slug in running_processes:
-        return {"success": False, "message": "Processor is already running for this book"}
+        return False
 
     py_bin = str(Path(repo_root()) / "application" / ".venv" / "bin" / "python3")
     if not Path(py_bin).is_file():
@@ -886,21 +893,20 @@ async def process_book(slug: str, config: ProcessConfig):
     cmd = [
         py_bin, "-u", batch_script,
         "--book", str(book_path),
-        "--threads", str(config.threads),
-        "--provider", "antigravity"  # Lock provider to antigravity (agy)
+        "--threads", str(threads),
+        "--provider", "antigravity"
     ]
-    if config.translate:
+    if translate:
         cmd.append("--translate")
-    if config.force:
+    if force:
         cmd.append("--force")
-    if config.pages:
-        cmd.extend(["--pages", config.pages])
-    if config.custom_prompt:
-        cmd.extend(["--custom-prompt", config.custom_prompt])
+    if pages:
+        cmd.extend(["--pages", pages])
+    if custom_prompt:
+        cmd.extend(["--custom-prompt", custom_prompt])
 
-    logger.info(f"Spawning batch processor: {' '.join(cmd)}")
+    logger.info(f"{log_prefix} Spawning batch processor: {' '.join(cmd)}")
     
-    # Copy the parent environment to preserve PATH, HOME, and other variables (like ANTIGRAVITY_MODEL)
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(repo_root()) / "application" / "backend")
     
@@ -914,25 +920,46 @@ async def process_book(slug: str, config: ProcessConfig):
             start_new_session=True
         )
         
-        # Persist initial status and logs in JSON state database
         studio_state.update_book_process(
             slug,
             status="running",
-            threads=config.threads,
-            translate=config.translate,
-            logs=[f"[SERVER] Started processing for '{slug}'...\n"]
+            threads=threads,
+            translate=translate,
+            logs=[f"{log_prefix} Started processing for '{slug}'...\n"]
         )
         
         running_processes[slug] = process
         process_logs[slug] = studio_state.data["books"][slug]["logs"]
         
         asyncio.create_task(read_subprocess_output(slug, process, book_path))
-        
         response_cache.clear(slug)
-        return {"success": True, "message": "Processing started"}
+        return True
     except Exception as e:
-        logger.error(f"Failed to start process: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"{log_prefix} Failed to start process: {e}")
+        return False
+
+@app.post("/api/books/{slug}/process")
+async def process_book(slug: str, config: ProcessConfig):
+    book_path = books_dir() / slug
+    if not book_path.is_dir():
+        raise HTTPException(status_code=404, detail="Book not found")
+        
+    if slug in running_processes:
+        return {"success": False, "message": "Processor is already running for this book"}
+
+    success = await start_book_processing_impl(
+        slug,
+        pages=config.pages,
+        threads=config.threads,
+        translate=config.translate,
+        force=config.force,
+        custom_prompt=config.custom_prompt,
+        log_prefix="[SERVER]"
+    )
+    if success:
+        return {"success": True, "message": "Processing started"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to start process")
 
 @app.get("/api/books/{slug}/logs")
 async def get_logs_stream(slug: str):
@@ -1056,13 +1083,34 @@ def pack_book_endpoint(slug: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/books/{slug}/verify")
-def verify_book_endpoint(slug: str):
+async def verify_book_endpoint(slug: str):
     book_path = books_dir() / slug
     if not book_path.is_dir():
         raise HTTPException(status_code=404, detail="Book not found")
     try:
         from books_core.book_layout import verify_book
         result = verify_book(book_path)
+        
+        broken = result.get("broken_pages", [])
+        auto_repair_started = False
+        if broken:
+            pages_str = ",".join(str(p) for p in broken)
+            book_conf = studio_state.get_book_process(slug)
+            threads = book_conf.get("threads", 4)
+            translate = book_conf.get("translate", True)
+            
+            auto_repair_started = await start_book_processing_impl(
+                slug,
+                pages=pages_str,
+                threads=threads,
+                translate=translate,
+                force=True,
+                log_prefix="[Auto-Repair]"
+            )
+            if auto_repair_started:
+                result["warnings"].append(f"[Auto-Repair] Automatically spawned agents to repair {len(broken)} pages: {pages_str}")
+        
+        result["auto_repair_started"] = auto_repair_started
         response_cache.clear(slug)
         return result
     except Exception as e:
