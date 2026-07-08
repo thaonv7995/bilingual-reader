@@ -1163,6 +1163,7 @@
                     <div style="display:flex; gap:0.75rem;">
                         <a id="viewEnBtn" class="btn btn-secondary" target="_blank" style="display:none;"><i data-lucide="external-link"></i> EN HTML</a>
                         <a id="viewViBtn" class="btn btn-secondary" target="_blank" style="display:none;"><i data-lucide="external-link"></i> VI HTML</a>
+                        <button id="verifyBtn" class="btn btn-secondary" onclick="verifyCurrentBook()"><i data-lucide="check-square"></i> Verify Book</button>
                         <button id="packBtn" class="btn btn-secondary" onclick="packCurrentBook()"><i data-lucide="package"></i> Repack</button>
                         <button id="downloadBtn" class="btn btn-success" disabled onclick="downloadCurrentBook()"><i data-lucide="download"></i> Download .bkb</button>
                     </div>
@@ -1887,6 +1888,46 @@
             } catch(e) { showToast("Failed to stop processing", "error"); }
             btn.disabled = false;
             btn.innerHTML = '<i data-lucide="square"></i> Stop Process';
+            lucide.createIcons();
+        }
+
+        async function verifyCurrentBook() {
+            const b = document.getElementById('verifyBtn');
+            b.disabled = true;
+            b.innerHTML = '<span class="loading-spinner" style="width:14px; height:14px; border:2px solid rgba(255,255,255,0.05); border-top-color:var(--text-primary); border-radius:50%; display:inline-block; margin-right:6px;"></span> Verifying...';
+            
+            try {
+                const res = await api(`/api/books/${activeSlug}/verify`, {method:"POST"});
+                if (res.ok) {
+                    showToast("Verification succeeded! Ready to pack.", "success");
+                } else {
+                    showToast("Verification finished. Found warnings/errors.", "warning");
+                }
+                
+                const box = document.getElementById('consoleBox');
+                let logs = `[SYSTEM] --- Verification Report for '${activeSlug}' ---\n`;
+                logs += `Status: ${res.ok ? 'READY TO PACK' : 'WARNINGS FOUND'}\n`;
+                logs += `Page Count: ${res.page_count}\n`;
+                if (res.moved && res.moved.length > 0) {
+                    logs += `Normalized layout moves:\n` + res.moved.map(m => `  * ${m}`).join('\n') + `\n`;
+                }
+                if (res.repaired_assets && res.repaired_assets.length > 0) {
+                    logs += `Restored missing assets:\n` + res.repaired_assets.map(a => `  * ${a}`).join('\n') + `\n`;
+                }
+                if (res.assembled_files && res.assembled_files.length > 0) {
+                    logs += `Compiled final book files:\n` + res.assembled_files.map(f => `  * ${f}`).join('\n') + `\n`;
+                }
+                if (res.warnings && res.warnings.length > 0) {
+                    logs += `Warnings/Errors:\n` + res.warnings.map(w => `  * ${w}`).join('\n') + `\n`;
+                }
+                box.innerHTML = `<pre style="font-family:monospace; color:var(--text-primary); margin:0;">${logs}</pre>`;
+                
+                pollDetailStatus();
+            } catch(e) {
+                showToast("Verification failed: " + e.message, "error");
+            }
+            b.disabled = false;
+            b.innerHTML = '<i data-lucide="check-square"></i> Verify Book';
             lucide.createIcons();
         }
 

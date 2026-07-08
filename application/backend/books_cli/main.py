@@ -22,7 +22,7 @@ from books_core.meta.reader import book_status_summary
 from books_core.paths import BookPaths
 from books_core.pipeline.process import process_page
 from books_core.package import pack_book, unpack_book
-from books_core.book_layout import repair_book
+from books_core.book_layout import verify_book
 
 
 def cmd_status(args: argparse.Namespace) -> int:
@@ -131,7 +131,7 @@ def cmd_assemble(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_repair(args: argparse.Namespace) -> int:
+def cmd_verify(args: argparse.Namespace) -> int:
     from books_core.repo import books_dir as get_books_dir
 
     if not args.book or args.book.lower() == "all":
@@ -140,19 +140,19 @@ def cmd_repair(args: argparse.Namespace) -> int:
             print(json.dumps({"ok": False, "error": f"Library books directory not found: {library_books_dir}"}))
             return 1
 
-        repaired = []
+        verified = []
         for child in sorted(library_books_dir.iterdir()):
             if child.is_dir() and not child.name.startswith(".") and child.name not in ("bkbs", "done", "inbox"):
                 try:
-                    res = repair_book(child, force_assets=bool(args.force_assets))
-                    repaired.append(res)
+                    res = verify_book(child, force_assets=bool(args.force_assets))
+                    verified.append(res)
                 except Exception as e:
-                    repaired.append({"book": child.name, "ok": False, "error": str(e)})
-        print(json.dumps({"ok": True, "repaired_books": repaired}, indent=2, ensure_ascii=False))
+                    verified.append({"book": child.name, "ok": False, "error": str(e)})
+        print(json.dumps({"ok": True, "verified_books": verified}, indent=2, ensure_ascii=False))
         return 0
     else:
         book = BookPaths.open(args.book)
-        out = repair_book(book.root, force_assets=bool(args.force_assets))
+        out = verify_book(book.root, force_assets=bool(args.force_assets))
         print(json.dumps(out, indent=2, ensure_ascii=False))
         return 0
 
@@ -260,17 +260,17 @@ def main(argv: list[str] | None = None) -> int:
     p_assemble.add_argument("--output", default="book.html")
     p_assemble.set_defaults(func=cmd_assemble)
 
-    p_repair = sub.add_parser(
-        "repair",
-        help="Repair missing/corrupt template assets and normalize book layout",
+    p_verify = sub.add_parser(
+        "verify",
+        help="Verify layout, missing assets, and assemble final book HTMLs before packaging",
     )
-    p_repair.add_argument("--book", help="Book directory path or slug (leave empty or use 'all' to repair all books)")
-    p_repair.add_argument(
+    p_verify.add_argument("--book", help="Book directory path or slug (leave empty or use 'all' to verify all books)")
+    p_verify.add_argument(
         "--force-assets",
         action="store_true",
         help="Overwrite existing assets with original templates",
     )
-    p_repair.set_defaults(func=cmd_repair)
+    p_verify.set_defaults(func=cmd_verify)
 
     p_pack = sub.add_parser("pack", help="Pack a book into a .bkb archive")
     p_pack.add_argument("--book", required=True, help="Path to book directory")

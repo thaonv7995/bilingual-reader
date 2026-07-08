@@ -102,16 +102,18 @@ def scaffold_book(
     return book
 
 
-def repair_book(
+def verify_book(
     book_dir: Path | str,
     *,
     force_assets: bool = False,
 ) -> dict[str, Any]:
     """
-    Repair a book's directory layout and assets:
-    1. Normalize layout (legacy flat layout to input/work/output)
-    2. Ensure standard directories are created
-    3. Copy missing/empty template CSS assets to output/assets/ (or force overwrite)
+    Verify a book's structure, assets, and page validity:
+    1. Normalize layout (legacy flat layout to input/work/output).
+    2. Repair missing or empty template CSS assets.
+    3. Verify that all pages in book.json (or estimated page count) are rendered and valid.
+    4. Compile/Assemble the final EN (and VI if present) book HTML files.
+    5. Return status, warning list, and whether it's ready to pack.
     """
     book_dir = Path(book_dir).expanduser().resolve()
     # Normalize layout first in case it is in legacy layout
@@ -120,13 +122,13 @@ def repair_book(
     book = BookPaths.open(book_dir)
     book.ensure_book_dirs()
 
+    # 2. Repair assets
     setup_tpl = skills_root() / "books-new-book-setup" / "templates"
     pdf_tpl = skills_root() / "books-pdf-to-html" / "templates"
     assets = book.output_dir / "assets"
     assets.mkdir(parents=True, exist_ok=True)
 
     repaired_assets = []
-
     css_files = [
         (setup_tpl / "book.css", assets / "book.css"),
         (setup_tpl / "page-tokens.css", assets / "page-tokens.css"),
@@ -144,9 +146,88 @@ def repair_book(
             shutil.copy2(src, dest)
             repaired_assets.append(dest.name)
 
+    # 3. Verify pages
+    meta = book.load_book_json()
+    page_count = meta.get("page_count", 0) or book.estimate_page_count()
+
+    warnings = []
+    missing_pages_en = []
+    missing_pages_vi = []
+    invalid_pages_en = []
+    invalid_pages_vi = []
+
+    from books_core.validation import validate_draft_html
+
+    default_lang = book.default_lang()
+
+    for page in range(1, page_count + 1):
+        # Check EN
+        en_path = book.page_lang_html(page, default_lang)
+        if not en_path.is_file():
+            missing_pages_en.append(page)
+        elif en_path.stat().st_size == 0:
+            invalid_pages_en.append(f"Page {page} ({default_lang}) is empty")
+        else:
+            try:
+                validate_draft_html(en_path.read_text(encoding="utf-8"))
+            except Exception as e:
+                invalid_pages_en.append(f"Page {page} ({default_lang}) invalid: {e}")
+
+        # Check VI if the vi directory exists or has files
+        vi_dir = book.pages_dir("vi")
+        if vi_dir.is_dir():
+            vi_path = book.page_lang_html(page, "vi")
+            if not vi_path.is_file():
+                missing_pages_vi.append(page)
+            elif vi_path.stat().st_size == 0:
+                invalid_pages_vi.append(f"Page {page} (vi) is empty")
+            else:
+                try:
+                    validate_draft_html(vi_path.read_text(encoding="utf-8"))
+                except Exception as e:
+                    invalid_pages_vi.append(f"Page {page} (vi) invalid: {e}")
+
+    if missing_pages_en:
+        warnings.append(f"Missing {len(missing_pages_en)} primary pages: {missing_pages_en[:10]}")
+    if missing_pages_vi and vi_dir.is_dir():
+        warnings.append(f"Missing {len(missing_pages_vi)} translated pages: {missing_pages_vi[:10]}")
+    warnings.extend(invalid_pages_en)
+    warnings.extend(invalid_pages_vi)
+
+    # 4. Assemble the book
+    assembled_files = []
+    assembly_ok = True
+    try:
+        from books_core.assemble import assemble_book_html
+        # Assemble EN
+        res_en = assemble_book_html(book, default_lang)
+        if res_en.get("ok"):
+            assembled_files.append(res_en.get("output"))
+        else:
+            assembly_ok = False
+            warnings.append(f"Assembly ({default_lang}) failed: {res_en.get('error')}")
+
+        # Assemble VI if it exists
+        if vi_dir.is_dir():
+            res_vi = assemble_book_html(book, "vi")
+            if res_vi.get("ok"):
+                assembled_files.append(res_vi.get("output"))
+            else:
+                assembly_ok = False
+                warnings.append(f"Assembly (vi) failed: {res_vi.get('error')}")
+    except Exception as ae:
+        assembly_ok = False
+        warnings.append(f"Assembly exception: {ae}")
+
+    ready_to_pack = (len(missing_pages_en) == 0) and (len(invalid_pages_en) == 0) and assembly_ok
+
     return {
-        "ok": True,
+        "ok": ready_to_pack,
         "book": str(book.root),
+        "page_count": page_count,
         "moved": normalize_result.get("moved", []),
         "repaired_assets": repaired_assets,
+        "assembled_files": assembled_files,
+        "warnings": warnings,
+        "ready_to_pack": ready_to_pack,
     }

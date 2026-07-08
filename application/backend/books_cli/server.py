@@ -1040,18 +1040,18 @@ def pack_book_endpoint(slug: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/books/{slug}/repair")
-def repair_book_endpoint(slug: str):
+@app.post("/api/books/{slug}/verify")
+def verify_book_endpoint(slug: str):
     book_path = books_dir() / slug
     if not book_path.is_dir():
         raise HTTPException(status_code=404, detail="Book not found")
     try:
-        from books_core.book_layout import repair_book
-        result = repair_book(book_path)
+        from books_core.book_layout import verify_book
+        result = verify_book(book_path)
         response_cache.clear(slug)
         return result
     except Exception as e:
-        logger.error(f"Repair failed: {e}")
+        logger.error(f"Verification failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/books/{slug}/download")

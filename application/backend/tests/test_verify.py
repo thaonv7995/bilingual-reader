@@ -4,11 +4,11 @@ from pathlib import Path
 import pytest
 
 from books_core.paths import BookPaths
-from books_core.book_layout import repair_book
+from books_core.book_layout import verify_book
 from books_cli.main import main
 
 
-def test_repair_book(tmp_path: Path) -> None:
+def test_verify_book(tmp_path: Path) -> None:
     # 1. Create a dummy book folder
     book_root = tmp_path / "dummy-book"
     book_root.mkdir()
@@ -18,9 +18,10 @@ def test_repair_book(tmp_path: Path) -> None:
     input_dir.mkdir()
     (input_dir / "original.pdf").write_bytes(b"%PDF")
     
-    # 2. Run repair_book
-    res = repair_book(book_root)
-    assert res["ok"] is True
+    # 2. Run verify_book
+    res = verify_book(book_root)
+    # verify_book will return ok=False because page HTML files are missing (which is correct!)
+    assert res["ready_to_pack"] is False
     
     # Verify that assets folder is created and templates are copied
     assets_dir = book_root / "output" / "assets"
@@ -37,20 +38,19 @@ def test_repair_book(tmp_path: Path) -> None:
     (legacy_root / "assets").mkdir()
     (legacy_root / "assets" / "custom.css").write_text("body {}")
     
-    res2 = repair_book(legacy_root)
-    assert res2["ok"] is True
+    res2 = verify_book(legacy_root)
     assert (legacy_root / "input" / "original.pdf").is_file()
     assert (legacy_root / "output" / "assets" / "custom.css").is_file()
 
 
-def test_repair_cli(tmp_path: Path) -> None:
+def test_verify_cli(tmp_path: Path) -> None:
     book_root = tmp_path / "cli-book"
     book_root.mkdir()
     (book_root / "input").mkdir()
     (book_root / "input" / "original.pdf").write_bytes(b"%PDF")
     
     # Run CLI command via main
-    argv = ["repair", "--book", str(book_root)]
+    argv = ["verify", "--book", str(book_root)]
     exit_code = main(argv)
     assert exit_code == 0
     assert (book_root / "output" / "assets" / "book.css").is_file()
