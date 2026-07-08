@@ -132,7 +132,7 @@ do_install() {
     fi
     
     # Extract tarball
-    rm -rf "$INSTALL_DIR"/{application,*.exp,fetch_quota_tmux.sh} 2>/dev/null || true
+    rm -rf "$INSTALL_DIR"/{application,.cursor,*.exp,fetch_quota_tmux.sh} 2>/dev/null || true
     tar -xzf "$temp_tar" -C "$INSTALL_DIR" --strip-components=1 || tar -xzf "$temp_tar" -C "$INSTALL_DIR"
     
     # Restore books directory if backed up
