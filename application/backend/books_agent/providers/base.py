@@ -156,12 +156,14 @@ class Provider(ABC):
             # The process can write its output immediately before exiting, after
             # the polling loop's last iteration. Validate once more before
             # deciding whether an otherwise-zero exit was successful.
+            validation_error = None
             if not completed_successfully and expected_output and expected_output.is_file():
                 try:
                     content = expected_output.read_text(encoding="utf-8")
                     validate_draft_html(content)
                     completed_successfully = expected_output.stat().st_mtime >= start_time - 1
-                except Exception:
+                except Exception as ve:
+                    validation_error = str(ve)
                     completed_successfully = False
 
             if completed_successfully or proc.returncode == 0:
@@ -174,6 +176,8 @@ class Provider(ABC):
                     "Agent exited with code 0 but did not create a fresh, valid output file at "
                     f"{expected_output}. Check authentication and the agent stdout/stderr above."
                 )
+                if validation_error:
+                    diagnostic += f" (Validation error: {validation_error})"
                 stderr_chunks.append(diagnostic + "\n")
                 emit(diagnostic, "system")
                 returncode = 3
