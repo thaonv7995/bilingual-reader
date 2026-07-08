@@ -38,14 +38,18 @@ def _extract_body(html: str) -> str:
 
 def assemble_book_html(
     book: BookPaths,
-    *,
     lang: str | None = None,
-    output_name: str = "book.html",
+    output_name: str | None = None,
 ) -> dict[str, object]:
     """
     Join output/<lang>/page_NNNN.html → output/book.html (one file, print-ready).
     """
     lang = lang or book.default_lang()
+    if output_name is None:
+        if lang == book.default_lang():
+            output_name = "book.html"
+        else:
+            output_name = f"book.{lang}.html"
     pages = _page_numbers(book, lang)
     if not pages:
         raise FileNotFoundError(

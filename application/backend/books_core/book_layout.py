@@ -102,6 +102,44 @@ def scaffold_book(
     return book
 
 
+def _verify_html_assets(html_path: Path, html_content: str) -> list[str]:
+    import re
+    errors = []
+
+    # 1. Stylesheets
+    css_refs = re.findall(r'<link\s+[^>]*href=["\']([^"\']+)["\']', html_content)
+    for ref in css_refs:
+        if ref.startswith(("http://", "https://", "//", "mailto:", "tel:")) or ref.startswith("#"):
+            continue
+        # Strip query strings if present
+        clean_ref = ref.split("?")[0]
+        asset_path = (html_path.parent / clean_ref).resolve()
+        if not asset_path.is_file():
+            errors.append(f"Missing CSS: '{ref}'")
+
+    # 2. Images
+    img_refs = re.findall(r'<img\s+[^>]*src=["\']([^"\']+)["\']', html_content)
+    for ref in img_refs:
+        if ref.startswith(("http://", "https://", "//", "data:")) or ref.startswith("#"):
+            continue
+        clean_ref = ref.split("?")[0]
+        asset_path = (html_path.parent / clean_ref).resolve()
+        if not asset_path.is_file():
+            errors.append(f"Missing image: '{ref}'")
+
+    # 3. Scripts
+    js_refs = re.findall(r'<script\s+[^>]*src=["\']([^"\']+)["\']', html_content)
+    for ref in js_refs:
+        if ref.startswith(("http://", "https://", "//")) or ref.startswith("#"):
+            continue
+        clean_ref = ref.split("?")[0]
+        asset_path = (html_path.parent / clean_ref).resolve()
+        if not asset_path.is_file():
+            errors.append(f"Missing JS: '{ref}'")
+
+    return errors
+
+
 def verify_book(
     book_dir: Path | str,
     *,
@@ -169,7 +207,11 @@ def verify_book(
             invalid_pages_en.append(f"Page {page} ({default_lang}) is empty")
         else:
             try:
-                validate_draft_html(en_path.read_text(encoding="utf-8"))
+                content = en_path.read_text(encoding="utf-8")
+                validate_draft_html(content)
+                asset_errors = _verify_html_assets(en_path, content)
+                for err in asset_errors:
+                    invalid_pages_en.append(f"Page {page} ({default_lang}) - {err}")
             except Exception as e:
                 invalid_pages_en.append(f"Page {page} ({default_lang}) invalid: {e}")
 
@@ -183,7 +225,11 @@ def verify_book(
                 invalid_pages_vi.append(f"Page {page} (vi) is empty")
             else:
                 try:
-                    validate_draft_html(vi_path.read_text(encoding="utf-8"))
+                    content = vi_path.read_text(encoding="utf-8")
+                    validate_draft_html(content)
+                    asset_errors = _verify_html_assets(vi_path, content)
+                    for err in asset_errors:
+                        invalid_pages_vi.append(f"Page {page} (vi) - {err}")
                 except Exception as e:
                     invalid_pages_vi.append(f"Page {page} (vi) invalid: {e}")
 
@@ -202,16 +248,30 @@ def verify_book(
         # Assemble EN
         res_en = assemble_book_html(book, default_lang)
         if res_en.get("ok"):
-            assembled_files.append(res_en.get("output"))
+            out_file = res_en.get("output")
+            assembled_files.append(out_file)
+            out_path = Path(out_file)
+            if out_path.is_file():
+                content = out_path.read_text(encoding="utf-8")
+                asset_errors = _verify_html_assets(out_path, content)
+                for err in asset_errors:
+                    warnings.append(f"Assembled ({default_lang}) - {err}")
         else:
             assembly_ok = False
             warnings.append(f"Assembly ({default_lang}) failed: {res_en.get('error')}")
 
         # Assemble VI if it exists
         if vi_dir.is_dir():
-            res_vi = assemble_book_html(book, "vi")
+            res_vi = assemble_book_html(book, "vi", "book.vi.html")
             if res_vi.get("ok"):
-                assembled_files.append(res_vi.get("output"))
+                out_file = res_vi.get("output")
+                assembled_files.append(out_file)
+                out_path = Path(out_file)
+                if out_path.is_file():
+                    content = out_path.read_text(encoding="utf-8")
+                    asset_errors = _verify_html_assets(out_path, content)
+                    for err in asset_errors:
+                        warnings.append(f"Assembled (vi) - {err}")
             else:
                 assembly_ok = False
                 warnings.append(f"Assembly (vi) failed: {res_vi.get('error')}")
@@ -219,7 +279,10 @@ def verify_book(
         assembly_ok = False
         warnings.append(f"Assembly exception: {ae}")
 
-    ready_to_pack = (len(missing_pages_en) == 0) and (len(invalid_pages_en) == 0) and assembly_ok
+    # Ready to pack requires no missing/invalid pages and successful assembly with no local asset errors in pages
+    # Note: we check if there are any warnings/invalid pages.
+    has_page_errors = len(missing_pages_en) > 0 or len(invalid_pages_en) > 0
+    ready_to_pack = (not has_page_errors) and assembly_ok
 
     return {
         "ok": ready_to_pack,
