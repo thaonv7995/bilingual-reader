@@ -132,10 +132,29 @@ def cmd_assemble(args: argparse.Namespace) -> int:
 
 
 def cmd_repair(args: argparse.Namespace) -> int:
-    book = BookPaths.open(args.book)
-    out = repair_book(book.root, force_assets=bool(args.force_assets))
-    print(json.dumps(out, indent=2, ensure_ascii=False))
-    return 0
+    from books_core.repo import books_dir as get_books_dir
+
+    if not args.book or args.book.lower() == "all":
+        library_books_dir = get_books_dir()
+        if not library_books_dir.is_dir():
+            print(json.dumps({"ok": False, "error": f"Library books directory not found: {library_books_dir}"}))
+            return 1
+
+        repaired = []
+        for child in sorted(library_books_dir.iterdir()):
+            if child.is_dir() and not child.name.startswith(".") and child.name not in ("bkbs", "done", "inbox"):
+                try:
+                    res = repair_book(child, force_assets=bool(args.force_assets))
+                    repaired.append(res)
+                except Exception as e:
+                    repaired.append({"book": child.name, "ok": False, "error": str(e)})
+        print(json.dumps({"ok": True, "repaired_books": repaired}, indent=2, ensure_ascii=False))
+        return 0
+    else:
+        book = BookPaths.open(args.book)
+        out = repair_book(book.root, force_assets=bool(args.force_assets))
+        print(json.dumps(out, indent=2, ensure_ascii=False))
+        return 0
 
 
 def cmd_render(args: argparse.Namespace) -> int:
@@ -245,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
         "repair",
         help="Repair missing/corrupt template assets and normalize book layout",
     )
-    p_repair.add_argument("--book", required=True, help="Book directory path or slug")
+    p_repair.add_argument("--book", help="Book directory path or slug (leave empty or use 'all' to repair all books)")
     p_repair.add_argument(
         "--force-assets",
         action="store_true",
