@@ -32,8 +32,8 @@ To prevent resource loading issues (broken CSS, JS, or images), you MUST follow 
    - Do NOT include any `<script>` tags, third-party trackers, or custom scripting unless it is a standard template requirement.
 3. **Images & Figure Assets**:
    - Every `<img>` tag MUST point to a valid relative path starting with `assets/images/` (e.g., `src="assets/images/page_NNNN_fig_X.png"`).
-   - Before writing the HTML, check the contents of `output/assets/images/` to see if a cropped image already exists for this page (e.g., `page_0016_fig_1.png` for page 16). Use its exact filename in the `src` attribute.
-   - Do NOT append random junk characters or duplicate extensions to the image source (e.g. `page_0016_fig_1.png123` or `page_0016_fig_1.png.png`).
+   - Before writing the HTML, check the contents of `output/assets/images/` to see if a cropped image already exists for this page. If you find `page_0016_fig_1.png`, you MUST include the prefix: `src="assets/images/page_0016_fig_1.png"`.
+   - Do NOT append random junk characters or duplicate extensions to the image source (e.g. `assets/images/page_0016_fig_1.png123` or `assets/images/page_0016_fig_1.png.png`).
    - If no image has been cropped yet, use the expected standard naming pattern (e.g., `assets/images/page_NNNN_fig_1.png`) inside a proper `<figure>` block, so the automated figure extraction script can place it later.
 
 ## Shell
