@@ -23,6 +23,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("books_server")
 
 app = FastAPI(title="Bilingual Reader Book Studio")
+
+# --- Proxy assets for Studio iframe preview ---
+@app.get("/books/{slug}/output/{lang}/assets/{rest_of_path:path}")
+async def serve_preview_assets(slug: str, lang: str, rest_of_path: str):
+    actual_path = books_dir() / slug / "output" / "assets" / rest_of_path
+    if not actual_path.is_file():
+        raise HTTPException(status_code=404, detail="Asset not found")
+    return FileResponse(actual_path)
+
 app.mount("/books", StaticFiles(directory=str(books_dir())), name="books")
 
 @app.get("/favicon.ico", include_in_schema=False)

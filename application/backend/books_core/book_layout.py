@@ -101,53 +101,73 @@ def scaffold_book(
     return book
 
 
-def _verify_html_assets(html_path: Path, html_content: str, *, ignore_page_figures: bool = False) -> list[str]:
+def _verify_html_assets(
+    html_path: Path,
+    html_content: str,
+    *,
+    ignore_page_figures: bool = False,
+    asset_base: Path | None = None,
+) -> list[str]:
+    """
+    Verify local CSS/JS/image refs resolve on disk.
+
+    asset_base: directory used to resolve relative URLs. Defaults to html_path.parent.
+    Use this when validating work/page_NNNN/final.*.html whose ../assets/ links are
+    written for output/<lang>/ (not for the work/ folder).
+    """
     import re
     import urllib.parse
-    errors = []
+
+    from books_core.asset_paths import resolve_relative_asset
+
+    errors: list[str] = []
+    base = Path(asset_base) if asset_base is not None else html_path.parent
+
+    def _local_ref(ref: str) -> str | None:
+        if ref.startswith(("http://", "https://", "//", "mailto:", "tel:", "data:", "#")):
+            return None
+        return ref
 
     # 1. Stylesheets
-    css_refs = re.findall(r'<link\s+[^>]*href=["\']([^"\']+)["\']', html_content)
+    css_refs = re.findall(r'<link\s+[^>]*href=["\']([^"\']+)["\']', html_content, flags=re.I)
     for ref in css_refs:
-        if ref.startswith(("http://", "https://", "//", "mailto:", "tel:")) or ref.startswith("#"):
+        if _local_ref(ref) is None:
             continue
         if " " in ref:
             errors.append(f"CSS link contains unencoded spaces: '{ref}'")
-        clean_ref = urllib.parse.unquote(ref.split("?")[0])
-        asset_path = (html_path.parent / clean_ref).resolve()
+        asset_path = resolve_relative_asset(base, ref)
         if not asset_path.is_file():
             errors.append(f"Missing CSS: '{ref}'")
         elif asset_path.stat().st_size == 0:
             errors.append(f"Empty CSS: '{ref}'")
 
     # 2. Images
-    img_refs = re.findall(r'<img\s+[^>]*src=["\']([^"\']+)["\']', html_content)
+    img_refs = re.findall(r'<img\s+[^>]*src=["\']([^"\']+)["\']', html_content, flags=re.I)
     for ref in img_refs:
-        if ref.startswith(("http://", "https://", "//", "data:")) or ref.startswith("#"):
+        if _local_ref(ref) is None:
             continue
         if " " in ref:
             errors.append(f"Image link contains unencoded spaces: '{ref}'")
         clean_ref = urllib.parse.unquote(ref.split("?")[0])
-        
-        # If ignore_page_figures is True, skip checking page-specific dynamic figures (e.g. page_0001_fig_1.png)
+
+        # Skip page-specific dynamic figures (cropped post-render)
         if ignore_page_figures and "_fig_" in clean_ref.lower() and Path(clean_ref).name.startswith("page_"):
             continue
-            
-        asset_path = (html_path.parent / clean_ref).resolve()
+
+        asset_path = resolve_relative_asset(base, ref)
         if not asset_path.is_file():
             errors.append(f"Missing image: '{ref}'")
         elif asset_path.stat().st_size == 0:
             errors.append(f"Empty image file: '{ref}'")
 
     # 3. Scripts
-    js_refs = re.findall(r'<script\s+[^>]*src=["\']([^"\']+)["\']', html_content)
+    js_refs = re.findall(r'<script\s+[^>]*src=["\']([^"\']+)["\']', html_content, flags=re.I)
     for ref in js_refs:
-        if ref.startswith(("http://", "https://", "//")) or ref.startswith("#"):
+        if _local_ref(ref) is None:
             continue
         if " " in ref:
             errors.append(f"JS link contains unencoded spaces: '{ref}'")
-        clean_ref = urllib.parse.unquote(ref.split("?")[0])
-        asset_path = (html_path.parent / clean_ref).resolve()
+        asset_path = resolve_relative_asset(base, ref)
         if not asset_path.is_file():
             errors.append(f"Missing JS: '{ref}'")
         elif asset_path.stat().st_size == 0:
@@ -300,8 +320,9 @@ def verify_book(
         if res_en.get("ok"):
             out_file = res_en.get("output")
             assembled_files.append(out_file)
-            out_path = Path(out_file)
-            if out_path.is_file():
+            # assemble returns a path relative to book.root (e.g. "output/book.html")
+            out_path = (book.root / str(out_file)).resolve() if out_file else None
+            if out_path is not None and out_path.is_file():
                 content = out_path.read_text(encoding="utf-8")
                 asset_errors = _verify_html_assets(out_path, content)
                 for err in asset_errors:
@@ -316,16 +337,15 @@ def verify_book(
             if res_vi.get("ok"):
                 out_file = res_vi.get("output")
                 assembled_files.append(out_file)
-                out_path = Path(out_file)
-                if out_path.is_file():
+                out_path = (book.root / str(out_file)).resolve() if out_file else None
+                if out_path is not None and out_path.is_file():
                     content = out_path.read_text(encoding="utf-8")
                     asset_errors = _verify_html_assets(out_path, content)
                     for err in asset_errors:
                         warnings.append(f"Assembled (vi) - {err}")
             else:
                 assembly_ok = False
-                warnings.append(f"Assembly (vi) failed: {res_vi.get('error')}")
-    except Exception as ae:
+                warnings.append(f"Assembly (vi) failed: {res_vi.get('error')}")    except Exception as ae:
         assembly_ok = False
         warnings.append(f"Assembly exception: {ae}")
 

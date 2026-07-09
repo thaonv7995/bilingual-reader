@@ -25,7 +25,7 @@ def _figure_ids_in_html(html: str) -> list[str]:
 
 def _replace_img_in_figure(html: str, fig_id: str, info: dict) -> str:
     """Replace the <img> inside the figure that references fig_id."""
-    src = f'../assets/{info["file"]}'
+    src = f'assets/{info["file"]}'
     w, h = info["width"], info["height"]
 
     # Match figure block containing this fig_id in figcaption or alt
@@ -88,9 +88,9 @@ def refresh_page(html_path: Path, manifest: dict[str, list]) -> bool:
 
     if "figures-page.css" not in html and figs:
         html = html.replace(
-            '<link rel="stylesheet" href="../assets/prose-page.css">',
-            '<link rel="stylesheet" href="../assets/prose-page.css">\n'
-            '  <link rel="stylesheet" href="../assets/figures-page.css">',
+            '<link rel="stylesheet" href="assets/prose-page.css">',
+            '<link rel="stylesheet" href="assets/prose-page.css">\n'
+            '  <link rel="stylesheet" href="assets/figures-page.css">',
             1,
         )
 

@@ -188,7 +188,7 @@ Translate all visible English content in the original page to natural and accura
 ```
 
 ## Strict Rules
-1. **Preserve Layout and CSS**: Do not change HTML structure, classes, IDs, CSS stylesheets links (e.g. `../assets/...`), or javascript/inline styles. Keep the stand-alone A4 sheet wrapper structure:
+1. **Preserve Layout and CSS**: Do not change HTML structure, classes, IDs, CSS stylesheets links (e.g. `assets/...`), or javascript/inline styles. Keep the stand-alone A4 sheet wrapper structure:
    `<body class="book-standalone">` -> `<main class="book-page book-page--sheet">` -> `<article class="sheet-flow prose-page...">`
 2. **Strict translation bounds**: Translate only user-visible English text blocks (e.g. headings, paragraphs, labels, list items, table text). Do NOT translate class names, ID attributes, file paths, image source tags (`src`), tag attributes (unless they are labels like `alt`, `title`, or `aria-label`), code fragments, syntax/grammar keywords, or links.
 3. **No text expansion / overflow**: Keep translations concise. Ensure the entire page still fits on exactly ONE A4 sheet in print preview, exactly mirroring the layout of the English page.

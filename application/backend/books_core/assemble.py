@@ -76,7 +76,10 @@ def assemble_book_html(
         html = page_path.read_text(encoding="utf-8")
         body = _extract_body(html)
         # Per-page HTML uses ../assets/; assembled book lives in output/ → assets/
-        body = body.replace('src="../assets/', 'src="assets/')
+        # Rewrite all occurrences (src, href, srcset, url(...), not only img src=).
+        from books_core.asset_paths import rewrite_per_page_assets_to_assembled
+
+        body = rewrite_per_page_assets_to_assembled(body)
         sections.append(
             f'<section class="book-sheet" id="page-{n:04d}" data-page="{n}">\n'
             f'  <main class="book-page book-page--sheet">\n'

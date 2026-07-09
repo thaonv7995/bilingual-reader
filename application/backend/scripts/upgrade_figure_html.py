@@ -33,7 +33,7 @@ def upgrade_page(html_path: Path, manifest: dict[str, list]) -> bool:
         caption = cap_m.group(0) if cap_m else ""
         return (
             f'<figure class="diagram">\n'
-            f'  <img src="../assets/{info["file"]}" width="{info["width"]}" height="{info["height"]}" '
+            f'  <img src="assets/{info["file"]}" width="{info["width"]}" height="{info["height"]}" '
             f'alt="Figure {fig_id}">\n'
             f"  {caption}\n"
             f"</figure>"
@@ -48,9 +48,9 @@ def upgrade_page(html_path: Path, manifest: dict[str, list]) -> bool:
 
     if "figures-page.css" not in html:
         html = html.replace(
-            '<link rel="stylesheet" href="../assets/prose-page.css">',
-            '<link rel="stylesheet" href="../assets/prose-page.css">\n'
-            '  <link rel="stylesheet" href="../assets/figures-page.css">',
+            '<link rel="stylesheet" href="assets/prose-page.css">',
+            '<link rel="stylesheet" href="assets/prose-page.css">\n'
+            '  <link rel="stylesheet" href="assets/figures-page.css">',
             1,
         )
 
