@@ -345,7 +345,8 @@ def verify_book(
                         warnings.append(f"Assembled (vi) - {err}")
             else:
                 assembly_ok = False
-                warnings.append(f"Assembly (vi) failed: {res_vi.get('error')}")    except Exception as ae:
+                warnings.append(f"Assembly (vi) failed: {res_vi.get('error')}")
+    except Exception as ae:
         assembly_ok = False
         warnings.append(f"Assembly exception: {ae}")
 
