@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -55,7 +56,9 @@ def _lint_per_page(path: Path, *, chrome: dict[str, str] | None, book: Path) -> 
     if "<main" in text and "book-page--sheet" not in text:
         issues.append(f"{name}: missing main.book-page.book-page--sheet shell")
 
-    issues.extend(lint_images_in_html(text, context=f"per-page {name}", book_root=book))
+    # lint_images_in_html enforces the URL contract; _verify_html_assets owns
+    # existence/size checks so one missing file is reported only once.
+    issues.extend(lint_images_in_html(text, context=f"per-page {name}"))
     issues.extend(f"{name}: {issue}" for issue in _verify_html_assets(path, text))
     return issues
 
@@ -74,7 +77,7 @@ def _lint_assembled(path: Path, book: Path) -> list[str]:
     if "sheet-flow prose-page" not in text:
         issues.append(f"{name}: each sheet needs article.sheet-flow.prose-page")
 
-    issues.extend(lint_images_in_html(text, context=f"assembled {name}", book_root=book))
+    issues.extend(lint_images_in_html(text, context=f"assembled {name}"))
     issues.extend(f"{name}: {issue}" for issue in _verify_html_assets(path, text))
     return issues
 
@@ -89,14 +92,21 @@ def _load_chrome(book: Path) -> dict[str, str] | None:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) < 2:
-        print("Usage: validate_page_fidelity.py <book-root> [--lang en|vi|all]", file=sys.stderr)
-        return 2
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("book_root")
+    parser.add_argument("--lang", default="all")
+    parser.add_argument(
+        "--pages-only",
+        action="store_true",
+        help="Validate standalone pages but ignore stale assembled book files",
+    )
+    try:
+        args = parser.parse_args(argv[1:])
+    except SystemExit as exc:
+        return int(exc.code)
 
-    book = Path(argv[1]).resolve()
-    lang_arg = "all"
-    if len(argv) > 2 and argv[2].startswith("--lang"):
-        lang_arg = argv[3] if len(argv) > 3 else "all"
+    book = Path(args.book_root).resolve()
+    lang_arg = args.lang
 
     chrome = _load_chrome(book)
     all_issues: list[str] = []
@@ -115,10 +125,11 @@ def main(argv: list[str]) -> int:
             page_count += 1
             all_issues.extend(_lint_per_page(path, chrome=chrome, book=book))
 
-    for assembled_name in ("book.html", "book.vi.html"):
-        assembled = book / "output" / assembled_name
-        if assembled.is_file():
-            all_issues.extend(_lint_assembled(assembled, book))
+    if not args.pages_only:
+        for assembled_name in ("book.html", "book.vi.html"):
+            assembled = book / "output" / assembled_name
+            if assembled.is_file():
+                all_issues.extend(_lint_assembled(assembled, book))
 
     if page_count == 0:
         print("FAIL No pages found or processed.")

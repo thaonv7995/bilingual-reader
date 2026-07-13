@@ -16,6 +16,54 @@ except ImportError:
 
 
 FIGURE_RE = re.compile(r"^Figure\s+([A-Za-z\d]+(?:[-.]\d+)?)(?:\s|[:.]|$)", re.I)
+EXPECTED_FIGURE_RE = re.compile(
+    r"(?:\.\./)?assets/images/"
+    r"(?P<name>page_(?P<page>\d{4})_fig_(?P<figure>[A-Za-z0-9_.-]+)\.png)",
+    re.I,
+)
+
+
+def _expected_page_figures(book_root: Path, page_num: int) -> list[tuple[str, str]]:
+    """Return (filename, figure id) placeholders referenced by rendered pages."""
+    found: dict[str, str] = {}
+    page_name = f"page_{page_num:04d}.html"
+    for html_path in sorted((book_root / "output").glob(f"*/{page_name}")):
+        html = html_path.read_text(encoding="utf-8")
+        for match in EXPECTED_FIGURE_RE.finditer(html):
+            if int(match.group("page")) != page_num:
+                continue
+            found.setdefault(match.group("name"), match.group("figure"))
+    return sorted(found.items())
+
+
+def _full_page_fallback(
+    page: fitz.Page,
+    out_dir: Path,
+    *,
+    page_num: int,
+    dpi: int,
+    expected_figures: list[tuple[str, str]],
+) -> list[dict]:
+    """Render a first-page cover when it has no conventional Figure caption."""
+    if page_num != 1 or len(expected_figures) != 1:
+        return []
+
+    filename, fig_id = expected_figures[0]
+    clip = page.rect
+    matrix = fitz.Matrix(dpi / 72.0, dpi / 72.0)
+    pix = page.get_pixmap(matrix=matrix, clip=clip, alpha=False)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    pix.save(str(out_dir / filename))
+    return [
+        {
+            "figure": fig_id,
+            "label": "First-page cover fallback",
+            "file": f"images/{filename}",
+            "width": pix.width,
+            "height": pix.height,
+            "clip": [clip.x0, clip.y0, clip.x1, clip.y1],
+        }
+    ]
 
 
 def _figure_labels(page: fitz.Page) -> list[tuple[str, str, fitz.Rect]]:
@@ -118,6 +166,7 @@ def extract_figures(
     *,
     page_num: int,
     dpi: int = 200,
+    expected_figures: list[tuple[str, str]] | None = None,
 ) -> list[dict]:
     out_dir.mkdir(parents=True, exist_ok=True)
     manifest: list[dict] = []
@@ -423,7 +472,13 @@ def extract_figures(
 
 
         if not labels:
-            return manifest
+            return _full_page_fallback(
+                page,
+                out_dir,
+                page_num=page_num,
+                dpi=dpi,
+                expected_figures=expected_figures or [],
+            )
 
         footer_y = _footer_top(page)
         scale = dpi / 72.0
@@ -998,7 +1053,13 @@ def process_book(book_root: Path, pages: list[int] | None = None) -> dict:
         pdf = work / f"page_{n:04d}" / "source.pdf"
         if not pdf.is_file():
             continue
-        figs = extract_figures(pdf, assets, page_num=n)
+        expected_figures = _expected_page_figures(book_root, n)
+        figs = extract_figures(
+            pdf,
+            assets,
+            page_num=n,
+            expected_figures=expected_figures,
+        )
         if figs:
             all_manifest[f"page_{n:04d}"] = figs
             print(f"page {n:04d}: {len(figs)} figure(s)")
@@ -1015,6 +1076,22 @@ def main(argv: list[str]) -> int:
     book = Path(argv[1]).resolve()
     pages = [int(x) for x in argv[2:]] if len(argv) > 2 else None
     process_book(book, pages)
+    targets = pages
+    if targets is None:
+        targets = [
+            int(path.parent.name.split("_")[1])
+            for path in sorted((book / "work").glob("page_*/source.pdf"))
+        ]
+    missing: list[str] = []
+    assets = book / "output" / "assets" / "images"
+    for page_num in targets:
+        for filename, _ in _expected_page_figures(book, page_num):
+            if not (assets / filename).is_file():
+                missing.append(f"page {page_num:04d}: output/assets/images/{filename}")
+    if missing:
+        for item in missing:
+            print(f"FAIL extractor did not create referenced figure: {item}", file=sys.stderr)
+        return 1
     return 0
 
 

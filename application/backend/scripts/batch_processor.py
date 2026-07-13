@@ -426,7 +426,6 @@ def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: boo
 
 
 def main() -> int:
-    has_errors = False
     parser = argparse.ArgumentParser(description="Parallel render and translate pages")
     parser.add_argument("--book", required=True, help="Path to book folder")
     parser.add_argument("--start-page", type=int, default=1, help="Start page")
@@ -484,7 +483,8 @@ def main() -> int:
                 try:
                     res = future.result()
                     if res.get("ok"):
-                        print(f"  ✓ Processed Page {p} (EN & VI complete)")
+                        draft_status = "EN & VI drafts ready" if args.translate else "EN draft ready"
+                        print(f"  ✓ Rendered Page {p} ({draft_status}; post-render pending)")
                     else:
                         print(f"\n======================================================================")
                         print(f"✗ ERROR ON PAGE {p} DURING PHASE: {res.get('phase').upper()}")
@@ -522,7 +522,7 @@ def main() -> int:
         ("upgrade_figure_html.py", []),
         ("refresh_figure_images.py", []),
         ("fix_book_layout.py", []),
-        ("validate_page_fidelity.py", ["--lang", "all"]),
+        ("validate_page_fidelity.py", ["--lang", "all", "--pages-only"]),
     ]
 
     for script_name, extra_args in post_scripts:
@@ -536,7 +536,8 @@ def main() -> int:
                 print(f"----------------------------------------------------------------------")
                 print(res.stdout)
                 print(f"======================================================================\n", flush=True)
-                has_errors = True
+                print("Batch processing failed during post-render; assembly was skipped.")
+                return 1
 
     # Assemble EN
     books_cli_bin = str(Path(_BACKEND).parent / ".venv" / "bin" / "books-cli")
@@ -555,7 +556,8 @@ def main() -> int:
         print(f"----------------------------------------------------------------------")
         print(res_en.stdout)
         print(f"======================================================================\n", flush=True)
-        has_errors = True
+        print("Batch processing failed while assembling the EN book.")
+        return 1
 
     # Assemble VI
     if args.translate:
@@ -574,7 +576,8 @@ def main() -> int:
             print(f"----------------------------------------------------------------------")
             print(res_vi.stdout)
             print(f"======================================================================\n", flush=True)
-            has_errors = True
+            print("Batch processing failed while assembling the VI book.")
+            return 1
 
 
     # Validate again
@@ -586,10 +589,11 @@ def main() -> int:
         print(f"----------------------------------------------------------------------")
         print(res_val.stdout)
         print(f"======================================================================\n", flush=True)
-        has_errors = True
+        print("Batch processing failed during final validation.")
+        return 1
 
-    print("Batch processing complete!")
-    return 1 if has_errors else 0
+    print("Batch processing complete — render, assets, assembly, and validation passed!")
+    return 0
 
 
 if __name__ == "__main__":

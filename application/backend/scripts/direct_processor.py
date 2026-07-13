@@ -313,7 +313,7 @@ def main() -> int:
         ("upgrade_figure_html.py", []),
         ("refresh_figure_images.py", []),
         ("fix_book_layout.py", []),
-        ("validate_page_fidelity.py", ["--lang", "all"]),
+        ("validate_page_fidelity.py", ["--lang", "all", "--pages-only"]),
     ]
 
     for script_name, extra_args in post_scripts:
@@ -322,7 +322,10 @@ def main() -> int:
             print(f"Running {script_name}...")
             cmd = [py_bin, str(script_path), str(book_root)] + extra_args
             import subprocess
-            subprocess.run(cmd, check=False)
+            result = subprocess.run(cmd, check=False)
+            if result.returncode != 0:
+                print(f"Post-render failed in {script_name}; assembly was skipped.")
+                return 1
 
     # Assemble EN
     print("Assembling EN book...")
@@ -336,7 +339,9 @@ def main() -> int:
         "--output", "book.html"
     ]
     import subprocess
-    subprocess.run(cmd_assemble_en, check=False)
+    if subprocess.run(cmd_assemble_en, check=False).returncode != 0:
+        print("EN assembly failed.")
+        return 1
 
     # Assemble VI
     if args.translate:
@@ -349,12 +354,16 @@ def main() -> int:
             "--lang", "vi",
             "--output", "book.vi.html"
         ]
-        subprocess.run(cmd_assemble_vi, check=False)
+        if subprocess.run(cmd_assemble_vi, check=False).returncode != 0:
+            print("VI assembly failed.")
+            return 1
 
     # Validate again
     print("Final validation...")
     cmd_val = [py_bin, str(scripts_dir / "validate_page_fidelity.py"), str(book_root), "--lang", "all"]
-    subprocess.run(cmd_val, check=False)
+    if subprocess.run(cmd_val, check=False).returncode != 0:
+        print("Final validation failed.")
+        return 1
 
     print("Direct processing complete!")
     return 0

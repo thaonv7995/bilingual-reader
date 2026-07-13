@@ -34,7 +34,8 @@ To prevent resource loading issues (broken CSS, JS, or images), you MUST follow 
    - Every `<img>` tag MUST point to a valid relative path starting with `../assets/images/` (e.g., `src="../assets/images/page_NNNN_fig_X.png"`).
    - Before writing the HTML, check the contents of `output/assets/images/` to see if a cropped image already exists for this page. If you find `page_0016_fig_1.png`, you MUST include the prefix: `src="../assets/images/page_0016_fig_1.png"`.
    - Do NOT append random junk characters or duplicate extensions to the image source (e.g. `../assets/images/page_0016_fig_1.png123` or `../assets/images/page_0016_fig_1.png.png`).
-   - If no image has been cropped yet, use the expected standard naming pattern (e.g., `../assets/images/page_NNNN_fig_1.png`) inside a proper `<figure>` block, so the automated figure extraction script can place it later.
+   - If no image has been cropped yet, use the expected standard naming pattern (e.g., `../assets/images/page_NNNN_fig_1.png`) only for a real figure, diagram, or first-page cover visible in `source.pdf`; keep it inside a proper `<figure>` block so the automated extractor can place it later.
+   - Never invent an `<img>` placeholder for decorative text, whitespace, or content that has no corresponding visual region in `source.pdf`.
 
 ## Shell
 
@@ -76,4 +77,3 @@ After writing the HTML file, you MUST perform a self-verification pass using you
 ## Done when
 
 Side-by-side with `source.pdf`: correct **order**, **block types**, **chrome**, **listings**, **figures**, **math**; page N only. Must fit onto exactly one A4 page without clipping or overflow.
-

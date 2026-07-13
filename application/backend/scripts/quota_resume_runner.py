@@ -294,7 +294,7 @@ def run_chunk(book: BookPaths, pages: list[int], args: argparse.Namespace, agy_b
     )
 
 
-def run_post_pipeline(book_root: Path, translate: bool) -> None:
+def run_post_pipeline(book_root: Path, translate: bool) -> bool:
     print("Running post-render and assembly pipeline...")
     py_bin = sys.executable or "python3"
     scripts_dir = _BACKEND / "scripts"
@@ -304,29 +304,35 @@ def run_post_pipeline(book_root: Path, translate: bool) -> None:
         ("upgrade_figure_html.py", []),
         ("refresh_figure_images.py", []),
         ("fix_book_layout.py", []),
-        ("validate_page_fidelity.py", ["--lang", "all"]),
+        ("validate_page_fidelity.py", ["--lang", "all", "--pages-only"]),
     ]
 
     for script_name, extra_args in post_scripts:
         script_path = scripts_dir / script_name
         if script_path.is_file():
             cmd = [py_bin, str(script_path), str(book_root)] + extra_args
-            subprocess.run(cmd, check=False)
+            if subprocess.run(cmd, check=False).returncode != 0:
+                print(f"Post-render failed in {script_name}; assembly was skipped.")
+                return False
 
     books_cli_bin = str(Path(_BACKEND).parent / ".venv" / "bin" / "books-cli")
-    subprocess.run(
+    if subprocess.run(
         [py_bin, books_cli_bin, "assemble", "--book", str(book_root), "--lang", "en", "--output", "book.html"],
         check=False,
-    )
+    ).returncode != 0:
+        return False
     if translate:
-        subprocess.run(
+        if subprocess.run(
             [py_bin, books_cli_bin, "assemble", "--book", str(book_root), "--lang", "vi", "--output", "book.vi.html"],
             check=False,
-        )
-    subprocess.run(
+        ).returncode != 0:
+            return False
+    if subprocess.run(
         [py_bin, str(scripts_dir / "validate_page_fidelity.py"), str(book_root), "--lang", "all"],
         check=False,
-    )
+    ).returncode != 0:
+        return False
+    return True
 
 
 def process_once(book: BookPaths, args: argparse.Namespace, state_path: Path, log_path: Path) -> int:
@@ -348,7 +354,11 @@ def process_once(book: BookPaths, args: argparse.Namespace, state_path: Path, lo
         state["pending_pages"] = []
         state["updated_at"] = iso(now_local())
         if args.run_post_pipeline and not state.get("post_pipeline_completed"):
-            run_post_pipeline(book.root, args.translate)
+            if not run_post_pipeline(book.root, args.translate):
+                state["status"] = "post_pipeline_failed"
+                state["last_error_excerpt"] = "Post-render pipeline failed"
+                save_json(state_path, state)
+                return 1
             state["post_pipeline_completed"] = True
             state["post_pipeline_completed_at"] = iso(now_local())
         save_json(state_path, state)
@@ -451,7 +461,11 @@ def process_once(book: BookPaths, args: argparse.Namespace, state_path: Path, lo
     state["last_blocker"] = None
     state["next_resume_after"] = None
     if args.run_post_pipeline and not state.get("post_pipeline_completed"):
-        run_post_pipeline(book.root, args.translate)
+        if not run_post_pipeline(book.root, args.translate):
+            state["status"] = "post_pipeline_failed"
+            state["last_error_excerpt"] = "Post-render pipeline failed"
+            save_json(state_path, state)
+            return 1
         state["post_pipeline_completed"] = True
         state["post_pipeline_completed_at"] = iso(now_local())
     save_json(state_path, state)
