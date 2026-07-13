@@ -1448,6 +1448,9 @@
         let currentPreviewPage = null;
         let currentPreviewTab = 'side-by-side';
         let currentBookPages = [];
+        let detailStatusInitialized = false;
+        let previousDetailRunning = false;
+        let previewVersion = Date.now().toString(36);
 
         // Initialize Icons
         lucide.createIcons();
@@ -1778,6 +1781,9 @@
         function openDetail(slug, title) {
             switchTab('detail');
             activeSlug = slug;
+            detailStatusInitialized = false;
+            previousDetailRunning = false;
+            previewVersion = Date.now().toString(36);
             document.getElementById('detailTitle').innerText = title;
             document.getElementById('detailSlug').innerText = `books/${slug}`;
             document.getElementById('consoleBox').innerHTML = "Initializing...";
@@ -1805,6 +1811,9 @@
                 if(data.has_book_vi_html) viB.href = `/books/${activeSlug}/output/book.vi.html`;
 
                 const isRunning = data.running;
+                const processingJustFinished = detailStatusInitialized && previousDetailRunning && !isRunning;
+                previousDetailRunning = isRunning;
+                detailStatusInitialized = true;
                 document.getElementById('startProcessBtn').style.display = isRunning ? 'none' : 'inline-flex';
                 document.getElementById('stopProcessBtn').style.display = isRunning ? 'inline-flex' : 'none';
                 document.getElementById('detailProcessingBadge').style.display = isRunning ? 'inline-flex' : 'none';
@@ -1846,6 +1855,14 @@
                     `;
                 });
                 document.getElementById('pageGrid').innerHTML = gridHtml;
+
+                if(processingJustFinished) {
+                    closeLogStream();
+                    if(currentPreviewPage) {
+                        refreshPreview(true);
+                        showToast("Preview refreshed with finalized assets.", "success");
+                    }
+                }
 
             } catch(e) {}
         }
@@ -2230,11 +2247,12 @@
             document.getElementById('previewContent').style.display = 'flex';
             document.getElementById('previewTitle').innerText = `Page ${String(pageNum).padStart(4, '0')} Preview`;
             
-            loadPreviewPageContents(pageNum);
+            loadPreviewPageContents(pageNum, true);
         }
 
-        function loadPreviewPageContents(pageNum) {
+        function loadPreviewPageContents(pageNum, forceFresh = false) {
             if (!pageNum || !activeSlug) return;
+            if (forceFresh) previewVersion = Date.now().toString(36);
             const pad = String(pageNum).padStart(4, '0');
             const token = localStorage.getItem('studio_token');
             const pData = currentBookPages.find(p => p.page === pageNum) || {
@@ -2262,7 +2280,7 @@
             const enIframeSide = document.getElementById('iframe-side-en');
             const enPlaceholderSide = document.getElementById('iframe-side-en-placeholder');
             
-            const enSrc = `/books/${activeSlug}/output/en/page_${pad}.html?token=${token}`;
+            const enSrc = `/books/${activeSlug}/preview/${previewVersion}/en/page_${pad}.html?token=${token}`;
             
             if (pData.published) {
                 enIframeSingle.src = enSrc;
@@ -2288,7 +2306,7 @@
             const viIframeSide = document.getElementById('iframe-side-vi');
             const viPlaceholderSide = document.getElementById('iframe-side-vi-placeholder');
             
-            const viSrc = `/books/${activeSlug}/output/vi/page_${pad}.html?token=${token}`;
+            const viSrc = `/books/${activeSlug}/preview/${previewVersion}/vi/page_${pad}.html?token=${token}`;
             
             if (pData.translated) {
                 viIframeSingle.src = viSrc;
@@ -2321,9 +2339,9 @@
             document.getElementById(`viewport-${tabId}`).style.display = 'flex';
         }
 
-        function refreshPreview() {
+        function refreshPreview(forceFresh = true) {
             if (currentPreviewPage) {
-                loadPreviewPageContents(currentPreviewPage);
+                loadPreviewPageContents(currentPreviewPage, forceFresh);
             }
         }
     </script>

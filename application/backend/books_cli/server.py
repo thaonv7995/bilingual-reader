@@ -18,19 +18,96 @@ from books_core.ingest import ingest_pdf
 from books_core.paths import BookPaths
 from books_core.meta.reader import book_status_summary
 from books_core.package import pack_book
+from books_core.asset_paths import normalize_per_page_asset_paths
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("books_server")
 
 app = FastAPI(title="Bilingual Reader Book Studio")
 
-# --- Proxy assets for Studio iframe preview ---
+PREVIEW_NO_CACHE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "CDN-Cache-Control": "no-store",
+    "Pragma": "no-cache",
+}
+
+
+def _preview_file(root: Path, rest_of_path: str) -> Path | None:
+    """Resolve one preview file without allowing traversal outside its root."""
+    root = root.resolve()
+    candidate = (root / rest_of_path).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    return candidate if candidate.is_file() else None
+
+
+def _preview_not_found(message: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=404,
+        content={"detail": message},
+        headers=PREVIEW_NO_CACHE_HEADERS,
+    )
+
+
+def _valid_preview_segment(value: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", value or ""))
+
+
+def _preview_asset_response(slug: str, rest_of_path: str) -> FileResponse | JSONResponse:
+    if not _valid_preview_segment(slug):
+        return _preview_not_found("Asset not found")
+    root = books_dir() / slug / "output" / "assets"
+    actual_path = _preview_file(root, rest_of_path)
+    if actual_path is None:
+        return _preview_not_found("Asset not found")
+    return FileResponse(actual_path, headers=PREVIEW_NO_CACHE_HEADERS)
+
+
+# --- No-cache routes for standalone pages and Studio iframe preview ---
+@app.get("/books/{slug}/output/assets/{rest_of_path:path}")
+async def serve_output_assets(slug: str, rest_of_path: str):
+    return _preview_asset_response(slug, rest_of_path)
+
+
 @app.get("/books/{slug}/output/{lang}/assets/{rest_of_path:path}")
 async def serve_preview_assets(slug: str, lang: str, rest_of_path: str):
-    actual_path = books_dir() / slug / "output" / "assets" / rest_of_path
-    if not actual_path.is_file():
-        raise HTTPException(status_code=404, detail="Asset not found")
-    return FileResponse(actual_path)
+    return _preview_asset_response(slug, rest_of_path)
+
+
+@app.get("/books/{slug}/preview-assets/{version}/{rest_of_path:path}")
+async def serve_versioned_preview_assets(
+    slug: str,
+    version: str,
+    rest_of_path: str,
+):
+    if not _valid_preview_segment(version):
+        return _preview_not_found("Asset not found")
+    return _preview_asset_response(slug, rest_of_path)
+
+
+@app.get("/books/{slug}/preview/{version}/{lang}/page_{page_num:int}.html")
+async def serve_versioned_preview_page(
+    slug: str,
+    version: str,
+    lang: str,
+    page_num: int,
+):
+    if not all(
+        _valid_preview_segment(value)
+        for value in (slug, version, lang)
+    ):
+        return _preview_not_found("Page not found")
+    page_root = books_dir() / slug / "output" / lang
+    page_path = _preview_file(page_root, f"page_{page_num:04d}.html")
+    if page_path is None:
+        return _preview_not_found("Page not found")
+
+    html = normalize_per_page_asset_paths(page_path.read_text(encoding="utf-8"))
+    versioned_assets = f"/books/{slug}/preview-assets/{version}/"
+    html = html.replace("../assets/", versioned_assets)
+    return HTMLResponse(html, headers=PREVIEW_NO_CACHE_HEADERS)
 
 app.mount("/books", StaticFiles(directory=str(books_dir())), name="books")
 
@@ -797,6 +874,7 @@ async def read_subprocess_output(slug: str, process: asyncio.subprocess.Process,
             translate=book_conf.get("translate", True),
             logs=list(process_logs[slug])
         )
+        response_cache.clear(slug)
         logger.info(f"Process ended for {slug} with code {process.returncode}. Marked status as {status_str}.")
         
         # 2. Pack the book asynchronously in the background only when all pages are 100% complete!
