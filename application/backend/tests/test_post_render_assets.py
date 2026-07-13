@@ -139,6 +139,47 @@ def test_batch_stops_before_assembly_when_post_render_fails(
     assert "Batch processing complete" not in output
 
 
+def test_batch_finalizes_valid_page_assets_before_returning_worker_errors(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    book = _book(tmp_path, page_count=2)
+    _write_source_pdf(book / "work" / "page_0001" / "source.pdf")
+    (book / "output" / "en" / "page_0001.html").write_text(
+        _page_html(
+            '<figure class="cover"><img src="../assets/images/page_0001_fig_1.png" '
+            'alt="Cover"></figure>'
+        ),
+        encoding="utf-8",
+    )
+
+    def fail_page_two(*_args, **_kwargs):
+        return {"ok": False, "page": 2, "phase": "render", "error": "quota exhausted"}
+
+    monkeypatch.setattr(batch_processor, "process_single_page", fail_page_two)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "batch_processor.py",
+            "--book",
+            str(book),
+            "--pages",
+            "1-2",
+            "--threads",
+            "12",
+        ],
+    )
+
+    assert batch_processor.main() == 1
+    assert (book / "output" / "assets" / "images" / "page_0001_fig_1.png").is_file()
+    assert not (book / "output" / "book.html").exists()
+    output = capsys.readouterr().out
+    assert "Figure assets were finalized for 1 page" in output
+    assert "Skipping layout post-processing and assembly" in output
+
+
 def test_batch_materializes_cover_then_assembles_successfully(
     tmp_path: Path,
     monkeypatch,

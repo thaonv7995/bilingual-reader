@@ -469,10 +469,10 @@ def main() -> int:
         if need_render or need_translate:
             pages_to_process.append(page)
 
+    errors: dict[int, str] = {}
     if pages_to_process:
         print(f"Starting rendering & translation for {len(pages_to_process)} pages using {args.threads} threads...")
         os.environ["BOOKS_SILENT_WORKERS"] = "1"
-        errors = {}
         with ThreadPoolExecutor(max_workers=args.threads) as executor:
             future_to_page = {
                 executor.submit(process_single_page, book, p, agy_bin, args.translate, args.provider, args.force, args.custom_prompt): p
@@ -500,10 +500,6 @@ def main() -> int:
                     print(f"======================================================================\n", flush=True)
                     errors[p] = str(e)
         
-        if errors:
-            print(f"Processing finished with errors in {len(errors)} pages.")
-            print("Skipping post-processing and assembly because rendering did not complete.")
-            return 1
     else:
         print("All pages already processed and translated.")
 
@@ -511,23 +507,71 @@ def main() -> int:
     py_bin = sys.executable or "python3"
     scripts_dir = _BACKEND / "scripts"
 
-    # For extract_pdf_figures.py, pass the specific pages we processed to speed it up!
-    extract_args = []
-    if args.pages:
-        extract_args = [str(p) for p in candidate_pages]
+    # Asset materialization is intentionally serialized after the worker pool.
+    # When some workers fail (for example due to provider quota exhaustion), still
+    # finalize every candidate with a valid EN draft.  Otherwise one late failure
+    # leaves successful/skipped pages pointing at figure files that were never
+    # created.  Do not move these scripts into the workers: they share the figure
+    # manifest and concurrent read/modify/write cycles can lose entries.
+    if errors:
+        asset_pages = [
+            page
+            for page in candidate_pages
+            if standalone_page_valid(book.page_lang_html(page, "en"))
+        ]
+        extract_args = [str(page) for page in asset_pages]
+        if asset_pages:
+            page_label = "page" if len(asset_pages) == 1 else "pages"
+            print(
+                f"Finalizing figure assets for {len(asset_pages)} {page_label} with valid EN drafts "
+                "before reporting worker errors..."
+            )
+    else:
+        # For a targeted run, pass only its requested pages.  An empty list keeps
+        # the historical full-book behavior for a non-targeted successful run.
+        extract_args = [str(page) for page in candidate_pages] if args.pages else []
 
-    # Runs scripts in sequence
-    post_scripts = [
+    asset_scripts = [
         ("diagnose_page_visuals.py", extract_args),
         ("materialize_vector_figures.py", extract_args),
         ("extract_pdf_figures.py", extract_args),
+    ]
+    layout_scripts = [
         ("upgrade_figure_html.py", []),
         ("refresh_figure_images.py", []),
         ("fix_book_layout.py", []),
         ("validate_page_fidelity.py", ["--lang", "all", "--pages-only"]),
     ]
 
+    # With worker errors and no valid EN drafts, an empty page argument would mean
+    # "all pages" to the asset scripts, so skip them instead.
+    post_scripts = [] if errors and not extract_args else asset_scripts
     for script_name, extra_args in post_scripts:
+        script_path = scripts_dir / script_name
+        if script_path.is_file():
+            cmd = [py_bin, str(script_path), str(book_root)] + extra_args
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+            if res.returncode != 0:
+                print(f"\n======================================================================")
+                print(f"✗ ERROR RUNNING POST-RENDER SCRIPT: {script_name}")
+                print(f"----------------------------------------------------------------------")
+                print(res.stdout)
+                print(f"======================================================================\n", flush=True)
+                print("Batch processing failed during post-render; assembly was skipped.")
+                return 1
+
+    if errors:
+        print(f"Processing finished with errors in {len(errors)} pages.")
+        if extract_args:
+            page_label = "page" if len(extract_args) == 1 else "pages"
+            print(
+                f"Figure assets were finalized for {len(extract_args)} {page_label} "
+                "with valid EN drafts."
+            )
+        print("Skipping layout post-processing and assembly because rendering did not complete.")
+        return 1
+
+    for script_name, extra_args in layout_scripts:
         script_path = scripts_dir / script_name
         if script_path.is_file():
             cmd = [py_bin, str(script_path), str(book_root)] + extra_args
