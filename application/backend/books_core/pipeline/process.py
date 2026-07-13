@@ -1,7 +1,8 @@
-"""2-step pipeline: page-pdf → AI render_page."""
+"""Vision-first pipeline: page-pdf → analyze_visuals → render_page."""
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from books_agent.session import prepare_session, run_agent
@@ -14,6 +15,11 @@ from books_core.pipeline.status import (
     write_process_status,
 )
 from books_core.validation import validate_draft_html
+from books_core.visual_diagnostics import (
+    agent_visual_plan_ready,
+    diagnosis_path,
+    validate_html_against_visual_plan,
+)
 
 
 def _page_ready_at(path, *, asset_base=None) -> bool:
@@ -161,7 +167,7 @@ def process_page(
     force: bool = False,
     custom_prompt: str | None = None,
 ) -> dict[str, Any]:
-    """Run page-pdf → render_page for one page."""
+    """Run page-pdf → agent vision plan → render_page for one page."""
     book.ensure_book_dirs()
     require_page_pdf(book, page)
     lang = book.default_lang()
@@ -172,12 +178,27 @@ def process_page(
         state="running",
         step="starting",
         provider=provider,
-        message="Pipeline: page PDF → AI render",
+        message="Pipeline: page PDF → Agent vision → AI render",
     )
     steps_run: list[str] = ["page-pdf"]
 
     try:
-        if force or not _published_ready(book, page, lang) or custom_prompt:
+        needs_render = force or not _published_ready(book, page, lang) or custom_prompt
+        if needs_render:
+            if force or not agent_visual_plan_ready(book.root, page):
+                _run_agent_step(
+                    book,
+                    page,
+                    "analyze_visuals",
+                    provider,
+                    timeout_s=timeout_s,
+                )
+                if not agent_visual_plan_ready(book.root, page):
+                    raise PipelineGateError(
+                        f"Page {page}: analyze_visuals completed without a finalized agent vision plan."
+                    )
+                steps_run.append("analyze_visuals")
+                append_live_log(book, page, "Finalized agent vision plan")
             _run_agent_step(
                 book,
                 page,
@@ -191,6 +212,20 @@ def process_page(
             if err_msg:
                 raise PipelineGateError(
                     f"Page {page}: AI render finished but {err_msg}."
+                )
+            rendered_path = book.page_lang_html(page, lang)
+            plan = json.loads(
+                diagnosis_path(book.root, page).read_text(encoding="utf-8")
+            )
+            visual_issues = validate_html_against_visual_plan(
+                rendered_path.read_text(encoding="utf-8"),
+                plan,
+                page_num=page,
+            )
+            if visual_issues:
+                raise PipelineGateError(
+                    f"Page {page}: rendered HTML does not match the agent visual plan: "
+                    + "; ".join(visual_issues)
                 )
 
         out_path = book.page_lang_html(page, lang)

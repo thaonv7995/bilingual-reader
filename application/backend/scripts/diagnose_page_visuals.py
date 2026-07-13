@@ -30,13 +30,17 @@ def main(argv: list[str]) -> int:
     try:
         pages = _target_pages(book_root, argv[2:])
         for page_num in pages:
-            diagnosis = ensure_visual_diagnosis(book_root, page_num, force=True)
+            # A finalized agent-vision plan is authoritative. This script only
+            # supplies deterministic recovery metadata for legacy pages that
+            # do not have one; it must never overwrite the agent's plan.
+            diagnosis = ensure_visual_diagnosis(book_root, page_num, force=False)
             counts: dict[str, int] = {}
             for figure in diagnosis.get("figures", []):
                 strategy = str(figure.get("strategy") or "unknown")
                 counts[strategy] = counts.get(strategy, 0) + 1
             summary = ", ".join(f"{key}={value}" for key, value in sorted(counts.items()))
-            print(f"page {page_num:04d}: {summary or 'no figures detected'}")
+            producer = diagnosis.get("producer") or "deterministic-fallback"
+            print(f"page {page_num:04d}: {producer}; {summary or 'no figures detected'}")
     except (OSError, ValueError, RuntimeError) as exc:
         print(f"FAIL visual diagnosis: {exc}", file=sys.stderr)
         return 1

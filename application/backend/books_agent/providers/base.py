@@ -115,14 +115,32 @@ class Provider(ABC):
             from books_core.validation import validate_draft_html
 
             expected_output = None
+            expected_kind = "html"
             try:
                 context_path = session_dir / "context.json"
                 if context_path.is_file():
                     ctx_data = json.loads(context_path.read_text(encoding="utf-8"))
-                    lang = ctx_data.get("lang")
-                    expected_output = book_root / "output" / lang / f"page_{page:04d}.html"
+                    expected_kind = str(ctx_data.get("output_kind") or "html")
+                    context_output = ctx_data.get("output_file")
+                    if context_output:
+                        expected_output = book_root / str(context_output)
+                    else:
+                        lang = ctx_data.get("lang")
+                        expected_output = book_root / "output" / lang / f"page_{page:04d}.html"
             except Exception:
                 pass
+
+            def validate_expected_output() -> None:
+                if expected_output is None:
+                    raise ValueError("expected output path is missing")
+                if expected_kind == "json":
+                    from books_core.visual_diagnostics import validate_agent_visual_plan
+
+                    data = json.loads(expected_output.read_text(encoding="utf-8"))
+                    validate_agent_visual_plan(data, page_num=page)
+                else:
+                    content = expected_output.read_text(encoding="utf-8")
+                    validate_draft_html(content)
 
             completed_successfully = False
             try:
@@ -130,8 +148,7 @@ class Provider(ABC):
                 while proc.poll() is None:
                     if expected_output and expected_output.is_file() and expected_output.stat().st_mtime >= start_time - 1 and expected_output.stat().st_size > 0:
                         try:
-                            content = expected_output.read_text(encoding="utf-8")
-                            validate_draft_html(content)
+                            validate_expected_output()
                             completed_successfully = True
                             proc.terminate()
                             try:
@@ -159,8 +176,7 @@ class Provider(ABC):
             validation_error = None
             if not completed_successfully and expected_output and expected_output.is_file():
                 try:
-                    content = expected_output.read_text(encoding="utf-8")
-                    validate_draft_html(content)
+                    validate_expected_output()
                     completed_successfully = expected_output.stat().st_mtime >= start_time - 1
                 except Exception as ve:
                     validation_error = str(ve)

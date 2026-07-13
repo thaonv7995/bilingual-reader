@@ -22,6 +22,14 @@ from books_core.repo import repo_root
 from books_core.asset_paths import normalize_per_page_asset_file
 from books_core.book_layout import _verify_html_assets
 from books_core.validation import validate_draft_html
+from books_core.io import atomic_write_json
+from books_core.visual_diagnostics import (
+    agent_visual_plan_ready,
+    diagnosis_path,
+    finalize_agent_visual_plan,
+    validate_html_against_visual_plan,
+    validate_agent_visual_plan,
+)
 
 
 import time
@@ -128,16 +136,39 @@ def clean_model_output(text: str) -> str:
     return text.strip()
 
 
+def analyze_visuals_direct(book: BookPaths, page: int) -> bool:
+    if agent_visual_plan_ready(book.root, page):
+        return True
+    prepare_session(book, page, "analyze_visuals")
+    prompt_path = book.page_work(page) / "agent" / "prompt.md"
+    print(f"  [Vision] Analyzing Page {page} visuals with Gemini...")
+    response_text = call_gemini_api(
+        prompt_path.read_text(encoding="utf-8"),
+        book.source_page_pdf(page),
+    )
+    try:
+        raw_plan = json.loads(clean_model_output(response_text))
+        validate_agent_visual_plan(raw_plan, page_num=page)
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise RuntimeError(f"Visual analysis for Page {page} returned invalid JSON: {exc}") from exc
+    atomic_write_json(diagnosis_path(book.root, page), raw_plan)
+    finalize_agent_visual_plan(book.root, page)
+    print(f"  ✓ Analyzed Page {page} visuals")
+    return True
+
+
 def render_page_direct(book: BookPaths, page: int) -> bool:
     en_html = book.page_lang_html(page, "en")
     if standalone_page_valid(en_html):
         return True
 
-    # Prepare session if prompt.md doesn't exist
+    analyze_visuals_direct(book, page)
+
+    # The analyze phase uses the same session directory, so always prepare the
+    # render prompt after the visual plan has been finalized.
     agent_dir = book.page_work(page) / "agent"
     prompt_path = agent_dir / "prompt.md"
-    if not prompt_path.is_file():
-        prepare_session(book, page, "render_page")
+    prepare_session(book, page, "render_page")
 
     prompt_text = prompt_path.read_text(encoding="utf-8")
     pdf_path = book.source_page_pdf(page)
@@ -158,6 +189,14 @@ def render_page_direct(book: BookPaths, page: int) -> bool:
         asset_errors = _verify_html_assets(en_html, html_content, ignore_page_figures=True)
         if asset_errors:
             raise ValueError("; ".join(asset_errors))
+        plan = json.loads(diagnosis_path(book.root, page).read_text(encoding="utf-8"))
+        visual_errors = validate_html_against_visual_plan(
+            html_content,
+            plan,
+            page_num=page,
+        )
+        if visual_errors:
+            raise ValueError("; ".join(visual_errors))
     except Exception as e:
         try:
             en_html.unlink()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Books HTML CLI — page-pdf → render → assemble."""
+"""Books HTML CLI — page-pdf → Agent vision → render → assemble."""
 
 from __future__ import annotations
 
@@ -237,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
 
     p_render = sub.add_parser(
         "render",
-        help="Step 2: source.pdf → AI render_page → output/<lang>/page_NNNN.html",
+        help="Step 2: source.pdf → Agent vision plan → AI render_page → output HTML",
     )
     p_render.add_argument("--book", required=True)
     p_render.add_argument("--page", type=int, required=True)

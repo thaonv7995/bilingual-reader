@@ -7,8 +7,34 @@ from typing import Any
 from books_agent.phases import AgentPhase
 
 PHASE_PACKS: dict[AgentPhase, dict[str, Any]] = {
+    "analyze_visuals": {
+        "role": "Vision-first PDF page visual planner",
+        "must_read_skill_keys": [
+            "fidelity_rules",
+            "books_pdf_render",
+            "special_layouts",
+        ],
+        "input_priority": ["source_reference_png", "source_page_pdf"],
+        "output_path_key": "visual_plan_output",
+        "output_contract": [
+            "Open the complete page PNG and inspect it visually; do not rely on extracted text alone.",
+            "Identify every meaningful visual region and assign stable figure ids in reading order.",
+            "Choose reconstruct-html-svg for simple diagrams and extract-raster for photos or complex art.",
+            "Write work/page_NNNN/visual-diagnosis.json using normalized 0..1 bboxes.",
+            "Do not write or modify page HTML in this phase.",
+        ],
+        "raster_policy": [
+            "Exclude semantic captions from the visual bbox.",
+            "Include the complete artwork with enough boundary to avoid clipping.",
+            "Decorative whitespace and ordinary text are not figures.",
+        ],
+        "quality_gate": [
+            "Every visible photo, illustration, chart, diagram, map, or meaningful logo is represented.",
+            "No figure bbox includes unrelated prose, page chrome, or a separately modeled caption.",
+        ],
+    },
     "render_page": {
-        "role": "AI page analyzer + HTML renderer",
+        "role": "HTML renderer consuming an approved visual plan",
         "must_read_skill_keys": [
             "fidelity_rules",
             "books_pdf_render",
@@ -17,7 +43,7 @@ PHASE_PACKS: dict[AgentPhase, dict[str, Any]] = {
         "input_priority": ["source_page_pdf", "visual_diagnosis", "source_pdf"],
         "output_path_key": "published_html",
         "output_contract": [
-            "Read FIDELITY-RULES.md + open source.pdf visually before writing.",
+            "Read FIDELITY-RULES.md and the finalized agent-vision visual plan before writing.",
             "Block order = visual PDF order (not text-extract order).",
             "Follow visual-diagnosis.json for every detected figure.",
             "reconstruct-html-svg: draw as semantic HTML/CSS or inline SVG; do not add an img placeholder.",

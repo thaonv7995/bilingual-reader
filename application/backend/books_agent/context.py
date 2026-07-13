@@ -8,7 +8,12 @@ from books_agent.phase_pack import phase_skill_pack
 from books_agent.phases import PROMPT_FILES, AgentPhase
 from books_core.paths import BookPaths
 from books_core.repo import repo_root, skills_root
-from books_core.visual_diagnostics import diagnosis_path, ensure_visual_diagnosis
+from books_core.visual_diagnostics import (
+    agent_visual_plan_ready,
+    diagnosis_path,
+    ensure_visual_reference,
+    visual_reference_path,
+)
 
 
 def agent_prompts_dir() -> Path:
@@ -27,7 +32,10 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
             return str(p)
 
     source_page_pdf = book.source_page_pdf(page)
-    output_file = rel(book.page_lang_html(page, lang))
+    published_output = rel(book.page_lang_html(page, lang))
+    visual_output = rel(diagnosis_path(book.root, page))
+    output_file = visual_output if phase == "analyze_visuals" else published_output
+    output_kind = "json" if phase == "analyze_visuals" else "html"
     paths = {
         "book_root": str(book.root),
         "work_dir": rel(work),
@@ -37,9 +45,11 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
         if (book.input_dir / "original.pdf").is_file()
         else None,
         "source_pdf": rel(book.source_pdf) if book.source_pdf.is_file() else None,
-        "visual_diagnosis": None,
+        "source_reference_png": None,
+        "visual_diagnosis": visual_output if diagnosis_path(book.root, page).is_file() else None,
+        "visual_plan_output": visual_output,
         # This is the required destination, not a description of an existing file.
-        "published_html": output_file,
+        "published_html": published_output,
     }
 
     skills = {
@@ -51,18 +61,33 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
     prerequisites: list[str] = []
     hints: list[str] = []
     visual_diagnosis: dict[str, Any] | None = None
-    if phase == "render_page":
-        if not paths.get("source_page_pdf"):
-            prerequisites.append(
-                "Run page-pdf first (work/page_NNNN/source.pdf required)."
+    visual_reference: dict[str, Any] | None = None
+    if not paths.get("source_page_pdf"):
+        prerequisites.append(
+            "Run page-pdf first (work/page_NNNN/source.pdf required)."
+        )
+    else:
+        try:
+            visual_reference = ensure_visual_reference(book.root, page)
+            paths["source_reference_png"] = rel(visual_reference_path(book.root, page))
+        except Exception as exc:
+            hints.append(f"Visual page reference could not be generated: {exc}")
+
+    if phase == "analyze_visuals":
+        hints.append("Open source.png and inspect the complete page visually before writing JSON.")
+        hints.append("Identify every meaningful photo, illustration, chart, diagram, map, and logo.")
+        hints.append("Return normalized bboxes; PDF object snapping happens after the vision phase.")
+    elif phase == "render_page":
+        if agent_visual_plan_ready(book.root, page):
+            visual_diagnosis = json.loads(
+                diagnosis_path(book.root, page).read_text(encoding="utf-8")
             )
+            paths["visual_diagnosis"] = visual_output
         else:
-            try:
-                visual_diagnosis = ensure_visual_diagnosis(book.root, page)
-                paths["visual_diagnosis"] = rel(diagnosis_path(book.root, page))
-            except Exception as exc:
-                paths["visual_diagnosis"] = None
-                hints.append(f"Visual diagnosis could not be generated: {exc}")
+            prerequisites.append(
+                "Run analyze_visuals first; a finalized agent-vision visual plan is required."
+            )
+            paths["visual_diagnosis"] = None
         hints.append("MUST READ: application/agent/FIDELITY-RULES.md before writing HTML.")
         hints.append(f"Primary input: {rel(source_page_pdf)} — open visually; do not trust text-extract order.")
         hints.append(
@@ -88,12 +113,14 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
         "page": page,
         "lang": lang,
         "output_file": output_file,
+        "output_kind": output_kind,
         "paths": paths,
         "skills": skills,
         "skill_pack": skill_pack,
         "prerequisites": prerequisites,
         "efficiency_hints": hints,
         "visual_diagnosis": visual_diagnosis,
+        "visual_reference": visual_reference,
         "repo_root": str(repo_root()),
     }
 
@@ -102,7 +129,11 @@ def build_prompt_markdown(book: BookPaths, page: int, phase: AgentPhase, ctx: di
     template = agent_prompts_dir() / PROMPT_FILES[phase]
     nn = f"{page:04d}"
     base = template.read_text(encoding="utf-8") if template.is_file() else f"# Phase {phase}\n"
-    base = base.replace("page_NNNN", f"page_{nn}").replace("<lang>", str(ctx["lang"]))
+    base = (
+        base.replace("page_NNNN", f"page_{nn}")
+        .replace("<page-number>", str(page))
+        .replace("<lang>", str(ctx["lang"]))
+    )
     header = f"""---
 book: {book.root.name}
 page: {page}
@@ -134,7 +165,8 @@ work: work/page_{nn}/
 Open folder: `{book.root}`
 
 Required output (exact path): `{ctx["output_file"]}` relative to `{book.root}`.
-Write the final HTML only to that canonical path. Do not write it under `work/` or legacy `pages/`.
+Write only the required {ctx["output_kind"].upper()} artifact to that canonical path.
+Do not write an alternative output under legacy `pages/` or another work directory.
 
 """
     return header + base + custom_section + body

@@ -1,4 +1,4 @@
-"""Pipeline gates for the 2-step PDF → HTML flow."""
+"""Pipeline gates for the vision-first PDF → visual plan → HTML flow."""
 
 from __future__ import annotations
 
@@ -21,7 +21,16 @@ def require_page_pdf(book: BookPaths, page: int) -> None:
 
 
 def require_agent_phase(book: BookPaths, page: int, phase: str) -> None:
-    if phase == "render_page":
+    if phase == "analyze_visuals":
         require_page_pdf(book, page)
+    elif phase == "render_page":
+        require_page_pdf(book, page)
+        from books_core.visual_diagnostics import agent_visual_plan_ready
+
+        if not agent_visual_plan_ready(book.root, page):
+            raise PipelineGateError(
+                f"Page {page}: run analyze_visuals first "
+                f"(missing finalized work/page_{_nn(page)}/visual-diagnosis.json)."
+            )
     else:
         raise PipelineGateError(f"Unknown agent phase: {phase}")

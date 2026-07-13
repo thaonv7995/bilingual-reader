@@ -10,7 +10,7 @@ You are the **page HTML builder** for **one PDF page**.
 ## Inputs
 
 1. **`work/page_NNNN/source.pdf`** — primary (open visually)
-2. **`work/page_NNNN/visual-diagnosis.json`** — required per-figure rendering strategy
+2. **`work/page_NNNN/visual-diagnosis.json`** — finalized plan produced by the vision agent
 3. **`book.json`** → `page_chrome` — header/footer text for this book
 4. **`output/assets/images/`** — raster figure crops
 
@@ -40,11 +40,12 @@ To prevent resource loading issues (broken CSS, JS, or images), you MUST follow 
 
 ## Figure strategy (CRITICAL)
 
-Read `work/page_NNNN/visual-diagnosis.json` before building figures and follow the strategy for each figure:
+Read the finalized agent-vision plan at `work/page_NNNN/visual-diagnosis.json` before building figures and follow its id, bbox, caption, and strategy for each figure. Do not independently invent a second visual interpretation:
 
 - **`reconstruct-html-svg`**: redraw the visual using semantic HTML/CSS or inline SVG. Preserve its labels, arrows, grouping, colors, and relationships. Do **not** add an `<img>` placeholder for this figure. Inline SVG is preferred over canvas because page HTML must work without JavaScript.
 - **`extract-raster`**: keep the figure in a proper `<figure>` and use the standard `../assets/images/page_NNNN_fig_X.png` placeholder. The post-render extractor will crop only the diagnosed artwork bounds and leave the source caption out when an HTML `<figcaption>` exists.
 - Preserve the caption as semantic `<figcaption>` text in both cases. Do not duplicate a caption inside a raster crop.
+- Add `data-visual-id="X"` to every planned `<figure>`, using the exact id from the visual plan.
 
 If a simple vector figure was not reconstructed by the agent, the post-render pipeline may replace its image placeholder with a clipped inline SVG from the source PDF as a fidelity fallback.
 

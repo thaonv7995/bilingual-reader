@@ -14,6 +14,7 @@ from books_core.validation import ArtifactValidationError, validate_process_stat
 STEP_LABELS: dict[str, str] = {
     "starting": "Starting…",
     "page-pdf": "Page PDF → source.pdf",
+    "analyze_visuals": "Agent Vision → Visual Plan",
     "render_page": "AI Render → HTML",
     "done": "Done",
     "failed": "Failed",

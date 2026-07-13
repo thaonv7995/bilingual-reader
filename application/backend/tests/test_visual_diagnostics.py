@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pymupdf as fitz
 
-from books_agent.context import build_context
+from books_agent.context import build_context, build_prompt_markdown
+from books_core.pipeline import process as pipeline_process
 from books_core.paths import BookPaths
-from books_core.visual_diagnostics import diagnose_pdf_page, ensure_visual_diagnosis
+from books_core.visual_diagnostics import (
+    diagnose_pdf_page,
+    diagnosis_path,
+    ensure_visual_diagnosis,
+    finalize_agent_visual_plan,
+    validate_html_against_visual_plan,
+)
 from scripts.extract_pdf_figures import extract_figures, main as extract_main
 from scripts.materialize_vector_figures import materialize_page
 
@@ -27,14 +35,15 @@ def _write_vector_figure_pdf(path: Path) -> None:
     document.close()
 
 
-def _write_raster_figure_pdf(path: Path) -> None:
+def _write_raster_figure_pdf(path: Path, *, caption: str | None = "Figure 2.1  Product photograph") -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     document = fitz.open()
     page = document.new_page(width=600, height=500)
     pixmap = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 160, 100), False)
     pixmap.clear_with(0x55AAEE)
     page.insert_image(fitz.Rect(80, 80, 360, 255), pixmap=pixmap)
-    page.insert_text((395, 150), "Figure 2.1  Product photograph", fontsize=10)
+    if caption:
+        page.insert_text((395, 150), caption, fontsize=10)
     document.save(path)
     document.close()
 
@@ -46,6 +55,20 @@ def _page_html(figure_id: str, caption: str) -> str:
   <figcaption>{caption}</figcaption>
 </figure>
 </article></main></body></html>"""
+
+
+def _standalone_page_html(figure_id: str, caption: str) -> str:
+    return f"""<!doctype html><html><head>
+<link rel="stylesheet" href="../assets/book.css">
+<link rel="stylesheet" href="../assets/page-tokens.css">
+<link rel="stylesheet" href="../assets/prose-page.css">
+<link rel="stylesheet" href="../assets/figures-page.css">
+</head><body class="book-standalone">
+<main class="book-page book-page--sheet"><article class="sheet-flow prose-page">
+<figure data-visual-id="{figure_id}">
+<img src="../assets/images/page_0010_fig_{figure_id}.png" alt="Photo">
+<figcaption>{caption}</figcaption>
+</figure></article></main></body></html>"""
 
 
 def test_side_caption_diagnosis_keeps_complete_art_bounds(tmp_path: Path) -> None:
@@ -74,6 +97,35 @@ def test_embedded_image_is_kept_as_raster(tmp_path: Path) -> None:
     assert figure["caption_position"] == "right"
 
 
+def test_numbered_photo_caption_is_diagnosed_without_figure_prefix(tmp_path: Path) -> None:
+    pdf = tmp_path / "source.pdf"
+    _write_raster_figure_pdf(pdf, caption="1. A human handprint made long ago")
+
+    figure = diagnose_pdf_page(pdf, page_num=10)["figures"][0]
+
+    assert figure["id"] == "1"
+    assert figure["strategy"] == "extract-raster"
+    assert figure["image_count"] == 1
+    assert figure["crop_bbox"][2] < figure["caption_bbox"][0]
+
+
+def test_single_uncaptioned_image_maps_to_single_html_placeholder(tmp_path: Path) -> None:
+    pdf = tmp_path / "source.pdf"
+    output = tmp_path / "images"
+    _write_raster_figure_pdf(pdf, caption=None)
+
+    figures = extract_figures(
+        pdf,
+        output,
+        page_num=10,
+        expected_figures=[("page_0010_fig_1.png", "1")],
+    )
+
+    assert len(figures) == 1
+    assert figures[0]["label"] == "Embedded image fallback"
+    assert (output / "page_0010_fig_1.png").is_file()
+
+
 def test_vector_placeholder_becomes_inline_svg_in_all_languages(tmp_path: Path) -> None:
     book = tmp_path / "book"
     pdf = book / "work" / "page_0032" / "source.pdf"
@@ -100,8 +152,43 @@ def test_vector_placeholder_becomes_inline_svg_in_all_languages(tmp_path: Path) 
 def test_render_context_includes_visual_strategy_before_agent_runs(tmp_path: Path) -> None:
     book_root = tmp_path / "book"
     _write_vector_figure_pdf(book_root / "work" / "page_0032" / "source.pdf")
+    book = BookPaths(book_root)
 
-    context = build_context(BookPaths(book_root), 32, "render_page")
+    analyze_context = build_context(book, 32, "analyze_visuals")
+    analyze_prompt = build_prompt_markdown(book, 32, "analyze_visuals", analyze_context)
+
+    assert analyze_context["output_kind"] == "json"
+    assert analyze_context["output_file"] == "work/page_0032/visual-diagnosis.json"
+    assert analyze_context["paths"]["source_reference_png"] == "work/page_0032/source.png"
+    assert (book_root / "work" / "page_0032" / "source.png").is_file()
+    assert '"page": 32' in analyze_prompt
+    assert "<page-number>" not in analyze_prompt
+
+    diagnosis_path(book_root, 32).write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "producer": "agent-vision",
+                "page": 32,
+                "figures": [
+                    {
+                        "id": "1.1",
+                        "type": "diagram",
+                        "strategy": "reconstruct-html-svg",
+                        "bbox_normalized": [0.14, 0.13, 0.65, 0.62],
+                        "caption_bbox_normalized": [0.67, 0.30, 0.95, 0.40],
+                        "confidence": 0.98,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    finalized = finalize_agent_visual_plan(book_root, 32)
+    assert finalized["producer"] == "agent-vision"
+    assert finalized["figures"][0]["snapped_to"] == "pdf-vector"
+
+    context = build_context(book, 32, "render_page")
 
     assert context["paths"]["visual_diagnosis"] == "work/page_0032/visual-diagnosis.json"
     assert context["visual_diagnosis"]["figures"][0]["strategy"] == "reconstruct-html-svg"
@@ -132,3 +219,68 @@ def test_extractor_uses_diagnosed_art_crop_and_rewrites_stale_png(tmp_path: Path
     assert figures[0]["clip"] == diagnosis["figures"][0]["crop_bbox"]
     assert figures[0]["clip"][2] < diagnosis["figures"][0]["caption_bbox"][0]
     assert stale.read_bytes().startswith(b"\x89PNG")
+
+
+def test_page_pipeline_runs_agent_vision_before_html_render(tmp_path: Path, monkeypatch) -> None:
+    book_root = tmp_path / "book"
+    book = BookPaths(book_root)
+    _write_raster_figure_pdf(book.source_page_pdf(10))
+    calls: list[str] = []
+
+    def fake_agent_step(book_arg, page, phase, provider, **kwargs):
+        calls.append(phase)
+        if phase == "analyze_visuals":
+            diagnosis_path(book_arg.root, page).write_text(
+                json.dumps(
+                    {
+                        "schema_version": "2.0",
+                        "producer": "agent-vision",
+                        "page": page,
+                        "figures": [
+                            {
+                                "id": "1",
+                                "type": "photo",
+                                "strategy": "extract-raster",
+                                "bbox_normalized": [0.12, 0.14, 0.62, 0.55],
+                                "caption_bbox_normalized": [0.65, 0.25, 0.95, 0.35],
+                                "confidence": 0.99,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            finalize_agent_visual_plan(book_arg.root, page)
+        else:
+            output = book_arg.page_lang_html(page, "en")
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(_standalone_page_html("1", "Figure 1 Photo"), encoding="utf-8")
+        return {"exit_code": 0}
+
+    monkeypatch.setattr(pipeline_process, "_run_agent_step", fake_agent_step)
+
+    result = pipeline_process.process_page(book, 10, "test")
+
+    assert result["ok"] is True
+    assert calls == ["analyze_visuals", "render_page"]
+    assert result["steps_run"] == ["page-pdf", "analyze_visuals", "render_page"]
+    plan = json.loads(diagnosis_path(book_root, 10).read_text(encoding="utf-8"))
+    assert plan["producer"] == "agent-vision"
+    assert plan["figures"][0]["snapped_to"] == "embedded-image"
+
+
+def test_html_must_cover_every_agent_planned_visual() -> None:
+    plan = {
+        "figures": [
+            {"id": "1", "strategy": "extract-raster"},
+            {"id": "1.1", "strategy": "reconstruct-html-svg"},
+        ]
+    }
+    html = '<img src="../assets/images/page_0010_fig_1.png">'
+
+    assert validate_html_against_visual_plan(html, plan, page_num=10) == [
+        "visual plan vector figure 11 has no data-visual-id HTML figure"
+    ]
+
+    html += '<figure data-visual-id="1.1"><svg></svg></figure>'
+    assert validate_html_against_visual_plan(html, plan, page_num=10) == []

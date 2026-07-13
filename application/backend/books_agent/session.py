@@ -150,6 +150,16 @@ def run_agent(
             timeout_s=timeout_s,
             on_log_line=on_line,
         )
+    if ph == "analyze_visuals" and result.exit_code == 0:
+        try:
+            from books_core.visual_diagnostics import finalize_agent_visual_plan
+
+            finalize_agent_visual_plan(book.root, page)
+            append_live_log(book, page, "Validated and finalized agent vision plan")
+        except Exception as exc:
+            result.exit_code = 4
+            result.stderr += f"\nAgent visual plan could not be finalized: {exc}\n"
+            append_live_log(book, page, f"Visual plan finalization failed: {exc}")
     session_path = adir / "session.json"
     session: dict[str, Any] = {}
     if session_path.is_file():

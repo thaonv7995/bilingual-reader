@@ -4,11 +4,15 @@ import json
 import sys
 from pathlib import Path
 
+import pymupdf as fitz
+
+from books_agent import session as agent_session
 from books_agent.context import build_context, build_prompt_markdown
 from books_agent.detect import DetectResult
 from books_agent.phases import AgentPhase
 from books_agent.providers.base import Provider
 from books_core.paths import BookPaths
+from books_core.visual_diagnostics import agent_visual_plan_ready
 
 
 class _NoOutputProvider(Provider):
@@ -36,6 +40,31 @@ class _NoOutputProvider(Provider):
         page: int,
     ) -> list[str]:
         return [binary, "-c", "print('finished without writing output')"]
+
+
+class _JsonOutputProvider(_NoOutputProvider):
+    def build_run_command(
+        self,
+        binary: str,
+        book_root: Path,
+        session_dir: Path,
+        phase: AgentPhase,
+        page: int,
+    ) -> list[str]:
+        output = book_root / "work" / f"page_{page:04d}" / "visual-diagnosis.json"
+        payload = json.dumps(
+            {
+                "schema_version": "2.0",
+                "producer": "agent-vision",
+                "page": page,
+                "figures": [],
+            }
+        )
+        return [
+            binary,
+            "-c",
+            f"from pathlib import Path; Path({str(output)!r}).write_text({payload!r})",
+        ]
 
 
 def test_render_prompt_uses_exact_canonical_output(tmp_path: Path) -> None:
@@ -74,3 +103,48 @@ def test_zero_exit_without_expected_output_is_failure(tmp_path: Path) -> None:
 
     assert result.exit_code != 0
     assert "did not create a fresh, valid output file" in result.stderr
+
+
+def test_provider_accepts_fresh_agent_visual_plan_json(tmp_path: Path) -> None:
+    book_root = tmp_path / "book"
+    session_dir = book_root / "work" / "page_0001" / "agent"
+    session_dir.mkdir(parents=True)
+    (session_dir / "context.json").write_text(
+        json.dumps(
+            {
+                "output_kind": "json",
+                "output_file": "work/page_0001/visual-diagnosis.json",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = _JsonOutputProvider().run(
+        book_root,
+        session_dir,
+        "analyze_visuals",
+        1,
+        timeout_s=5,
+    )
+
+    assert result.exit_code == 0
+
+
+def test_agent_session_finalizes_vision_plan_before_render(tmp_path: Path, monkeypatch) -> None:
+    book_root = tmp_path / "book"
+    pdf_path = book_root / "work" / "page_0001" / "source.pdf"
+    pdf_path.parent.mkdir(parents=True)
+    document = fitz.open()
+    document.new_page(width=200, height=300)
+    document.save(pdf_path)
+    document.close()
+    book = BookPaths(book_root)
+    monkeypatch.setattr(agent_session, "get_provider", lambda _provider: _JsonOutputProvider())
+
+    agent_session.prepare_session(book, 1, "analyze_visuals")
+    result = agent_session.run_agent(book, 1, "analyze_visuals", "test", timeout_s=5)
+
+    assert result["exit_code"] == 0
+    assert agent_visual_plan_ready(book_root, 1)
+    render_session = agent_session.prepare_session(book, 1, "render_page")
+    assert render_session["phase"] == "render_page"

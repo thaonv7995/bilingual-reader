@@ -16,7 +16,8 @@ except ImportError:
 
 
 FIGURE_RE = re.compile(
-    r"^(?:Figure|Fig\.|Hình)\s+([A-Za-z\d]+(?:[-.]\d+)?)(?:\s|[:.]|$)",
+    r"^(?:(?:Figure|Fig\.|Hình)\s+([A-Za-z\d]+(?:[-.]\d+)?)|"
+    r"(\d{1,3})[.)])(?:\s|[:.]|$)",
     re.I,
 )
 EXPECTED_FIGURE_RE = re.compile(
@@ -41,6 +42,12 @@ def _expected_page_figures(book_root: Path, page_num: int) -> list[tuple[str, st
 
 def _canonical_figure_id(value: str) -> str:
     return re.sub(r"[^a-z0-9]", "", value.lower())
+
+
+def _rects_within(left: fitz.Rect, right: fitz.Rect, distance: float) -> bool:
+    dx = max(left.x0 - right.x1, right.x0 - left.x1, 0.0)
+    dy = max(left.y0 - right.y1, right.y0 - left.y1, 0.0)
+    return dx * dx + dy * dy <= distance * distance
 
 
 def _diagnosed_crop_overrides(pdf_path: Path) -> dict[str, fitz.Rect]:
@@ -96,6 +103,7 @@ def _full_page_fallback(
 def _figure_labels(page: fitz.Page) -> list[tuple[str, str, fitz.Rect]]:
     """Return (fig_id, label_line, bbox) sorted top-to-bottom."""
     found: list[tuple[str, str, fitz.Rect]] = []
+    image_rects = [fitz.Rect(image["bbox"]) for image in page.get_image_info()]
     data = page.get_text("dict")
     for block in data.get("blocks", []):
         if block.get("type") != 0:
@@ -110,7 +118,12 @@ def _figure_labels(page: fitz.Page) -> list[tuple[str, str, fitz.Rect]]:
             text = "".join(parts).strip()
             m = FIGURE_RE.match(text)
             if m and line_rect is not None:
-                found.append((m.group(1), text, line_rect))
+                if m.group(2) and not any(
+                    _rects_within(line_rect, image_rect, 48.0)
+                    for image_rect in image_rects
+                ):
+                    continue
+                found.append((m.group(1) or m.group(2), text, line_rect))
     found.sort(key=lambda x: x[2].y0)
     return found
 
@@ -200,6 +213,7 @@ def extract_figures(
     out_dir.mkdir(parents=True, exist_ok=True)
     manifest: list[dict] = []
     crop_overrides = _diagnosed_crop_overrides(pdf_path)
+    fallback_clips: dict[str, fitz.Rect] = {}
 
     with fitz.open(pdf_path) as doc:
         page = doc[0]
@@ -511,6 +525,28 @@ def extract_figures(
                 for label in labels
                 if _canonical_figure_id(label[0]) in expected_ids
             ]
+
+        # Some photo-heavy books use an unnumbered caption or no PDF text
+        # caption at all. When the rendered HTML placeholders and embedded
+        # PDF images have an exact 1:1 count, map them in visual order instead
+        # of failing after the agent has already rendered the page.
+        if not labels and expected_figures:
+            image_infos = sorted(
+                page.get_image_info(),
+                key=lambda info: (info["bbox"][1], info["bbox"][0]),
+            )
+            if len(image_infos) == len(expected_figures):
+                labels = []
+                for (_, expected_id), image_info in zip(expected_figures, image_infos):
+                    image_rect = fitz.Rect(image_info["bbox"])
+                    labels.append((expected_id, "Embedded image fallback", image_rect))
+                    clip = fitz.Rect(
+                        image_rect.x0 - 7,
+                        image_rect.y0 - 7,
+                        image_rect.x1 + 7,
+                        image_rect.y1 + 7,
+                    )
+                    fallback_clips[_canonical_figure_id(expected_id)] = clip & page.rect
 
         if not labels:
             return _full_page_fallback(
@@ -1035,6 +1071,8 @@ def extract_figures(
                 clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
                 clip &= rect
             diagnosed_clip = crop_overrides.get(_canonical_figure_id(fig_id))
+            if diagnosed_clip is None:
+                diagnosed_clip = fallback_clips.get(_canonical_figure_id(fig_id))
             if diagnosed_clip is not None:
                 clip = diagnosed_clip & rect
 
