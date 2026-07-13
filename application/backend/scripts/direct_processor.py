@@ -19,10 +19,25 @@ if str(_BACKEND) not in sys.path:
 from books_core.paths import BookPaths
 from books_agent.session import prepare_session
 from books_core.repo import repo_root
+from books_core.asset_paths import normalize_per_page_asset_file
+from books_core.book_layout import _verify_html_assets
+from books_core.validation import validate_draft_html
 
 
 import time
 import urllib.error
+
+
+def standalone_page_valid(path: Path) -> bool:
+    if not path.is_file() or path.stat().st_size == 0:
+        return False
+    try:
+        normalize_per_page_asset_file(path)
+        content = path.read_text(encoding="utf-8")
+        validate_draft_html(content)
+        return not _verify_html_assets(path, content, ignore_page_figures=True)
+    except Exception:
+        return False
 
 
 def get_gemini_key() -> str:
@@ -115,7 +130,7 @@ def clean_model_output(text: str) -> str:
 
 def render_page_direct(book: BookPaths, page: int) -> bool:
     en_html = book.page_lang_html(page, "en")
-    if en_html.is_file() and en_html.stat().st_size > 0:
+    if standalone_page_valid(en_html):
         return True
 
     # Prepare session if prompt.md doesn't exist
@@ -134,11 +149,15 @@ def render_page_direct(book: BookPaths, page: int) -> bool:
     # Ensure output directory exists
     en_html.parent.mkdir(parents=True, exist_ok=True)
     en_html.write_text(html_content, encoding="utf-8")
+    normalize_per_page_asset_file(en_html)
+    html_content = en_html.read_text(encoding="utf-8")
     
     # Validate HTML
-    from books_core.validation import validate_draft_html
     try:
         validate_draft_html(html_content)
+        asset_errors = _verify_html_assets(en_html, html_content, ignore_page_figures=True)
+        if asset_errors:
+            raise ValueError("; ".join(asset_errors))
     except Exception as e:
         try:
             en_html.unlink()
@@ -152,7 +171,7 @@ def render_page_direct(book: BookPaths, page: int) -> bool:
 
 def translate_page_direct(book: BookPaths, page: int) -> bool:
     vi_html = book.page_lang_html(page, "vi")
-    if vi_html.is_file() and vi_html.stat().st_size > 0:
+    if standalone_page_valid(vi_html):
         return True
 
     en_html = book.page_lang_html(page, "en")
@@ -166,6 +185,7 @@ def translate_page_direct(book: BookPaths, page: int) -> bool:
     if glossary_path.is_file():
         glossary_content = glossary_path.read_text(encoding="utf-8")
 
+    normalize_per_page_asset_file(en_html)
     en_content = en_html.read_text(encoding="utf-8")
 
     prompt_text = f"""# Phase: Translate page (`translate_page`)
@@ -188,7 +208,7 @@ Translate all visible English content in the original page to natural and accura
 ```
 
 ## Strict Rules
-1. **Preserve Layout and CSS**: Do not change HTML structure, classes, IDs, CSS stylesheets links (e.g. `assets/...`), or javascript/inline styles. Keep the stand-alone A4 sheet wrapper structure:
+1. **Preserve Layout and CSS**: Do not change HTML structure, classes, IDs, CSS stylesheets links (all per-page assets must remain under `../assets/...`), or javascript/inline styles. Keep the stand-alone A4 sheet wrapper structure:
    `<body class="book-standalone">` -> `<main class="book-page book-page--sheet">` -> `<article class="sheet-flow prose-page...">`
 2. **Strict translation bounds**: Translate only user-visible English text blocks (e.g. headings, paragraphs, labels, list items, table text). Do NOT translate class names, ID attributes, file paths, image source tags (`src`), tag attributes (unless they are labels like `alt`, `title`, or `aria-label`), code fragments, syntax/grammar keywords, or links.
 3. **No text expansion / overflow**: Keep translations concise. Ensure the entire page still fits on exactly ONE A4 sheet in print preview, exactly mirroring the layout of the English page.
@@ -201,11 +221,15 @@ Translate all visible English content in the original page to natural and accura
 
     vi_html.parent.mkdir(parents=True, exist_ok=True)
     vi_html.write_text(html_content, encoding="utf-8")
+    normalize_per_page_asset_file(vi_html)
+    html_content = vi_html.read_text(encoding="utf-8")
     
     # Validate HTML
-    from books_core.validation import validate_draft_html
     try:
         validate_draft_html(html_content)
+        asset_errors = _verify_html_assets(vi_html, html_content, ignore_page_figures=True)
+        if asset_errors:
+            raise ValueError("; ".join(asset_errors))
     except Exception as e:
         try:
             vi_html.unlink()

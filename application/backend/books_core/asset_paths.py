@@ -7,18 +7,66 @@ import urllib.parse
 from pathlib import Path
 
 # Per-page: output/<lang>/page_NNNN.html → output/assets/
-PER_PAGE_ASSET_PREFIX = "assets/"
+PER_PAGE_ASSET_PREFIX = "../assets/"
 
 # Assembled: output/book.html → output/assets/
 ASSEMBLED_ASSET_PREFIX = "assets/"
 
-_IMG_SRC_RE = re.compile(r'<img\s+[^>]*\bsrc="([^"]+)"', re.IGNORECASE)
+_IMG_SRC_RE = re.compile(
+    r"<img\s+[^>]*\bsrc\s*=\s*([\"'])(.*?)\1",
+    re.IGNORECASE | re.DOTALL,
+)
 _VALID_IMG = re.compile(
     r"^(\.\./assets/|assets/)images/[a-zA-Z0-9_./-]+\.(png|jpg|jpeg|gif|webp|svg)$"
 )
 
 # Rewrite every per-page asset prefix when joining into output/book*.html
 _PER_PAGE_ASSET_RE = re.compile(r"""(\.\./assets/)""")
+_URL_ATTR_RE = re.compile(
+    r"(?P<head>\b(?:src|href|poster|data)\s*=\s*)(?P<quote>[\"'])(?P<value>.*?)(?P=quote)",
+    re.IGNORECASE | re.DOTALL,
+)
+_SRCSET_ATTR_RE = re.compile(
+    r"(?P<head>\bsrcset\s*=\s*)(?P<quote>[\"'])(?P<value>.*?)(?P=quote)",
+    re.IGNORECASE | re.DOTALL,
+)
+_CSS_URL_RE = re.compile(
+    r"(?P<head>url\(\s*(?:[\"'])?)assets/",
+    re.IGNORECASE,
+)
+
+
+def normalize_per_page_asset_paths(html: str) -> str:
+    """Rewrite legacy bare asset URLs for HTML under output/<lang>/."""
+
+    def rewrite_url_attr(match: re.Match[str]) -> str:
+        value = match.group("value")
+        if value.startswith(ASSEMBLED_ASSET_PREFIX):
+            value = PER_PAGE_ASSET_PREFIX + value[len(ASSEMBLED_ASSET_PREFIX) :]
+        return f'{match.group("head")}{match.group("quote")}{value}{match.group("quote")}'
+
+    def rewrite_srcset_attr(match: re.Match[str]) -> str:
+        value = re.sub(
+            r"(^|,\s*)assets/",
+            lambda m: f"{m.group(1)}{PER_PAGE_ASSET_PREFIX}",
+            match.group("value"),
+            flags=re.IGNORECASE,
+        )
+        return f'{match.group("head")}{match.group("quote")}{value}{match.group("quote")}'
+
+    html = _URL_ATTR_RE.sub(rewrite_url_attr, html)
+    html = _SRCSET_ATTR_RE.sub(rewrite_srcset_attr, html)
+    return _CSS_URL_RE.sub(rf"\g<head>{PER_PAGE_ASSET_PREFIX}", html)
+
+
+def normalize_per_page_asset_file(path: Path) -> bool:
+    """Canonicalize asset URLs in one page file and report whether it changed."""
+    original = path.read_text(encoding="utf-8")
+    normalized = normalize_per_page_asset_paths(original)
+    if normalized == original:
+        return False
+    path.write_text(normalized, encoding="utf-8")
+    return True
 
 
 def rewrite_per_page_assets_to_assembled(html: str) -> str:
@@ -45,8 +93,8 @@ def lint_image_src(src: str, *, context: str) -> list[str]:
         return issues
     if context.startswith("assembled") and src.startswith("../"):
         issues.append(f"assembled book must use assets/ not ../assets/: {src!r}")
-    if context.startswith("per-page") and not src.startswith("assets/"):
-        issues.append(f"per-page HTML must use assets/: {src!r}")
+    if context.startswith("per-page") and not src.startswith(PER_PAGE_ASSET_PREFIX):
+        issues.append(f"per-page HTML must use ../assets/: {src!r}")
     return issues
 
 
@@ -58,11 +106,20 @@ def lint_images_in_html(
 ) -> list[str]:
     issues: list[str] = []
     for m in _IMG_SRC_RE.finditer(html):
-        src = m.group(1)
-        issues.extend(lint_image_src(src, context=context))
+        src = m.group(2)
+        src_issues = lint_image_src(src, context=context)
+        issues.extend(src_issues)
+        if src_issues:
+            continue
         if book_root is not None:
-            rel = src.removeprefix("../")
-            path = book_root / "output" / rel
+            if context.startswith("assembled"):
+                path = book_root / "output" / src
+            elif src.startswith(PER_PAGE_ASSET_PREFIX):
+                path = book_root / "output" / src.removeprefix("../")
+            else:
+                page_context = context.removeprefix("per-page ")
+                lang = page_context.split("/", 1)[0]
+                path = book_root / "output" / lang / src
             if not path.is_file():
                 issues.append(f"missing image file {path.relative_to(book_root)} ({context})")
     return issues

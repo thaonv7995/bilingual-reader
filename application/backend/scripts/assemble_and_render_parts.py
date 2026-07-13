@@ -14,6 +14,7 @@ if str(_BACKEND) not in sys.path:
 
 from books_core.paths import BookPaths
 from books_core.io import atomic_write_text
+from books_core.asset_paths import rewrite_per_page_assets_to_assembled
 
 def _extract_body(html: str) -> str:
     """Pull printable content from a standalone page."""
@@ -39,6 +40,12 @@ async def render_pdf_file(html_path: Path, pdf_path: Path):
         abs_url = f"file://{html_path.resolve()}"
         print(f"Loading page {abs_url}...")
         await page.goto(abs_url, wait_until="load", timeout=30000)
+        broken_images = await page.eval_on_selector_all(
+            "img",
+            "imgs => imgs.filter(img => !img.complete || img.naturalWidth === 0).map(img => img.currentSrc || img.src)",
+        )
+        if broken_images:
+            raise RuntimeError(f"Cannot render PDF part with broken images: {broken_images}")
         
         print(f"Printing PDF to {pdf_path.name}...")
         await page.pdf(
@@ -74,7 +81,7 @@ def assemble_part_html(book: BookPaths, pages_list: list[int], lang: str, output
         html_content = page_path.read_text(encoding="utf-8")
         body = _extract_body(html_content)
         # Per-page HTML uses ../assets/; assembled book lives in output/ → assets/
-        body = body.replace('src="../assets/', 'src="assets/')
+        body = rewrite_per_page_assets_to_assembled(body)
         sections.append(
             f'<section class="book-sheet" id="page-{n:04d}" data-page="{n}">\n'
             f'  <main class="book-page book-page--sheet">\n'

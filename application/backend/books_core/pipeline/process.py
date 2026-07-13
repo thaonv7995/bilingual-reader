@@ -16,23 +16,33 @@ from books_core.pipeline.status import (
 from books_core.validation import validate_draft_html
 
 
+def _page_ready_at(path, *, asset_base=None) -> bool:
+    if not path.is_file() or path.stat().st_size == 0:
+        return False
+    try:
+        from books_core.asset_paths import normalize_per_page_asset_file
+        from books_core.book_layout import _verify_html_assets
+
+        normalize_per_page_asset_file(path)
+        content = path.read_text(encoding="utf-8")
+        validate_draft_html(content)
+        return not _verify_html_assets(
+            path,
+            content,
+            ignore_page_figures=True,
+            asset_base=asset_base,
+        )
+    except Exception:
+        return False
+
+
 def _published_ready(book: BookPaths, page: int, lang: str | None = None) -> bool:
     lang = lang or book.default_lang()
     published = book.page_lang_html(page, lang)
-    if published.is_file() and published.stat().st_size > 0:
-        try:
-            validate_draft_html(published.read_text(encoding="utf-8"))
-            return True
-        except Exception:
-            pass
+    if _page_ready_at(published):
+        return True
     final = book.final_html(page, lang)
-    if final.is_file() and final.stat().st_size > 0:
-        try:
-            validate_draft_html(final.read_text(encoding="utf-8"))
-            return True
-        except Exception:
-            pass
-    return False
+    return _page_ready_at(final, asset_base=book.pages_dir(lang))
 
 
 def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
@@ -41,6 +51,9 @@ def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
         if published.stat().st_size == 0:
             return f"{published.name} is empty (0 bytes)"
         try:
+            from books_core.asset_paths import normalize_per_page_asset_file
+
+            normalize_per_page_asset_file(published)
             content = published.read_text(encoding="utf-8")
             validate_draft_html(content)
             
@@ -59,12 +72,20 @@ def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
         if final.stat().st_size == 0:
             return f"{final.name} is empty (0 bytes)"
         try:
+            from books_core.asset_paths import normalize_per_page_asset_file
+
+            normalize_per_page_asset_file(final)
             content = final.read_text(encoding="utf-8")
             validate_draft_html(content)
             
             # Verify CSS, JS, and image assets! Ignore page figures as they are cropped post-render
             from books_core.book_layout import _verify_html_assets
-            asset_errors = _verify_html_assets(final, content, ignore_page_figures=True)
+            asset_errors = _verify_html_assets(
+                final,
+                content,
+                ignore_page_figures=True,
+                asset_base=book.pages_dir(lang),
+            )
             if asset_errors:
                 return f"{final.name} has broken assets: " + "; ".join(asset_errors)
                 

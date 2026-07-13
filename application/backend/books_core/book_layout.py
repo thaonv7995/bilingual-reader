@@ -143,6 +143,24 @@ def _verify_html_assets(
 
     # 2. Images
     img_refs = re.findall(r'<img\s+[^>]*src=["\']([^"\']+)["\']', html_content, flags=re.I)
+    srcset_refs = re.findall(
+        r'<(?:source|img)\s+[^>]*srcset=["\']([^"\']+)["\']',
+        html_content,
+        flags=re.I,
+    )
+    img_refs.extend(
+        re.findall(r'<(?:video|object)\s+[^>]*(?:poster|data)=["\']([^"\']+)["\']', html_content, flags=re.I)
+    )
+    img_refs.extend(
+        re.findall(r'url\(\s*["\']?([^"\')]+)["\']?\s*\)', html_content, flags=re.I)
+    )
+    for ref in srcset_refs:
+        img_refs.extend(
+            candidate.strip().split()[0]
+            for candidate in ref.split(",")
+            if candidate.strip()
+        )
+    img_refs = list(dict.fromkeys(ref.strip() for ref in img_refs))
     for ref in img_refs:
         if _local_ref(ref) is None:
             continue
@@ -229,6 +247,7 @@ def verify_book(
     invalid_pages_en = []
     invalid_pages_vi = []
 
+    from books_core.asset_paths import normalize_per_page_asset_file
     from books_core.validation import validate_draft_html
     from concurrent.futures import ThreadPoolExecutor
 
@@ -243,6 +262,7 @@ def verify_book(
             "missing_vi": [],
             "invalid_en": [],
             "invalid_vi": [],
+            "normalized": [],
             "is_broken": False
         }
         # Check EN
@@ -255,6 +275,8 @@ def verify_book(
             res_dict["is_broken"] = True
         else:
             try:
+                if normalize_per_page_asset_file(en_path):
+                    res_dict["normalized"].append(str(en_path.relative_to(book.root)))
                 content = en_path.read_text(encoding="utf-8")
                 validate_draft_html(content)
                 asset_errors = _verify_html_assets(en_path, content)
@@ -277,6 +299,8 @@ def verify_book(
                 res_dict["is_broken"] = True
             else:
                 try:
+                    if normalize_per_page_asset_file(vi_path):
+                        res_dict["normalized"].append(str(vi_path.relative_to(book.root)))
                     content = vi_path.read_text(encoding="utf-8")
                     validate_draft_html(content)
                     asset_errors = _verify_html_assets(vi_path, content)
@@ -294,12 +318,14 @@ def verify_book(
         results = list(executor.map(check_single_page, range(1, page_count + 1)))
 
     broken_pages = []
+    normalized_pages = []
     for r in results:
         page = r["page"]
         missing_pages_en.extend(r["missing_en"])
         missing_pages_vi.extend(r["missing_vi"])
         invalid_pages_en.extend(r["invalid_en"])
         invalid_pages_vi.extend(r["invalid_vi"])
+        normalized_pages.extend(r["normalized"])
         if r["is_broken"]:
             broken_pages.append(page)
 
@@ -325,6 +351,8 @@ def verify_book(
             if out_path is not None and out_path.is_file():
                 content = out_path.read_text(encoding="utf-8")
                 asset_errors = _verify_html_assets(out_path, content)
+                if asset_errors:
+                    assembly_ok = False
                 for err in asset_errors:
                     warnings.append(f"Assembled ({default_lang}) - {err}")
         else:
@@ -341,6 +369,8 @@ def verify_book(
                 if out_path is not None and out_path.is_file():
                     content = out_path.read_text(encoding="utf-8")
                     asset_errors = _verify_html_assets(out_path, content)
+                    if asset_errors:
+                        assembly_ok = False
                     for err in asset_errors:
                         warnings.append(f"Assembled (vi) - {err}")
             else:
@@ -352,7 +382,14 @@ def verify_book(
 
     # Ready to pack requires no missing/invalid pages and successful assembly with no local asset errors in pages
     # Note: we check if there are any warnings/invalid pages.
-    has_page_errors = len(missing_pages_en) > 0 or len(invalid_pages_en) > 0
+    has_page_errors = any(
+        (
+            missing_pages_en,
+            missing_pages_vi,
+            invalid_pages_en,
+            invalid_pages_vi,
+        )
+    )
     ready_to_pack = (not has_page_errors) and assembly_ok
 
     return {
@@ -361,6 +398,7 @@ def verify_book(
         "page_count": page_count,
         "moved": normalize_result.get("moved", []),
         "repaired_assets": repaired_assets,
+        "normalized_pages": sorted(normalized_pages),
         "assembled_files": assembled_files,
         "warnings": warnings,
         "ready_to_pack": ready_to_pack,

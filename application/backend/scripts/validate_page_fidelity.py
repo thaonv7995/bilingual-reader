@@ -13,6 +13,7 @@ if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
 from books_core.asset_paths import lint_images_in_html  # noqa: E402
+from books_core.book_layout import _verify_html_assets  # noqa: E402
 
 
 def _lint_per_page(path: Path, *, chrome: dict[str, str] | None, book: Path) -> list[str]:
@@ -55,6 +56,7 @@ def _lint_per_page(path: Path, *, chrome: dict[str, str] | None, book: Path) -> 
         issues.append(f"{name}: missing main.book-page.book-page--sheet shell")
 
     issues.extend(lint_images_in_html(text, context=f"per-page {name}", book_root=book))
+    issues.extend(f"{name}: {issue}" for issue in _verify_html_assets(path, text))
     return issues
 
 
@@ -73,6 +75,7 @@ def _lint_assembled(path: Path, book: Path) -> list[str]:
         issues.append(f"{name}: each sheet needs article.sheet-flow.prose-page")
 
     issues.extend(lint_images_in_html(text, context=f"assembled {name}", book_root=book))
+    issues.extend(f"{name}: {issue}" for issue in _verify_html_assets(path, text))
     return issues
 
 

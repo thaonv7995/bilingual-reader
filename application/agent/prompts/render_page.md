@@ -18,23 +18,23 @@ You are the **page HTML builder** for **one PDF page**.
 **`output/<lang>/page_NNNN.html`**
 
 Stylesheets (relative to page file):
-- Always: `assets/book.css`, `assets/page-tokens.css`, `assets/prose-page.css`
-- If code/listings: `assets/code-page.css`
-- If figures/math: `assets/figures-page.css`
+- Always: `../assets/book.css`, `../assets/page-tokens.css`, `../assets/prose-page.css`
+- If code/listings: `../assets/code-page.css`
+- If figures/math: `../assets/figures-page.css`
 
 ## Rules for Linking Stylesheets, Scripts, and Images (CRITICAL)
 
 To prevent resource loading issues (broken CSS, JS, or images), you MUST follow these constraints:
 1. **CSS Stylesheets**:
-   - Link ONLY standard stylesheets from the `assets/` directory in the `<head>`: `assets/book.css`, `assets/page-tokens.css`, `assets/prose-page.css`, and optionally `assets/code-page.css` or `assets/figures-page.css` based on page elements.
+   - Link ONLY standard stylesheets from the `../assets/` directory in the `<head>`: `../assets/book.css`, `../assets/page-tokens.css`, `../assets/prose-page.css`, and optionally `../assets/code-page.css` or `../assets/figures-page.css` based on page elements.
    - Do NOT reference any other styles, remote web links, or ad-hoc custom CSS files.
 2. **Javascript (JS) Scripts**:
    - Do NOT include any `<script>` tags, third-party trackers, or custom scripting unless it is a standard template requirement.
 3. **Images & Figure Assets**:
-   - Every `<img>` tag MUST point to a valid relative path starting with `assets/images/` (e.g., `src="assets/images/page_NNNN_fig_X.png"`).
-   - Before writing the HTML, check the contents of `output/assets/images/` to see if a cropped image already exists for this page. If you find `page_0016_fig_1.png`, you MUST include the prefix: `src="assets/images/page_0016_fig_1.png"`.
-   - Do NOT append random junk characters or duplicate extensions to the image source (e.g. `assets/images/page_0016_fig_1.png123` or `assets/images/page_0016_fig_1.png.png`).
-   - If no image has been cropped yet, use the expected standard naming pattern (e.g., `assets/images/page_NNNN_fig_1.png`) inside a proper `<figure>` block, so the automated figure extraction script can place it later.
+   - Every `<img>` tag MUST point to a valid relative path starting with `../assets/images/` (e.g., `src="../assets/images/page_NNNN_fig_X.png"`).
+   - Before writing the HTML, check the contents of `output/assets/images/` to see if a cropped image already exists for this page. If you find `page_0016_fig_1.png`, you MUST include the prefix: `src="../assets/images/page_0016_fig_1.png"`.
+   - Do NOT append random junk characters or duplicate extensions to the image source (e.g. `../assets/images/page_0016_fig_1.png123` or `../assets/images/page_0016_fig_1.png.png`).
+   - If no image has been cropped yet, use the expected standard naming pattern (e.g., `../assets/images/page_NNNN_fig_1.png`) inside a proper `<figure>` block, so the automated figure extraction script can place it later.
 
 ## Shell
 
@@ -68,13 +68,12 @@ DO NOT run any post-render scripts (such as `extract_pdf_figures.py`, `upgrade_f
 ## Self-Verification Steps (CRITICAL)
 
 After writing the HTML file, you MUST perform a self-verification pass using your file tools to ensure all resources load successfully:
-1. **Verify CSS Stylesheets**: Find every stylesheet link (e.g. `assets/book.css`) in your written HTML. Verify that these files actually exist on disk in the corresponding `output/assets/` directory.
-2. **Verify Images & Figures**: For every `<img>` tag you wrote, resolve its relative path (e.g. `assets/images/page_NNNN_fig_X.png`) and verify that the target image file exists on disk. If the image is not present yet but is required by the page layout, make sure the reference is clean and structured under a proper `<figure>` container so the pipeline can extract it later.
+1. **Verify CSS Stylesheets**: Find every stylesheet link (e.g. `../assets/book.css`) in your written HTML. Resolve it from `output/<lang>/`; it must point to the corresponding file under `output/assets/`.
+2. **Verify Images & Figures**: For every `<img>` tag you wrote, resolve its relative path (e.g. `../assets/images/page_NNNN_fig_X.png`) from `output/<lang>/` and verify that the target image file exists. If the image is not present yet but is required by the page layout, make sure the reference is clean and structured under a proper `<figure>` container so the pipeline can extract it later.
 3. **Verify Javascript**: Ensure no unexpected scripts or external links are present.
 4. **Immediate Fix**: If any file path is incorrect, broken (404), has unencoded spaces, or is missing, modify your HTML to fix the path before completing your work.
 
 ## Done when
 
 Side-by-side with `source.pdf`: correct **order**, **block types**, **chrome**, **listings**, **figures**, **math**; page N only. Must fit onto exactly one A4 page without clipping or overflow.
-
 

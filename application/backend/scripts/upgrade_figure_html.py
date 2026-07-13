@@ -8,20 +8,48 @@ import re
 import sys
 from pathlib import Path
 
+# Allow imports from backend when run as a standalone script.
+_BACKEND = Path(__file__).resolve().parents[1]
+if str(_BACKEND) not in sys.path:
+    sys.path.insert(0, str(_BACKEND))
+
+from books_core.asset_paths import normalize_per_page_asset_paths  # noqa: E402
+
 
 def _fig_id_from_caption(html: str) -> str | None:
-    m = re.search(r"Figure\s+([A-Za-z\d]+[-.]\d+)", html, re.I)
+    visible_text = re.sub(r"<[^>]+>", " ", html)
+    m = re.search(
+        r"(?:Figure|Hình)\s+([A-Za-z\d]+(?:[-.]\d+)?)",
+        visible_text,
+        re.I,
+    )
     return m.group(1) if m else None
+
+
+def _ensure_figures_css(html: str) -> str:
+    if "figures-page.css" in html:
+        return html
+    prose_link = re.compile(
+        r"<link\b[^>]*href\s*=\s*([\"'])\.\./assets/prose-page\.css\1[^>]*>",
+        re.IGNORECASE,
+    )
+    return prose_link.sub(
+        lambda m: f'{m.group(0)}\n  <link rel="stylesheet" href="../assets/figures-page.css">',
+        html,
+        count=1,
+    )
 
 
 def upgrade_page(html_path: Path, manifest: dict[str, list]) -> bool:
     page_key = f"page_{int(html_path.stem.split('_')[1]):04d}"
     figs = {f["figure"]: f for f in manifest.get(page_key, [])}
+    original = html_path.read_text(encoding="utf-8")
+    html = normalize_per_page_asset_paths(original)
     if not figs:
+        if html != original:
+            html_path.write_text(html, encoding="utf-8")
+            return True
         return False
-
-    html = html_path.read_text(encoding="utf-8")
-    original = html
 
     def repl(match: re.Match[str]) -> str:
         block = match.group(0)
@@ -33,26 +61,23 @@ def upgrade_page(html_path: Path, manifest: dict[str, list]) -> bool:
         caption = cap_m.group(0) if cap_m else ""
         return (
             f'<figure class="diagram">\n'
-            f'  <img src="assets/{info["file"]}" width="{info["width"]}" height="{info["height"]}" '
+            f'  <img src="../assets/{info["file"]}" width="{info["width"]}" height="{info["height"]}" '
             f'alt="Figure {fig_id}">\n'
             f"  {caption}\n"
             f"</figure>"
         )
 
     html = re.sub(
-        r'<figure class="diagram">.*?<pre class="ascii-figure">.*?</pre>\s*</figure>',
+        r'<figure\b[^>]*class=["\'][^"\']*\bdiagram\b[^"\']*["\'][^>]*>.*?'
+        r'<pre\b[^>]*class=["\'][^"\']*\bascii-figure\b[^"\']*["\'][^>]*>.*?'
+        r'</pre>\s*</figure>',
         repl,
         html,
         flags=re.DOTALL,
     )
 
-    if "figures-page.css" not in html:
-        html = html.replace(
-            '<link rel="stylesheet" href="assets/prose-page.css">',
-            '<link rel="stylesheet" href="assets/prose-page.css">\n'
-            '  <link rel="stylesheet" href="assets/figures-page.css">',
-            1,
-        )
+    if figs:
+        html = _ensure_figures_css(html)
 
     if html != original:
         html_path.write_text(html, encoding="utf-8")
@@ -70,12 +95,14 @@ def main(argv: list[str]) -> int:
         print(f"Missing {manifest_path} — run extract_pdf_figures.py first", file=sys.stderr)
         return 1
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    pages_dir = book / "output" / "en"
     changed = 0
-    for path in sorted(pages_dir.glob("page_*.html")):
-        if upgrade_page(path, manifest):
-            changed += 1
-            print(f"upgraded {path.name}")
+    for pages_dir in sorted((book / "output").iterdir()):
+        if not pages_dir.is_dir():
+            continue
+        for path in sorted(pages_dir.glob("page_*.html")):
+            if upgrade_page(path, manifest):
+                changed += 1
+                print(f"upgraded {pages_dir.name}/{path.name}")
     print(f"Done — {changed} pages")
     return 0
 

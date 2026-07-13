@@ -18,6 +18,12 @@ async def generate_pdf(html_path: Path, pdf_path: Path):
         # Resolve path to absolute file:// URL
         abs_url = f"file://{html_path.resolve()}"
         await page.goto(abs_url, wait_until="networkidle", timeout=60000)
+        broken_images = await page.eval_on_selector_all(
+            "img",
+            "imgs => imgs.filter(img => !img.complete || img.naturalWidth === 0).map(img => img.currentSrc || img.src)",
+        )
+        if broken_images:
+            raise RuntimeError(f"Cannot generate PDF with broken images: {broken_images}")
         
         print(f"Generating PDF at {pdf_path}...")
         # Print to PDF with standard A4 size and no margins to let A4 CSS sub-sheets work perfectly

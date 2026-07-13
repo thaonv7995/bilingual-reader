@@ -166,7 +166,7 @@ Fix all errors before `books-cli assemble`.
 </section>
 ```
 
-Head must link: `assets/book.css`, `page-tokens.css`, `prose-page.css`, and `code-page.css` / `figures-page.css` when used.
+Per-page head must link: `../assets/book.css`, `../assets/page-tokens.css`, `../assets/prose-page.css`, and `../assets/code-page.css` / `../assets/figures-page.css` when used.
 
 **Never** dump raw `<article>` content without `main` + `prose-page` wrapper.
 

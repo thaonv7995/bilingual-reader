@@ -8,91 +8,105 @@ import re
 import sys
 from pathlib import Path
 
+# Allow imports from backend when run as a standalone script.
+_BACKEND = Path(__file__).resolve().parents[1]
+if str(_BACKEND) not in sys.path:
+    sys.path.insert(0, str(_BACKEND))
 
-def _figure_ids_in_html(html: str) -> list[str]:
-    ids: list[str] = []
-    for m in re.finditer(
-        r"<figcaption>[^<]*(?:Figure|Hình)\s+([A-Za-z\d]+[-.]\d+)",
-        html,
-        flags=re.IGNORECASE,
-    ):
-        ids.append(m.group(1))
-    for m in re.finditer(r'alt="(?:Figure|Hình)\s+([A-Za-z\d]+[-.]\d+)"', html, flags=re.IGNORECASE):
-        if m.group(1) not in ids:
-            ids.append(m.group(1))
-    return ids
+from books_core.asset_paths import (  # noqa: E402
+    normalize_per_page_asset_paths,
+    resolve_relative_asset,
+)
+
+
+_FIGURE_BLOCK_RE = re.compile(r"<figure\b[^>]*>.*?</figure>", re.IGNORECASE | re.DOTALL)
+_IMG_TAG_RE = re.compile(r"<img\b[^>]*>", re.IGNORECASE | re.DOTALL)
+_IMG_SRC_RE = re.compile(r"\bsrc\s*=\s*([\"'])(.*?)\1", re.IGNORECASE | re.DOTALL)
+
+
+def _set_img_attr(tag: str, name: str, value: str) -> str:
+    pattern = re.compile(
+        rf"(\s{name}\s*=\s*)([\"']).*?\2",
+        re.IGNORECASE | re.DOTALL,
+    )
+    if pattern.search(tag):
+        return pattern.sub(lambda m: f'{m.group(1)}"{value}"', tag, count=1)
+    insert_at = tag.rfind("/>") if tag.rstrip().endswith("/>") else tag.rfind(">")
+    return f'{tag[:insert_at].rstrip()} {name}="{value}"{tag[insert_at:]}'
 
 
 def _replace_img_in_figure(html: str, fig_id: str, info: dict) -> str:
-    """Replace the <img> inside the figure that references fig_id."""
-    src = f'assets/{info["file"]}'
-    w, h = info["width"], info["height"]
-
-    # Match figure block containing this fig_id in figcaption or alt
-    pattern = (
-        rf'(<figure[^>]*>(?:(?!</figure>).)*?<img\s+)[^>]+(>(?:(?!</figure>).)*?'
-        rf'(?:Figure|Hình)\s+{re.escape(fig_id)}(?:(?!</figure>).)*?</figure>)'
+    """Update only image URL/dimensions while preserving the rest of the tag."""
+    src = f'../assets/{info["file"]}'
+    expected_name = Path(info["file"]).name
+    label_re = re.compile(
+        rf"(?:Figure|Hình)\s+{re.escape(fig_id)}(?![.-]\d)",
+        re.IGNORECASE,
     )
+    updated = False
 
-    def repl(m: re.Match[str]) -> str:
-        # Preserve alt from existing tag if present
-        block = m.group(0)
-        alt_m = re.search(r'alt="([^"]*)"', block)
-        alt = alt_m.group(1) if alt_m else f"Figure {fig_id}"
-        return (
-            f'{m.group(1)}src="{src}" width="{w}" height="{h}" alt="{alt}"{m.group(2)}'
-        )
+    def replace_block(match: re.Match[str]) -> str:
+        nonlocal updated
+        block = match.group(0)
+        if updated:
+            return block
+        img_match = _IMG_TAG_RE.search(block)
+        if not img_match:
+            return block
+        current_src = _IMG_SRC_RE.search(img_match.group(0))
+        current_name = ""
+        if current_src:
+            current_name = Path(current_src.group(2).split("?", 1)[0]).name
+        if not label_re.search(block) and current_name != expected_name:
+            return block
 
-    return re.sub(pattern, repl, html, count=1, flags=re.DOTALL | re.IGNORECASE)
+        tag = img_match.group(0)
+        tag = _set_img_attr(tag, "src", src)
+        tag = _set_img_attr(tag, "width", str(info["width"]))
+        tag = _set_img_attr(tag, "height", str(info["height"]))
+        if not re.search(r"\balt\s*=", tag, flags=re.IGNORECASE):
+            tag = _set_img_attr(tag, "alt", f"Figure {fig_id}")
+        updated = True
+        return f"{block[:img_match.start()]}{tag}{block[img_match.end():]}"
+
+    return _FIGURE_BLOCK_RE.sub(replace_block, html)
+
+
+def _ensure_figures_css(html: str) -> str:
+    if "figures-page.css" in html:
+        return html
+    prose_link = re.compile(
+        r"<link\b[^>]*href\s*=\s*([\"'])\.\./assets/prose-page\.css\1[^>]*>",
+        re.IGNORECASE,
+    )
+    return prose_link.sub(
+        lambda m: f'{m.group(0)}\n  <link rel="stylesheet" href="../assets/figures-page.css">',
+        html,
+        count=1,
+    )
 
 
 def refresh_page(html_path: Path, manifest: dict[str, list]) -> bool:
     page_key = f"page_{int(html_path.stem.split('_')[1]):04d}"
     figs = {f["figure"]: f for f in manifest.get(page_key, [])}
 
-    html = html_path.read_text(encoding="utf-8")
-    original = html
+    original = html_path.read_text(encoding="utf-8")
+    html = normalize_per_page_asset_paths(original)
 
     for fig_id, info in figs.items():
         html = _replace_img_in_figure(html, fig_id, info)
 
-    # Clean up hallucinated/missing figures that were never extracted
-    def cleanup_missing_figures(match: re.Match[str]) -> str:
-        block = match.group(0)
-        src_m = re.search(r'src=["\']([^"\']+)["\']', block)
-        if not src_m:
-            return block
-        src = src_m.group(1)
-        if "page_" in src and "_fig_" in src:
-            import urllib.parse
-            clean_ref = urllib.parse.unquote(src.split("?")[0])
-            asset_path = (html_path.parent / clean_ref).resolve()
-            if not asset_path.is_file():
-                return ""  # Remove broken figure block
-        return block
+    if figs:
+        html = _ensure_figures_css(html)
 
-    html = re.sub(r'<figure[^>]*>.*?</figure>', cleanup_missing_figures, html, flags=re.DOTALL)
-    
-    # Also clean up standalone images if any were hallucinated outside a figure
-    def cleanup_missing_imgs(match: re.Match[str]) -> str:
-        src = match.group(1)
+    missing_refs: set[str] = set()
+    for src_match in _IMG_SRC_RE.finditer(html):
+        src = src_match.group(2)
         if "page_" in src and "_fig_" in src:
-            import urllib.parse
-            clean_ref = urllib.parse.unquote(src.split("?")[0])
-            asset_path = (html_path.parent / clean_ref).resolve()
-            if not asset_path.is_file():
-                return ""
-        return match.group(0)
-    
-    html = re.sub(r'<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*>', cleanup_missing_imgs, html)
-
-    if "figures-page.css" not in html and figs:
-        html = html.replace(
-            '<link rel="stylesheet" href="assets/prose-page.css">',
-            '<link rel="stylesheet" href="assets/prose-page.css">\n'
-            '  <link rel="stylesheet" href="assets/figures-page.css">',
-            1,
-        )
+            if not resolve_relative_asset(html_path.parent, src).is_file():
+                missing_refs.add(src)
+    for src in sorted(missing_refs):
+        print(f"WARN {html_path}: missing figure asset {src}", file=sys.stderr)
 
     if html != original:
         html_path.write_text(html, encoding="utf-8")

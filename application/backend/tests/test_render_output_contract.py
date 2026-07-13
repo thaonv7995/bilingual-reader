@@ -53,6 +53,8 @@ def test_render_prompt_uses_exact_canonical_output(tmp_path: Path) -> None:
     assert context["skill_pack"]["output_path"] == "output/en/page_0001.html"
     assert "page_NNNN" not in prompt
     assert "Required output (exact path): `output/en/page_0001.html`" in prompt
+    assert 'src="../assets/images/page_0001_fig_X.png"' in prompt
+    assert 'src="assets/images/' not in prompt
 
 
 def test_zero_exit_without_expected_output_is_failure(tmp_path: Path) -> None:
