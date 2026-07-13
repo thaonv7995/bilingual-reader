@@ -309,6 +309,8 @@ def main() -> int:
     scripts_dir = _BACKEND / "scripts"
 
     post_scripts = [
+        ("diagnose_page_visuals.py", []),
+        ("materialize_vector_figures.py", []),
         ("extract_pdf_figures.py", []),
         ("upgrade_figure_html.py", []),
         ("refresh_figure_images.py", []),

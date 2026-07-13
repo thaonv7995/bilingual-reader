@@ -10,8 +10,9 @@ You are the **page HTML builder** for **one PDF page**.
 ## Inputs
 
 1. **`work/page_NNNN/source.pdf`** — primary (open visually)
-2. **`book.json`** → `page_chrome` — header/footer text for this book
-3. **`output/assets/images/`** — figure crops
+2. **`work/page_NNNN/visual-diagnosis.json`** — required per-figure rendering strategy
+3. **`book.json`** → `page_chrome` — header/footer text for this book
+4. **`output/assets/images/`** — raster figure crops
 
 ## Output
 
@@ -36,6 +37,16 @@ To prevent resource loading issues (broken CSS, JS, or images), you MUST follow 
    - Do NOT append random junk characters or duplicate extensions to the image source (e.g. `../assets/images/page_0016_fig_1.png123` or `../assets/images/page_0016_fig_1.png.png`).
    - If no image has been cropped yet, use the expected standard naming pattern (e.g., `../assets/images/page_NNNN_fig_1.png`) only for a real figure, diagram, or first-page cover visible in `source.pdf`; keep it inside a proper `<figure>` block so the automated extractor can place it later.
    - Never invent an `<img>` placeholder for decorative text, whitespace, or content that has no corresponding visual region in `source.pdf`.
+
+## Figure strategy (CRITICAL)
+
+Read `work/page_NNNN/visual-diagnosis.json` before building figures and follow the strategy for each figure:
+
+- **`reconstruct-html-svg`**: redraw the visual using semantic HTML/CSS or inline SVG. Preserve its labels, arrows, grouping, colors, and relationships. Do **not** add an `<img>` placeholder for this figure. Inline SVG is preferred over canvas because page HTML must work without JavaScript.
+- **`extract-raster`**: keep the figure in a proper `<figure>` and use the standard `../assets/images/page_NNNN_fig_X.png` placeholder. The post-render extractor will crop only the diagnosed artwork bounds and leave the source caption out when an HTML `<figcaption>` exists.
+- Preserve the caption as semantic `<figcaption>` text in both cases. Do not duplicate a caption inside a raster crop.
+
+If a simple vector figure was not reconstructed by the agent, the post-render pipeline may replace its image placeholder with a clipped inline SVG from the source PDF as a fidelity fallback.
 
 ## Shell
 
@@ -64,7 +75,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
 
 ## After you write HTML
 
-DO NOT run any post-render scripts (such as `extract_pdf_figures.py`, `upgrade_figure_html.py`, `fix_book_layout.py`, or `validate_page_fidelity.py`) yourself. These scripts are run automatically by the main orchestrator after you finish. Running them yourself as background tasks will cause your process to exit early and fail. Simply write the completed HTML file and finish.
+DO NOT run any post-render scripts (such as `diagnose_page_visuals.py`, `materialize_vector_figures.py`, `extract_pdf_figures.py`, `upgrade_figure_html.py`, `fix_book_layout.py`, or `validate_page_fidelity.py`) yourself. These scripts are run automatically by the main orchestrator after you finish. Running them yourself as background tasks will cause your process to exit early and fail. Simply write the completed HTML file and finish.
 
 ## Self-Verification Steps (CRITICAL)
 

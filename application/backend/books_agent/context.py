@@ -8,6 +8,7 @@ from books_agent.phase_pack import phase_skill_pack
 from books_agent.phases import PROMPT_FILES, AgentPhase
 from books_core.paths import BookPaths
 from books_core.repo import repo_root, skills_root
+from books_core.visual_diagnostics import diagnosis_path, ensure_visual_diagnosis
 
 
 def agent_prompts_dir() -> Path:
@@ -36,6 +37,7 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
         if (book.input_dir / "original.pdf").is_file()
         else None,
         "source_pdf": rel(book.source_pdf) if book.source_pdf.is_file() else None,
+        "visual_diagnosis": None,
         # This is the required destination, not a description of an existing file.
         "published_html": output_file,
     }
@@ -48,14 +50,29 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
 
     prerequisites: list[str] = []
     hints: list[str] = []
+    visual_diagnosis: dict[str, Any] | None = None
     if phase == "render_page":
         if not paths.get("source_page_pdf"):
             prerequisites.append(
                 "Run page-pdf first (work/page_NNNN/source.pdf required)."
             )
+        else:
+            try:
+                visual_diagnosis = ensure_visual_diagnosis(book.root, page)
+                paths["visual_diagnosis"] = rel(diagnosis_path(book.root, page))
+            except Exception as exc:
+                paths["visual_diagnosis"] = None
+                hints.append(f"Visual diagnosis could not be generated: {exc}")
         hints.append("MUST READ: application/agent/FIDELITY-RULES.md before writing HTML.")
         hints.append(f"Primary input: {rel(source_page_pdf)} — open visually; do not trust text-extract order.")
-        hints.append("After render: extract_pdf_figures → upgrade_figure_html → fix_book_layout → validate_page_fidelity.")
+        hints.append(
+            "Follow visual-diagnosis.json per figure: reconstruct-html-svg uses semantic HTML/inline SVG; "
+            "extract-raster uses a standard image placeholder."
+        )
+        hints.append(
+            "After render: materialize_vector_figures → extract_pdf_figures → "
+            "upgrade_figure_html → fix_book_layout → validate_page_fidelity."
+        )
 
     skill_pack = phase_skill_pack(phase, skills, paths)
     skill_pack["output_contract"] = [
@@ -76,6 +93,7 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
         "skill_pack": skill_pack,
         "prerequisites": prerequisites,
         "efficiency_hints": hints,
+        "visual_diagnosis": visual_diagnosis,
         "repo_root": str(repo_root()),
     }
 

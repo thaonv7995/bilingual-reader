@@ -15,7 +15,10 @@ except ImportError:
 
 
 
-FIGURE_RE = re.compile(r"^Figure\s+([A-Za-z\d]+(?:[-.]\d+)?)(?:\s|[:.]|$)", re.I)
+FIGURE_RE = re.compile(
+    r"^(?:Figure|Fig\.|Hình)\s+([A-Za-z\d]+(?:[-.]\d+)?)(?:\s|[:.]|$)",
+    re.I,
+)
 EXPECTED_FIGURE_RE = re.compile(
     r"(?:\.\./)?assets/images/"
     r"(?P<name>page_(?P<page>\d{4})_fig_(?P<figure>[A-Za-z0-9_.-]+)\.png)",
@@ -34,6 +37,30 @@ def _expected_page_figures(book_root: Path, page_num: int) -> list[tuple[str, st
                 continue
             found.setdefault(match.group("name"), match.group("figure"))
     return sorted(found.items())
+
+
+def _canonical_figure_id(value: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", value.lower())
+
+
+def _diagnosed_crop_overrides(pdf_path: Path) -> dict[str, fitz.Rect]:
+    """Return diagnosis art crops keyed by punctuation-insensitive figure id."""
+    diagnosis_path = pdf_path.with_name("visual-diagnosis.json")
+    if not diagnosis_path.is_file():
+        return {}
+    try:
+        diagnosis = json.loads(diagnosis_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    overrides: dict[str, fitz.Rect] = {}
+    for figure in diagnosis.get("figures", []):
+        crop = figure.get("crop_bbox")
+        if not isinstance(crop, list) or len(crop) != 4:
+            continue
+        rect = fitz.Rect(*(float(value) for value in crop))
+        if rect.width > 0 and rect.height > 0:
+            overrides[_canonical_figure_id(str(figure.get("id") or ""))] = rect
+    return overrides
 
 
 def _full_page_fallback(
@@ -168,8 +195,11 @@ def extract_figures(
     dpi: int = 200,
     expected_figures: list[tuple[str, str]] | None = None,
 ) -> list[dict]:
+    if expected_figures == []:
+        return []
     out_dir.mkdir(parents=True, exist_ok=True)
     manifest: list[dict] = []
+    crop_overrides = _diagnosed_crop_overrides(pdf_path)
 
     with fitz.open(pdf_path) as doc:
         page = doc[0]
@@ -470,6 +500,17 @@ def extract_figures(
         elif "the-lean-startup" in str(pdf_path) and page_num == 207:
             labels = [("1", "", fitz.Rect(10, 155, 242, 304))]
 
+
+        if expected_figures:
+            expected_ids = {
+                _canonical_figure_id(figure_id)
+                for _, figure_id in expected_figures
+            }
+            labels = [
+                label
+                for label in labels
+                if _canonical_figure_id(label[0]) in expected_ids
+            ]
 
         if not labels:
             return _full_page_fallback(
@@ -993,6 +1034,10 @@ def extract_figures(
             else:
                 clip = fitz.Rect(rect.x0 + margin_x, y0, rect.x1 - margin_x, y1)
                 clip &= rect
+            diagnosed_clip = crop_overrides.get(_canonical_figure_id(fig_id))
+            if diagnosed_clip is not None:
+                clip = diagnosed_clip & rect
+
             safe_id = fig_id.replace("-", "_").replace(".", "_")
             name = f"page_{page_num:04d}_fig_{safe_id}.png"
             out_path = out_dir / name
@@ -1008,7 +1053,12 @@ def extract_figures(
                 except Exception:
                     pass
 
-            if pix_width is None or pix_height is None or page_num == 93:
+            if (
+                pix_width is None
+                or pix_height is None
+                or page_num == 93
+                or diagnosed_clip is not None
+            ):
                 if pix is None:
                     if page_num in (4, 15, 26, 27, 35, 71, 93, 213, 227, 311, 329, 361, 371, 381, 395, 407, 415, 427, 445, 451, 479):
                         for block in page.get_text("dict")["blocks"]:
@@ -1060,9 +1110,12 @@ def process_book(book_root: Path, pages: list[int] | None = None) -> dict:
             page_num=n,
             expected_figures=expected_figures,
         )
+        manifest_key = f"page_{n:04d}"
         if figs:
-            all_manifest[f"page_{n:04d}"] = figs
+            all_manifest[manifest_key] = figs
             print(f"page {n:04d}: {len(figs)} figure(s)")
+        elif not expected_figures:
+            all_manifest.pop(manifest_key, None)
 
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(all_manifest, indent=2), encoding="utf-8")

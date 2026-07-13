@@ -133,7 +133,7 @@ def test_batch_stops_before_assembly_when_post_render_fails(
 
     assert batch_processor.main() == 1
     assert len(calls) == 1
-    assert calls[0][1].endswith("extract_pdf_figures.py")
+    assert calls[0][1].endswith("diagnose_page_visuals.py")
     output = capsys.readouterr().out
     assert "assembly was skipped" in output
     assert "Batch processing complete" not in output

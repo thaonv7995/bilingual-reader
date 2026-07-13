@@ -300,6 +300,8 @@ def run_post_pipeline(book_root: Path, translate: bool) -> bool:
     scripts_dir = _BACKEND / "scripts"
 
     post_scripts = [
+        ("diagnose_page_visuals.py", []),
+        ("materialize_vector_figures.py", []),
         ("extract_pdf_figures.py", []),
         ("upgrade_figure_html.py", []),
         ("refresh_figure_images.py", []),

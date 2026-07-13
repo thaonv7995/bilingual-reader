@@ -518,6 +518,8 @@ def main() -> int:
 
     # Runs scripts in sequence
     post_scripts = [
+        ("diagnose_page_visuals.py", extract_args),
+        ("materialize_vector_figures.py", extract_args),
         ("extract_pdf_figures.py", extract_args),
         ("upgrade_figure_html.py", []),
         ("refresh_figure_images.py", []),
