@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
+from books_core.figure_dimensions import normalize_figure_display_html
 from books_core.io import atomic_write_text
 from books_core.paths import BookPaths
 from books_core.validation import ArtifactValidationError, validate_draft_html
@@ -60,6 +62,17 @@ def assemble_book_html(
     meta = book.load_book_json()
     title = str(meta.get("title") or book.root.name)
     sections: list[str] = []
+    figure_manifest: dict[str, list[dict]] = {}
+    manifest_path = book.output_dir / "assets" / "figures.manifest.json"
+    if manifest_path.is_file():
+        try:
+            loaded_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if isinstance(loaded_manifest, dict):
+                figure_manifest = loaded_manifest
+        except (OSError, json.JSONDecodeError):
+            # Asset validation reports malformed/missing data elsewhere; assembly
+            # remains backward compatible with books that have no valid manifest.
+            pass
 
     assets = book.output_dir / "assets"
     extra_css: list[str] = ["assets/book.css", "assets/page-tokens.css", "assets/prose-page.css"]
@@ -75,6 +88,13 @@ def assemble_book_html(
     for n in pages:
         page_path = book.page_lang_html(n, lang)
         html = page_path.read_text(encoding="utf-8")
+        normalized_html = normalize_figure_display_html(
+            html,
+            figure_manifest.get(f"page_{n:04d}", []),
+        )
+        if normalized_html != html:
+            atomic_write_text(page_path, normalized_html)
+            html = normalized_html
         try:
             validate_draft_html(html)
         except ArtifactValidationError as exc:

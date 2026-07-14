@@ -17,6 +17,9 @@ from books_core.asset_paths import (  # noqa: E402
     normalize_per_page_asset_paths,
     resolve_relative_asset,
 )
+from books_core.figure_dimensions import (  # noqa: E402
+    apply_figure_display_to_img_tag,
+)
 
 
 _FIGURE_BLOCK_RE = re.compile(r"<figure\b[^>]*>.*?</figure>", re.IGNORECASE | re.DOTALL)
@@ -62,8 +65,7 @@ def _replace_img_in_figure(html: str, fig_id: str, info: dict) -> str:
 
         tag = img_match.group(0)
         tag = _set_img_attr(tag, "src", src)
-        tag = _set_img_attr(tag, "width", str(info["width"]))
-        tag = _set_img_attr(tag, "height", str(info["height"]))
+        tag = apply_figure_display_to_img_tag(tag, info)
         if not re.search(r"\balt\s*=", tag, flags=re.IGNORECASE):
             tag = _set_img_attr(tag, "alt", f"Figure {fig_id}")
         updated = True

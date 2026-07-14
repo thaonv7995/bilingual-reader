@@ -66,6 +66,10 @@ def test_first_page_cover_placeholder_is_materialized(tmp_path: Path) -> None:
     assert image.stat().st_size > 0
     assert manifest["page_0001"][0]["file"] == "images/page_0001_fig_1.png"
     assert manifest["page_0001"][0]["label"] == "First-page cover fallback"
+    assert manifest["page_0001"][0]["raster_width"] > 0
+    assert manifest["page_0001"][0]["raster_height"] > 0
+    assert manifest["page_0001"][0]["display_width_pt"] == 200
+    assert manifest["page_0001"][0]["display_height_pt"] == 300
     assert extract_main(["extract_pdf_figures.py", str(book), "1"]) == 0
 
 

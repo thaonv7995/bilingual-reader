@@ -195,6 +195,117 @@ def test_upgrade_plain_figure_id_for_en_and_vi(tmp_path: Path) -> None:
         assert "ascii-figure" not in content
 
 
+def test_pdf_crop_controls_figure_display_size_for_en_and_vi(tmp_path: Path) -> None:
+    """A 200-DPI PNG must not be displayed as if its pixels were CSS pixels."""
+    book = _book(tmp_path, with_vi=True)
+    manifest = {
+        "page_0001": [
+            {
+                "figure": "6",
+                "file": "images/page_0001_fig_6.png",
+                "width": 686,
+                "height": 1040,
+                "raster_width": 686,
+                "raster_height": 1040,
+                "display_width_pt": 246.56,
+                "display_height_pt": 374.0,
+                "clip": [183.08, 186.68, 429.64, 560.68],
+            }
+        ]
+    }
+    for lang, alt in (("en", "Pope Francis"), ("vi", "Giáo hoàng Phanxicô")):
+        page = book.page_lang_html(1, lang)
+        page.write_text(
+            _page_html(
+                '<figure data-visual-id="6">'
+                f'<img src="../assets/images/page_0001_fig_6.png" alt="{alt}" '
+                'width="686" height="1040" style="object-fit: contain; width: 686px">'
+                "</figure>"
+            ),
+            encoding="utf-8",
+        )
+
+        assert refresh_page(page, manifest) is True
+        content = page.read_text(encoding="utf-8")
+        assert 'width="329"' in content
+        assert 'height="499"' in content
+        assert "width: 86.981mm" in content
+        assert "max-width: 100%" in content
+        assert "height: auto" in content
+        assert "object-fit: contain" in content
+        assert "width: 686px" not in content
+
+
+def test_upgrade_uses_pdf_crop_size_instead_of_raster_size(tmp_path: Path) -> None:
+    book = _book(tmp_path)
+    page = book.page_lang_html(1, "en")
+    page.write_text(
+        _page_html(
+            '<figure class="diagram"><figcaption>Figure 6</figcaption>'
+            '<pre class="ascii-figure">photo</pre></figure>'
+        ),
+        encoding="utf-8",
+    )
+    manifest = {
+        "page_0001": [
+            {
+                "figure": "6",
+                "file": "images/page_0001_fig_6.png",
+                "width": 686,
+                "height": 1040,
+                "clip": [183.08, 186.68, 429.64, 560.68],
+            }
+        ]
+    }
+
+    assert upgrade_page(page, manifest) is True
+    content = page.read_text(encoding="utf-8")
+    assert 'width="329"' in content
+    assert 'height="499"' in content
+    assert 'style="width: 86.981mm; max-width: 100%; height: auto;"' in content
+    assert 'width="686"' not in content
+
+
+def test_repack_repairs_existing_figure_dimensions(tmp_path: Path) -> None:
+    book = _book(tmp_path)
+    image = book.output_dir / "assets" / "images" / "page_0001_fig_6.png"
+    image.write_bytes(b"png")
+    page = book.page_lang_html(1, "en")
+    page.write_text(
+        _page_html(
+            '<figure><img src="../assets/images/page_0001_fig_6.png" '
+            'width="686" height="1040" alt="Pope Francis"></figure>'
+        ),
+        encoding="utf-8",
+    )
+    manifest = {
+        "page_0001": [
+            {
+                "figure": "6",
+                "file": "images/page_0001_fig_6.png",
+                "width": 686,
+                "height": 1040,
+                "clip": [183.08, 186.68, 429.64, 560.68],
+            }
+        ]
+    }
+    (book.output_dir / "assets" / "figures.manifest.json").write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+
+    result = assemble_book_html(book, "en")
+
+    assert result["ok"] is True
+    standalone = page.read_text(encoding="utf-8")
+    assembled = (book.output_dir / "book.html").read_text(encoding="utf-8")
+    for content in (standalone, assembled):
+        assert 'width="329"' in content
+        assert 'height="499"' in content
+        assert "width: 86.981mm" in content
+        assert 'width="686"' not in content
+
+
 def test_verify_normalizes_both_languages_and_counts_vi_asset_errors(tmp_path: Path) -> None:
     book = _book(tmp_path, with_vi=True)
     book.page_lang_html(1, "en").write_text(_page_html("<p>EN</p>"), encoding="utf-8")

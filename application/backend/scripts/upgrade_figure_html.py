@@ -14,6 +14,10 @@ if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
 from books_core.asset_paths import normalize_per_page_asset_paths  # noqa: E402
+from books_core.figure_dimensions import (  # noqa: E402
+    figure_display_dimensions,
+    figure_display_style,
+)
 
 
 def _fig_id_from_caption(html: str) -> str | None:
@@ -57,11 +61,15 @@ def upgrade_page(html_path: Path, manifest: dict[str, list]) -> bool:
         if not fig_id or fig_id not in figs:
             return block
         info = figs[fig_id]
+        dimensions = figure_display_dimensions(info)
+        display_style = figure_display_style(info)
+        style_attr = f' style="{display_style}"' if display_style else ""
         cap_m = re.search(r"<figcaption>(.*?)</figcaption>", block, re.DOTALL)
         caption = cap_m.group(0) if cap_m else ""
         return (
             f'<figure class="diagram">\n'
-            f'  <img src="../assets/{info["file"]}" width="{info["width"]}" height="{info["height"]}" '
+            f'  <img src="../assets/{info["file"]}" width="{dimensions.width_px}" '
+            f'height="{dimensions.height_px}"{style_attr} '
             f'alt="Figure {fig_id}">\n'
             f"  {caption}\n"
             f"</figure>"

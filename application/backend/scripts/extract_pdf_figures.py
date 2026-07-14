@@ -145,6 +145,10 @@ def _full_page_fallback(
             "file": f"images/{filename}",
             "width": pix.width,
             "height": pix.height,
+            "raster_width": pix.width,
+            "raster_height": pix.height,
+            "display_width_pt": clip.width,
+            "display_height_pt": clip.height,
             "clip": [clip.x0, clip.y0, clip.x1, clip.y1],
         }
     ]
@@ -1166,6 +1170,10 @@ def extract_figures(
                     "file": f"images/{name}",
                     "width": pix_width,
                     "height": pix_height,
+                    "raster_width": pix_width,
+                    "raster_height": pix_height,
+                    "display_width_pt": clip.width,
+                    "display_height_pt": clip.height,
                     "clip": [clip.x0, clip.y0, clip.x1, clip.y1],
                 }
             )
