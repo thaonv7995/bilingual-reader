@@ -48,6 +48,17 @@ def _write_raster_figure_pdf(path: Path, *, caption: str | None = "Figure 2.1  P
     document.close()
 
 
+def _write_full_page_raster_pdf(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    document = fitz.open()
+    page = document.new_page(width=600, height=800)
+    pixmap = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 600, 800), False)
+    pixmap.clear_with(0x33AAEE)
+    page.insert_image(page.rect, pixmap=pixmap)
+    document.save(path)
+    document.close()
+
+
 def _page_html(figure_id: str, caption: str) -> str:
     return f"""<!doctype html><html><body><main><article>
 <figure class="book-figure">
@@ -196,6 +207,70 @@ def test_render_context_includes_visual_strategy_before_agent_runs(tmp_path: Pat
         item["key"] == "visual_diagnosis"
         for item in context["skill_pack"]["inputs"]
     )
+
+
+def test_full_page_raster_cover_collapses_agent_subregions(tmp_path: Path) -> None:
+    book_root = tmp_path / "book"
+    pdf = book_root / "work" / "page_0001" / "source.pdf"
+    _write_full_page_raster_pdf(pdf)
+    diagnosis_path(book_root, 1).write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "producer": "agent-vision",
+                "page": 1,
+                "figures": [
+                    {
+                        "id": "1",
+                        "type": "illustration",
+                        "strategy": "extract-raster",
+                        "bbox_normalized": [0.05, 0.60, 0.35, 0.80],
+                        "caption_bbox_normalized": None,
+                    },
+                    {
+                        "id": "2",
+                        "type": "logo",
+                        "strategy": "extract-raster",
+                        "bbox_normalized": [0.84, 0.64, 0.96, 0.73],
+                        "caption_bbox_normalized": None,
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    finalized = finalize_agent_visual_plan(book_root, 1)
+
+    assert len(finalized["figures"]) == 1
+    assert finalized["figures"][0]["id"] == "1"
+    assert finalized["figures"][0]["type"] == "cover"
+    assert finalized["figures"][0]["crop_bbox"] == [0.0, 0.0, 600.0, 800.0]
+    assert finalized["figures"][0]["snapped_to"] == "full-page-embedded-image"
+
+
+def test_extractor_repairs_multi_placeholder_full_page_cover(tmp_path: Path) -> None:
+    book = tmp_path / "book"
+    pdf = book / "work" / "page_0001" / "source.pdf"
+    _write_full_page_raster_pdf(pdf)
+    for lang in ("en", "vi"):
+        page = book / "output" / lang / "page_0001.html"
+        page.parent.mkdir(parents=True, exist_ok=True)
+        page.write_text(
+            """<!doctype html><html><body><main><article>
+<figure data-visual-id="1"><img src="../assets/images/page_0001_fig_1.png"></figure>
+<figure data-visual-id="2"><img src="../assets/images/page_0001_fig_2.png"></figure>
+</article></main></body></html>""",
+            encoding="utf-8",
+        )
+
+    assert extract_main(["extract_pdf_figures.py", str(book), "1"]) == 0
+    assert (book / "output" / "assets" / "images" / "page_0001_fig_1.png").is_file()
+    assert not (book / "output" / "assets" / "images" / "page_0001_fig_2.png").exists()
+    for lang in ("en", "vi"):
+        html = (book / "output" / lang / "page_0001.html").read_text(encoding="utf-8")
+        assert html.count("page_0001_fig_1.png") == 1
+        assert "page_0001_fig_2.png" not in html
 
 
 def test_extractor_uses_diagnosed_art_crop_and_rewrites_stale_png(tmp_path: Path) -> None:

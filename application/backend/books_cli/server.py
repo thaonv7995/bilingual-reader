@@ -171,6 +171,9 @@ class ProcessConfig(BaseModel):
 # Cache for active tasks and logs
 # slug -> asyncio.subprocess.Process
 running_processes: Dict[str, asyncio.subprocess.Process] = {}
+# Slugs reserved while asyncio.create_subprocess_exec is still awaiting. Without
+# this reservation, concurrent clicks/requests can all pass the running check.
+starting_processes: set[str] = set()
 # slug -> list of string logs
 process_logs: Dict[str, List[str]] = {}
 
@@ -968,8 +971,9 @@ async def start_book_processing_impl(
     if not book_path.is_dir():
         return False
         
-    if slug in running_processes:
+    if slug in running_processes or slug in starting_processes:
         return False
+    starting_processes.add(slug)
 
     py_bin = str(Path(repo_root()) / "application" / ".venv" / "bin" / "python3")
     if not Path(py_bin).is_file():
@@ -1024,6 +1028,8 @@ async def start_book_processing_impl(
     except Exception as e:
         logger.error(f"{log_prefix} Failed to start process: {e}")
         return False
+    finally:
+        starting_processes.discard(slug)
 
 @app.post("/api/books/{slug}/process")
 async def process_book(slug: str, config: ProcessConfig):
@@ -1031,7 +1037,7 @@ async def process_book(slug: str, config: ProcessConfig):
     if not book_path.is_dir():
         raise HTTPException(status_code=404, detail="Book not found")
         
-    if slug in running_processes:
+    if slug in running_processes or slug in starting_processes:
         return {"success": False, "message": "Processor is already running for this book"}
 
     success = await start_book_processing_impl(

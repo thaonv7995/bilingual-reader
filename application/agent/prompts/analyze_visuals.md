@@ -20,6 +20,8 @@ Identify every meaningful non-text visual:
 
 Do not classify ordinary prose, headings, captions, rules, backgrounds, or whitespace as figures.
 
+When page 1 is a single scanned or embedded raster covering essentially the whole page, model it as exactly one `extract-raster` visual with id `1` and bbox `[0, 0, 1, 1]`. Treat it as the full-page cover/scan; do not split logos, seals, badges, or text already contained inside that raster into additional figures.
+
 ## Strategy decision
 
 - `reconstruct-html-svg`: a simple diagram whose boxes, lines, arrows, labels, and relationships can be faithfully rebuilt using semantic HTML/CSS or inline SVG.

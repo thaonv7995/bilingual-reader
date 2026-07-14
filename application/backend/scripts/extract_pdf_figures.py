@@ -8,6 +8,10 @@ import re
 import sys
 from pathlib import Path
 
+_BACKEND = Path(__file__).resolve().parents[1]
+if str(_BACKEND) not in sys.path:
+    sys.path.insert(0, str(_BACKEND))
+
 try:
     import pymupdf as fitz
 except ImportError:
@@ -25,6 +29,7 @@ EXPECTED_FIGURE_RE = re.compile(
     r"(?P<name>page_(?P<page>\d{4})_fig_(?P<figure>[A-Za-z0-9_.-]+)\.png)",
     re.I,
 )
+ARTICLE_RE = re.compile(r"(<article\b[^>]*>).*?(</article>)", re.I | re.S)
 
 
 def _expected_page_figures(book_root: Path, page_num: int) -> list[tuple[str, str]]:
@@ -38,6 +43,51 @@ def _expected_page_figures(book_root: Path, page_num: int) -> list[tuple[str, st
                 continue
             found.setdefault(match.group("name"), match.group("figure"))
     return sorted(found.items())
+
+
+def _normalize_full_page_cover(
+    book_root: Path,
+    pdf_path: Path,
+    *,
+    page_num: int,
+) -> list[Path]:
+    """Canonicalize a scanned first page to one full-page cover placeholder."""
+    if page_num != 1:
+        return []
+    from books_core.visual_diagnostics import (
+        diagnosis_path,
+        finalize_agent_visual_plan,
+        is_full_page_raster_cover,
+    )
+
+    if not is_full_page_raster_cover(pdf_path, page_num=page_num):
+        return []
+
+    plan_path = diagnosis_path(book_root, page_num)
+    if plan_path.is_file():
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        if plan.get("producer") == "agent-vision":
+            finalize_agent_visual_plan(book_root, page_num)
+
+    changed: list[Path] = []
+    page_name = f"page_{page_num:04d}.html"
+    for html_path in sorted((book_root / "output").glob(f"*/{page_name}")):
+        original = html_path.read_text(encoding="utf-8")
+        alt = "Bìa sách" if html_path.parent.name.lower() == "vi" else "Book cover"
+        cover = (
+            '\n      <figure class="cover" data-visual-id="1">\n'
+            f'        <img src="../assets/images/page_{page_num:04d}_fig_1.png" alt="{alt}">\n'
+            "      </figure>\n    "
+        )
+        normalized, count = ARTICLE_RE.subn(
+            lambda match: f"{match.group(1)}{cover}{match.group(2)}",
+            original,
+            count=1,
+        )
+        if count and normalized != original:
+            html_path.write_text(normalized, encoding="utf-8")
+            changed.append(html_path)
+    return changed
 
 
 def _canonical_figure_id(value: str) -> str:
@@ -1141,6 +1191,7 @@ def process_book(book_root: Path, pages: list[int] | None = None) -> dict:
         pdf = work / f"page_{n:04d}" / "source.pdf"
         if not pdf.is_file():
             continue
+        _normalize_full_page_cover(book_root, pdf, page_num=n)
         expected_figures = _expected_page_figures(book_root, n)
         figs = extract_figures(
             pdf,

@@ -329,6 +329,30 @@ def _overlap_score(left: fitz.Rect, right: fitz.Rect) -> float:
     return intersection.get_area() / denominator if denominator > 0 else 0.0
 
 
+def _similar_area(left: fitz.Rect, right: fitz.Rect, *, max_ratio: float = 4.0) -> bool:
+    smaller = min(left.get_area(), right.get_area())
+    larger = max(left.get_area(), right.get_area())
+    return smaller > 0 and larger / smaller <= max_ratio
+
+
+def _is_full_page_raster_cover(page: fitz.Page, *, page_num: int) -> bool:
+    """Return true when page 1 is effectively one full-page embedded scan."""
+    if page_num != 1 or page.rect.get_area() <= 0:
+        return False
+    for info in page.get_image_info():
+        image_rect = fitz.Rect(info["bbox"]) & page.rect
+        if image_rect.get_area() / page.rect.get_area() >= 0.9:
+            return True
+    return False
+
+
+def is_full_page_raster_cover(pdf_path: Path, *, page_num: int) -> bool:
+    if page_num != 1 or not pdf_path.is_file():
+        return False
+    with fitz.open(pdf_path) as document:
+        return _is_full_page_raster_cover(document[0], page_num=page_num)
+
+
 def _snap_agent_bbox(
     candidate: fitz.Rect,
     *,
@@ -337,14 +361,19 @@ def _snap_agent_bbox(
     vector_clusters: list[dict[str, Any]],
 ) -> tuple[fitz.Rect, str]:
     if strategy == "extract-raster" and image_rects:
-        matches = [rect for rect in image_rects if _overlap_score(candidate, rect) >= 0.2]
+        matches = [
+            rect
+            for rect in image_rects
+            if _overlap_score(candidate, rect) >= 0.2
+            and _similar_area(candidate, rect)
+        ]
         if matches:
             snapped = fitz.Rect(matches[0])
             for rect in matches[1:]:
                 snapped |= rect
             return snapped, "embedded-image"
         nearest = min(image_rects, key=lambda rect: _rect_distance(candidate, rect))
-        if _rect_distance(candidate, nearest) <= 24.0:
+        if _rect_distance(candidate, nearest) <= 24.0 and _similar_area(candidate, nearest):
             return fitz.Rect(nearest), "embedded-image"
     if strategy == "reconstruct-html-svg" and vector_clusters:
         candidates = [cluster["rect"] for cluster in vector_clusters]
@@ -367,7 +396,25 @@ def finalize_agent_visual_plan(book_root: Path, page_num: int) -> dict[str, Any]
         image_rects = [fitz.Rect(info["bbox"]) for info in page.get_image_info()]
         vector_clusters = _visual_clusters(page)
         figures: list[dict[str, Any]] = []
-        for figure in data["figures"]:
+        full_page_cover = _is_full_page_raster_cover(page, page_num=page_num)
+        if full_page_cover:
+            figures.append(
+                {
+                    "id": "1",
+                    "type": "cover",
+                    "strategy": "extract-raster",
+                    "bbox_normalized": [0.0, 0.0, 1.0, 1.0],
+                    "caption_bbox_normalized": None,
+                    "confidence": 1.0,
+                    "label": "Full-page cover",
+                    "reason": "Page 1 is a single embedded raster covering the complete page.",
+                    "art_bbox": _rect_list(page_rect),
+                    "crop_bbox": _rect_list(page_rect),
+                    "caption_bbox": None,
+                    "snapped_to": "full-page-embedded-image",
+                }
+            )
+        for figure in ([] if full_page_cover else data["figures"]):
             if _valid_bbox(figure.get("bbox_normalized"), normalized=True):
                 candidate = _normalized_to_page(figure["bbox_normalized"], page_rect)
             else:

@@ -26,6 +26,7 @@ PHASE_PACKS: dict[AgentPhase, dict[str, Any]] = {
         "raster_policy": [
             "Exclude semantic captions from the visual bbox.",
             "Include the complete artwork with enough boundary to avoid clipping.",
+            "A page-1 raster covering the whole page is one cover visual; do not split its logos or badges.",
             "Decorative whitespace and ordinary text are not figures.",
         ],
         "quality_gate": [
