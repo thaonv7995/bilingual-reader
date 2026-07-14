@@ -100,6 +100,12 @@ stop_existing_server() {
 }
 
 do_install() {
+    # The update command can be launched while the user's shell is inside the
+    # installed application tree.  That tree is replaced below; keeping it as
+    # the process cwd makes pip fail later with a path-less Errno 2 from getcwd().
+    # Move to a stable directory before stopping or replacing anything.
+    cd /tmp
+
     echo -e "${BLUE}=== Starting Installation ===${NC}"
     echo -e "Target Directory: ${GREEN}$INSTALL_DIR${NC}"
     echo -e "Executable Link:  ${GREEN}$BIN_DIR/$APP_NAME${NC}"
@@ -151,13 +157,18 @@ do_install() {
     # 4. Setup Python venv and install
     echo -e "\n${BLUE}=== Configuring Virtual Environment ===${NC}"
     local venv_path="$INSTALL_DIR/application/.venv"
+    local venv_python="$venv_path/bin/python3"
+    # Never reuse a partially installed or platform-specific environment from a
+    # previous update.  Invoke pip through the new interpreter so this does not
+    # depend on pip's generated shebang remaining valid.
+    rm -rf "$venv_path"
     python3 -m venv "$venv_path"
-    "$venv_path/bin/pip" install --upgrade pip
+    "$venv_python" -m pip install --upgrade pip
     
     if [ -f "$INSTALL_DIR/application/backend/requirements.txt" ]; then
-        "$venv_path/bin/pip" install -r "$INSTALL_DIR/application/backend/requirements.txt"
+        "$venv_python" -m pip install -r "$INSTALL_DIR/application/backend/requirements.txt"
     fi
-    "$venv_path/bin/pip" install -e "$INSTALL_DIR/application/backend"
+    "$venv_python" -m pip install -e "$INSTALL_DIR/application/backend"
 
     # Make utility scripts executable
     chmod +x "$INSTALL_DIR"/*.exp "$INSTALL_DIR"/*.sh "$INSTALL_DIR"/application/backend/books_cli/bin/* 2>/dev/null || true
@@ -282,6 +293,9 @@ case "\$1" in
         status_service
         ;;
     update|--update)
+        # The caller may currently be somewhere below INSTALL_DIR.  The
+        # installer replaces that directory, so leave it before spawning bash.
+        cd /tmp || exit 1
         if [ -f "$INSTALL_DIR/install.sh" ]; then
             echo "Running local install.sh with --update..."
             bash "$INSTALL_DIR/install.sh" --update

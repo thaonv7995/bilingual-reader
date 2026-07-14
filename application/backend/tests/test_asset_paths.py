@@ -88,6 +88,46 @@ def test_per_page_assets_resolve_and_assemble_to_root_assets(tmp_path: Path) -> 
     assert 'src="../assets/' not in assembled
 
 
+def test_asset_verifier_ignores_java_methods_ending_in_url(tmp_path: Path) -> None:
+    book = _book(tmp_path)
+    page = book.page_lang_html(1, "en")
+    page.write_text(
+        _page_html(
+            """
+            <pre class="code-block"><code>.formLogin()
+              .loginProcessingUrl("/authenticate")
+              .defaultSuccessUrl("/design")</code></pre>
+            """,
+            assets="../assets/",
+        ),
+        encoding="utf-8",
+    )
+
+    content = page.read_text(encoding="utf-8")
+    assert _verify_html_assets(page, content) == []
+
+
+def test_asset_verifier_still_checks_css_url_references(tmp_path: Path) -> None:
+    book = _book(tmp_path)
+    page = book.page_lang_html(1, "en")
+    page.write_text(
+        _page_html(
+            """
+            <style>.hero { background-image: url('../assets/images/missing-style.png'); }</style>
+            <div style="background-image: url('../assets/images/missing-inline.png')"></div>
+            """,
+            assets="../assets/",
+        ),
+        encoding="utf-8",
+    )
+
+    content = page.read_text(encoding="utf-8")
+    assert _verify_html_assets(page, content) == [
+        "Missing image: '../assets/images/missing-style.png'",
+        "Missing image: '../assets/images/missing-inline.png'",
+    ]
+
+
 def test_refresh_preserves_figures_and_normalizes_legacy_paths(tmp_path: Path) -> None:
     book = _book(tmp_path)
     existing = book.output_dir / "assets" / "images" / "page_0001_fig_1.png"

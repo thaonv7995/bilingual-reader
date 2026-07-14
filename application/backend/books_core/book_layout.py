@@ -3,12 +3,44 @@
 from __future__ import annotations
 
 import shutil
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
 from books_core.io import atomic_write_json, atomic_write_text
 from books_core.paths import BookPaths, normalize_book_layout
 from books_core.repo import skills_root
+
+
+class _CssContextCollector(HTMLParser):
+    """Collect CSS only from style elements and inline style attributes."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._style_depth = 0
+        self.css_chunks: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() == "style":
+            self._style_depth += 1
+        for name, value in attrs:
+            if name.lower() == "style" and value:
+                self.css_chunks.append(value)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() == "style" and self._style_depth:
+            self._style_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self._style_depth:
+            self.css_chunks.append(data)
+
+
+def _css_contexts(html_content: str) -> list[str]:
+    collector = _CssContextCollector()
+    collector.feed(html_content)
+    collector.close()
+    return collector.css_chunks
 
 
 def _copy_if_exists(src: Path, dest: Path) -> None:
@@ -151,9 +183,10 @@ def _verify_html_assets(
     img_refs.extend(
         re.findall(r'<(?:video|object)\s+[^>]*(?:poster|data)=["\']([^"\']+)["\']', html_content, flags=re.I)
     )
-    img_refs.extend(
-        re.findall(r'url\(\s*["\']?([^"\')]+)["\']?\s*\)', html_content, flags=re.I)
-    )
+    for css in _css_contexts(html_content):
+        img_refs.extend(
+            re.findall(r'url\(\s*["\']?([^"\')]+)["\']?\s*\)', css, flags=re.I)
+        )
     for ref in srcset_refs:
         img_refs.extend(
             candidate.strip().split()[0]
