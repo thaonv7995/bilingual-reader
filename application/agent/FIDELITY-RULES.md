@@ -66,14 +66,16 @@ See `.cursor/skills/books-pdf-to-html/special-layouts.md`. Summary:
 | Body prose | `<p>` | `prose-page.css` |
 | **Listing** (caption + code) | `<figure class="listing">` caption **above** `<pre class="code-block">` | `code-page.css` |
 | Code snippet (no listing #) | `<figure class="code-snippet"><pre class="code-block">` | `code-page.css` |
-| **UML / charts / maps** | `<figure class="diagram"><img src="../assets/images/…">` | `figures-page.css` |
+| **Structured diagrams** (UML, flow, family tree, org chart, timeline) | `<figure class="diagram">` with semantic HTML + inline SVG | `figures-page.css` |
+| **Simple icons / pictograms** | Inline `<span data-visual-id>` with SVG/CSS/Unicode | Match surrounding text size/baseline |
+| **Pixel-dependent visuals** (photos, textured art, complex maps) | `<figure class="diagram"><img src="../assets/images/…">` | `figures-page.css` |
 | Simple math / metrics | `.math`, `.frac`, `.metric-block`, `.formula-display` | `figures-page.css` |
 | Tables | `<table class="data-table">` | `code-page.css` |
 | Footnotes | `.footnotes` at bottom (before footer) | `prose-page.css` |
 
 **Forbidden:**
 - Diagram labels as a stack of `<p>` tags
-- `<pre class="ascii-figure">` for UML/box diagrams (use PNG crop or SVG)
+- `<pre class="ascii-figure">` for UML/box diagrams (use semantic HTML/inline SVG)
 - Gray code background unless source PDF has it
 - `overflow-x: auto` on code (wrap instead; see `code-page.css`)
 
@@ -81,7 +83,9 @@ See `.cursor/skills/books-pdf-to-html/special-layouts.md`. Summary:
 
 ## Rule 4 — Figures & images
 
-**Preferred pipeline (after each page or batch render):**
+**Strategy invariant:** classify by visible content, never by the PDF container. Simple icons/pictograms and family trees, pedigrees, org charts, flowcharts, timelines, forms, tables, and worksheet diagrams made from text plus basic geometry MUST be reconstructed with semantic HTML and inline SVG/CSS. This remains true when the source is a scan. Extract raster only when fidelity depends on original pixels such as a photograph, painting, texture, hand-drawn detail, genuine irreproducible brand artwork, or irreducibly complex artwork.
+
+**Raster pipeline (only for visuals classified `extract-raster`):**
 
 ```bash
 # 1. Crop figures from single-page PDFs
@@ -104,7 +108,7 @@ Markup:
 </figure>
 ```
 
-Redraw inline SVG only when extraction is unusable **and** SVG matches PDF geometry.
+Use raster extraction only for a finalized `extract-raster` visual. For `reconstruct-html-svg`, preserve readable labels as HTML (or accessible SVG text) and reproduce the source geometry with inline SVG/CSS.
 
 ---
 
@@ -233,9 +237,10 @@ $PY application/backend/scripts/validate_page_fidelity.py "$BOOK" --lang all
 | Listing at wrong position | Text-extract order | Re-read PDF visually; move `<figure class="listing">` |
 | CLIENTS RUIN EVERYTHING block heading | Run-in treated as h3 + uppercase CSS | `run-in` paragraph + remove `text-transform: uppercase` |
 | Author in header | Guessed template | `page_chrome` + `fix_book_layout.py` |
-| Ellipse/Circle as two lines of ASCII | Lazy diagram | `extract_pdf_figures.py` |
+| Ellipse/Circle as two lines of ASCII | Lazy diagram | Rebuild with inline SVG |
 | Code in gray box | Default IDE styling | `code-page.css` transparent background |
 | Figure missing | Never extracted | Run figure pipeline after render |
-| Broken image icon | Corrupt `src` or wrong `../` prefix in assembled book | `refresh_figure_images.py` + Rule 9; re-assemble |
+| Broken `<img>` used for a simple icon | Icon incorrectly classified as raster | Replace with inline SVG/CSS/Unicode and rerender the page |
+| Broken raster figure | Corrupt `src` or wrong `../` prefix in assembled book | `refresh_figure_images.py` + Rule 9; re-assemble |
 | `book.vi.html` plain text blob | Assemble without A4 shell/CSS | Rule 8; use current `assemble.py` |
 | Duplicate Figure label | `alt` + empty `figcaption` | One caption in `<figcaption>`; alt can mirror |

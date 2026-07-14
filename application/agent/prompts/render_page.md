@@ -48,7 +48,11 @@ Read the finalized agent-vision plan at `work/page_NNNN/visual-diagnosis.json` b
 - **`reconstruct-html-svg`**: redraw the visual using semantic HTML/CSS or inline SVG. Preserve its labels, arrows, grouping, colors, and relationships. Do **not** add an `<img>` placeholder for this figure. Inline SVG is preferred over canvas because page HTML must work without JavaScript.
 - **`extract-raster`**: keep the figure in a proper `<figure>` and use the standard `../assets/images/page_NNNN_fig_X.png` placeholder. The post-render extractor will crop only the diagnosed artwork bounds and leave the source caption out when an HTML `<figcaption>` exists.
 - Preserve the caption as semantic `<figcaption>` text in both cases. Do not duplicate a caption inside a raster crop.
-- Add `data-visual-id="X"` to every planned `<figure>`, using the exact id from the visual plan.
+- Add `data-visual-id="X"` to every planned visual container, using the exact id from the visual plan. Use `<figure>` for a standalone visual; a small icon adjacent to a heading may use an inline `<span>` container.
+
+For a family tree, pedigree, org chart, flowchart, timeline, form, or worksheet diagram, keep every visible label and answer blank as real HTML text/elements and draw only connectors or geometry with inline SVG/CSS. Preserve topology and relative grouping; do not substitute a screenshot just because the source page was scanned.
+
+For a simple icon, pictogram, glyph, exercise marker, or standard symbol, render a compact accessible inline SVG, CSS shape, or reliable Unicode character. Match its size and baseline beside the surrounding heading/text. Do not emit an `<img>` placeholder or asset path for it.
 
 If a simple vector figure was not reconstructed by the agent, the post-render pipeline may replace its image placeholder with a clipped inline SVG from the source PDF as a fidelity fallback.
 

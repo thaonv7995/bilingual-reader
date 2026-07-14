@@ -23,8 +23,41 @@ FIGURE_RE = re.compile(
 )
 
 VISUAL_STRATEGIES = {"reconstruct-html-svg", "extract-raster"}
+RECONSTRUCTION_ONLY_TYPES = {
+    "icon",
+    "simple-icon",
+    "pictogram",
+    "glyph",
+    "symbol",
+    "exercise-marker",
+    "section-marker",
+    "family-tree",
+    "familytree",
+    "pedigree",
+    "org-chart",
+    "orgchart",
+    "organization-chart",
+    "organisational-chart",
+    "organizational-chart",
+    "flowchart",
+    "flow-chart",
+    "timeline",
+    "worksheet-diagram",
+    "worksheet",
+    "form",
+    "table",
+}
 HTML_PAGE_FIGURE_RE = re.compile(r"page_(\d{4})_fig_([A-Za-z0-9_.-]+)\.png", re.I)
 HTML_VISUAL_ID_RE = re.compile(r"data-visual-id=[\"']([^\"']+)[\"']", re.I)
+
+
+def _normalized_visual_type(figure: dict[str, Any]) -> str:
+    return re.sub(r"[\s_]+", "-", str(figure.get("type") or "").strip().lower())
+
+
+def _requires_reconstruction(figure: dict[str, Any]) -> bool:
+    figure_type = _normalized_visual_type(figure)
+    return figure_type in RECONSTRUCTION_ONLY_TYPES or figure_type.endswith("-icon")
 
 
 def _rect_list(rect: fitz.Rect) -> list[float]:
@@ -302,6 +335,15 @@ def validate_agent_visual_plan(data: Any, *, page_num: int) -> None:
         seen.add(figure_id)
         if figure.get("strategy") not in VISUAL_STRATEGIES:
             raise ValueError(f"visual plan figure {figure_id} has an invalid strategy")
+        figure_type = _normalized_visual_type(figure)
+        if (
+            _requires_reconstruction(figure)
+            and figure.get("strategy") != "reconstruct-html-svg"
+        ):
+            raise ValueError(
+                f"visual plan figure {figure_id} type {figure_type} must use "
+                "reconstruct-html-svg"
+            )
         if not (
             _valid_bbox(figure.get("bbox_normalized"), normalized=True)
             or _valid_bbox(figure.get("art_bbox"), normalized=False)
@@ -376,7 +418,12 @@ def _snap_agent_bbox(
         if _rect_distance(candidate, nearest) <= 24.0 and _similar_area(candidate, nearest):
             return fitz.Rect(nearest), "embedded-image"
     if strategy == "reconstruct-html-svg" and vector_clusters:
-        candidates = [cluster["rect"] for cluster in vector_clusters]
+        candidates = [
+            cluster["rect"]
+            for cluster in vector_clusters
+            if cluster.get("drawing_count", 0) > 0
+            and cluster.get("image_count", 0) == 0
+        ]
         matches = [rect for rect in candidates if _overlap_score(candidate, rect) >= 0.2]
         if matches:
             return fitz.Rect(max(matches, key=lambda rect: _overlap_score(candidate, rect))), "pdf-vector"
@@ -396,7 +443,17 @@ def finalize_agent_visual_plan(book_root: Path, page_num: int) -> dict[str, Any]
         image_rects = [fitz.Rect(info["bbox"]) for info in page.get_image_info()]
         vector_clusters = _visual_clusters(page)
         figures: list[dict[str, Any]] = []
-        full_page_cover = _is_full_page_raster_cover(page, page_num=page_num)
+        # The PDF container alone cannot decide visual semantics. A scanned
+        # first page may still be a worksheet or structured diagram that the
+        # vision plan correctly chose to reconstruct.
+        has_reconstructed_content = any(
+            figure.get("strategy") == "reconstruct-html-svg"
+            for figure in data["figures"]
+        )
+        full_page_cover = (
+            _is_full_page_raster_cover(page, page_num=page_num)
+            and not has_reconstructed_content
+        )
         if full_page_cover:
             figures.append(
                 {
@@ -517,6 +574,15 @@ def validate_html_against_visual_plan(
     }
     for figure_id in sorted(required_vector - tagged_ids):
         issues.append(f"visual plan vector figure {figure_id} has no data-visual-id HTML figure")
+    forbidden_raster = {
+        figure_id
+        for figure_id, figure in plan_figures.items()
+        if _requires_reconstruction(figure)
+    }
+    for figure_id in sorted(forbidden_raster & html_ids):
+        issues.append(
+            f"visual plan reconstruct-only figure {figure_id} has a raster image placeholder"
+        )
     return issues
 
 

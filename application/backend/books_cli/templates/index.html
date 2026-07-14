@@ -1166,6 +1166,7 @@
                         <button id="exportPdfBtn" class="btn btn-secondary" onclick="exportCurrentBookPdfs()"><i data-lucide="file-down"></i> Build PDFs</button>
                         <a id="downloadEnPdfBtn" class="btn btn-success" download style="display:none;"><i data-lucide="download"></i> EN PDF</a>
                         <a id="downloadViPdfBtn" class="btn btn-success" download style="display:none;"><i data-lucide="download"></i> VI PDF</a>
+                        <button id="failedPagesBtn" class="btn btn-danger" style="display:none;" onclick="openFailedPagesModal()"><i data-lucide="triangle-alert"></i> Failed Pages</button>
                         <button id="verifyBtn" class="btn btn-secondary" onclick="verifyCurrentBook()"><i data-lucide="check-square"></i> Verify Book</button>
                         <button id="packBtn" class="btn btn-secondary" onclick="packCurrentBook()"><i data-lucide="package"></i> Repack</button>
                         <button id="downloadBtn" class="btn btn-success" disabled onclick="downloadCurrentBook()"><i data-lucide="download"></i> Download .bkb</button>
@@ -1329,6 +1330,20 @@
         </div>
     </div>
 
+    <!-- Failed Pages Modal -->
+    <div id="failedPagesModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 620px; max-height:80vh; overflow:auto;">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title">Pages Requiring Repair</h3>
+                    <p style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.3rem;">Select one page to force render, rebuild its assets, and validate again.</p>
+                </div>
+                <button class="btn-icon" onclick="closeModal('failedPagesModal')"><i data-lucide="x"></i></button>
+            </div>
+            <div id="failedPagesList" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1.25rem;"></div>
+        </div>
+    </div>
+
     <!-- Repair Modal -->
     <div id="repairModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 500px;">
@@ -1454,6 +1469,7 @@
         let detailStatusInitialized = false;
         let previousDetailRunning = false;
         let previousPdfExportState = null;
+        let currentRepairReport = null;
         let previewVersion = Date.now().toString(36);
 
         // Initialize Icons
@@ -1562,6 +1578,9 @@
         // Modals
         function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+        }
 
         // PDF Cover Renderer
         const coverCache = {};
@@ -1806,6 +1825,7 @@
                 const data = await res.json();
                 
                 currentBookPages = data.pages || [];
+                currentRepairReport = data.repair_report || null;
                 
                 document.getElementById('downloadBtn').disabled = !data.has_bkb;
                 const enB = document.getElementById('viewEnBtn');
@@ -1845,6 +1865,11 @@
                 document.getElementById('startProcessBtn').style.display = isRunning ? 'none' : 'inline-flex';
                 document.getElementById('stopProcessBtn').style.display = isRunning ? 'inline-flex' : 'none';
                 document.getElementById('detailProcessingBadge').style.display = isRunning ? 'inline-flex' : 'none';
+                const failedPagesBtn = document.getElementById('failedPagesBtn');
+                const failedPageCount = currentRepairReport?.pages?.length || 0;
+                failedPagesBtn.style.display = failedPageCount ? 'inline-flex' : 'none';
+                failedPagesBtn.disabled = isRunning;
+                failedPagesBtn.innerHTML = `<i data-lucide="triangle-alert"></i> Failed Pages (${failedPageCount})`;
                 
                 if(isRunning) connectLogStream(activeSlug);
 
@@ -1894,6 +1919,49 @@
                 }
 
             } catch(e) {}
+        }
+
+        function openFailedPagesModal() {
+            const pages = currentRepairReport?.pages || [];
+            if(!pages.length) return showToast("No failed pages in the current report.", "info");
+            const issues = currentRepairReport?.issues || [];
+            const list = document.getElementById('failedPagesList');
+            list.innerHTML = pages.map(item => {
+                const page = Number(item.page);
+                const categories = (item.categories || []).map(category => {
+                    if(category === 'missing_asset') return 'Missing asset';
+                    if(category === 'blank_content') return 'Blank content';
+                    return 'HTML validation';
+                });
+                const messages = [...new Set(issues.filter(issue => Number(issue.page) === page).map(issue => issue.message))];
+                return `
+                    <button class="btn btn-secondary" onclick="repairReportedPage(${page})" style="width:100%;text-align:left;justify-content:space-between;padding:0.9rem 1rem;align-items:flex-start;">
+                        <span style="display:flex;gap:0.75rem;align-items:flex-start;">
+                            <span style="font-family:'JetBrains Mono',monospace;color:var(--accent-warning);font-weight:700;">P${String(page).padStart(4, '0')}</span>
+                            <span>
+                                <span style="display:block;color:var(--text-primary);font-weight:600;">${escapeHtml(categories.join(' · '))}</span>
+                                <span style="display:block;color:var(--text-muted);font-size:0.72rem;margin-top:0.25rem;line-height:1.4;">${escapeHtml(messages.join(' · '))}</span>
+                            </span>
+                        </span>
+                        <i data-lucide="play" style="flex-shrink:0;margin-top:0.1rem;"></i>
+                    </button>`;
+            }).join('');
+            openModal('failedPagesModal');
+            lucide.createIcons();
+        }
+
+        async function repairReportedPage(page) {
+            closeModal('failedPagesModal');
+            showToast(`Starting targeted repair for Page ${page}...`, "info");
+            try {
+                const response = await api(`/api/books/${activeSlug}/repair-page/${page}`, {method:"POST"});
+                const result = await response.json();
+                if(!result.success) throw new Error(result.message || 'Could not start repair');
+                showToast(`Page ${page} repair started.`, "success");
+                await pollDetailStatus();
+            } catch(e) {
+                showToast(`Page ${page} repair failed to start: ${e.message || 'Unknown error'}`, "error");
+            }
         }
 
         async function startProcessing() {

@@ -13,6 +13,7 @@ from books_core.visual_diagnostics import (
     diagnosis_path,
     ensure_visual_diagnosis,
     finalize_agent_visual_plan,
+    validate_agent_visual_plan,
     validate_html_against_visual_plan,
 )
 from scripts.extract_pdf_figures import extract_figures, main as extract_main
@@ -249,6 +250,37 @@ def test_full_page_raster_cover_collapses_agent_subregions(tmp_path: Path) -> No
     assert finalized["figures"][0]["snapped_to"] == "full-page-embedded-image"
 
 
+def test_scanned_first_page_structured_diagram_is_not_forced_to_cover(tmp_path: Path) -> None:
+    book_root = tmp_path / "book"
+    pdf = book_root / "work" / "page_0001" / "source.pdf"
+    _write_full_page_raster_pdf(pdf)
+    diagnosis_path(book_root, 1).write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "producer": "agent-vision",
+                "page": 1,
+                "figures": [
+                    {
+                        "id": "1",
+                        "type": "family-tree",
+                        "strategy": "reconstruct-html-svg",
+                        "bbox_normalized": [0.05, 0.08, 0.95, 0.92],
+                        "caption_bbox_normalized": None,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    finalized = finalize_agent_visual_plan(book_root, 1)
+
+    assert finalized["figures"][0]["type"] == "family-tree"
+    assert finalized["figures"][0]["strategy"] == "reconstruct-html-svg"
+    assert finalized["figures"][0]["snapped_to"] == "agent-region"
+
+
 def test_extractor_repairs_multi_placeholder_full_page_cover(tmp_path: Path) -> None:
     book = tmp_path / "book"
     pdf = book / "work" / "page_0001" / "source.pdf"
@@ -359,3 +391,64 @@ def test_html_must_cover_every_agent_planned_visual() -> None:
 
     html += '<figure data-visual-id="1.1"><svg></svg></figure>'
     assert validate_html_against_visual_plan(html, plan, page_num=10) == []
+
+
+def test_structured_relationship_diagram_cannot_be_planned_as_raster() -> None:
+    plan = {
+        "page": 13,
+        "figures": [
+            {
+                "id": "1",
+                "type": "family_tree",
+                "strategy": "extract-raster",
+                "bbox_normalized": [0.03, 0.08, 0.97, 0.92],
+            }
+        ],
+    }
+
+    try:
+        validate_agent_visual_plan(plan, page_num=13)
+    except ValueError as exc:
+        assert "family-tree must use reconstruct-html-svg" in str(exc)
+    else:
+        raise AssertionError("family tree raster plan should be rejected")
+
+    plan["figures"][0]["strategy"] = "reconstruct-html-svg"
+    validate_agent_visual_plan(plan, page_num=13)
+
+
+def test_simple_icon_cannot_create_a_raster_asset_dependency() -> None:
+    for figure_type in ("icon", "book-icon", "pictogram", "glyph", "exercise_marker"):
+        plan = {
+            "page": 23,
+            "figures": [
+                {
+                    "id": "1",
+                    "type": figure_type,
+                    "strategy": "extract-raster",
+                    "bbox_normalized": [0.08, 0.05, 0.13, 0.10],
+                }
+            ],
+        }
+
+        try:
+            validate_agent_visual_plan(plan, page_num=23)
+        except ValueError as exc:
+            assert "must use reconstruct-html-svg" in str(exc)
+        else:
+            raise AssertionError(f"{figure_type} raster plan should be rejected")
+
+        plan["figures"][0]["strategy"] = "reconstruct-html-svg"
+        validate_agent_visual_plan(plan, page_num=23)
+
+        html = (
+            '<span data-visual-id="1">'
+            '<img src="../assets/images/page_0023_fig_1.png" alt="Book icon">'
+            "</span>"
+        )
+        assert validate_html_against_visual_plan(html, plan, page_num=23) == [
+            "visual plan reconstruct-only figure 1 has a raster image placeholder"
+        ]
+
+        html = '<span data-visual-id="1"><svg aria-label="Book icon"></svg></span>'
+        assert validate_html_against_visual_plan(html, plan, page_num=23) == []

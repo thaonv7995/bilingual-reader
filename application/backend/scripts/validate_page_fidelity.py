@@ -16,6 +16,7 @@ if str(_BACKEND) not in sys.path:
 from books_core.asset_paths import lint_images_in_html  # noqa: E402
 from books_core.book_layout import _verify_html_assets  # noqa: E402
 from books_core.validation import ArtifactValidationError, validate_draft_html  # noqa: E402
+from books_core.repair_report import clear_repair_report, write_repair_report  # noqa: E402
 
 
 def _lint_per_page(path: Path, *, chrome: dict[str, str] | None, book: Path) -> list[str]:
@@ -144,9 +145,17 @@ def main(argv: list[str]) -> int:
     if all_issues:
         for msg in all_issues:
             print(f"FAIL {msg}")
+        stage = "post-render" if args.pages_only else "final-validation"
+        report_output = "\n".join(f"FAIL {message}" for message in all_issues)
+        report = write_repair_report(book, report_output, stage=stage)
+        if report:
+            pages = ",".join(str(item["page"]) for item in report["pages"])
+            print(f"\nREPAIR REPORT — {len(report['pages'])} page(s): {pages}")
         print(f"\n{len(all_issues)} issue(s) — see application/agent/FIDELITY-RULES.md")
         return 1
 
+    if lang_arg == "all":
+        clear_repair_report(book)
     print(f"OK — {page_count} page(s), assembled book(s) passed fidelity lint")
     return 0
 

@@ -20,8 +20,10 @@ Read with [page-production.md](page-production.md), [vector-recreation.md](vecto
 | **Bullets** | `<ul class="bullets">` | `prose-page.css` | — |
 | **Numbered lists** | `<ol class="numbered">` | page-local if needed | — |
 | **Footnotes** | `.footnotes` | `prose-page.css` | Body size for notes |
-| **Layer / flow diagrams** (boxes, rings, arrows) | **PNG crop** via `extract_pdf_figures.py`, else inline SVG | `figures-page.css` | `<p>` per label; `ascii-figure` |
+| **Layer / flow diagrams** (boxes, rings, arrows) | Semantic HTML + dedicated **inline SVG** | `figures-page.css` | PNG crop; `<p>` per label; `ascii-figure` |
 | **Box + table diagrams** (region tables, stacks, before/after) | Dedicated **SVG** per [figure-box-diagram-quality.md](figure-box-diagram-quality.md) | page bands in `<style>` | Cropped `<img>`; rushed HTML table; `max-height` on figure |
+| **Relationship diagrams** (family tree, pedigree, org chart) | HTML labels/fields + inline SVG/CSS connectors | `figures-page.css` | Screenshot/crop of readable text and simple lines |
+| **Simple icons / pictograms** (book, pencil, speaker, warning, exercise marker) | Compact inline SVG, CSS geometry, or reliable Unicode | page-local sizing/alignment | PNG crop; broken `<img>` placeholder |
 | **ASCII / box drawings** (memory maps, trees in text) | `<pre class="ascii-figure">` **or** redraw SVG | monospace, `white-space: pre`, no wrap | Reflow as prose |
 | **Dense charts / photos / scan-only art** | Cropped `<figure><img>` | [image-extraction-strict.md](image-extraction-strict.md) | Only when redraw infeasible |
 | **Equations** (simple) | `<i>` / Unicode in `<p>` | — | Guess complex TeX |
@@ -92,6 +94,8 @@ Read with [page-production.md](page-production.md), [vector-recreation.md](vecto
 | Tree built from `|`, `-`, `/` characters | `<pre class="ascii-figure">` or SVG if reused |
 | Memory layout with addresses in columns | `<pre class="ascii-figure">` + verify spacing in print |
 | Mixed figure + caption | `<figure>` + SVG/img + `<figcaption>` |
+
+If a diagram consists mainly of readable text, standard symbols, boxes, rules, arrows, brackets, or connector lines, reconstruct it even when the PDF contains a single scanned image. Treat generic icons and pictograms as geometry, not image assets. PDF storage is not a visual-content classification. Raster cropping is reserved for photos, textured/hand-drawn artwork, genuine brand artwork that cannot be reproduced safely, and genuinely irreducible complex graphics.
 
 **Anti-pattern:** PyMuPDF text order → 30× `<p>` (“Per Process Region Table”, “342K”, …). That is a **figure**, not prose.
 

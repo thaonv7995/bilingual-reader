@@ -12,6 +12,7 @@ When the provider supplies `source.pdf` directly as a multimodal attachment, ins
 
 Identify every meaningful non-text visual:
 
+- simple icon, pictogram, glyph, or section marker
 - photograph or scanned artwork
 - illustration
 - chart, graph, map, timeline, or table rendered as artwork
@@ -20,12 +21,20 @@ Identify every meaningful non-text visual:
 
 Do not classify ordinary prose, headings, captions, rules, backgrounds, or whitespace as figures.
 
-When page 1 is a single scanned or embedded raster covering essentially the whole page, model it as exactly one `extract-raster` visual with id `1` and bbox `[0, 0, 1, 1]`. Treat it as the full-page cover/scan; do not split logos, seals, badges, or text already contained inside that raster into additional figures.
+When page 1 is a single scanned or embedded raster covering essentially the whole page **and its meaning depends on the original pixels** (for example a cover, photograph, painting, or textured illustration), model it as exactly one `extract-raster` visual with id `1` and bbox `[0, 0, 1, 1]`. Do not apply this exception to a worksheet, form, table, family tree, flowchart, or other structured text-and-line layout merely because the PDF stored the whole page as one scan.
 
 ## Strategy decision
 
-- `reconstruct-html-svg`: a simple diagram whose boxes, lines, arrows, labels, and relationships can be faithfully rebuilt using semantic HTML/CSS or inline SVG.
-- `extract-raster`: a photograph, painting, scan, textured image, complex illustration, or visual that cannot be safely reconstructed.
+- `reconstruct-html-svg`: structured content whose meaning is carried by text, basic geometry, connectors, symbols, spacing, or relationships and can be faithfully rebuilt using semantic HTML/CSS and/or inline SVG.
+- `extract-raster`: content whose meaning or fidelity depends on continuous-tone pixels, irregular hand-drawn detail, texture, or complex illustration that cannot be safely reconstructed.
+
+Use a **reconstruction-first test**. Ignore how the PDF encoded the region and ask what the reader sees:
+
+- Family trees, pedigrees, organization charts, flowcharts, timelines, matching exercises, worksheet diagrams, labeled boxes, forms, and tables made from text plus rules/connectors MUST use `reconstruct-html-svg`.
+- Simple icons, pictograms, glyphs, exercise markers, and standard symbols MUST use `reconstruct-html-svg`. Recreate them as compact inline SVG, CSS geometry, or a reliable Unicode symbol; never create a raster crop merely for an icon.
+- A scanned source, distressed typeface, gender symbols, many labels, or a large/dense layout does not by itself justify raster extraction.
+- Use HTML for readable text and form fields; use inline SVG for connector lines, brackets, arrows, and geometry. A hybrid HTML/SVG figure is valid.
+- Choose `extract-raster` only when essential visual information would be lost by replacing pixels with text and geometry. State that raster-only property in `reason`.
 
 ## Bounding boxes
 
@@ -62,6 +71,8 @@ Write exactly one JSON object to `work/page_NNNN/visual-diagnosis.json`:
 ```
 
 Use figure ids in visual reading order: `1`, `2`, `3`, etc., unless the visible caption clearly supplies an id such as `1.1`. When the page has no meaningful visuals, return an empty `figures` array.
+
+Use a specific lowercase `type`. In particular use `simple-icon`, `pictogram`, `glyph`, `family-tree`, `pedigree`, `org-chart`, `flowchart`, `timeline`, `worksheet-diagram`, `form`, or `table` for reconstructable visuals instead of the vague `illustration` or `scan`. Reserve `logo` for an actual brand/identity mark, not a generic book, pencil, speaker, warning, or exercise icon.
 
 ## Strict rules
 

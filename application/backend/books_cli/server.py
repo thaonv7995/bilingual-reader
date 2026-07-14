@@ -20,6 +20,7 @@ from books_core.meta.reader import book_status_summary
 from books_core.package import pack_book
 from books_core.asset_paths import normalize_per_page_asset_paths
 from books_core.validation import draft_html_file_valid
+from books_core.repair_report import read_repair_report
 from books_cli.agy_settings import (
     credential_paths,
     credentials_present,
@@ -857,6 +858,7 @@ def get_book_status_endpoint(slug: str):
     summary["has_book_vi_pdf"] = (book.output_dir / "book.vi.pdf").is_file()
     summary["pdf_exporting"] = is_pdf_exporting
     summary["pdf_export"] = dict(pdf_export_status.get(slug, {}))
+    summary["repair_report"] = read_repair_report(book.root)
     
     response_cache.set_status(slug, summary)
     return summary
@@ -1063,6 +1065,43 @@ async def process_book(slug: str, config: ProcessConfig):
         return {"success": True, "message": "Processing started"}
     else:
         raise HTTPException(status_code=500, detail="Failed to start process")
+
+
+@app.post("/api/books/{slug}/repair-page/{page}")
+async def repair_failed_page(slug: str, page: int):
+    book_path = books_dir() / slug
+    if not book_path.is_dir():
+        raise HTTPException(status_code=404, detail="Book not found")
+    if slug in running_processes or slug in starting_processes:
+        return {"success": False, "message": "Processor is already running for this book"}
+
+    report = read_repair_report(book_path)
+    reported_pages = {
+        int(item.get("page"))
+        for item in (report or {}).get("pages", [])
+        if isinstance(item, dict) and item.get("page") is not None
+    }
+    if page not in reported_pages:
+        raise HTTPException(status_code=404, detail=f"Page {page} is not in the current repair report")
+
+    book_conf = studio_state.get_book_process(slug)
+    page_has_vi_issue = any(
+        isinstance(issue, dict)
+        and str(issue.get("page")) == str(page)
+        and issue.get("lang") == "vi"
+        for issue in (report or {}).get("issues", [])
+    )
+    success = await start_book_processing_impl(
+        slug,
+        pages=str(page),
+        threads=1,
+        translate=bool(book_conf.get("translate", True) or page_has_vi_issue),
+        force=True,
+        log_prefix="[Page Repair]",
+    )
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to start page repair")
+    return {"success": True, "page": page, "message": f"Repair started for page {page}"}
 
 @app.get("/api/books/{slug}/logs")
 async def get_logs_stream(slug: str):
