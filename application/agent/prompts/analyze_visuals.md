@@ -31,6 +31,7 @@ When page 1 is a single scanned or embedded raster covering essentially the whol
 Use a **reconstruction-first test**. Ignore how the PDF encoded the region and ask what the reader sees:
 
 - Family trees, pedigrees, organization charts, flowcharts, timelines, matching exercises, worksheet diagrams, labeled boxes, forms, and tables made from text plus rules/connectors MUST use `reconstruct-html-svg`.
+- A visual typed `diagram` or any `*-diagram` is treated as structured and MUST use `reconstruct-html-svg`. If it truly depends on irreducible pixels, classify it accurately as `complex-illustration`, `photo`, `textured-art`, or another pixel-dependent type instead of `diagram`.
 - Simple icons, pictograms, glyphs, exercise markers, and standard symbols MUST use `reconstruct-html-svg`. Recreate them as compact inline SVG, CSS geometry, or a reliable Unicode symbol; never create a raster crop merely for an icon.
 - A scanned source, distressed typeface, gender symbols, many labels, or a large/dense layout does not by itself justify raster extraction.
 - Use HTML for readable text and form fields; use inline SVG for connector lines, brackets, arrows, and geometry. A hybrid HTML/SVG figure is valid.

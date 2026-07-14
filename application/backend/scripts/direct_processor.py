@@ -29,6 +29,7 @@ from books_core.visual_diagnostics import (
     finalize_agent_visual_plan,
     validate_html_against_visual_plan,
     validate_agent_visual_plan,
+    validate_html_file_against_visual_plan,
 )
 
 
@@ -43,6 +44,8 @@ def standalone_page_valid(path: Path) -> bool:
         normalize_per_page_asset_file(path)
         content = path.read_text(encoding="utf-8")
         validate_draft_html(content)
+        if validate_html_file_against_visual_plan(path):
+            return False
         return not _verify_html_assets(path, content, ignore_page_figures=True)
     except Exception:
         return False

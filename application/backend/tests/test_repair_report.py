@@ -49,6 +49,29 @@ def test_non_page_validation_failure_does_not_create_report(tmp_path) -> None:
     assert not repair_report_path(tmp_path).exists()
 
 
+def test_extractor_failure_is_recorded_for_targeted_page_repair(tmp_path) -> None:
+    output = (
+        "FAIL extractor did not create referenced figure: page 0154: "
+        "output/assets/images/page_0154_fig_1.png"
+    )
+
+    report = write_repair_report(tmp_path, output, stage="post-render:extract_pdf_figures.py")
+
+    assert report is not None
+    assert report["pages"] == [{"page": 154, "categories": ["missing_asset"]}]
+    assert report["issues"] == [
+        {
+            "page": 154,
+            "lang": "all",
+            "category": "missing_asset",
+            "message": (
+                "Extractor did not create referenced figure: "
+                "output/assets/images/page_0154_fig_1.png"
+            ),
+        }
+    ]
+
+
 def test_validator_writes_and_clears_repair_report(tmp_path) -> None:
     pages = tmp_path / "output" / "en"
     pages.mkdir(parents=True)

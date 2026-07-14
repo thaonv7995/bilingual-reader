@@ -25,6 +25,8 @@ from books_core.extract.service import run_page_pdf
 from books_core.asset_paths import normalize_per_page_asset_file
 from books_core.book_layout import _verify_html_assets
 from books_core.validation import validate_draft_html
+from books_core.visual_diagnostics import validate_html_file_against_visual_plan
+from books_core.repair_report import write_repair_report
 
 
 def standalone_page_valid(path: Path) -> bool:
@@ -34,6 +36,8 @@ def standalone_page_valid(path: Path) -> bool:
         normalize_per_page_asset_file(path)
         content = path.read_text(encoding="utf-8")
         validate_draft_html(content)
+        if validate_html_file_against_visual_plan(path):
+            return False
         return not _verify_html_assets(path, content, ignore_page_figures=True)
     except Exception:
         return False
@@ -552,6 +556,11 @@ def main() -> int:
             cmd = [py_bin, str(script_path), str(book_root)] + extra_args
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
             if res.returncode != 0:
+                write_repair_report(
+                    book_root,
+                    res.stdout,
+                    stage=f"post-render:{script_name}",
+                )
                 print(f"\n======================================================================")
                 print(f"✗ ERROR RUNNING POST-RENDER SCRIPT: {script_name}")
                 print(f"----------------------------------------------------------------------")

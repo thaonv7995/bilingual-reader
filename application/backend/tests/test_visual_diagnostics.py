@@ -15,6 +15,7 @@ from books_core.visual_diagnostics import (
     finalize_agent_visual_plan,
     validate_agent_visual_plan,
     validate_html_against_visual_plan,
+    validate_html_file_against_visual_plan,
 )
 from scripts.extract_pdf_figures import extract_figures, main as extract_main
 from scripts.materialize_vector_figures import materialize_page
@@ -393,53 +394,55 @@ def test_html_must_cover_every_agent_planned_visual() -> None:
     assert validate_html_against_visual_plan(html, plan, page_num=10) == []
 
 
-def test_structured_relationship_diagram_cannot_be_planned_as_raster() -> None:
-    plan = {
-        "page": 13,
-        "figures": [
-            {
-                "id": "1",
-                "type": "family_tree",
-                "strategy": "extract-raster",
-                "bbox_normalized": [0.03, 0.08, 0.97, 0.92],
-            }
-        ],
-    }
+def test_structured_diagram_raster_plan_is_normalized_before_render() -> None:
+    for figure_type, label in (
+        ("family_tree", "Family Tree"),
+        ("diagram", "Relationship exercise"),
+        ("relationship-diagram", "Relationship exercise"),
+        ("illustration", "Family tree diagram"),
+    ):
+        plan = {
+            "page": 154,
+            "figures": [
+                {
+                    "id": "1",
+                    "type": figure_type,
+                    "label": label,
+                    "strategy": "extract-raster",
+                    "bbox_normalized": [0.03, 0.08, 0.97, 0.92],
+                }
+            ],
+        }
 
-    try:
-        validate_agent_visual_plan(plan, page_num=13)
-    except ValueError as exc:
-        assert "family-tree must use reconstruct-html-svg" in str(exc)
-    else:
-        raise AssertionError("family tree raster plan should be rejected")
-
-    plan["figures"][0]["strategy"] = "reconstruct-html-svg"
-    validate_agent_visual_plan(plan, page_num=13)
+        assert validate_agent_visual_plan(plan, page_num=154) is True
+        assert plan["figures"][0]["strategy"] == "reconstruct-html-svg"
+        assert plan["figures"][0]["strategy_overridden_from"] == "extract-raster"
 
 
 def test_simple_icon_cannot_create_a_raster_asset_dependency() -> None:
-    for figure_type in ("icon", "book-icon", "pictogram", "glyph", "exercise_marker"):
+    for figure_type, label in (
+        ("icon", "Book"),
+        ("book-icon", "Book"),
+        ("pictogram", "Book"),
+        ("glyph", "Book"),
+        ("exercise_marker", "Book"),
+        ("illustration", "Book icon"),
+    ):
         plan = {
             "page": 23,
             "figures": [
                 {
                     "id": "1",
                     "type": figure_type,
+                    "label": label,
                     "strategy": "extract-raster",
                     "bbox_normalized": [0.08, 0.05, 0.13, 0.10],
                 }
             ],
         }
 
-        try:
-            validate_agent_visual_plan(plan, page_num=23)
-        except ValueError as exc:
-            assert "must use reconstruct-html-svg" in str(exc)
-        else:
-            raise AssertionError(f"{figure_type} raster plan should be rejected")
-
-        plan["figures"][0]["strategy"] = "reconstruct-html-svg"
-        validate_agent_visual_plan(plan, page_num=23)
+        assert validate_agent_visual_plan(plan, page_num=23) is True
+        assert plan["figures"][0]["strategy"] == "reconstruct-html-svg"
 
         html = (
             '<span data-visual-id="1">'
@@ -452,3 +455,64 @@ def test_simple_icon_cannot_create_a_raster_asset_dependency() -> None:
 
         html = '<span data-visual-id="1"><svg aria-label="Book icon"></svg></span>'
         assert validate_html_against_visual_plan(html, plan, page_num=23) == []
+
+
+def test_published_diagram_placeholder_invalidates_cached_page(tmp_path: Path) -> None:
+    book = tmp_path / "book"
+    plan_path = diagnosis_path(book, 154)
+    plan_path.parent.mkdir(parents=True)
+    plan_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "producer": "agent-vision",
+                "status": "finalized",
+                "page": 154,
+                "figures": [
+                    {
+                        "id": "1",
+                        "type": "diagram",
+                        "strategy": "extract-raster",
+                        "bbox_normalized": [0.03, 0.08, 0.97, 0.92],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    html_path = book / "output" / "en" / "page_0154.html"
+    html_path.parent.mkdir(parents=True)
+    html_path.write_text(
+        '<figure data-visual-id="1">'
+        '<img src="../assets/images/page_0154_fig_1.png" alt="Family tree">'
+        "</figure>",
+        encoding="utf-8",
+    )
+
+    assert validate_html_file_against_visual_plan(html_path) == [
+        "visual plan reconstruct-only figure 1 has a raster image placeholder"
+    ]
+    persisted = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert persisted["figures"][0]["strategy"] == "reconstruct-html-svg"
+
+
+def test_icon_alt_text_blocks_raster_even_when_plan_type_is_vague() -> None:
+    plan = {
+        "figures": [
+            {
+                "id": "1",
+                "type": "illustration",
+                "label": "Header mark",
+                "strategy": "extract-raster",
+            }
+        ]
+    }
+    html = (
+        '<figure data-visual-id="1">'
+        '<img src="../assets/images/page_0154_fig_1.png" alt="Book icon">'
+        "</figure>"
+    )
+
+    assert validate_html_against_visual_plan(html, plan, page_num=154) == [
+        "visual plan reconstruct-only figure 1 has a raster image placeholder"
+    ]

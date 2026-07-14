@@ -13,6 +13,11 @@ from books_core.io import atomic_write_json
 _PAGE_FAILURE = re.compile(
     r"^FAIL\s+(?P<lang>[^/\s]+)/page_(?P<page>\d+)\.html:\s*(?P<message>.+)$"
 )
+_EXTRACTOR_FAILURE = re.compile(
+    r"^FAIL extractor did not create referenced figure:\s*"
+    r"page\s+(?P<page>\d+):\s*(?P<message>.+)$",
+    re.I,
+)
 
 
 def repair_report_path(book_root: Path) -> Path:
@@ -34,16 +39,28 @@ def parse_validation_failures(output: str) -> dict[str, Any]:
     issues: list[dict[str, Any]] = []
     page_categories: dict[int, set[str]] = {}
     for raw_line in output.splitlines():
-        match = _PAGE_FAILURE.match(raw_line.strip())
-        if not match:
+        line = raw_line.strip()
+        match = _PAGE_FAILURE.match(line)
+        extractor_match = _EXTRACTOR_FAILURE.match(line)
+        if match:
+            page = int(match.group("page"))
+            lang = match.group("lang")
+            message = match.group("message").strip()
+            category = classify_issue(message)
+        elif extractor_match:
+            page = int(extractor_match.group("page"))
+            lang = "all"
+            message = (
+                "Extractor did not create referenced figure: "
+                + extractor_match.group("message").strip()
+            )
+            category = "missing_asset"
+        else:
             continue
-        page = int(match.group("page"))
-        message = match.group("message").strip()
-        category = classify_issue(message)
         issues.append(
             {
                 "page": page,
-                "lang": match.group("lang"),
+                "lang": lang,
                 "category": category,
                 "message": message,
             }

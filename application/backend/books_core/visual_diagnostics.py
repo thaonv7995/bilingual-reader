@@ -24,6 +24,8 @@ FIGURE_RE = re.compile(
 
 VISUAL_STRATEGIES = {"reconstruct-html-svg", "extract-raster"}
 RECONSTRUCTION_ONLY_TYPES = {
+    "diagram",
+    "structured-diagram",
     "icon",
     "simple-icon",
     "pictogram",
@@ -49,6 +51,13 @@ RECONSTRUCTION_ONLY_TYPES = {
 }
 HTML_PAGE_FIGURE_RE = re.compile(r"page_(\d{4})_fig_([A-Za-z0-9_.-]+)\.png", re.I)
 HTML_VISUAL_ID_RE = re.compile(r"data-visual-id=[\"']([^\"']+)[\"']", re.I)
+HTML_IMG_TAG_RE = re.compile(r"<img\b[^>]*>", re.I | re.S)
+RECONSTRUCTABLE_LABEL_RE = re.compile(
+    r"\b(?:icon|pictogram|glyph|exercise[\s_-]+marker|section[\s_-]+marker|"
+    r"family[\s_-]+tree|pedigree|organi[sz]ation(?:al)?[\s_-]+chart|"
+    r"org[\s_-]+chart|flow[\s_-]*chart|worksheet[\s_-]+diagram)\b",
+    re.I,
+)
 
 
 def _normalized_visual_type(figure: dict[str, Any]) -> str:
@@ -57,7 +66,15 @@ def _normalized_visual_type(figure: dict[str, Any]) -> str:
 
 def _requires_reconstruction(figure: dict[str, Any]) -> bool:
     figure_type = _normalized_visual_type(figure)
-    return figure_type in RECONSTRUCTION_ONLY_TYPES or figure_type.endswith("-icon")
+    descriptor = " ".join(
+        str(figure.get(key) or "") for key in ("type", "label")
+    )
+    return (
+        figure_type in RECONSTRUCTION_ONLY_TYPES
+        or figure_type.endswith("-icon")
+        or figure_type.endswith("-diagram")
+        or bool(RECONSTRUCTABLE_LABEL_RE.search(descriptor))
+    )
 
 
 def _rect_list(rect: fitz.Rect) -> list[float]:
@@ -316,8 +333,11 @@ def _valid_bbox(values: Any, *, normalized: bool) -> bool:
     return x1 > x0 and y1 > y0
 
 
-def validate_agent_visual_plan(data: Any, *, page_num: int) -> None:
-    """Validate the raw JSON contract written by the vision agent."""
+def validate_agent_visual_plan(data: Any, *, page_num: int) -> bool:
+    """Validate and normalize the raw JSON contract written by the vision agent.
+
+    Returns true when a reconstruct-only strategy was corrected in memory.
+    """
     if not isinstance(data, dict):
         raise ValueError("visual plan must be a JSON object")
     if int(data.get("page", -1)) != page_num:
@@ -326,6 +346,7 @@ def validate_agent_visual_plan(data: Any, *, page_num: int) -> None:
     if not isinstance(figures, list):
         raise ValueError("visual plan figures must be an array")
     seen: set[str] = set()
+    changed = False
     for index, figure in enumerate(figures, start=1):
         if not isinstance(figure, dict):
             raise ValueError(f"visual plan figure {index} must be an object")
@@ -336,14 +357,14 @@ def validate_agent_visual_plan(data: Any, *, page_num: int) -> None:
         if figure.get("strategy") not in VISUAL_STRATEGIES:
             raise ValueError(f"visual plan figure {figure_id} has an invalid strategy")
         figure_type = _normalized_visual_type(figure)
-        if (
-            _requires_reconstruction(figure)
-            and figure.get("strategy") != "reconstruct-html-svg"
-        ):
-            raise ValueError(
-                f"visual plan figure {figure_id} type {figure_type} must use "
-                "reconstruct-html-svg"
+        if _requires_reconstruction(figure) and figure.get("strategy") != "reconstruct-html-svg":
+            previous = str(figure["strategy"])
+            figure["strategy"] = "reconstruct-html-svg"
+            figure["strategy_overridden_from"] = previous
+            figure["strategy_override_reason"] = (
+                f"Structured visual type {figure_type} must be rebuilt with HTML/SVG."
             )
+            changed = True
         if not (
             _valid_bbox(figure.get("bbox_normalized"), normalized=True)
             or _valid_bbox(figure.get("art_bbox"), normalized=False)
@@ -352,6 +373,7 @@ def validate_agent_visual_plan(data: Any, *, page_num: int) -> None:
         caption_bbox = figure.get("caption_bbox_normalized")
         if caption_bbox is not None and not _valid_bbox(caption_bbox, normalized=True):
             raise ValueError(f"visual plan figure {figure_id} has an invalid caption bbox")
+    return changed
 
 
 def _normalized_to_page(values: list[float], page_rect: fitz.Rect) -> fitz.Rect:
@@ -530,7 +552,8 @@ def agent_visual_plan_ready(book_root: Path, page_num: int) -> bool:
             and isinstance(data.get("figures"), list)
         )
         if ready:
-            validate_agent_visual_plan(data, page_num=page_num)
+            if validate_agent_visual_plan(data, page_num=page_num):
+                atomic_write_json(path, data)
         return ready
     except (OSError, ValueError, TypeError, json.JSONDecodeError):
         return False
@@ -579,11 +602,42 @@ def validate_html_against_visual_plan(
         for figure_id, figure in plan_figures.items()
         if _requires_reconstruction(figure)
     }
+    for image_tag in HTML_IMG_TAG_RE.findall(html):
+        if not RECONSTRUCTABLE_LABEL_RE.search(image_tag):
+            continue
+        image_match = HTML_PAGE_FIGURE_RE.search(image_tag)
+        if image_match and int(image_match.group(1)) == page_num:
+            forbidden_raster.add(canonical(image_match.group(2)))
     for figure_id in sorted(forbidden_raster & html_ids):
         issues.append(
             f"visual plan reconstruct-only figure {figure_id} has a raster image placeholder"
         )
     return issues
+
+
+def validate_html_file_against_visual_plan(html_path: Path) -> list[str]:
+    """Validate a published per-page file against its persisted visual plan."""
+    match = re.fullmatch(r"page_(\d{4})\.html", html_path.name, re.I)
+    if not match or len(html_path.parents) < 3:
+        return []
+    page_num = int(match.group(1))
+    book_root = html_path.parents[2]
+    plan_path = diagnosis_path(book_root, page_num)
+    if not plan_path.is_file():
+        return []
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        if plan.get("producer") == "agent-vision" and validate_agent_visual_plan(
+            plan, page_num=page_num
+        ):
+            atomic_write_json(plan_path, plan)
+        return validate_html_against_visual_plan(
+            html_path.read_text(encoding="utf-8"),
+            plan,
+            page_num=page_num,
+        )
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return []
 
 
 def ensure_visual_diagnosis(
@@ -603,7 +657,12 @@ def ensure_visual_diagnosis(
         }
     output_path = diagnosis_path(book_root, page_num)
     if not force and output_path.is_file() and output_path.stat().st_mtime >= pdf_path.stat().st_mtime:
-        return json.loads(output_path.read_text(encoding="utf-8"))
+        diagnosis = json.loads(output_path.read_text(encoding="utf-8"))
+        if diagnosis.get("producer") == "agent-vision" and validate_agent_visual_plan(
+            diagnosis, page_num=page_num
+        ):
+            atomic_write_json(output_path, diagnosis)
+        return diagnosis
     diagnosis = diagnose_pdf_page(pdf_path, page_num=page_num)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_json(output_path, diagnosis)

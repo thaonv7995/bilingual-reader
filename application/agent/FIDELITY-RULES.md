@@ -83,7 +83,7 @@ See `.cursor/skills/books-pdf-to-html/special-layouts.md`. Summary:
 
 ## Rule 4 — Figures & images
 
-**Strategy invariant:** classify by visible content, never by the PDF container. Simple icons/pictograms and family trees, pedigrees, org charts, flowcharts, timelines, forms, tables, and worksheet diagrams made from text plus basic geometry MUST be reconstructed with semantic HTML and inline SVG/CSS. This remains true when the source is a scan. Extract raster only when fidelity depends on original pixels such as a photograph, painting, texture, hand-drawn detail, genuine irreproducible brand artwork, or irreducibly complex artwork.
+**Strategy invariant:** classify by visible content, never by the PDF container. Simple icons/pictograms and every visual typed `diagram` or `*-diagram`—including family trees, pedigrees, org charts, flowcharts, timelines, forms, tables, and worksheet diagrams—MUST be reconstructed with semantic HTML and inline SVG/CSS. This remains true when the source is a scan. Extract raster only when fidelity depends on original pixels such as a photograph, painting, texture, hand-drawn detail, genuine irreproducible brand artwork, or irreducibly complex artwork; use a pixel-dependent type rather than `diagram` in that case.
 
 **Raster pipeline (only for visuals classified `extract-raster`):**
 

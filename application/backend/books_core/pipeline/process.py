@@ -32,6 +32,10 @@ def _page_ready_at(path, *, asset_base=None) -> bool:
         normalize_per_page_asset_file(path)
         content = path.read_text(encoding="utf-8")
         validate_draft_html(content)
+        from books_core.visual_diagnostics import validate_html_file_against_visual_plan
+
+        if validate_html_file_against_visual_plan(path):
+            return False
         return not _verify_html_assets(
             path,
             content,
