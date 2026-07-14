@@ -1,41 +1,15 @@
 #!/usr/bin/env python3
-"""Script to compile HTML books to PDF using Playwright."""
+"""Compile one assembled HTML book to a verified A4 PDF."""
 
 import sys
 import asyncio
 from pathlib import Path
 
-async def generate_pdf(html_path: Path, pdf_path: Path):
-    from playwright.async_api import async_playwright
-    
-    async with async_playwright() as pw:
-        print("Launching Chromium...")
-        browser = await pw.chromium.launch()
-        context = await browser.new_context(viewport={"width": 794, "height": 1123})
-        page = await context.new_page()
-        
-        print(f"Loading {html_path}...")
-        # Resolve path to absolute file:// URL
-        abs_url = f"file://{html_path.resolve()}"
-        await page.goto(abs_url, wait_until="networkidle", timeout=60000)
-        broken_images = await page.eval_on_selector_all(
-            "img",
-            "imgs => imgs.filter(img => !img.complete || img.naturalWidth === 0).map(img => img.currentSrc || img.src)",
-        )
-        if broken_images:
-            raise RuntimeError(f"Cannot generate PDF with broken images: {broken_images}")
-        
-        print(f"Generating PDF at {pdf_path}...")
-        # Print to PDF with standard A4 size and no margins to let A4 CSS sub-sheets work perfectly
-        await page.pdf(
-            path=str(pdf_path),
-            format="A4",
-            print_background=True,
-            margin={"top": "0px", "right": "0px", "bottom": "0px", "left": "0px"},
-            prefer_css_page_size=True
-        )
-        await browser.close()
-    print("PDF generation complete!")
+_BACKEND = Path(__file__).resolve().parents[1]
+if str(_BACKEND) not in sys.path:
+    sys.path.insert(0, str(_BACKEND))
+
+from books_core.pdf_export import export_html_pdf
 
 def main():
     if len(sys.argv) < 3:
@@ -49,10 +23,8 @@ def main():
         print(f"Error: {html_path} does not exist.")
         sys.exit(1)
         
-    # Ensure parent output directory exists
-    pdf_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    asyncio.run(generate_pdf(html_path, pdf_path))
+    result = asyncio.run(export_html_pdf(html_path, pdf_path))
+    print(f"PDF generation complete: {result['pages']} A4 pages, {result['bytes']} bytes")
 
 if __name__ == "__main__":
     main()

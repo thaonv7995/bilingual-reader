@@ -1160,9 +1160,12 @@
                         </div>
                         <span id="detailProcessingBadge" class="badge badge-processing" style="display:none; align-items:center; gap:0.35rem; padding:0.4rem 0.8rem; font-size:0.8rem;"><span class="loading-spinner" style="width:12px; height:12px; border:2px solid rgba(255,255,255,0.05); border-top-color:var(--accent-warning); border-radius:50%;"></span> Processing...</span>
                     </div>
-                    <div style="display:flex; gap:0.75rem;">
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:flex-end;">
                         <a id="viewEnBtn" class="btn btn-secondary" target="_blank" style="display:none;"><i data-lucide="external-link"></i> EN HTML</a>
                         <a id="viewViBtn" class="btn btn-secondary" target="_blank" style="display:none;"><i data-lucide="external-link"></i> VI HTML</a>
+                        <button id="exportPdfBtn" class="btn btn-secondary" onclick="exportCurrentBookPdfs()"><i data-lucide="file-down"></i> Build PDFs</button>
+                        <a id="downloadEnPdfBtn" class="btn btn-success" download style="display:none;"><i data-lucide="download"></i> EN PDF</a>
+                        <a id="downloadViPdfBtn" class="btn btn-success" download style="display:none;"><i data-lucide="download"></i> VI PDF</a>
                         <button id="verifyBtn" class="btn btn-secondary" onclick="verifyCurrentBook()"><i data-lucide="check-square"></i> Verify Book</button>
                         <button id="packBtn" class="btn btn-secondary" onclick="packCurrentBook()"><i data-lucide="package"></i> Repack</button>
                         <button id="downloadBtn" class="btn btn-success" disabled onclick="downloadCurrentBook()"><i data-lucide="download"></i> Download .bkb</button>
@@ -1450,6 +1453,7 @@
         let currentBookPages = [];
         let detailStatusInitialized = false;
         let previousDetailRunning = false;
+        let previousPdfExportState = null;
         let previewVersion = Date.now().toString(36);
 
         // Initialize Icons
@@ -1783,6 +1787,7 @@
             activeSlug = slug;
             detailStatusInitialized = false;
             previousDetailRunning = false;
+            previousPdfExportState = null;
             previewVersion = Date.now().toString(36);
             document.getElementById('detailTitle').innerText = title;
             document.getElementById('detailSlug').innerText = `books/${slug}`;
@@ -1809,6 +1814,29 @@
                 viB.style.display = data.has_book_vi_html ? 'inline-flex' : 'none';
                 if(data.has_book_html) enB.href = `/books/${activeSlug}/output/book.html`;
                 if(data.has_book_vi_html) viB.href = `/books/${activeSlug}/output/book.vi.html`;
+
+                const downloadToken = localStorage.getItem('studio_token');
+                const enPdf = document.getElementById('downloadEnPdfBtn');
+                const viPdf = document.getElementById('downloadViPdfBtn');
+                enPdf.style.display = data.has_book_pdf ? 'inline-flex' : 'none';
+                viPdf.style.display = data.has_book_vi_pdf ? 'inline-flex' : 'none';
+                if(data.has_book_pdf) enPdf.href = `/api/books/${activeSlug}/download-pdf/en?token=${downloadToken}`;
+                if(data.has_book_vi_pdf) viPdf.href = `/api/books/${activeSlug}/download-pdf/vi?token=${downloadToken}`;
+
+                const exportPdfBtn = document.getElementById('exportPdfBtn');
+                exportPdfBtn.disabled = !!data.pdf_exporting;
+                exportPdfBtn.innerHTML = data.pdf_exporting
+                    ? '<span class="loading-spinner" style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.05);border-top-color:var(--text-primary);border-radius:50%;display:inline-block;margin-right:6px;"></span> Building PDFs...'
+                    : '<i data-lucide="file-down"></i> Build PDFs';
+
+                const pdfState = data.pdf_export && data.pdf_export.state;
+                if(detailStatusInitialized && previousPdfExportState === 'running' && pdfState && pdfState !== 'running') {
+                    const message = data.pdf_export.message || 'PDF export finished';
+                    if(pdfState === 'success') showToast(message, 'success');
+                    else if(pdfState === 'partial') showToast(message, 'warning');
+                    else showToast(`${message}: ${data.pdf_export.error || 'Unknown error'}`, 'error');
+                }
+                previousPdfExportState = pdfState || null;
 
                 const isRunning = data.running;
                 const processingJustFinished = detailStatusInitialized && previousDetailRunning && !isRunning;
@@ -1855,6 +1883,7 @@
                     `;
                 });
                 document.getElementById('pageGrid').innerHTML = gridHtml;
+                lucide.createIcons();
 
                 if(processingJustFinished) {
                     closeLogStream();
@@ -1998,6 +2027,25 @@
 
         function downloadCurrentBook() {
             window.location.href = `/api/books/${activeSlug}/download?token=${localStorage.getItem('studio_token')}`;
+        }
+
+        async function exportCurrentBookPdfs() {
+            const button = document.getElementById('exportPdfBtn');
+            button.disabled = true;
+            button.innerHTML = '<span class="loading-spinner" style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.05);border-top-color:var(--text-primary);border-radius:50%;display:inline-block;margin-right:6px;"></span> Starting...';
+            try {
+                const raw = await api(`/api/books/${activeSlug}/export-pdf`, {method: 'POST'});
+                const result = await raw.json();
+                if(!result.success) throw new Error(result.message || 'Could not start PDF export');
+                previousPdfExportState = 'running';
+                showToast('PDF export started in background.', 'info');
+                pollDetailStatus();
+            } catch(error) {
+                showToast(`PDF export failed: ${error.message}`, 'error');
+                button.disabled = false;
+                button.innerHTML = '<i data-lucide="file-down"></i> Build PDFs';
+                lucide.createIcons();
+            }
         }
 
         function connectLogStream(slug) {

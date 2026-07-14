@@ -176,6 +176,9 @@ running_processes: Dict[str, asyncio.subprocess.Process] = {}
 starting_processes: set[str] = set()
 # slug -> list of string logs
 process_logs: Dict[str, List[str]] = {}
+# Long PDF exports run outside request lifetimes and publish progress via status.
+pdf_export_tasks: Dict[str, asyncio.Task] = {}
+pdf_export_status: Dict[str, dict] = {}
 
 # --- Caching Layer to prevent massive disk scanning lag ---
 class ResponseCache:
@@ -800,7 +803,8 @@ async def upload_file(file: UploadFile = File(...)):
 @app.get("/api/books/{slug}/status")
 def get_book_status_endpoint(slug: str):
     is_running = slug in running_processes
-    status_ttl = 1.5 if is_running else 5.0
+    is_pdf_exporting = slug in pdf_export_tasks
+    status_ttl = 1.5 if is_running or is_pdf_exporting else 5.0
     
     cached = response_cache.get_status(slug, status_ttl)
     if cached is not None:
@@ -847,6 +851,10 @@ def get_book_status_endpoint(slug: str):
     # Check if assembled book files exist
     summary["has_book_html"] = (book.output_dir / "book.html").is_file()
     summary["has_book_vi_html"] = (book.output_dir / "book.vi.html").is_file()
+    summary["has_book_pdf"] = (book.output_dir / "book.pdf").is_file()
+    summary["has_book_vi_pdf"] = (book.output_dir / "book.vi.pdf").is_file()
+    summary["pdf_exporting"] = is_pdf_exporting
+    summary["pdf_export"] = dict(pdf_export_status.get(slug, {}))
     
     response_cache.set_status(slug, summary)
     return summary
@@ -1174,6 +1182,109 @@ def pack_book_endpoint(slug: str):
         return {"success": True, "archive": result["archive"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def _run_pdf_export(slug: str, book_path: Path) -> None:
+    from books_core.assemble import assemble_book_html
+    from books_core.pdf_export import export_html_pdf
+
+    status = pdf_export_status[slug]
+    generated: dict[str, dict] = {}
+    skipped: dict[str, str] = {}
+    try:
+        book = BookPaths.open(book_path)
+        expected_pages = book.estimate_page_count()
+        for lang, html_name, pdf_name in (
+            ("en", "book.html", "book.pdf"),
+            ("vi", "book.vi.html", "book.vi.pdf"),
+        ):
+            pages = sorted(book.pages_dir(lang).glob("page_*.html")) if book.pages_dir(lang).is_dir() else []
+            if not pages:
+                skipped[lang] = "No rendered HTML pages"
+                continue
+            if expected_pages and len(pages) != expected_pages:
+                skipped[lang] = f"Expected {expected_pages} pages, found {len(pages)}"
+                continue
+            status.update({"state": "running", "language": lang, "message": f"Exporting {lang.upper()} PDF..."})
+            response_cache.clear(slug)
+            assemble_book_html(book, lang, html_name)
+            generated[lang] = await export_html_pdf(
+                book.output_dir / html_name,
+                book.output_dir / pdf_name,
+            )
+
+        if not generated:
+            details = "; ".join(f"{lang.upper()}: {reason}" for lang, reason in skipped.items())
+            raise RuntimeError(f"No complete language is ready for PDF export. {details}")
+        state = "success" if not skipped else "partial"
+        message = f"Generated {', '.join(lang.upper() for lang in generated)} PDF"
+        if skipped:
+            message += "; skipped " + ", ".join(lang.upper() for lang in skipped)
+        status.update(
+            {
+                "state": state,
+                "language": None,
+                "message": message,
+                "generated": generated,
+                "skipped": skipped,
+                "error": None,
+            }
+        )
+    except Exception as exc:
+        logger.exception("PDF export failed for %s", slug)
+        status.update(
+            {
+                "state": "failed",
+                "language": None,
+                "message": "PDF export failed",
+                "generated": generated,
+                "skipped": skipped,
+                "error": str(exc),
+            }
+        )
+    finally:
+        pdf_export_tasks.pop(slug, None)
+        response_cache.clear(slug)
+
+
+@app.post("/api/books/{slug}/export-pdf")
+async def export_book_pdf_endpoint(slug: str):
+    book_path = books_dir() / slug
+    if not book_path.is_dir():
+        raise HTTPException(status_code=404, detail="Book not found")
+    if slug in running_processes or slug in starting_processes:
+        return {"success": False, "message": "Wait for page processing to finish before exporting PDF"}
+    if slug in pdf_export_tasks:
+        return {"success": False, "message": "PDF export is already running"}
+
+    pdf_export_status[slug] = {
+        "state": "running",
+        "language": None,
+        "message": "Preparing assembled HTML...",
+        "generated": {},
+        "skipped": {},
+        "error": None,
+    }
+    task = asyncio.create_task(_run_pdf_export(slug, book_path))
+    pdf_export_tasks[slug] = task
+    response_cache.clear(slug)
+    return {"success": True, "message": "PDF export started"}
+
+
+@app.get("/api/books/{slug}/download-pdf/{lang}")
+def download_book_pdf(slug: str, lang: str):
+    if lang not in {"en", "vi"}:
+        raise HTTPException(status_code=400, detail="Language must be 'en' or 'vi'")
+    book_path = books_dir() / slug
+    pdf_name = "book.pdf" if lang == "en" else "book.vi.pdf"
+    pdf_path = book_path / "output" / pdf_name
+    if not pdf_path.is_file():
+        raise HTTPException(status_code=404, detail=f"{lang.upper()} PDF has not been generated")
+    return FileResponse(
+        path=str(pdf_path),
+        filename=f"{slug}.{lang}.pdf",
+        media_type="application/pdf",
+    )
 
 @app.post("/api/books/{slug}/verify")
 async def verify_book_endpoint(slug: str):

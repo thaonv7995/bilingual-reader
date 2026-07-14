@@ -32,7 +32,7 @@ echo -e "${YELLOW}This requires sudo privileges. You might be prompted for your 
 # Check for apt-get
 if command -v apt-get >/dev/null 2>&1; then
     sudo apt-get update
-    sudo apt-get install -y expect tmux python3-pip python3-venv python3-dev build-essential
+    sudo apt-get install -y expect tmux python3-pip python3-venv python3-dev build-essential chromium
     echo -e "${GREEN}[✔] System packages installed successfully.${NC}"
 else
     echo -e "${RED}[✘] apt-get not found. Please install expect, tmux, python3-pip, python3-venv manually.${NC}"

@@ -49,11 +49,11 @@ done
 install_dependencies() {
     echo -e "\n${BLUE}=== Installing OS Dependencies ===${NC}"
     if [ "$EUID" -eq 0 ]; then
-        apt-get update && apt-get install -y expect tmux python3-pip python3-venv python3-dev build-essential curl git
+        apt-get update && apt-get install -y expect tmux python3-pip python3-venv python3-dev build-essential curl git chromium
     else
         if command -v sudo >/dev/null 2>&1; then
             echo -e "${YELLOW}Requesting sudo permissions to install dependencies (expect, tmux, python3)...${NC}"
-            sudo apt-get update && sudo apt-get install -y expect tmux python3-pip python3-venv python3-dev build-essential curl git
+            sudo apt-get update && sudo apt-get install -y expect tmux python3-pip python3-venv python3-dev build-essential curl git chromium
         else
             echo -e "${RED}[✘] Error: sudo is required to install dependencies but not found.${NC}"
             echo -e "Please install 'expect', 'tmux', 'python3-venv', 'python3-pip', 'build-essential' manually."
