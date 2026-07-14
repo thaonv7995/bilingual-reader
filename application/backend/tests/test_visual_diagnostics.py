@@ -309,24 +309,73 @@ def test_extractor_repairs_multi_placeholder_full_page_cover(tmp_path: Path) -> 
 def test_extractor_uses_diagnosed_art_crop_and_rewrites_stale_png(tmp_path: Path) -> None:
     book = tmp_path / "book"
     pdf = book / "work" / "page_0032" / "source.pdf"
-    _write_vector_figure_pdf(pdf)
+    _write_raster_figure_pdf(pdf)
     diagnosis = ensure_visual_diagnosis(book, 32, force=True)
     output = book / "output" / "assets" / "images"
     output.mkdir(parents=True)
-    stale = output / "page_0032_fig_1_1.png"
+    stale = output / "page_0032_fig_2_1.png"
     stale.write_bytes(b"stale")
 
     figures = extract_figures(
         pdf,
         output,
         page_num=32,
-        expected_figures=[("page_0032_fig_1_1.png", "1_1")],
+        expected_figures=[("page_0032_fig_2_1.png", "2_1")],
     )
 
     assert len(figures) == 1
     assert figures[0]["clip"] == diagnosis["figures"][0]["crop_bbox"]
     assert figures[0]["clip"][2] < diagnosis["figures"][0]["caption_bbox"][0]
     assert stale.read_bytes().startswith(b"\x89PNG")
+
+
+def test_extractor_crops_multiple_planned_images_from_one_scanned_page(tmp_path: Path) -> None:
+    book = tmp_path / "book"
+    pdf = book / "work" / "page_0188" / "source.pdf"
+    _write_full_page_raster_pdf(pdf)
+    diagnosis_path(book, 188).write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "producer": "agent-vision",
+                "status": "finalized",
+                "page": 188,
+                "figures": [
+                    {
+                        "id": "1",
+                        "type": "photo",
+                        "strategy": "extract-raster",
+                        "bbox_normalized": [0.08, 0.12, 0.45, 0.42],
+                        "crop_bbox": [48.0, 96.0, 270.0, 336.0],
+                    },
+                    {
+                        "id": "2",
+                        "type": "photo",
+                        "strategy": "extract-raster",
+                        "bbox_normalized": [0.55, 0.52, 0.92, 0.82],
+                        "crop_bbox": [330.0, 416.0, 552.0, 656.0],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output = book / "output" / "assets" / "images"
+
+    figures = extract_figures(
+        pdf,
+        output,
+        page_num=188,
+        expected_figures=[
+            ("page_0188_fig_1.png", "1"),
+            ("page_0188_fig_2.png", "2"),
+        ],
+    )
+
+    assert [figure["figure"] for figure in figures] == ["1", "2"]
+    assert (output / "page_0188_fig_1.png").is_file()
+    assert (output / "page_0188_fig_2.png").is_file()
+    assert figures[1]["clip"] == [330.0, 416.0, 552.0, 656.0]
 
 
 def test_page_pipeline_runs_agent_vision_before_html_render(tmp_path: Path, monkeypatch) -> None:

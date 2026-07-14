@@ -111,6 +111,8 @@ def _diagnosed_crop_overrides(pdf_path: Path) -> dict[str, fitz.Rect]:
         return {}
     overrides: dict[str, fitz.Rect] = {}
     for figure in diagnosis.get("figures", []):
+        if figure.get("strategy") != "extract-raster":
+            continue
         crop = figure.get("crop_bbox")
         if not isinstance(crop, list) or len(crop) != 4:
             continue
@@ -579,6 +581,19 @@ def extract_figures(
                 for label in labels
                 if _canonical_figure_id(label[0]) in expected_ids
             ]
+
+            # A scan-only page can contain several agent-diagnosed photos or
+            # illustrations inside one full-page embedded image. PDF object
+            # counts cannot map those placeholders 1:1, but the finalized
+            # visual plan already supplies authoritative crop bounds.
+            present_ids = {_canonical_figure_id(label[0]) for label in labels}
+            for _, expected_id in expected_figures:
+                canonical_id = _canonical_figure_id(expected_id)
+                diagnosed_clip = crop_overrides.get(canonical_id)
+                if canonical_id not in present_ids and diagnosed_clip is not None:
+                    labels.append((expected_id, "Agent-diagnosed raster region", diagnosed_clip))
+                    present_ids.add(canonical_id)
+            labels.sort(key=lambda item: (item[2].y0, item[2].x0))
 
         # Some photo-heavy books use an unnumbered caption or no PDF text
         # caption at all. When the rendered HTML placeholders and embedded
