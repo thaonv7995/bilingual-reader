@@ -20,6 +20,12 @@ from books_core.meta.reader import book_status_summary
 from books_core.package import pack_book
 from books_core.asset_paths import normalize_per_page_asset_paths
 from books_core.validation import draft_html_file_valid
+from books_cli.agy_settings import (
+    credential_paths,
+    credentials_present,
+    parse_quota_output,
+    remove_credentials,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("books_server")
@@ -236,11 +242,7 @@ def get_agy_binary() -> str:
     return "agy"
 
 def get_token_paths() -> list[Path]:
-    return [
-        Path.home() / ".gemini/antigravity-cli/antigravity-oauth-token",
-        Path.home() / ".gemini/antigravity-cli/jetski_state.pbtxt",
-        Path.home() / ".gemini/credentials.json"
-    ]
+    return credential_paths()
 
 # --- Persistent Studio State Database (JSON Store) ---
 class StudioState:
@@ -313,40 +315,46 @@ class StudioState:
 studio_state = StudioState()
 
 def find_logged_in_email() -> Optional[str]:
-    return "Connected account"
+    return studio_state.data["auth"].get("email")
 
-_auth_cache = {"logged_in": False, "last_check": 0.0}
+_auth_cache = {
+    "state": "checking",
+    "logged_in": False,
+    "email": None,
+    "message": "Checking AGY CLI session…",
+    "last_check": 0.0,
+}
+
+
+def _set_auth_state(state: str, *, email: str | None = None, message: str | None = None) -> None:
+    logged_in = state == "connected"
+    _auth_cache.update(
+        {
+            "state": state,
+            "logged_in": logged_in,
+            "email": email,
+            "message": message or "",
+            "last_check": time.time(),
+        }
+    )
+    studio_state.update_auth(logged_in=logged_in, email=email)
+
+
+def _reset_agy_caches(*, state: str = "checking", message: str = "Checking AGY CLI session…") -> None:
+    _set_auth_state(state, email=None, message=message)
+    _quota_cache.update({"data": None, "last_updated": 0.0, "is_updating": False})
 
 def is_agy_authenticated(force: bool = False) -> bool:
-    now = time.time()
-    # Cache auth status for 60 seconds unless forced
-    if not force and (now - _auth_cache["last_check"] < 60.0):
-        return _auth_cache["logged_in"]
-        
-    agy_bin = get_agy_binary()
-    try:
-        proc = subprocess.run(
-            [agy_bin, "models"],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=8
-        )
-        is_auth = (proc.returncode == 0) and bool(proc.stdout.strip())
-        _auth_cache["logged_in"] = is_auth
-    except Exception:
-        _auth_cache["logged_in"] = False
-        
-    _auth_cache["last_check"] = now
-    
-    if _auth_cache["logged_in"]:
-        email = find_logged_in_email()
-        studio_state.update_auth(logged_in=True, email=email)
-    else:
-        studio_state.update_auth(logged_in=False, email=None)
-        
-    return _auth_cache["logged_in"]
+    """Return readiness from the last interactive probe.
+
+    ``agy models`` is intentionally not used here: it lists models even when
+    OAuth credentials are absent or the account still needs verification.
+    """
+    if not credentials_present():
+        if _auth_cache["state"] != "disconnected":
+            _set_auth_state("disconnected", message="AGY CLI is not signed in.")
+        return False
+    return bool(_auth_cache["state"] == "connected")
 # Quota memory cache
 _quota_cache = {
     "data": None,
@@ -354,77 +362,17 @@ _quota_cache = {
     "is_updating": False
 }
 
-def parse_quota_output(output: str) -> dict:
-    quota = {"account": "", "groups": []}
-    
-    acc_match = re.search(r'Account:\s*([^\n]+)', output)
-    if acc_match:
-        quota["account"] = acc_match.group(1).strip()
-        
-    lines = output.split('\n')
-    current_group = None
-    current_limit = None
-    
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        stripped = line.strip()
-        
-        # Group (e.g. GEMINI MODELS)
-        if re.match(r'^[A-Z0-9\s]+$', stripped) and len(stripped) > 0 and i + 1 < len(lines) and "Models within this group:" in lines[i+1]:
-            if current_group:
-                if current_limit:
-                    current_group["limits"].append(current_limit)
-                    current_limit = None
-                quota["groups"].append(current_group)
-            
-            group_name = stripped
-            models_str = lines[i+1].split("Models within this group:")[1].strip()
-            current_group = {"name": group_name, "models": models_str, "limits": []}
-            i += 2
-            continue
-            
-        # Limit (e.g. Weekly Limit)
-        if current_group and re.match(r'^[A-Za-z\s]+Limit$', stripped):
-            if current_limit:
-                current_group["limits"].append(current_limit)
-            
-            limit_name = stripped
-            if i + 1 < len(lines) and "[" in lines[i+1] and "%" in lines[i+1]:
-                pct_match = re.search(r'([0-9\.]+)\%', lines[i+1])
-                pct = float(pct_match.group(1)) if pct_match else 0.0
-                
-                desc = lines[i+2].strip() if i + 2 < len(lines) else ""
-                
-                color = "#22c55e" # Green
-                if pct < 10:
-                    color = "#ef4444" # Red
-                elif pct < 30:
-                    color = "#f59e0b" # Orange
-                    
-                current_limit = {
-                    "name": limit_name,
-                    "percent": pct,
-                    "color": color,
-                    "info": desc
-                }
-                i += 3
-                continue
-        
-        i += 1
-        
-    if current_group:
-        if current_limit:
-            current_group["limits"].append(current_limit)
-        quota["groups"].append(current_group)
-        
-    return quota
-
 async def refresh_quota_cache_async():
     global _quota_cache
     if _quota_cache["is_updating"]:
         return
+    if not credentials_present():
+        _set_auth_state("disconnected", message="AGY CLI is not signed in.")
+        _quota_cache["data"] = {"success": False, "error": "Not authenticated", "state": "disconnected"}
+        _quota_cache["last_updated"] = time.time()
+        return
     _quota_cache["is_updating"] = True
+    proc = None
     try:
         agy_bin = get_agy_binary()
         script_path = str(Path(repo_root()) / "fetch_quota_tmux.sh")
@@ -434,42 +382,64 @@ async def refresh_quota_cache_async():
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
-        stdout, stderr = await proc.communicate()
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=20)
         
         if proc.returncode == 0:
             output = stdout.decode('utf-8', errors='replace')
-            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-            output = ansi_escape.sub('', output)
-            
-            quota = parse_quota_output(output)
-            if quota["account"] or quota["groups"]:
+            parsed = parse_quota_output(output)
+            state = parsed["state"]
+            quota = parsed["quota"]
+            email = quota.get("account") or None
+            _set_auth_state(state, email=email, message=parsed["message"])
+
+            if parsed["raw_has_quota"]:
                 _quota_cache["data"] = {
                     "success": True,
-                    "quota": quota
+                    "quota": quota,
+                    "state": state,
+                    "warning": parsed["message"] if state != "connected" else None,
                 }
                 _quota_cache["last_updated"] = time.time()
-                if quota["account"]:
-                    studio_state.update_auth(logged_in=True, email=quota["account"])
             else:
-                err = "Failed to parse quota from CLI."
-                if "Eligibility check failed" in output:
-                    err = "Eligibility check failed. Re-authenticate AGY CLI."
-                elif "trust" in output.lower():
-                    err = "AGY CLI is blocked by a workspace trust prompt."
-                _quota_cache["data"] = {"success": False, "error": err}
+                _quota_cache["data"] = {
+                    "success": False,
+                    "error": parsed["message"],
+                    "state": state,
+                }
+                _quota_cache["last_updated"] = time.time()
         else:
-            _quota_cache["data"] = {"success": False, "error": "Failed to retrieve quota"}
+            error = stderr.decode('utf-8', errors='replace').strip() or "Failed to retrieve quota"
+            _set_auth_state("error", message=error)
+            _quota_cache["data"] = {"success": False, "error": error, "state": "error"}
+            _quota_cache["last_updated"] = time.time()
+    except asyncio.TimeoutError:
+        _set_auth_state("error", message="AGY quota check timed out.")
+        _quota_cache["data"] = {"success": False, "error": "AGY quota check timed out", "state": "error"}
+        _quota_cache["last_updated"] = time.time()
     except Exception as e:
         logger.error(f"Error updating quota cache: {e}")
-        _quota_cache["data"] = {"success": False, "error": f"Error parsing quota: {str(e)}"}
+        _set_auth_state("error", message=f"AGY quota check failed: {e}")
+        _quota_cache["data"] = {"success": False, "error": f"AGY quota check failed: {str(e)}", "state": "error"}
+        _quota_cache["last_updated"] = time.time()
     finally:
+        if proc is not None and proc.returncode is None:
+            proc.terminate()
+            try:
+                await asyncio.wait_for(proc.wait(), timeout=2)
+            except (asyncio.TimeoutError, ProcessLookupError):
+                try:
+                    proc.kill()
+                    await proc.wait()
+                except ProcessLookupError:
+                    pass
         _quota_cache["is_updating"] = False
 
 async def background_quota_updater():
     await asyncio.sleep(5)
     while True:
         try:
-            if is_agy_authenticated(force=False):
+            age = time.time() - _quota_cache["last_updated"]
+            if credentials_present() and (_quota_cache["data"] is None or age >= 120):
                 await refresh_quota_cache_async()
         except Exception as e:
             logger.error(f"Error in background quota updater: {e}")
@@ -480,20 +450,30 @@ async def startup_event():
     asyncio.create_task(background_quota_updater())
 
 @app.get("/api/auth/status")
-def get_auth_status(force: bool = False):
-    logged_in = is_agy_authenticated(force=force)
+async def get_auth_status(force: bool = False):
+    if not credentials_present():
+        _set_auth_state("disconnected", message="AGY CLI is not signed in.")
+    elif force:
+        await refresh_quota_cache_async()
+    elif _quota_cache["data"] is None and not _quota_cache["is_updating"]:
+        asyncio.create_task(refresh_quota_cache_async())
     return {
-        "logged_in": logged_in,
-        "email": studio_state.data["auth"].get("email"),
-        "status": login_session.status,
-        "oauth_url": login_session.oauth_url
+        "logged_in": _auth_cache["state"] == "connected",
+        "credential_present": credentials_present(),
+        "state": _auth_cache["state"],
+        "message": _auth_cache["message"],
+        "email": _auth_cache.get("email") or studio_state.data["auth"].get("email"),
+        "login_status": login_session.status,
+        "oauth_url": login_session.oauth_url,
+        "checking": _auth_cache["state"] == "checking" or _quota_cache["is_updating"],
     }
 
 @app.get("/api/auth/quota")
 async def get_auth_quota(force: bool = False):
     global _quota_cache
-    if not is_agy_authenticated(force=False):
-        return {"success": False, "error": "Not authenticated"}
+    if not credentials_present():
+        _set_auth_state("disconnected", message="AGY CLI is not signed in.")
+        return {"success": False, "error": "Not authenticated", "state": "disconnected"}
     
     import time
     now = time.time()
@@ -513,32 +493,34 @@ async def get_auth_quota(force: bool = False):
         
     return {"success": False, "error": "Quota cache is being populated, please wait a moment."}
 @app.post("/api/auth/logout_agy")
-def logout_agy_cli():
+async def logout_agy_cli():
+    global login_session
+    cli_warning = None
     try:
+        if login_session.process and login_session.process.returncode is None:
+            login_session.process.kill()
+            await login_session.process.wait()
+        login_session = LoginSession()
+
         script_path = Path(repo_root()) / "logout_agy.exp"
         if script_path.exists() and shutil.which("expect"):
             agy_bin = get_agy_binary()
             try:
-                result = subprocess.run(["expect", str(script_path), agy_bin], timeout=25, capture_output=True)
+                result = await asyncio.to_thread(
+                    subprocess.run,
+                    ["expect", str(script_path), agy_bin],
+                    timeout=25,
+                    capture_output=True,
+                    text=True,
+                )
                 if result.returncode != 0:
-                    return {"success": False, "error": "AGY logout failed"}
+                    cli_warning = "AGY CLI did not confirm remote logout; local credentials were cleared."
             except Exception as e:
-                return {"success": False, "error": f"Failed to run expect script: {e}"}
-        
-        for token_file in get_token_paths():
-            if token_file.exists():
-                try:
-                    token_file.unlink()
-                except:
-                    pass
-        
-        if is_agy_authenticated(force=True):
-            return {"success": False, "error": "AGY credential is still active"}
-            
-        _auth_cache["logged_in"] = False
-        _auth_cache["last_check"] = 0
-        studio_state.update_auth(logged_in=False, email=None)
-        return {"success": True}
+                cli_warning = f"Remote logout check failed; local credentials were cleared: {e}"
+
+        remove_credentials()
+        _reset_agy_caches(state="disconnected", message="AGY CLI is not signed in.")
+        return {"success": True, "state": "disconnected", "warning": cli_warning}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
@@ -547,8 +529,8 @@ def logout_agy_cli():
 async def start_auth_login():
     global login_session
     
-    if is_agy_authenticated(force=True):
-        return {"success": True, "already_authenticated": True}
+    if _auth_cache["state"] == "connected" and credentials_present():
+        return {"success": True, "already_authenticated": True, "state": "connected"}
         
     # Terminate any existing login process
     if login_session.process and login_session.process.returncode is None:
@@ -557,6 +539,13 @@ async def start_auth_login():
             await login_session.process.wait()
         except Exception:
             pass
+
+    # A stale or ineligible token makes AGY skip the login chooser. Reconnect is
+    # an explicit user action, so clear only OAuth credential files before
+    # starting a fresh authorization flow.
+    if credentials_present():
+        remove_credentials()
+    _reset_agy_caches(state="disconnected", message="Waiting for AGY authorization.")
             
     login_session = LoginSession()
     login_session.status = "starting"
@@ -565,10 +554,14 @@ async def start_auth_login():
     logger.info(f"Spawning '{agy_bin} login' to fetch OAuth link")
     
     import tempfile
-    url_file = tempfile.mktemp(prefix="agy_oauth_")
+    url_fd, url_file = tempfile.mkstemp(prefix="agy_oauth_")
+    os.close(url_fd)
+    Path(url_file).unlink(missing_ok=True)
     
     try:
         script_path = Path(repo_root()) / "login_agy.exp"
+        if not shutil.which("expect"):
+            raise RuntimeError("The 'expect' command is required for AGY browser login.")
         env = dict(os.environ)
         env["BROWSER"] = "true %s"
         env["AGY_OAUTH_URL_FILE"] = url_file
@@ -679,12 +672,18 @@ async def verify_auth_code(payload: dict):
             pass
         exit_code = -1
         
-    has_token = any(f.is_file() and f.stat().st_size > 0 for f in get_token_paths())
-    if exit_code == 0 or has_token or is_agy_authenticated(force=True):
+    has_token = credentials_present()
+    if exit_code == 0 or has_token:
         login_session.status = "success"
-        _auth_cache["logged_in"] = True
-        _auth_cache["last_check"] = time.time()
-        return {"success": True}
+        _reset_agy_caches()
+        if has_token:
+            await refresh_quota_cache_async()
+        return {
+            "success": has_token,
+            "state": _auth_cache["state"],
+            "message": _auth_cache["message"],
+            "error": None if has_token else "AGY did not create an OAuth credential file.",
+        }
     else:
         login_session.status = "failed"
         return {
@@ -707,6 +706,8 @@ async def cancel_auth_login():
     login_session.status = "idle"
     login_session.oauth_url = None
     login_session.process = None
+    if not credentials_present():
+        _reset_agy_caches(state="disconnected", message="AGY CLI is not signed in.")
     return {"success": True}
 
 @app.get("/api/books")

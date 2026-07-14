@@ -2069,11 +2069,13 @@
         // Settings / Auth
         // Settings / Auth
         async function checkAgyAuth() {
+            const box = document.getElementById('authStatusBox');
+            const authBtn = document.getElementById('authBtn');
             try {
                 const res = await api("/api/auth/status");
                 const data = await res.json();
-                const box = document.getElementById('authStatusBox');
-                if(data.logged_in) {
+                const state = data.state || (data.logged_in ? 'connected' : 'disconnected');
+                if(state === 'connected') {
                     const firstChar = (data.email || 'A')[0].toUpperCase();
                     box.innerHTML = `
                         <div class="user-profile-card">
@@ -2102,19 +2104,36 @@
                         </div>
                     `;
                     closeModal('verifyModal');
-                    document.getElementById('authBtn').style.display = 'none';
+                    authBtn.style.display = 'none';
+                } else if(state === 'checking') {
+                    box.innerHTML = `
+                        <div style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); padding:1rem; border-radius:var(--radius-lg); margin-bottom:1.5rem; display:flex; align-items:center; gap:0.75rem;">
+                            <span class="loading-spinner" style="width:18px;height:18px;border:2px solid rgba(255,255,255,0.08);border-top-color:var(--accent-primary);border-radius:50%;flex-shrink:0;"></span>
+                            <div><strong style="display:block;margin-bottom:0.15rem;">Checking AGY session</strong><span style="font-size:0.8rem;color:var(--text-secondary);">${data.message || 'Reading authentication and quota status…'}</span></div>
+                        </div>`;
+                    authBtn.style.display = 'none';
+                    if(data.checking) setTimeout(checkAgyAuth, 1500);
+                } else if(state === 'needs_verification') {
+                    box.innerHTML = `
+                        <div style="background:rgba(245,158,11,0.09); border:1px solid rgba(245,158,11,0.3); padding:1rem; border-radius:var(--radius-lg); margin-bottom:1.5rem; display:flex; align-items:flex-start; gap:0.75rem;">
+                            <i data-lucide="shield-alert" style="color:var(--accent-warning);width:20px;height:20px;flex-shrink:0;"></i>
+                            <div><strong style="display:block;margin-bottom:0.2rem;">Account verification required</strong><span style="font-size:0.8rem;color:var(--text-secondary);">${data.message || 'Reconnect AGY with an eligible Google account before running the pipeline.'}</span>${data.email ? `<div style="font-size:0.78rem;margin-top:0.45rem;color:var(--text-primary);">${data.email}</div>` : ''}</div>
+                        </div>`;
+                    authBtn.style.display = 'inline-flex';
+                    authBtn.innerHTML = '<i data-lucide="refresh-cw"></i> Reconnect AGY CLI';
                 } else {
                     box.innerHTML = `
                         <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); padding:1rem; border-radius:var(--radius-lg); margin-bottom:1.5rem; display:flex; align-items:center; gap:0.75rem;">
                             <i data-lucide="alert-circle" style="color:var(--accent-danger); width:20px; height:20px; flex-shrink:0;"></i>
                             <div>
-                                <strong style="color:var(--text-primary); font-size:0.9rem; display:block; margin-bottom:0.15rem;">Disconnected</strong>
-                                <span style="font-size:0.8rem; color:var(--text-secondary);">CLI authorization required. Please follow instructions to authorize.</span>
+                                <strong style="color:var(--text-primary); font-size:0.9rem; display:block; margin-bottom:0.15rem;">${state === 'error' ? 'Connection check failed' : 'Disconnected'}</strong>
+                                <span style="font-size:0.8rem; color:var(--text-secondary);">${data.message || 'CLI authorization required. Please follow instructions to authorize.'}</span>
                             </div>
                         </div>
                     `;
-                    document.getElementById('authBtn').style.display = 'inline-flex';
-                    if(data.status === 'waiting_code' && data.oauth_url) {
+                    authBtn.style.display = 'inline-flex';
+                    authBtn.innerHTML = `<i data-lucide="shield-alert"></i> ${state === 'error' ? 'Reconnect AGY CLI' : 'Authorize AGY CLI'}`;
+                    if(data.login_status === 'waiting_code' && data.oauth_url) {
                         document.getElementById('oauthLink').href = data.oauth_url;
                         openModal('verifyModal');
                     } else {
@@ -2122,7 +2141,12 @@
                     }
                 }
                 lucide.createIcons();
-            } catch(e) {}
+            } catch(e) {
+                box.innerHTML = `<div class="stat-item"><span class="stat-label">Status</span><span class="stat-val" style="color:var(--accent-danger);">${e.message || 'Unable to check AGY session'}</span></div>`;
+                authBtn.style.display = 'inline-flex';
+                authBtn.innerHTML = '<i data-lucide="refresh-cw"></i> Retry Connection';
+                lucide.createIcons();
+            }
         }
 
         async function logoutAgy() {
@@ -2133,12 +2157,15 @@
                 btn.innerHTML = '<span class="loading-spinner" style="width:14px; height:14px; border:2px solid rgba(255,255,255,0.05); border-top-color:var(--text-primary); border-radius:50%; display:inline-block; margin-right:6px;"></span> Disconnecting...';
             }
             try {
-                await api("/api/auth/logout_agy", {method:"POST"});
+                const res = await api("/api/auth/logout_agy", {method:"POST"});
+                const data = await res.json();
+                if(!data.success) throw new Error(data.error || 'AGY logout failed');
                 showToast("Logged out of AGY successfully.", "success");
                 await checkAgyAuth();
                 document.getElementById('quotaBox').innerHTML = `<div class="stat-item"><span class="stat-label">Status</span><span class="stat-val">Disconnected</span></div>`;
+                if(data.warning) showToast(data.warning, "warning");
             } catch(e) { 
-                showToast("Error logging out", "error"); 
+                showToast(`Error logging out: ${e.message || 'Unknown error'}`, "error");
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = '<i data-lucide="log-out"></i> Disconnect Session';
@@ -2161,8 +2188,11 @@
                     openModal('verifyModal');
                     window.open(data.url, '_blank');
                     showToast("Authentication initiated! Please check your browser to sign in.", "info");
-                } else showToast("Failed to start auth", "error");
-            } catch(e) { showToast("Error connecting to auth API", "error"); }
+                } else if(data.success && data.already_authenticated) {
+                    showToast("AGY CLI is already connected.", "info");
+                    await checkAgyAuth();
+                } else showToast(data.error || "Failed to start auth", "error");
+            } catch(e) { showToast(`Error connecting to auth API: ${e.message || 'Unknown error'}`, "error"); }
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = '<i data-lucide="shield-alert"></i> Authorize AGY CLI';
@@ -2192,9 +2222,11 @@
                 const res = await api("/api/auth/verify", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({code})});
                 const data = await res.json();
                 if(data.success) { 
-                    showToast("Authorized successfully!", "success"); 
+                    const needsVerification = data.state === 'needs_verification';
+                    showToast(needsVerification ? (data.message || "Account needs verification.") : "Authorized successfully!", needsVerification ? "warning" : "success");
                     closeModal('verifyModal'); 
-                    checkAgyAuth(); 
+                    await checkAgyAuth();
+                    await fetchQuota(true);
                 }
                 else showToast("Failed: " + (data.error||'Unknown'), "error");
             } catch(e) { showToast("Verification error", "error"); }
@@ -2230,7 +2262,8 @@
                 
                 if(data.success && data.quota) {
                     let ageText = data.age !== undefined ? ` (Updated ${data.age}s ago)` : '';
-                    let html = `<div style="font-size:0.875rem; color:var(--text-secondary); margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; width:100%;">
+                    let html = data.warning ? `<div style="background:rgba(245,158,11,0.09);border:1px solid rgba(245,158,11,0.3);color:var(--accent-warning);padding:0.75rem;border-radius:var(--radius-md);font-size:0.78rem;line-height:1.45;margin-bottom:1rem;">${data.warning}</div>` : '';
+                    html += `<div style="font-size:0.875rem; color:var(--text-secondary); margin-bottom:1.5rem; display:flex; align-items:center; justify-content:space-between; width:100%;">
                         <span style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="user-check" style="width:16px;height:16px;"></i> Active Account: <strong style="color:var(--text-primary);">${data.quota.account}</strong></span>
                         <span style="font-size:0.75rem; color:var(--text-muted);">${ageText}</span>
                     </div>`;
@@ -2267,6 +2300,7 @@
                     }
                 }
                 lucide.createIcons();
+                if(force) await checkAgyAuth();
             } catch(e) {
                 if (!hasExistingData) {
                     box.innerHTML = `<div class="stat-item"><span class="stat-label">Error</span><span class="stat-val">Failed to fetch</span></div>`;

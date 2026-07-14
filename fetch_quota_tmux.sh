@@ -1,25 +1,35 @@
 #!/bin/bash
+set -u
+
 SESSION_NAME="agy_quota_fetch_$$"
 
 AGY_BIN="${1:-agy}"
 
+cleanup() {
+    tmux kill-session -t "$SESSION_NAME" 2>/dev/null || true
+}
+
+# The server can be stopped while this helper is waiting. Always remove the
+# detached AGY process instead of leaving an orphaned tmux session behind.
+trap cleanup EXIT INT TERM HUP
+
 # Kill any existing session with this name just in case
-tmux kill-session -t $SESSION_NAME 2>/dev/null
+cleanup
 
 # Start a new detached tmux session running agy in current directory
-tmux new-session -d -s $SESSION_NAME -x 1000 -y 100 "$AGY_BIN"
+tmux new-session -d -s "$SESSION_NAME" -x 1000 -y 100 "$AGY_BIN"
 
 # Wait a moment for agy to load
 sleep 3
 
 # Send the "/quota" command and press Enter
-tmux send-keys -t $SESSION_NAME "/quota" C-m
+tmux send-keys -t "$SESSION_NAME" "/quota" C-m
 
 # Wait for the quota to be printed
 sleep 3
 
 # Capture the current screen output
-tmux capture-pane -t $SESSION_NAME -p -S - -E - | sed '/^[[:space:]]*$/d'
+tmux capture-pane -t "$SESSION_NAME" -p -S - -E - | sed '/^[[:space:]]*$/d'
 
 # Kill the session
-tmux kill-session -t $SESSION_NAME
+cleanup
