@@ -15,12 +15,18 @@ if str(_BACKEND) not in sys.path:
 
 from books_core.asset_paths import lint_images_in_html  # noqa: E402
 from books_core.book_layout import _verify_html_assets  # noqa: E402
+from books_core.validation import ArtifactValidationError, validate_draft_html  # noqa: E402
 
 
 def _lint_per_page(path: Path, *, chrome: dict[str, str] | None, book: Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
     issues: list[str] = []
     name = f"{path.parent.name}/{path.name}"
+
+    try:
+        validate_draft_html(text)
+    except ArtifactValidationError as exc:
+        issues.append(f"{name}: {exc}")
 
     if "page-copyright" in text:
         issues.append(f"{name}: use .book-footer not .page-copyright")

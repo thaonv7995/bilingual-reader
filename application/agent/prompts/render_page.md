@@ -10,9 +10,12 @@ You are the **page HTML builder** for **one PDF page**.
 ## Inputs
 
 1. **`work/page_NNNN/source.pdf`** — primary (open visually)
-2. **`work/page_NNNN/visual-diagnosis.json`** — finalized plan produced by the vision agent
-3. **`book.json`** → `page_chrome` — header/footer text for this book
-4. **`output/assets/images/`** — raster figure crops
+2. **`work/page_NNNN/source.png`** — complete rendered page; open this first, especially for scanned PDFs
+3. **`work/page_NNNN/visual-diagnosis.json`** — finalized plan produced by the vision agent
+4. **`book.json`** → `page_chrome` — header/footer text for this book
+5. **`output/assets/images/`** — raster figure crops
+
+The PDF can be a scanned/image-only page with no extractable text. Empty text extraction never means the page is blank: inspect `source.png` and reproduce every visible content block. Never write an empty `<article>` for a source page that contains visible content. For a genuinely blank source page only, mark the article explicitly with `data-intentionally-blank="true"`.
 
 ## Output
 

@@ -89,7 +89,11 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
             )
             paths["visual_diagnosis"] = None
         hints.append("MUST READ: application/agent/FIDELITY-RULES.md before writing HTML.")
-        hints.append(f"Primary input: {rel(source_page_pdf)} — open visually; do not trust text-extract order.")
+        hints.append(
+            f"Primary visual input: {paths.get('source_reference_png') or rel(source_page_pdf)} — "
+            "open the complete page; scanned PDFs may have no extractable text."
+        )
+        hints.append("Never emit an empty article when the source page has visible content.")
         hints.append(
             "Follow visual-diagnosis.json per figure: reconstruct-html-svg uses semantic HTML/inline SVG; "
             "extract-raster uses a standard image placeholder."

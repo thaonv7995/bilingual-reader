@@ -311,8 +311,8 @@ def main() -> int:
     for page in range(args.start_page, page_count + 1):
         en_html = book.page_lang_html(page, "en")
         vi_html = book.page_lang_html(page, "vi")
-        need_render = not en_html.is_file() or en_html.stat().st_size == 0
-        need_translate = args.translate and (not vi_html.is_file() or vi_html.stat().st_size == 0)
+        need_render = not standalone_page_valid(en_html)
+        need_translate = args.translate and not standalone_page_valid(vi_html)
         
         if need_render or need_translate:
             pages_to_process.append(page)

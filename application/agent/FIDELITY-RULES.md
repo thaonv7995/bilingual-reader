@@ -132,6 +132,8 @@ Every page:
 
 Always link: `book.css`, `page-tokens.css`, `prose-page.css`
 
+The `<article>` must contain meaningful visible text or artwork. A shell containing only page chrome is invalid. Image-only/scanned PDFs must be read from `work/page_NNNN/source.png`; lack of extractable PDF text is not evidence of a blank page. Only a genuinely blank source page may use `<article ... data-intentionally-blank="true">`.
+
 Also link when needed:
 - `code-page.css` — listings, tables, monospace blocks
 - `figures-page.css` — diagrams, math, metrics

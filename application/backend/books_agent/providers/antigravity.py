@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import subprocess
+import threading
+import time
+from dataclasses import replace
 from pathlib import Path
 
 from books_agent.detect import DetectResult, detect_binary
@@ -14,30 +17,55 @@ class AntigravityProvider(Provider):
     label = "Antigravity CLI"
     binary_names = ["agy", "antigravity"]
 
+    def __init__(self) -> None:
+        self._detect_lock = threading.Lock()
+        self._detect_cache: DetectResult | None = None
+        self._detect_cache_until = 0.0
+
     def detect(self) -> DetectResult:
-        base = detect_binary(self.id, self.label, self.binary_names)
-        if not base.installed or not base.path:
-            return base
-        
-        # A stale token/state file is not proof that the CLI can actually run.
-        # Probe the same authenticated command used by the Web Studio instead.
-        try:
-            proc = subprocess.run(
-                [base.path, "models"],
-                stdin=subprocess.DEVNULL,
-                capture_output=True,
-                text=True,
-                timeout=8,
-                cwd=str(repo_root()),
-            )
-            output = (proc.stdout or "") + (proc.stderr or "")
-            if proc.returncode != 0 or not any(name in output for name in ("Gemini", "Claude", "GPT")):
-                base.runnable = False
-                base.message = output.strip()[:300] or "Antigravity CLI is not authenticated or has no available models."
-        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-            base.runnable = False
-            base.message = "Could not verify Antigravity authentication with `agy models`."
-        return base
+        now = time.monotonic()
+        if self._detect_cache is not None and now < self._detect_cache_until:
+            return replace(self._detect_cache)
+
+        # A batch can start many page threads at once. Serialize and cache this
+        # relatively expensive auth probe so `agy models` is not launched 12–24
+        # times concurrently and mistaken for an authentication failure.
+        with self._detect_lock:
+            now = time.monotonic()
+            if self._detect_cache is not None and now < self._detect_cache_until:
+                return replace(self._detect_cache)
+
+            base = detect_binary(self.id, self.label, self.binary_names)
+            if base.installed and base.path:
+                # A stale token/state file is not proof that the CLI can actually run.
+                # Probe the same authenticated command used by the Web Studio instead.
+                try:
+                    proc = subprocess.run(
+                        [base.path, "models"],
+                        stdin=subprocess.DEVNULL,
+                        capture_output=True,
+                        text=True,
+                        timeout=8,
+                        cwd=str(repo_root()),
+                    )
+                    output = (proc.stdout or "") + (proc.stderr or "")
+                    if proc.returncode != 0 or not any(
+                        name in output for name in ("Gemini", "Claude", "GPT")
+                    ):
+                        base.runnable = False
+                        base.message = (
+                            output.strip()[:300]
+                            or "Antigravity CLI is not authenticated or has no available models."
+                        )
+                except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+                    base.runnable = False
+                    base.message = "Could not verify Antigravity authentication with `agy models`."
+
+            self._detect_cache = replace(base)
+            # Successful auth is stable within one batch. Failures expire quickly
+            # so an interactive login or transient CLI timeout can recover on retry.
+            self._detect_cache_until = time.monotonic() + (30.0 if base.runnable else 2.0)
+            return replace(base)
 
     def build_run_command(
         self,

@@ -67,6 +67,30 @@ class _JsonOutputProvider(_NoOutputProvider):
         ]
 
 
+class _BlankHtmlProvider(_NoOutputProvider):
+    def build_run_command(
+        self,
+        binary: str,
+        book_root: Path,
+        session_dir: Path,
+        phase: AgentPhase,
+        page: int,
+    ) -> list[str]:
+        output = book_root / "output" / "en" / f"page_{page:04d}.html"
+        blank = (
+            '<html><body><main class="book-page book-page--sheet">'
+            '<header class="running-head">Page 1</header>'
+            '<article class="sheet-flow prose-page"></article>'
+            '</main></body></html>'
+        )
+        return [
+            binary,
+            "-c",
+            f"from pathlib import Path; p=Path({str(output)!r}); "
+            f"p.parent.mkdir(parents=True, exist_ok=True); p.write_text({blank!r})",
+        ]
+
+
 def test_render_prompt_uses_exact_canonical_output(tmp_path: Path) -> None:
     book_root = tmp_path / "book"
     session_dir = book_root / "work" / "page_0001" / "agent"
@@ -86,6 +110,26 @@ def test_render_prompt_uses_exact_canonical_output(tmp_path: Path) -> None:
     assert 'src="assets/images/' not in prompt
 
 
+def test_render_context_prioritizes_full_page_png_for_scanned_pages(tmp_path: Path) -> None:
+    book_root = tmp_path / "book"
+    pdf_path = book_root / "work" / "page_0001" / "source.pdf"
+    pdf_path.parent.mkdir(parents=True)
+    document = fitz.open()
+    page = document.new_page(width=612, height=792)
+    page.insert_text((72, 120), "Scanned page visual content")
+    document.save(pdf_path)
+    document.close()
+
+    context = build_context(BookPaths(book_root), 1, "render_page")
+    inputs = context["skill_pack"]["inputs"]
+
+    assert context["paths"]["source_reference_png"] == "work/page_0001/source.png"
+    assert inputs[0] == {"key": "source_reference_png", "path": "work/page_0001/source.png"}
+    assert "scanned PDFs may have no extractable text" in " ".join(
+        context["efficiency_hints"]
+    )
+
+
 def test_zero_exit_without_expected_output_is_failure(tmp_path: Path) -> None:
     book_root = tmp_path / "book"
     session_dir = book_root / "work" / "page_0001" / "agent"
@@ -103,6 +147,33 @@ def test_zero_exit_without_expected_output_is_failure(tmp_path: Path) -> None:
 
     assert result.exit_code != 0
     assert "did not create a fresh, valid output file" in result.stderr
+
+
+def test_zero_exit_with_fresh_blank_page_is_failure(tmp_path: Path) -> None:
+    book_root = tmp_path / "book"
+    session_dir = book_root / "work" / "page_0001" / "agent"
+    session_dir.mkdir(parents=True)
+    (session_dir / "context.json").write_text(
+        json.dumps(
+            {
+                "lang": "en",
+                "output_kind": "html",
+                "output_file": "output/en/page_0001.html",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = _BlankHtmlProvider().run(
+        book_root,
+        session_dir,
+        "render_page",
+        1,
+        timeout_s=5,
+    )
+
+    assert result.exit_code != 0
+    assert "blank page shell" in result.stderr
 
 
 def test_provider_accepts_fresh_agent_visual_plan_json(tmp_path: Path) -> None:

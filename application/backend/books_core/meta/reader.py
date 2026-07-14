@@ -14,12 +14,9 @@ def _step_done(path: Path) -> bool:
     if not path.is_file() or path.stat().st_size == 0:
         return False
     if path.suffix == ".html":
-        try:
-            from books_core.validation import validate_draft_html
-            validate_draft_html(path.read_text(encoding="utf-8"))
-            return True
-        except Exception:
-            return False
+        from books_core.validation import draft_html_file_valid
+
+        return draft_html_file_valid(path)
     return True
 
 

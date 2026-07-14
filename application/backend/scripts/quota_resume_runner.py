@@ -28,7 +28,7 @@ if str(_BACKEND) not in sys.path:
 
 from books_core.paths import BookPaths
 from books_core.repo import repo_root
-from scripts.batch_processor import get_agy_binary, process_single_page
+from scripts.batch_processor import get_agy_binary, process_single_page, standalone_page_valid
 
 
 LOCAL_TZ = datetime.now().astimezone().tzinfo or timezone.utc
@@ -95,11 +95,11 @@ def append_log(path: Path, text: str) -> None:
 
 def page_done(book: BookPaths, page: int, translate: bool) -> bool:
     en_html = book.page_lang_html(page, "en")
-    if not en_html.is_file() or en_html.stat().st_size == 0:
+    if not standalone_page_valid(en_html):
         return False
     if translate:
         vi_html = book.page_lang_html(page, "vi")
-        if not vi_html.is_file() or vi_html.stat().st_size == 0:
+        if not standalone_page_valid(vi_html):
             return False
     return True
 

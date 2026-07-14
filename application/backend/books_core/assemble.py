@@ -7,6 +7,7 @@ from pathlib import Path
 
 from books_core.io import atomic_write_text
 from books_core.paths import BookPaths
+from books_core.validation import ArtifactValidationError, validate_draft_html
 
 
 def _page_numbers(book: BookPaths, lang: str) -> list[int]:
@@ -74,6 +75,12 @@ def assemble_book_html(
     for n in pages:
         page_path = book.page_lang_html(n, lang)
         html = page_path.read_text(encoding="utf-8")
+        try:
+            validate_draft_html(html)
+        except ArtifactValidationError as exc:
+            raise ValueError(
+                f"Cannot assemble {page_path.relative_to(book.root)}: {exc}"
+            ) from exc
         body = _extract_body(html)
         # Per-page HTML uses ../assets/; assembled book lives in output/ → assets/
         # Rewrite all occurrences (src, href, srcset, url(...), not only img src=).

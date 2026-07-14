@@ -34,7 +34,11 @@ def _write_book(tmp_path: Path, *, include_vi: bool = True) -> Path:
         encoding="utf-8",
     )
     for page in (1, 2):
-        markup = f"<html><body><article><h1>Page {page}</h1></article></body></html>"
+        markup = (
+            '<html><body><main class="book-page book-page--sheet">'
+            f'<article class="sheet-flow prose-page"><h1>Page {page}</h1></article>'
+            '</main></body></html>'
+        )
         (book / "output" / "en" / f"page_{page:04d}.html").write_text(
             markup, encoding="utf-8"
         )
@@ -108,6 +112,32 @@ def test_pdf_export_skips_incomplete_language(tmp_path: Path, monkeypatch) -> No
     assert status["state"] == "partial"
     assert set(status["generated"]) == {"en"}
     assert status["skipped"] == {"vi": "No rendered HTML pages"}
+
+
+def test_pdf_export_skips_language_with_blank_page(tmp_path: Path, monkeypatch) -> None:
+    book = _write_book(tmp_path)
+    (book / "output" / "vi" / "page_0002.html").write_text(
+        '<html><body><main class="book-page book-page--sheet">'
+        '<article class="sheet-flow prose-page"></article></main></body></html>',
+        encoding="utf-8",
+    )
+    calls: list[str] = []
+
+    async def fake_export(_html_path: Path, pdf_path: Path) -> dict[str, object]:
+        calls.append(pdf_path.name)
+        pdf_path.write_bytes(b"%PDF-test")
+        return {"path": str(pdf_path), "pages": 2, "bytes": pdf_path.stat().st_size}
+
+    monkeypatch.setattr("books_core.pdf_export.export_html_pdf", fake_export)
+    server.pdf_export_status[book.name] = {}
+    server.pdf_export_tasks[book.name] = object()  # type: ignore[assignment]
+
+    asyncio.run(server._run_pdf_export(book.name, book))
+
+    status = server.pdf_export_status[book.name]
+    assert calls == ["book.pdf"]
+    assert status["state"] == "partial"
+    assert status["skipped"] == {"vi": "1 blank/invalid page(s): [2]"}
 
 
 def test_download_pdf_returns_named_attachment(tmp_path: Path, monkeypatch) -> None:

@@ -19,6 +19,7 @@ from books_core.paths import BookPaths
 from books_core.meta.reader import book_status_summary
 from books_core.package import pack_book
 from books_core.asset_paths import normalize_per_page_asset_paths
+from books_core.validation import draft_html_file_valid
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("books_server")
@@ -822,7 +823,7 @@ def get_book_status_endpoint(slug: str):
     for p in summary.get("pages", []):
         page_num = p["page"]
         vi_html = book.page_lang_html(page_num, "vi")
-        p["translated"] = vi_html.is_file() and vi_html.stat().st_size > 0
+        p["translated"] = draft_html_file_valid(vi_html)
         
         # Load process.status.json if it exists to get real-time activity
         p["process_state"] = None
@@ -1204,6 +1205,16 @@ async def _run_pdf_export(slug: str, book_path: Path) -> None:
                 continue
             if expected_pages and len(pages) != expected_pages:
                 skipped[lang] = f"Expected {expected_pages} pages, found {len(pages)}"
+                continue
+            invalid_pages = [
+                int(path.stem.split("_")[1])
+                for path in pages
+                if not draft_html_file_valid(path)
+            ]
+            if invalid_pages:
+                skipped[lang] = (
+                    f"{len(invalid_pages)} blank/invalid page(s): {invalid_pages[:10]}"
+                )
                 continue
             status.update({"state": "running", "language": lang, "message": f"Exporting {lang.upper()} PDF..."})
             response_cache.clear(slug)
