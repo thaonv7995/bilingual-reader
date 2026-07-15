@@ -21,6 +21,11 @@ from books_core.package import pack_book
 from books_core.asset_paths import normalize_per_page_asset_paths
 from books_core.validation import draft_html_file_valid
 from books_core.repair_report import read_repair_report
+from books_core.page_editor import (
+    read_page_source,
+    save_page_source,
+    validate_page_source,
+)
 from books_cli.agy_settings import (
     credential_paths,
     credentials_present,
@@ -175,6 +180,12 @@ class ProcessConfig(BaseModel):
     force: bool = False
     pages: Optional[str] = None
     custom_prompt: Optional[str] = None
+
+
+class PageEditorPayload(BaseModel):
+    lang: str = "en"
+    html: str
+    revision: Optional[str] = None
 
 # Cache for active tasks and logs
 # slug -> asyncio.subprocess.Process
@@ -1102,6 +1113,71 @@ async def repair_failed_page(slug: str, page: int):
     if not success:
         raise HTTPException(status_code=500, detail="Failed to start page repair")
     return {"success": True, "page": page, "message": f"Repair started for page {page}"}
+
+
+def _page_editor_book(slug: str, page: int) -> Path:
+    if not _valid_preview_segment(slug) or page < 1:
+        raise HTTPException(status_code=404, detail="Page not found")
+    book_path = books_dir() / slug
+    if not book_path.is_dir():
+        raise HTTPException(status_code=404, detail="Book not found")
+    return book_path
+
+
+def _page_editor_lock_reason(slug: str) -> str | None:
+    if slug in running_processes or slug in starting_processes:
+        return "The page editor is read-only while the book pipeline is running"
+    if slug in pdf_export_tasks:
+        return "The page editor is read-only while PDF export is running"
+    return None
+
+
+@app.get("/api/books/{slug}/pages/{page}/source")
+def get_page_source(slug: str, page: int, lang: str = "en"):
+    book_path = _page_editor_book(slug, page)
+    try:
+        source = read_page_source(book_path, page, lang)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"{lang.upper()} HTML for page {page} was not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    lock_reason = _page_editor_lock_reason(slug)
+    return {**source, "locked": bool(lock_reason), "lock_reason": lock_reason}
+
+
+@app.post("/api/books/{slug}/pages/{page}/validate")
+def validate_page_html(slug: str, page: int, payload: PageEditorPayload):
+    book_path = _page_editor_book(slug, page)
+    try:
+        return validate_page_source(book_path, page, payload.lang, payload.html)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.put("/api/books/{slug}/pages/{page}/source")
+def update_page_source(slug: str, page: int, payload: PageEditorPayload):
+    book_path = _page_editor_book(slug, page)
+    lock_reason = _page_editor_lock_reason(slug)
+    if lock_reason:
+        raise HTTPException(status_code=409, detail=lock_reason)
+    if not payload.revision:
+        raise HTTPException(status_code=400, detail="A source revision is required when saving")
+    try:
+        result = save_page_source(
+            book_path,
+            page,
+            payload.lang,
+            payload.html,
+            expected_revision=payload.revision,
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"{payload.lang.upper()} HTML for page {page} was not found")
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    response_cache.clear(slug)
+    return {"success": True, **result}
 
 @app.get("/api/books/{slug}/logs")
 async def get_logs_stream(slug: str):
