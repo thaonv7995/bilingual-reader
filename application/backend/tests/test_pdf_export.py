@@ -10,6 +10,8 @@ from fastapi import HTTPException
 from fastapi.responses import FileResponse
 
 from books_cli import server
+from books_core.assemble import assemble_book_html
+from books_core.paths import BookPaths
 from books_core.pdf_export import _validate_pdf, find_chromium
 
 
@@ -63,6 +65,33 @@ def test_validate_pdf_requires_exact_a4_page_count(tmp_path: Path) -> None:
 
     with pytest.raises(RuntimeError, match="page count mismatch"):
         _validate_pdf(pdf_path, expected_pages=1)
+
+
+def test_assembly_preserves_and_scopes_page_local_print_styles(tmp_path: Path) -> None:
+    book = _write_book(tmp_path, include_vi=False)
+    page = book / "output" / "en" / "page_0001.html"
+    page.write_text(
+        """<!doctype html><html><head><style>
+:root { --hint-bg: #000; }
+body.book-standalone .hint-box { display: flex; background: var(--hint-bg); }
+.hint-icon { width: 18mm; height: 12mm; }
+@media print { .hint-box { border-radius: 3mm; } }
+</style></head><body class="book-standalone">
+<main class="book-page book-page--sheet"><article class="sheet-flow prose-page">
+<div class="hint-box"><svg class="hint-icon" viewBox="0 0 180 120"></svg></div>
+</article></main></body></html>""",
+        encoding="utf-8",
+    )
+
+    assemble_book_html(BookPaths(book), "en")
+
+    assembled = (book / "output" / "book.html").read_text(encoding="utf-8")
+    assert '<style data-book-page-styles>' in assembled
+    assert "@scope (#page-0001)" in assembled
+    assert ":scope { --hint-bg: #000; }" in assembled
+    assert ":scope .hint-box" in assembled
+    assert ".hint-icon { width: 18mm; height: 12mm; }" in assembled
+    assert "@media print { .hint-box { border-radius: 3mm; } }" in assembled
 
 
 def test_find_chromium_honors_configured_browser(tmp_path: Path, monkeypatch) -> None:

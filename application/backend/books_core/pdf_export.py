@@ -22,6 +22,10 @@ _BROWSER_CANDIDATES = (
 _PRINT_SAFETY_CSS = """
 @media print {
   html, body { overflow: visible !important; }
+  html, body, .book-sheet, .book-page {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
   body.book-full .book-full__main { display: block !important; }
   .book-sheet { break-inside: avoid !important; page-break-inside: avoid !important; }
   .book-page { overflow: hidden !important; }

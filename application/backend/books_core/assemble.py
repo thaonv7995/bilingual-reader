@@ -39,6 +39,34 @@ def _extract_body(html: str) -> str:
     return html.strip()
 
 
+def _extract_inline_styles(html: str) -> list[str]:
+    """Return page-local CSS that would otherwise be lost during assembly."""
+    return [
+        match.strip()
+        for match in re.findall(r"<style\b[^>]*>(.*?)</style>", html, re.DOTALL | re.IGNORECASE)
+        if match.strip()
+    ]
+
+
+_PAGE_ROOT_SELECTOR_RE = re.compile(
+    r"(?<![\w-])(?:html|body)(?:(?:[.#][\w-]+)|(?:\[[^\]]+\]))*",
+    re.IGNORECASE,
+)
+
+
+def _scope_page_css(css: str, page_id: str) -> str:
+    """Contain one standalone page's head CSS inside its assembled sheet.
+
+    Chromium's native @scope keeps ordinary selectors and nested @media rules
+    intact. Standalone `html`, `body`, and `:root` anchors are mapped to the
+    sheet scope because those ancestors are not copied into assembled HTML.
+    """
+    localized = re.sub(r":root\b", ":scope", css, flags=re.IGNORECASE)
+    localized = _PAGE_ROOT_SELECTOR_RE.sub(":scope", localized)
+    localized = re.sub(r":scope(?:\s+:scope)+", ":scope", localized)
+    return f"@scope (#{page_id}) {{\n{localized}\n}}"
+
+
 def assemble_book_html(
     book: BookPaths,
     lang: str | None = None,
@@ -62,6 +90,7 @@ def assemble_book_html(
     meta = book.load_book_json()
     title = str(meta.get("title") or book.root.name)
     sections: list[str] = []
+    page_styles: list[str] = []
     figure_manifest: dict[str, list[dict]] = {}
     manifest_path = book.output_dir / "assets" / "figures.manifest.json"
     if manifest_path.is_file():
@@ -107,8 +136,12 @@ def assemble_book_html(
         from books_core.asset_paths import rewrite_per_page_assets_to_assembled
 
         body = rewrite_per_page_assets_to_assembled(body)
+        page_id = f"page-{n:04d}"
+        page_styles.extend(
+            _scope_page_css(css, page_id) for css in _extract_inline_styles(html)
+        )
         sections.append(
-            f'<section class="book-sheet" id="page-{n:04d}" data-page="{n}">\n'
+            f'<section class="book-sheet" id="{page_id}" data-page="{n}">\n'
             f'  <main class="book-page book-page--sheet">\n'
             f'    <article class="sheet-flow prose-page">\n{body}\n'
             f"    </article>\n"
@@ -206,12 +239,17 @@ def assemble_book_html(
     }
   </style>"""
 
+    scoped_page_css = ""
+    if page_styles:
+        scoped_page_css = "\n  <style data-book-page-styles>\n" + "\n".join(page_styles) + "\n  </style>"
+
     combined = f"""<!doctype html>
 <html lang="{lang}">
 <head>
   <meta charset="utf-8">
   <title>{title}</title>
 {css_links}
+{scoped_page_css}
   <style>
     @media print {{
       .book-page {{ height: 296mm; }}
