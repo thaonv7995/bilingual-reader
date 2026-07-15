@@ -142,6 +142,9 @@ def test_studio_exposes_live_html_editor_controls() -> None:
     assert "function highlightCss" in template
     assert "function highlightJavaScript" in template
     assert "function editorCompletionContext" in template
+    assert ".editor-highlight code, .editor-highlight span" in template
+    assert "font-variant-ligatures: none" in template
+    assert ".syntax-comment { color: #64748b; }" in template
     assert "function applyEditorSuggestion" in template
     assert "event.code === 'Space'" in template
     assert "function renderEditorPreview()" in template
