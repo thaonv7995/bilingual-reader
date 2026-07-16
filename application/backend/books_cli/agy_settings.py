@@ -3,11 +3,20 @@
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
+import sys
+from html import unescape
 from pathlib import Path
 from typing import Any
 
 
 ANSI_ESCAPE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+OSC_ESCAPE = re.compile(r"\x1b\][^\x07]*(?:\x07|\x1b\\)")
+OSC_LINK = re.compile(r"\x1b\]8;[^;]*;(https?://[^\x07\x1b]+)(?:\x07|\x1b\\)")
+HTTP_URL = re.compile(r"https?://[^\s\x00-\x1f\x7f<>\"']+")
+AGY_KEYCHAIN_SERVICE = "gemini"
+AGY_KEYCHAIN_ACCOUNT = "antigravity"
 
 
 def credential_paths(home: Path | None = None) -> list[Path]:
@@ -23,8 +32,37 @@ def credential_paths(home: Path | None = None) -> list[Path]:
     ]
 
 
+def keychain_credential_present() -> bool:
+    """Check AGY's current macOS Keychain entry without reading its secret."""
+    if sys.platform != "darwin" or not shutil.which("security"):
+        return False
+    try:
+        result = subprocess.run(
+            [
+                "security",
+                "find-generic-password",
+                "-a",
+                AGY_KEYCHAIN_ACCOUNT,
+                "-s",
+                AGY_KEYCHAIN_SERVICE,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=3,
+            check=False,
+        )
+        return result.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
 def credentials_present(home: Path | None = None) -> bool:
-    return any(path.is_file() and path.stat().st_size > 0 for path in credential_paths(home))
+    file_credentials = any(
+        path.is_file() and path.stat().st_size > 0 for path in credential_paths(home)
+    )
+    # Passing an explicit home is primarily used for isolated operations/tests;
+    # never mix the real user's Keychain into that result.
+    return file_credentials or (home is None and keychain_credential_present())
 
 
 def remove_credentials(home: Path | None = None) -> list[Path]:
@@ -33,11 +71,59 @@ def remove_credentials(home: Path | None = None) -> list[Path]:
         if path.exists():
             path.unlink()
             removed.append(path)
+    if home is None and sys.platform == "darwin" and shutil.which("security"):
+        try:
+            subprocess.run(
+                [
+                    "security",
+                    "delete-generic-password",
+                    "-a",
+                    AGY_KEYCHAIN_ACCOUNT,
+                    "-s",
+                    AGY_KEYCHAIN_SERVICE,
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            pass
     return removed
 
 
 def strip_terminal_output(output: str) -> str:
-    return ANSI_ESCAPE.sub("", output).replace("\r", "")
+    return ANSI_ESCAPE.sub("", OSC_ESCAPE.sub("", output)).replace("\r", "")
+
+
+def extract_oauth_url(output: str) -> str | None:
+    """Extract an OAuth URL from plain text or an OSC-8 terminal hyperlink."""
+    candidates = OSC_LINK.findall(output)
+    candidates.extend(HTTP_URL.findall(strip_terminal_output(output)))
+    if not candidates:
+        # Some terminal renderers leave the OSC payload behind after stripping
+        # only the ESC byte. Searching the raw stream is a useful final fallback.
+        candidates.extend(HTTP_URL.findall(output))
+
+    cleaned: list[str] = []
+    for candidate in candidates:
+        url = unescape(candidate).rstrip(".,;:!?)]}\x07")
+        if url not in cleaned:
+            cleaned.append(url)
+    if not cleaned:
+        return None
+
+    preferred_markers = (
+        "accounts.google.",
+        "oauth",
+        "/auth/",
+        "gemini-code-assist",
+        "antigravity",
+    )
+    return next(
+        (url for url in cleaned if any(marker in url.lower() for marker in preferred_markers)),
+        cleaned[0],
+    )
 
 
 def parse_quota_output(output: str) -> dict[str, Any]:

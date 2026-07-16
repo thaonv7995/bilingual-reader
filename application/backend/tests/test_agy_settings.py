@@ -4,6 +4,8 @@ from pathlib import Path
 
 from books_cli.agy_settings import (
     credentials_present,
+    extract_oauth_url,
+    keychain_credential_present,
     parse_quota_output,
     remove_credentials,
 )
@@ -71,3 +73,70 @@ def test_remove_credentials_preserves_noncredential_cli_state(tmp_path: Path) ->
     assert removed == [token]
     assert not credentials_present(tmp_path)
     assert state.read_text(encoding="utf-8") == "state"
+
+
+def test_extract_oauth_url_from_osc8_terminal_link() -> None:
+    url = (
+        "https://accounts.google.com/signin/continue?continue="
+        "https://developers.google.com/gemini-code-assist/auth/success&authuser"
+    )
+    output = f"Open \x1b]8;id=url;{url}\x07Google sign-in\x1b]8;;\x07"
+
+    assert extract_oauth_url(output) == url
+
+
+def test_extract_oauth_url_accepts_non_google_oauth_host() -> None:
+    url = "https://login.example.test/oauth/authorize?client_id=agy&amp;scope=openid"
+
+    assert extract_oauth_url(f"Continue at {url}.\n") == url.replace("&amp;", "&")
+
+
+def test_keychain_check_uses_agy_service_without_reading_secret(monkeypatch) -> None:
+    calls = []
+
+    class Result:
+        returncode = 0
+
+    monkeypatch.setattr("books_cli.agy_settings.sys.platform", "darwin")
+    monkeypatch.setattr("books_cli.agy_settings.shutil.which", lambda name: "/usr/bin/security")
+    monkeypatch.setattr(
+        "books_cli.agy_settings.subprocess.run",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or Result(),
+    )
+
+    assert keychain_credential_present() is True
+    command = calls[0][0][0]
+    assert command == [
+        "security",
+        "find-generic-password",
+        "-a",
+        "antigravity",
+        "-s",
+        "gemini",
+    ]
+    assert "-w" not in command
+
+
+def test_remove_credentials_deletes_current_agy_keychain_item(monkeypatch) -> None:
+    calls = []
+
+    class Result:
+        returncode = 0
+
+    monkeypatch.setattr("books_cli.agy_settings.sys.platform", "darwin")
+    monkeypatch.setattr("books_cli.agy_settings.shutil.which", lambda name: "/usr/bin/security")
+    monkeypatch.setattr("books_cli.agy_settings.credential_paths", lambda home=None: [])
+    monkeypatch.setattr(
+        "books_cli.agy_settings.subprocess.run",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or Result(),
+    )
+
+    assert remove_credentials() == []
+    assert calls[0][0][0] == [
+        "security",
+        "delete-generic-password",
+        "-a",
+        "antigravity",
+        "-s",
+        "gemini",
+    ]

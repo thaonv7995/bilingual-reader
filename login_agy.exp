@@ -1,36 +1,48 @@
 #!/usr/bin/expect -f
+set timeout 45
 set stty_init "cols 1000"
+match_max 200000
 set agy_bin [lindex $argv 0]
 if { $agy_bin == "" } {
     set agy_bin "agy"
 }
 spawn $agy_bin
 
-# (Removed "Select login method" as newer agy versions don't print it)
+proc publish_url {url} {
+    puts "\nURL_FOUND_HERE:$url\n"
+    if {[info exists ::env(AGY_OAUTH_URL_FILE)]} {
+        if {![catch {open $::env(AGY_OAUTH_URL_FILE) w} handle]} {
+            puts $handle $url
+            close $handle
+        }
+    }
+}
 
-# Handle optional "Select login method" prompt for some agy versions
 expect {
+    timeout {
+        puts "\nAGY_LOGIN_ERROR:Timed out waiting for an OAuth URL\n"
+        exit 2
+    }
+    eof {
+        exit 3
+    }
     "Select login method" {
         send "\r"
         exp_continue
     }
-    -re "(https://accounts.google.com\[^\r\n \007\033]+)" {
-        puts "\nURL_FOUND_HERE:$expect_out(1,string)\n"
+    -re "(https?://\[^\r\n \007\033]+)" {
+        publish_url $expect_out(1,string)
     }
 }
 
+# Keep AGY alive while the browser completes its callback. Older AGY builds
+# may still ask for a code, so continue to forward stdin when that happens.
 set timeout -1
 expect {
-    "uthorization code..." {
+    -nocase -re "(authorization|verification).*code|paste.*code" {
         set code [gets stdin]
         send "$code\r"
         exp_continue
     }
     eof
-    ">" {
-        send "exit\r"
-    }
 }
-
-set timeout 5
-expect eof

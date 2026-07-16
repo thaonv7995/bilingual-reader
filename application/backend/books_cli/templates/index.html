@@ -1565,17 +1565,20 @@
                 </div>
                 <div class="step-item">
                     <div class="step-num">2</div>
-                    <div class="step-text">Log in with your Google account and copy the code.</div>
+                    <div class="step-text">Complete Google sign-in or account verification in the browser.</div>
                 </div>
                 <div class="step-item">
                     <div class="step-num">3</div>
-                    <div class="step-text">Paste the code below to complete connection.</div>
+                    <div class="step-text">Return here, then check whether AGY is connected.</div>
                 </div>
             </div>
-            <input type="text" id="verificationCode" class="form-input" placeholder="Paste verification code here" style="margin-bottom:1rem; padding:0.6rem; margin-top:0.5rem;">
+            <div id="legacyCodeFlow" style="display:none;">
+                <input type="text" id="verificationCode" class="form-input" placeholder="Paste verification code here" style="margin-bottom:1rem; padding:0.6rem; margin-top:0.5rem;">
+            </div>
             <div style="display:flex; gap:0.75rem;">
                 <button class="btn btn-secondary" onclick="cancelAgyAuth()" style="flex:1;">Cancel</button>
-                <button id="verifyCodeBtn" class="btn btn-success" onclick="verifyAgyAuth()" style="flex:1;"><i data-lucide="check"></i> Verify Code</button>
+                <button id="checkConnectionBtn" class="btn btn-success" onclick="completeAgyAuth()" style="flex:1;"><i data-lucide="refresh-cw"></i> Check Connection</button>
+                <button id="verifyCodeBtn" class="btn btn-success" onclick="verifyAgyAuth()" style="display:none;flex:1;"><i data-lucide="check"></i> Verify Code</button>
             </div>
         </div>
     </div>
@@ -2512,7 +2515,13 @@
         function closeLogStream() { if(logEventSource) { logEventSource.close(); logEventSource=null; } }
 
         // Settings / Auth
-        // Settings / Auth
+        function configureAgyAuthModal(mode = 'browser') {
+            const isCode = mode === 'code';
+            document.getElementById('legacyCodeFlow').style.display = isCode ? 'block' : 'none';
+            document.getElementById('verifyCodeBtn').style.display = isCode ? 'inline-flex' : 'none';
+            document.getElementById('checkConnectionBtn').style.display = isCode ? 'none' : 'inline-flex';
+        }
+
         async function checkAgyAuth() {
             const box = document.getElementById('authStatusBox');
             const authBtn = document.getElementById('authBtn');
@@ -2578,12 +2587,14 @@
                     `;
                     authBtn.style.display = 'inline-flex';
                     authBtn.innerHTML = `<i data-lucide="shield-alert"></i> ${state === 'error' ? 'Reconnect AGY CLI' : 'Authorize AGY CLI'}`;
-                    if(data.login_status === 'waiting_code' && data.oauth_url) {
-                        document.getElementById('oauthLink').href = data.oauth_url;
-                        openModal('verifyModal');
-                    } else {
-                        closeModal('verifyModal');
-                    }
+                }
+                const loginWaiting = data.login_status === 'waiting_browser' || data.login_status === 'waiting_code';
+                if(state !== 'connected' && loginWaiting && data.oauth_url) {
+                    document.getElementById('oauthLink').href = data.oauth_url;
+                    configureAgyAuthModal(data.login_status === 'waiting_code' ? 'code' : 'browser');
+                    openModal('verifyModal');
+                } else if(state !== 'connected' && !loginWaiting) {
+                    closeModal('verifyModal');
                 }
                 lucide.createIcons();
             } catch(e) {
@@ -2630,6 +2641,7 @@
                 const data = await res.json();
                 if(data.success && data.url) {
                     document.getElementById('oauthLink').href = data.url;
+                    configureAgyAuthModal(data.verification_mode || 'browser');
                     openModal('verifyModal');
                     window.open(data.url, '_blank');
                     showToast("Authentication initiated! Please check your browser to sign in.", "info");
@@ -2679,6 +2691,34 @@
                 btn.disabled = false;
                 btn.innerHTML = '<i data-lucide="check"></i> Verify Code';
                 lucide.createIcons();
+            }
+        }
+
+        async function completeAgyAuth() {
+            const btn = document.getElementById('checkConnectionBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner" style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.05);border-top-color:var(--text-primary);border-radius:50%;display:inline-block;margin-right:6px;"></span> Checking...';
+            }
+            try {
+                const res = await api('/api/auth/complete', {method:'POST'});
+                const data = await res.json();
+                if(data.success) {
+                    closeModal('verifyModal');
+                    showToast('AGY CLI connected successfully.', 'success');
+                    await checkAgyAuth();
+                    await fetchQuota(true);
+                } else {
+                    showToast(data.error || 'Browser authorization has not completed yet.', 'warning');
+                }
+            } catch(e) {
+                showToast(`Could not check AGY connection: ${e.message || 'Unknown error'}`, 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="refresh-cw"></i> Check Connection';
+                    lucide.createIcons();
+                }
             }
         }
 
@@ -2737,8 +2777,11 @@
                     });
                     box.innerHTML = html;
                 } else {
-                    // Only overwrite box with error if we don't have existing quota data
-                    if (!hasExistingData) {
+                    const authPending = data.state === 'disconnected' || data.state === 'checking';
+                    if (authPending) {
+                        const label = data.state === 'checking' ? 'Checking AGY session…' : 'Connect AGY to view quota';
+                        box.innerHTML = `<div class="stat-item"><span class="stat-label">Status</span><span class="stat-val">${label}</span></div>`;
+                    } else if (!hasExistingData) {
                         box.innerHTML = `<div class="stat-item"><span class="stat-label">Status</span><span class="stat-val" style="color:var(--accent-danger);">${data.error || 'Failed to fetch'}</span></div>`;
                     } else {
                         showToast(`Failed to update quota: ${data.error || 'Unknown error'}`, "error");

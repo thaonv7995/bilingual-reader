@@ -6,7 +6,7 @@ import subprocess
 from books_cli import server
 
 
-def test_auth_status_uses_credentials_not_models(monkeypatch) -> None:
+def test_auth_status_keeps_probed_session_when_legacy_files_are_missing(monkeypatch) -> None:
     monkeypatch.setattr(server, "credentials_present", lambda: False)
     monkeypatch.setattr(server, "_set_auth_state", lambda state, **kwargs: server._auth_cache.update({
         "state": state,
@@ -18,8 +18,8 @@ def test_auth_status_uses_credentials_not_models(monkeypatch) -> None:
 
     result = asyncio.run(server.get_auth_status())
 
-    assert result["state"] == "disconnected"
-    assert result["logged_in"] is False
+    assert result["state"] == "connected"
+    assert result["logged_in"] is True
     assert result["credential_present"] is False
 
 
@@ -46,3 +46,54 @@ def test_logout_clears_local_credentials_when_cli_logout_fails(tmp_path, monkeyp
     assert result["warning"]
     assert removed == [True]
     assert reset == [{"state": "disconnected", "message": "AGY CLI is not signed in."}]
+
+
+def test_quota_probe_is_not_blocked_by_missing_legacy_credential_files(monkeypatch) -> None:
+    class FakeProcess:
+        returncode = 0
+
+        async def communicate(self):
+            return (
+                b"Account: person@example.com\n"
+                b"GEMINI MODELS\n"
+                b"Models within this group: Gemini Flash\n"
+                b"Weekly Limit\n"
+                b"[bar] 50%\n"
+                b"50% remaining\n",
+                b"",
+            )
+
+    async def fake_subprocess(*_args, **_kwargs):
+        return FakeProcess()
+
+    monkeypatch.setattr(server, "credentials_present", lambda: False)
+    monkeypatch.setattr(server.asyncio, "create_subprocess_exec", fake_subprocess)
+    monkeypatch.setattr(server, "_set_auth_state", lambda state, **kwargs: server._auth_cache.update({
+        "state": state,
+        "logged_in": state == "connected",
+        "email": kwargs.get("email"),
+        "message": kwargs.get("message") or "",
+    }))
+    server._quota_cache.update({"data": None, "last_updated": 0.0, "is_updating": False})
+
+    asyncio.run(server.refresh_quota_cache_async())
+
+    assert server._quota_cache["data"]["success"] is True
+    assert server._auth_cache["state"] == "connected"
+
+
+def test_quota_does_not_spawn_agy_again_after_explicit_logout(monkeypatch) -> None:
+    spawned = []
+
+    async def fake_subprocess(*args, **kwargs):
+        spawned.append((args, kwargs))
+        raise AssertionError("AGY should not be started for passive quota polling")
+
+    monkeypatch.setattr(server.asyncio, "create_subprocess_exec", fake_subprocess)
+    server._auth_cache.update({"state": "disconnected", "logged_in": False})
+    server._quota_cache.update({"data": None, "last_updated": 0.0, "is_updating": False})
+
+    result = asyncio.run(server.get_auth_quota(force=False))
+
+    assert result["state"] == "disconnected"
+    assert spawned == []

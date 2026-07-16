@@ -33,6 +33,7 @@ from books_core.page_editor import (
 from books_cli.agy_settings import (
     credential_paths,
     credentials_present,
+    extract_oauth_url,
     parse_quota_output,
     remove_credentials,
 )
@@ -251,7 +252,8 @@ class LoginSession:
         self.process: Optional[asyncio.subprocess.Process] = None
         self.oauth_url: Optional[str] = None
         self.logs: List[str] = []
-        self.status: str = "idle"  # idle, starting, waiting_code, verifying, success, failed
+        self.status: str = "idle"  # idle, starting, waiting_browser, waiting_code, verifying, success, failed
+        self.requires_code: bool = False
 
 # Singleton login session
 login_session = LoginSession()
@@ -371,10 +373,6 @@ def is_agy_authenticated(force: bool = False) -> bool:
     ``agy models`` is intentionally not used here: it lists models even when
     OAuth credentials are absent or the account still needs verification.
     """
-    if not credentials_present():
-        if _auth_cache["state"] != "disconnected":
-            _set_auth_state("disconnected", message="AGY CLI is not signed in.")
-        return False
     return bool(_auth_cache["state"] == "connected")
 # Quota memory cache
 _quota_cache = {
@@ -387,21 +385,24 @@ async def refresh_quota_cache_async():
     global _quota_cache
     if _quota_cache["is_updating"]:
         return
-    if not credentials_present():
-        _set_auth_state("disconnected", message="AGY CLI is not signed in.")
-        _quota_cache["data"] = {"success": False, "error": "Not authenticated", "state": "disconnected"}
-        _quota_cache["last_updated"] = time.time()
-        return
+    # AGY 1.1.3 stores OAuth in the OS keyring instead of the legacy token
+    # files. The interactive probe is therefore the source of truth; do not
+    # reject the request solely because no credential file is visible.
     _quota_cache["is_updating"] = True
     proc = None
     try:
         agy_bin = get_agy_binary()
         script_path = str(Path(repo_root()) / "fetch_quota_tmux.sh")
-        
+        probe_env = dict(os.environ)
+        capture_bin_dir = str(Path(__file__).parent / "bin")
+        probe_env["BROWSER"] = str(Path(capture_bin_dir) / "open")
+        probe_env["PATH"] = f"{capture_bin_dir}{os.pathsep}{probe_env.get('PATH', '')}"
+
         proc = await asyncio.create_subprocess_exec(
             script_path, agy_bin,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
+            env=probe_env,
         )
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=20)
         
@@ -460,7 +461,9 @@ async def background_quota_updater():
     while True:
         try:
             age = time.time() - _quota_cache["last_updated"]
-            if credentials_present() and (_quota_cache["data"] is None or age >= 120):
+            if _auth_cache["state"] != "disconnected" and (
+                _quota_cache["data"] is None or age >= 120
+            ):
                 await refresh_quota_cache_async()
         except Exception as e:
             logger.error(f"Error in background quota updater: {e}")
@@ -472,11 +475,13 @@ async def startup_event():
 
 @app.get("/api/auth/status")
 async def get_auth_status(force: bool = False):
-    if not credentials_present():
-        _set_auth_state("disconnected", message="AGY CLI is not signed in.")
-    elif force:
+    if force:
         await refresh_quota_cache_async()
-    elif _quota_cache["data"] is None and not _quota_cache["is_updating"]:
+    elif (
+        _auth_cache["state"] != "disconnected"
+        and _quota_cache["data"] is None
+        and not _quota_cache["is_updating"]
+    ):
         asyncio.create_task(refresh_quota_cache_async())
     return {
         "logged_in": _auth_cache["state"] == "connected",
@@ -492,12 +497,18 @@ async def get_auth_status(force: bool = False):
 @app.get("/api/auth/quota")
 async def get_auth_quota(force: bool = False):
     global _quota_cache
-    if not credentials_present():
-        _set_auth_state("disconnected", message="AGY CLI is not signed in.")
-        return {"success": False, "error": "Not authenticated", "state": "disconnected"}
-    
     import time
     now = time.time()
+
+    # Do not repeatedly start AGY (which may itself launch browser auth) after
+    # an explicit logout. A forced refresh remains available for sessions that
+    # were authenticated outside Studio.
+    if _auth_cache["state"] == "disconnected" and not force:
+        return {
+            "success": False,
+            "error": "AGY CLI is not signed in.",
+            "state": "disconnected",
+        }
     
     if force:
         await refresh_quota_cache_async()
@@ -550,7 +561,7 @@ async def logout_agy_cli():
 async def start_auth_login():
     global login_session
     
-    if _auth_cache["state"] == "connected" and credentials_present():
+    if _auth_cache["state"] == "connected":
         return {"success": True, "already_authenticated": True, "state": "connected"}
         
     # Terminate any existing login process
@@ -562,10 +573,9 @@ async def start_auth_login():
             pass
 
     # A stale or ineligible token makes AGY skip the login chooser. Reconnect is
-    # an explicit user action, so clear only OAuth credential files before
+    # an explicit user action, so clear only local OAuth credentials before
     # starting a fresh authorization flow.
-    if credentials_present():
-        remove_credentials()
+    remove_credentials()
     _reset_agy_caches(state="disconnected", message="Waiting for AGY authorization.")
             
     login_session = LoginSession()
@@ -584,10 +594,10 @@ async def start_auth_login():
         if not shutil.which("expect"):
             raise RuntimeError("The 'expect' command is required for AGY browser login.")
         env = dict(os.environ)
-        env["BROWSER"] = "true %s"
         env["AGY_OAUTH_URL_FILE"] = url_file
-        # Prepend dummy open binary directory to PATH to suppress server-side browser open
+        # Capture browser launches instead of opening a browser on the server.
         dummy_bin_dir = str(Path(__file__).parent / "bin")
+        env["BROWSER"] = str(Path(dummy_bin_dir) / "open")
         env["PATH"] = f"{dummy_bin_dir}{os.pathsep}{env.get('PATH', '')}"
         
         proc = await asyncio.create_subprocess_exec(
@@ -603,27 +613,30 @@ async def start_auth_login():
         logger.error(f"Failed to start agy login process: {e}")
         return {"success": False, "error": f"Failed to start agy login: {str(e)}"}
 
+    session = login_session
+
     async def drain_stdout():
         while True:
-            line_bytes = await proc.stdout.readline()
-            if not line_bytes:
+            chunk_bytes = await proc.stdout.read(1024)
+            if not chunk_bytes:
                 break
-            line = line_bytes.decode('utf-8', errors='replace')
-            login_session.logs.append(line)
+            chunk = chunk_bytes.decode('utf-8', errors='replace')
+            session.logs.append(chunk)
+            combined = "".join(session.logs[-12:])
+            if not session.oauth_url:
+                session.oauth_url = extract_oauth_url(combined)
+            lowered = combined.lower()
+            if "authorization code" in lowered or "verification code" in lowered or "paste" in lowered and "code" in lowered:
+                session.requires_code = True
             
     asyncio.create_task(drain_stdout())
 
     url_found = False
-    for _ in range(40):  # poll for 20 seconds (40 * 0.5s)
+    for _ in range(90):  # AGY's browser link can take 10-20 seconds to render.
         # 1. Check if expect script captured it
-        for line in login_session.logs:
-            if "URL_FOUND_HERE:" in line:
-                url = line.split("URL_FOUND_HERE:")[1].strip()
-                if url.startswith("http"):
-                    login_session.oauth_url = url
-                    login_session.status = "waiting_code"
-                    url_found = True
-                    break
+        if session.oauth_url:
+            session.status = "waiting_code" if session.requires_code else "waiting_browser"
+            url_found = True
         if url_found:
             break
             
@@ -632,7 +645,7 @@ async def start_auth_login():
             url = Path(url_file).read_text().strip()
             if url.startswith("http"):
                 login_session.oauth_url = url
-                login_session.status = "waiting_code"
+                login_session.status = "waiting_browser"
                 url_found = True
                 break
                 
@@ -646,7 +659,11 @@ async def start_auth_login():
         pass
         
     if url_found:
-        return {"success": True, "url": login_session.oauth_url}
+        return {
+            "success": True,
+            "url": login_session.oauth_url,
+            "verification_mode": "code" if login_session.requires_code else "browser",
+        }
     else:
         try:
             proc.kill()
@@ -656,9 +673,39 @@ async def start_auth_login():
         login_session.status = "failed"
         return {
             "success": False, 
-            "error": "Could not extract OAuth URL within 20 seconds.", 
+            "error": "Could not extract OAuth URL within 45 seconds.",
             "logs": "".join(login_session.logs)
         }
+
+
+@app.post("/api/auth/complete")
+async def complete_browser_auth():
+    """Check a browser-based AGY login without requiring a pasted code."""
+    global login_session
+    login_session.status = "verifying"
+    await refresh_quota_cache_async()
+    state = _auth_cache["state"]
+    if state == "connected":
+        if login_session.process and login_session.process.returncode is None:
+            try:
+                login_session.process.kill()
+                await login_session.process.wait()
+            except ProcessLookupError:
+                pass
+        login_session.status = "success"
+        return {
+            "success": True,
+            "state": state,
+            "message": _auth_cache["message"],
+            "email": _auth_cache.get("email"),
+        }
+
+    login_session.status = "waiting_browser"
+    return {
+        "success": False,
+        "state": state,
+        "error": _auth_cache["message"] or "Browser authorization has not completed yet.",
+    }
 
 @app.post("/api/auth/verify")
 async def verify_auth_code(payload: dict):
@@ -684,7 +731,7 @@ async def verify_auth_code(payload: dict):
     # Just wait a bit for the process to exit after providing the code
         
     try:
-        exit_code = await asyncio.wait_for(login_session.process.wait(), timeout=8.0)
+        exit_code = await asyncio.wait_for(login_session.process.wait(), timeout=20.0)
     except asyncio.TimeoutError:
         try:
             login_session.process.kill()
@@ -693,17 +740,16 @@ async def verify_auth_code(payload: dict):
             pass
         exit_code = -1
         
+    await refresh_quota_cache_async()
     has_token = credentials_present()
-    if exit_code == 0 or has_token:
+    authenticated = _auth_cache["state"] == "connected"
+    if exit_code == 0 or has_token or authenticated:
         login_session.status = "success"
-        _reset_agy_caches()
-        if has_token:
-            await refresh_quota_cache_async()
         return {
-            "success": has_token,
+            "success": authenticated,
             "state": _auth_cache["state"],
             "message": _auth_cache["message"],
-            "error": None if has_token else "AGY did not create an OAuth credential file.",
+            "error": None if authenticated else "AGY authorization completed, but the CLI is not ready.",
         }
     else:
         login_session.status = "failed"
@@ -727,7 +773,7 @@ async def cancel_auth_login():
     login_session.status = "idle"
     login_session.oauth_url = None
     login_session.process = None
-    if not credentials_present():
+    if _auth_cache["state"] != "connected":
         _reset_agy_caches(state="disconnected", message="AGY CLI is not signed in.")
     return {"success": True}
 
