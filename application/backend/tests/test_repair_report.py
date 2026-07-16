@@ -7,6 +7,7 @@ from books_core.repair_report import (
     repair_report_path,
     write_repair_report,
 )
+from scripts import validate_page_fidelity as fidelity_validator
 from scripts.validate_page_fidelity import main as validate_main
 
 
@@ -83,7 +84,15 @@ def test_validator_writes_and_clears_repair_report(tmp_path) -> None:
         encoding="utf-8",
     )
 
-    assert validate_main(["validate_page_fidelity.py", str(tmp_path), "--lang", "all", "--pages-only"]) == 1
+    args = [
+        "validate_page_fidelity.py",
+        str(tmp_path),
+        "--lang",
+        "all",
+        "--pages-only",
+        "--skip-rendered-layout",
+    ]
+    assert validate_main(args) == 1
     report = read_repair_report(tmp_path)
     assert report["pages"] == [{"page": 1, "categories": ["missing_asset"]}]
 
@@ -91,5 +100,47 @@ def test_validator_writes_and_clears_repair_report(tmp_path) -> None:
     image.parent.mkdir(parents=True)
     image.write_bytes(b"not-empty")
 
-    assert validate_main(["validate_page_fidelity.py", str(tmp_path), "--lang", "all", "--pages-only"]) == 0
+    assert validate_main(args) == 0
     assert read_repair_report(tmp_path) is None
+
+
+def test_rendered_overflow_is_classified_for_targeted_repair() -> None:
+    output = (
+        "FAIL vi/page_0044.html: vertical overflow by 38.0px "
+        "near article.sheet-flow.prose-page"
+    )
+
+    report = parse_validation_failures(output)
+
+    assert report["pages"] == [{"page": 44, "categories": ["layout_overflow"]}]
+    assert report["issues"][0]["category"] == "layout_overflow"
+
+
+def test_validator_persists_browser_geometry_failure(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    pages = tmp_path / "output" / "en"
+    pages.mkdir(parents=True)
+    page = pages / "page_0007.html"
+    page.write_text(
+        '<main class="book-page book-page--sheet">'
+        '<article class="sheet-flow prose-page"><p>Visible content.</p></article>'
+        '</main>',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        fidelity_validator,
+        "validate_rendered_pages",
+        lambda paths: {page.resolve(): ["vertical overflow by 42.0px near article.sheet-flow"]},
+    )
+
+    assert validate_main([
+        "validate_page_fidelity.py",
+        str(tmp_path),
+        "--lang",
+        "all",
+        "--pages-only",
+    ]) == 1
+    report = read_repair_report(tmp_path)
+    assert report["pages"] == [{"page": 7, "categories": ["layout_overflow"]}]

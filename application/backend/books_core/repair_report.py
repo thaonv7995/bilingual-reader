@@ -26,6 +26,14 @@ def repair_report_path(book_root: Path) -> Path:
 
 def classify_issue(message: str) -> str:
     lowered = message.lower()
+    if (
+        "overflow" in lowered
+        or "clipped text/content" in lowered
+        or "rendered page width" in lowered
+        or "rendered page height" in lowered
+        or "exactly one a4 sheet" in lowered
+    ):
+        return "layout_overflow"
     if "missing image:" in lowered or "empty image" in lowered:
         return "missing_asset"
     if "no meaningful visible content" in lowered or "blank page shell" in lowered:

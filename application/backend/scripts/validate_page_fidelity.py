@@ -17,6 +17,7 @@ from books_core.asset_paths import lint_images_in_html  # noqa: E402
 from books_core.book_layout import _verify_html_assets  # noqa: E402
 from books_core.validation import ArtifactValidationError, validate_draft_html  # noqa: E402
 from books_core.repair_report import clear_repair_report, write_repair_report  # noqa: E402
+from books_core.rendered_layout import validate_rendered_pages  # noqa: E402
 
 
 def _lint_per_page(path: Path, *, chrome: dict[str, str] | None, book: Path) -> list[str]:
@@ -107,6 +108,11 @@ def main(argv: list[str]) -> int:
         action="store_true",
         help="Validate standalone pages but ignore stale assembled book files",
     )
+    parser.add_argument(
+        "--skip-rendered-layout",
+        action="store_true",
+        help="Skip Chromium geometry checks (debug/testing only)",
+    )
     try:
         args = parser.parse_args(argv[1:])
     except SystemExit as exc:
@@ -124,13 +130,30 @@ def main(argv: list[str]) -> int:
         langs = [lang_arg]
 
     page_count = 0
+    page_paths: list[Path] = []
     for lang in langs:
         pages_dir = book / "output" / lang
         if not pages_dir.is_dir():
             continue
         for path in sorted(pages_dir.glob("page_*.html")):
             page_count += 1
+            page_paths.append(path.resolve())
             all_issues.extend(_lint_per_page(path, chrome=chrome, book=book))
+
+    if page_paths and not args.skip_rendered_layout:
+        try:
+            print(
+                f"Checking rendered A4 bounds for {len(page_paths)} page(s) with Chromium...",
+                flush=True,
+            )
+            rendered_issues = validate_rendered_pages(page_paths)
+            for path in page_paths:
+                name = f"{path.parent.name}/{path.name}"
+                all_issues.extend(
+                    f"{name}: {message}" for message in rendered_issues.get(path, [])
+                )
+        except (FileNotFoundError, RuntimeError) as exc:
+            all_issues.append(f"Rendered layout validation unavailable: {exc}")
 
     if not args.pages_only:
         for assembled_name in ("book.html", "book.vi.html"):

@@ -156,6 +156,15 @@ python3 .cursor/skills/books-pdf-to-html/scripts/validate_a4_page.py books/<slug
 application/.venv/bin/python3 application/backend/scripts/validate_page_fidelity.py books/<slug> --lang all
 ```
 
+The fidelity validator renders every standalone page with Chromium print CSS and fails when:
+
+- the page shell is not 210mm × 296–297mm;
+- visible text, images, or positioned content crosses any page edge;
+- text/content is hidden by an inner `overflow: hidden/clip/auto` box;
+- `overflow: hidden` on the A4 shell merely conceals content outside the page.
+
+Failures are written to `work/repair-report.json` as `layout_overflow` so each affected page can be repaired from Studio. The `en-ipa` pipeline keeps its documented vertical-overflow exception, but horizontal bounds are still enforced.
+
 Fix all errors before `books-cli assemble`.
 
 ---

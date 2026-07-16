@@ -41,7 +41,17 @@ def _book(tmp_path: Path, *, page_count: int = 1) -> Path:
     book = tmp_path / "book"
     (book / "output" / "en").mkdir(parents=True)
     (book / "output" / "assets" / "images").mkdir(parents=True)
-    for name in ("book.css", "page-tokens.css", "prose-page.css", "figures-page.css"):
+    (book / "output" / "assets" / "book.css").write_text(
+        """@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+.book-page.book-page--sheet { width: 210mm; height: 296mm; overflow: hidden; }
+.sheet-flow { width: 100%; height: 100%; overflow: hidden; }
+img { max-width: 100%; height: auto; }
+""",
+        encoding="utf-8",
+    )
+    for name in ("page-tokens.css", "prose-page.css", "figures-page.css"):
         (book / "output" / "assets" / name).write_text("/* test */", encoding="utf-8")
     (book / "book.json").write_text(
         json.dumps({"title": "Test", "page_count": page_count, "source_lang": "en"}),
@@ -107,7 +117,14 @@ def test_fidelity_reports_one_missing_asset_and_can_ignore_stale_assembly(
         '<img src="assets/images/stale-missing.png">',
         encoding="utf-8",
     )
-    assert validate_main(["validate_page_fidelity.py", str(book), "--lang", "all", "--pages-only"]) == 0
+    assert validate_main([
+        "validate_page_fidelity.py",
+        str(book),
+        "--lang",
+        "all",
+        "--pages-only",
+        "--skip-rendered-layout",
+    ]) == 0
     assert "OK" in capsys.readouterr().out
 
 
