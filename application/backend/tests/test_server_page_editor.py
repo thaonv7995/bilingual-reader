@@ -26,6 +26,10 @@ def _book(tmp_path: Path) -> Path:
         target = book / "output" / lang / "page_0001.html"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(VALID_HTML.replace('lang="en"', f'lang="{lang}"'), encoding="utf-8")
+    assets = book / "output" / "assets"
+    assets.mkdir(parents=True, exist_ok=True)
+    (assets / "book.css").write_text(".book-page { color: #111; }\n", encoding="utf-8")
+    (assets / "prose-page.css").write_text(".prose-page { line-height: 1.5; }\n", encoding="utf-8")
     return book
 
 
@@ -125,6 +129,70 @@ def test_page_save_rejects_stale_revision_and_processing_lock(
         )
     assert locked.value.status_code == 409
     assert "read-only" in str(locked.value.detail)
+
+
+def test_stylesheet_source_list_validation_and_safe_path(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _book(tmp_path)
+    monkeypatch.setattr(server, "books_dir", lambda: tmp_path)
+
+    listed = server.get_editor_stylesheets("test-book")
+    assert [item["filename"] for item in listed["stylesheets"]] == [
+        "book.css",
+        "prose-page.css",
+    ]
+    source = server.get_stylesheet_source("test-book", "book.css")
+    assert source["css"] == ".book-page { color: #111; }\n"
+    assert len(source["revision"]) == 64
+    assert source["locked"] is False
+
+    invalid = server.validate_stylesheet(
+        "test-book",
+        "book.css",
+        server.StylesheetEditorPayload(css=".book-page { color: red;"),
+    )
+    assert invalid["valid"] is False
+    assert any("Unclosed '{'" in issue["message"] for issue in invalid["issues"])
+
+    with pytest.raises(HTTPException) as unsafe:
+        server.get_stylesheet_source("test-book", "../book.css")
+    assert unsafe.value.status_code == 400
+
+
+def test_stylesheet_save_creates_backup_and_invalidates_both_languages(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    book = _book(tmp_path)
+    monkeypatch.setattr(server, "books_dir", lambda: tmp_path)
+    for name in ("book.html", "book.pdf", "book.vi.html", "book.vi.pdf"):
+        (book / "output" / name).write_text("stale", encoding="utf-8")
+    archive = tmp_path / "test-book.bkb"
+    archive.write_text("stale", encoding="utf-8")
+
+    source = server.get_stylesheet_source("test-book", "book.css")
+    changed = ".book-page { color: rebeccapurple; }\n"
+    result = server.update_stylesheet_source(
+        "test-book",
+        "book.css",
+        server.StylesheetEditorPayload(css=changed, revision=source["revision"]),
+    )
+
+    assert result["success"] is True
+    assert result["saved"] is True
+    assert (book / "output" / "assets" / "book.css").read_text(encoding="utf-8") == changed
+    assert not any((book / "output" / name).exists() for name in (
+        "book.html",
+        "book.pdf",
+        "book.vi.html",
+        "book.vi.pdf",
+    ))
+    assert not archive.exists()
+    backups = list((book / "work" / "editor-backups" / "assets" / "book.css").glob("*.css"))
+    assert len(backups) == 1
+    assert backups[0].read_text(encoding="utf-8") == ".book-page { color: #111; }\n"
 
 
 def test_studio_exposes_live_html_editor_controls() -> None:

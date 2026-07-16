@@ -1593,11 +1593,15 @@
             <div class="editor-toolbar">
                 <button id="editorPrevBtn" class="btn btn-secondary btn-icon" title="Previous available page" onclick="navigateEditorPage(-1)"><i data-lucide="chevron-left"></i></button>
                 <button id="editorNextBtn" class="btn btn-secondary btn-icon" title="Next available page" onclick="navigateEditorPage(1)"><i data-lucide="chevron-right"></i></button>
-                <select id="editorLanguage" class="form-input" aria-label="Editor language" onchange="switchEditorLanguage(this.value)">
-                    <option value="en">English</option>
-                    <option value="vi">Vietnamese</option>
+                <select id="editorTarget" class="form-input" aria-label="Editor target" onchange="switchEditorTarget(this.value)">
+                    <optgroup label="Page HTML">
+                        <option value="page:en">English</option>
+                        <option value="page:vi">Vietnamese</option>
+                    </optgroup>
+                    <optgroup label="Stylesheets" id="editorStylesheetsGroup">
+                    </optgroup>
                 </select>
-                <button class="btn btn-secondary" title="Format HTML" onclick="formatEditorSource()"><i data-lucide="align-left"></i> Format</button>
+                <button class="btn btn-secondary" title="Format HTML/CSS" onclick="formatEditorSource()"><i data-lucide="align-left"></i> Format</button>
                 <button id="editorValidateBtn" class="btn btn-secondary" title="Validate HTML (Cmd/Ctrl+Enter)" onclick="validateEditorSource()"><i data-lucide="shield-check"></i> Validate</button>
                 <button id="editorSaveBtn" class="btn btn-primary" title="Save with backup (Cmd/Ctrl+S)" onclick="saveEditorSource()"><i data-lucide="save"></i> Save</button>
                 <button class="btn btn-secondary btn-icon" title="Close editor" onclick="closePageEditor()"><i data-lucide="x"></i></button>
@@ -1722,6 +1726,8 @@
             open: false,
             page: null,
             lang: 'en',
+            targetType: 'page',
+            cssFile: null,
             original: '',
             revision: null,
             locked: false,
@@ -2982,9 +2988,25 @@
             overlay.classList.add('open');
             overlay.setAttribute('aria-hidden', 'false');
             document.getElementById('editorBookTitle').innerText = document.getElementById('detailTitle').innerText;
-            document.getElementById('editorLanguage').value = preferred;
+            
+            try {
+                const response = await api(`/api/books/${encodeURIComponent(activeSlug)}/editor/stylesheets`);
+                const data = await response.json();
+                const group = document.getElementById('editorStylesheetsGroup');
+                group.innerHTML = '';
+                for(const sheet of data.stylesheets) {
+                    const option = document.createElement('option');
+                    option.value = `css:${sheet.filename}`;
+                    option.textContent = sheet.filename;
+                    group.appendChild(option);
+                }
+            } catch(e) {
+                console.warn('Could not load stylesheets:', e);
+            }
+            
+            document.getElementById('editorTarget').value = 'page:' + preferred;
             lucide.createIcons();
-            await loadEditorSource(currentPreviewPage, preferred);
+            await loadEditorTarget('page:' + preferred, currentPreviewPage);
         }
 
         async function closePageEditor() {
@@ -3001,30 +3023,59 @@
             hideEditorIssues();
         }
 
-        async function loadEditorSource(page, lang) {
+        async function loadEditorTarget(targetStr, pageOverride = null) {
             hideEditorSuggestions();
             editorState.loading = true;
-            editorState.page = page;
-            editorState.lang = lang;
-            document.getElementById('editorLanguage').value = lang;
-            document.getElementById('editorPageNumber').innerText = String(page).padStart(4, '0');
-            document.getElementById('editorSourcePath').innerText = `output/${lang}/page_${String(page).padStart(4, '0')}.html`;
-            setEditorStatus('Loading page source…');
+            document.getElementById('editorTarget').value = targetStr;
             syncEditorControls();
             hideEditorIssues();
+
+            const [type, value] = targetStr.split(':');
+            editorState.targetType = type;
+
             try {
-                const response = await api(`/api/books/${encodeURIComponent(activeSlug)}/pages/${page}/source?lang=${lang}`);
-                const data = await response.json();
-                editorState.original = data.html;
-                editorState.revision = data.revision;
-                editorState.locked = !!data.locked;
-                const editor = document.getElementById('htmlEditor');
-                editor.value = data.html;
-                editor.scrollTop = 0;
-                updateEditorMetrics();
-                renderEditorPreview();
-                setEditorStatus(data.lock_reason || 'Source loaded. Live preview is isolated from scripts.', data.locked ? 'warning' : 'success');
-                setTimeout(() => editor.focus(), 0);
+                if (type === 'page') {
+                    const lang = value;
+                    const page = pageOverride !== null ? pageOverride : editorState.page;
+                    editorState.page = page;
+                    editorState.lang = lang;
+                    editorState.cssFile = null;
+                    document.getElementById('editorPageNumber').innerText = String(page).padStart(4, '0');
+                    document.getElementById('editorSourcePath').innerText = `output/${lang}/page_${String(page).padStart(4, '0')}.html`;
+                    setEditorStatus('Loading page source…');
+
+                    const response = await api(`/api/books/${encodeURIComponent(activeSlug)}/pages/${page}/source?lang=${lang}`);
+                    const data = await response.json();
+                    editorState.original = data.html;
+                    editorState.revision = data.revision;
+                    editorState.locked = !!data.locked;
+                    const editor = document.getElementById('htmlEditor');
+                    editor.value = data.html;
+                    editor.scrollTop = 0;
+                    updateEditorMetrics();
+                    renderEditorPreview();
+                    setEditorStatus(data.lock_reason || 'Source loaded. Live preview is isolated from scripts.', data.locked ? 'warning' : 'success');
+                    setTimeout(() => editor.focus(), 0);
+                } else if (type === 'css') {
+                    const filename = value;
+                    editorState.cssFile = filename;
+                    document.getElementById('editorPageNumber').innerText = 'CSS';
+                    document.getElementById('editorSourcePath').innerText = `output/assets/${filename}`;
+                    setEditorStatus('Loading stylesheet…');
+
+                    const response = await api(`/api/books/${encodeURIComponent(activeSlug)}/editor/stylesheets/${filename}/source`);
+                    if (!response.ok) throw new Error(await response.text() || response.statusText);
+                    const data = await response.json();
+                    editorState.original = data.css;
+                    editorState.revision = data.revision;
+                    editorState.locked = false;
+                    const editor = document.getElementById('htmlEditor');
+                    editor.value = data.css;
+                    editor.scrollTop = 0;
+                    updateEditorMetrics();
+                    setEditorStatus('Stylesheet loaded.', 'success');
+                    setTimeout(() => editor.focus(), 0);
+                }
             } catch(error) {
                 editorState.original = '';
                 editorState.revision = null;
@@ -3039,24 +3090,25 @@
             }
         }
 
-        async function switchEditorLanguage(lang) {
-            const previous = editorState.lang;
-            if(lang === previous) return;
+        async function switchEditorTarget(targetStr) {
+            const currentTarget = editorState.targetType === 'css' ? `css:${editorState.cssFile}` : `page:${editorState.lang}`;
+            if(targetStr === currentTarget) return;
             if(!(await confirmDiscardEditorChanges())) {
-                document.getElementById('editorLanguage').value = previous;
+                document.getElementById('editorTarget').value = currentTarget;
                 return;
             }
-            await loadEditorSource(editorState.page, lang);
+            await loadEditorTarget(targetStr);
         }
 
         async function navigateEditorPage(direction) {
+            if (editorState.targetType === 'css') return;
             const pages = editorAvailablePages();
             const index = pages.indexOf(editorState.page);
             const target = pages[index + direction];
             if(!target || !(await confirmDiscardEditorChanges())) return;
             currentPreviewPage = target;
             selectPreviewPage(target);
-            await loadEditorSource(target, editorState.lang);
+            await loadEditorTarget(`page:${editorState.lang}`, target);
         }
 
         function syncEditorControls() {
@@ -3202,7 +3254,8 @@
 
         function updateSyntaxHighlight() {
             const source = document.getElementById('htmlEditor').value;
-            document.getElementById('editorHighlightCode').innerHTML = highlightHtmlSource(source) + (source.endsWith('\n') ? ' ' : '');
+            const highlighted = editorState.targetType === 'css' ? highlightCss(source) : highlightHtmlSource(source);
+            document.getElementById('editorHighlightCode').innerHTML = highlighted + (source.endsWith('\n') ? ' ' : '');
             syncEditorHighlightScroll();
         }
 
@@ -3243,8 +3296,8 @@
             const scriptOpen = lowered.lastIndexOf('<script');
             const scriptClose = lowered.lastIndexOf('</script');
 
-            if(styleOpen > styleClose && styleOpen > scriptOpen) {
-                const segmentStart = before.indexOf('>', styleOpen) + 1;
+            if(editorState.targetType === 'css' || (styleOpen > styleClose && styleOpen > scriptOpen)) {
+                const segmentStart = editorState.targetType === 'css' ? 0 : before.indexOf('>', styleOpen) + 1;
                 const segment = before.slice(Math.max(segmentStart, 0));
                 const prefixMatch = segment.match(/[-\w]*$/);
                 const prefix = prefixMatch?.[0] || '';
@@ -3259,10 +3312,12 @@
                 };
             }
 
-            if(scriptOpen > scriptClose && scriptOpen > styleOpen) {
+            if(editorState.targetType !== 'css' && scriptOpen > scriptClose && scriptOpen > styleOpen) {
                 const prefix = before.match(/[A-Za-z_$][\w$.]*$/)?.[0] || '';
                 return {mode: 'javascript', prefix, start: caret - prefix.length, end: caret, items: JAVASCRIPT_COMPLETIONS};
             }
+
+            if (editorState.targetType === 'css') return null;
 
             const lastOpen = before.lastIndexOf('<');
             const lastClose = before.lastIndexOf('>');
@@ -3458,6 +3513,10 @@
 
         function renderEditorPreview() {
             if(!editorState.open) return;
+            if(editorState.targetType === 'css') {
+                document.getElementById('editorPreviewHealth').innerText = 'CSS preview not available';
+                return;
+            }
             const frame = document.getElementById('editorPreviewFrame');
             frame.onload = () => {
                 try {
@@ -3495,22 +3554,35 @@
 
         async function validateEditorSource({quiet = false} = {}) {
             if(editorState.loading || !editorState.revision) return null;
-            setEditorStatus('Validating structure, assets, and visual plan…');
+            
+            let url, body;
+            const content = document.getElementById('htmlEditor').value;
+            
+            if (editorState.targetType === 'css') {
+                setEditorStatus('Validating stylesheet syntax…');
+                url = `/api/books/${encodeURIComponent(activeSlug)}/editor/stylesheets/${editorState.cssFile}/validate`;
+                body = { css: content, revision: editorState.revision };
+            } else {
+                setEditorStatus('Validating structure, assets, and visual plan…');
+                url = `/api/books/${encodeURIComponent(activeSlug)}/pages/${editorState.page}/validate`;
+                body = { lang: editorState.lang, html: content, revision: editorState.revision };
+            }
+
             try {
-                const response = await api(`/api/books/${encodeURIComponent(activeSlug)}/pages/${editorState.page}/validate`, {
+                const response = await api(url, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({lang: editorState.lang, html: document.getElementById('htmlEditor').value, revision: editorState.revision})
+                    body: JSON.stringify(body)
                 });
                 const result = await response.json();
                 if(result.valid) {
                     hideEditorIssues();
-                    setEditorStatus('Validation passed. The page is safe to save.', 'success');
-                    if(!quiet) showToast('Page HTML passed validation.', 'success');
+                    setEditorStatus(`Validation passed. The ${editorState.targetType === 'css' ? 'stylesheet' : 'page'} is safe to save.`, 'success');
+                    if(!quiet) showToast('Validation passed.', 'success');
                 } else {
                     showEditorIssues(result.issues || []);
                     setEditorStatus(`Validation found ${(result.issues || []).length} issue(s).`, 'error');
-                    if(!quiet) showToast('Fix the reported HTML issues before saving.', 'error');
+                    if(!quiet) showToast(`Fix the reported issues before saving.`, 'error');
                 }
                 return result;
             } catch(error) {
@@ -3528,18 +3600,27 @@
             syncEditorControls();
             setEditorStatus('Saving atomically and creating a backup…');
             try {
-                const html = document.getElementById('htmlEditor').value;
-                const response = await api(`/api/books/${encodeURIComponent(activeSlug)}/pages/${editorState.page}/source`, {
+                const content = document.getElementById('htmlEditor').value;
+                let url, body;
+                if (editorState.targetType === 'css') {
+                    url = `/api/books/${encodeURIComponent(activeSlug)}/editor/stylesheets/${editorState.cssFile}/source`;
+                    body = { css: content, revision: editorState.revision };
+                } else {
+                    url = `/api/books/${encodeURIComponent(activeSlug)}/pages/${editorState.page}/source`;
+                    body = { lang: editorState.lang, html: content, revision: editorState.revision };
+                }
+
+                const response = await api(url, {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({lang: editorState.lang, html, revision: editorState.revision})
+                    body: JSON.stringify(body)
                 });
                 const result = await response.json();
-                editorState.original = html;
+                editorState.original = content;
                 editorState.revision = result.revision;
                 hideEditorIssues();
                 setEditorStatus(result.saved ? 'Saved. A backup was created; assembled HTML/PDF must be rebuilt.' : 'No changes to save.', 'success');
-                showToast(result.saved ? 'Page saved. Rebuild the book/PDF when editing is complete.' : 'Page is already up to date.', 'success');
+                showToast(result.saved ? `${editorState.targetType === 'css' ? 'Stylesheet' : 'Page'} saved. Rebuild the book/PDF when editing is complete.` : 'File is already up to date.', 'success');
                 refreshPreview(true);
                 pollDetailStatus();
             } catch(error) {
@@ -3553,6 +3634,10 @@
 
         function formatEditorSource() {
             if(editorState.loading || editorState.locked) return;
+            if(editorState.targetType === 'css') {
+                setEditorStatus('Auto-format is not supported for CSS yet.', 'warning');
+                return;
+            }
             const editor = document.getElementById('htmlEditor');
             const lines = editor.value.split('\n');
             let depth = 0;

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,8 @@ from books_core.visual_diagnostics import (
 EDITOR_LANGUAGES = {"en", "vi"}
 MAX_EDITOR_BYTES = 5 * 1024 * 1024
 MAX_BACKUPS_PER_LANGUAGE = 20
+MAX_BACKUPS_PER_STYLESHEET = 20
+STYLESHEET_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.css$", re.IGNORECASE)
 
 
 def _language(lang: str) -> str:
@@ -35,6 +38,17 @@ def page_source_path(book_root: Path, page: int, lang: str) -> Path:
     if int(page) < 1:
         raise ValueError("Page number must be positive")
     return Path(book_root) / "output" / _language(lang) / f"page_{int(page):04d}.html"
+
+
+def _stylesheet_name(filename: str) -> str:
+    normalized = str(filename or "").strip()
+    if not STYLESHEET_NAME_PATTERN.fullmatch(normalized) or Path(normalized).name != normalized:
+        raise ValueError("Stylesheet must be a direct .css file in output/assets")
+    return normalized
+
+
+def stylesheet_source_path(book_root: Path, filename: str) -> Path:
+    return Path(book_root) / "output" / "assets" / _stylesheet_name(filename)
 
 
 def source_revision(html: str) -> str:
@@ -55,6 +69,132 @@ def read_page_source(book_root: Path, page: int, lang: str) -> dict[str, Any]:
         "updated_at": datetime.fromtimestamp(
             path.stat().st_mtime, tz=timezone.utc
         ).isoformat(),
+    }
+
+
+def list_stylesheet_sources(book_root: Path) -> list[dict[str, Any]]:
+    assets = Path(book_root) / "output" / "assets"
+    if not assets.is_dir():
+        return []
+    stylesheets: list[dict[str, Any]] = []
+    for path in sorted(assets.iterdir(), key=lambda item: item.name.lower()):
+        if not path.is_file() or not STYLESHEET_NAME_PATTERN.fullmatch(path.name):
+            continue
+        stylesheets.append(
+            {
+                "filename": path.name,
+                "path": f"output/assets/{path.name}",
+                "bytes": path.stat().st_size,
+                "updated_at": datetime.fromtimestamp(
+                    path.stat().st_mtime, tz=timezone.utc
+                ).isoformat(),
+            }
+        )
+    return stylesheets
+
+
+def read_stylesheet_source(book_root: Path, filename: str) -> dict[str, Any]:
+    path = stylesheet_source_path(book_root, filename)
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    css = path.read_text(encoding="utf-8")
+    return {
+        "filename": path.name,
+        "path": f"output/assets/{path.name}",
+        "css": css,
+        "revision": source_revision(css),
+        "bytes": len(css.encode("utf-8")),
+        "updated_at": datetime.fromtimestamp(
+            path.stat().st_mtime, tz=timezone.utc
+        ).isoformat(),
+    }
+
+
+def _css_structure_issues(css: str) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    stack: list[tuple[str, int]] = []
+    matching = {"}": "{", "]": "[", ")": "("}
+    quote: str | None = None
+    quote_line = 1
+    in_comment = False
+    comment_line = 1
+    escaped = False
+    line = 1
+    index = 0
+    while index < len(css):
+        char = css[index]
+        next_char = css[index + 1] if index + 1 < len(css) else ""
+        if char == "\n":
+            line += 1
+        if in_comment:
+            if char == "*" and next_char == "/":
+                in_comment = False
+                index += 2
+                continue
+            index += 1
+            continue
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            index += 1
+            continue
+        if char == "/" and next_char == "*":
+            in_comment = True
+            comment_line = line
+            index += 2
+            continue
+        if char in {'"', "'"}:
+            quote = char
+            quote_line = line
+        elif char in "{[(":
+            stack.append((char, line))
+        elif char in "}])":
+            expected = matching[char]
+            if not stack or stack[-1][0] != expected:
+                issues.append(
+                    {"type": "structure", "message": f"Unexpected '{char}' on line {line}"}
+                )
+            else:
+                stack.pop()
+        index += 1
+
+    if in_comment:
+        issues.append(
+            {"type": "structure", "message": f"Unterminated comment opened on line {comment_line}"}
+        )
+    if quote:
+        issues.append(
+            {"type": "structure", "message": f"Unterminated string opened on line {quote_line}"}
+        )
+    for opener, opener_line in reversed(stack):
+        issues.append(
+            {"type": "structure", "message": f"Unclosed '{opener}' opened on line {opener_line}"}
+        )
+    return issues
+
+
+def validate_stylesheet_source(css: str) -> dict[str, Any]:
+    encoded_size = len(css.encode("utf-8"))
+    issues: list[dict[str, str]] = []
+    if encoded_size > MAX_EDITOR_BYTES:
+        issues.append(
+            {
+                "type": "size",
+                "message": f"CSS exceeds the {MAX_EDITOR_BYTES // (1024 * 1024)} MB editor limit",
+            }
+        )
+    if "\x00" in css:
+        issues.append({"type": "structure", "message": "CSS contains a null byte"})
+    issues.extend(_css_structure_issues(css))
+    return {
+        "valid": not issues,
+        "issues": issues,
+        "bytes": encoded_size,
+        "lines": css.count("\n") + 1,
     }
 
 
@@ -105,6 +245,18 @@ def _backup_page(path: Path, book_root: Path, page: int, lang: str) -> Path:
     shutil.copy2(path, backup)
     backups = sorted(backup_dir.glob(f"*-{_language(lang)}.html"), reverse=True)
     for stale in backups[MAX_BACKUPS_PER_LANGUAGE:]:
+        stale.unlink(missing_ok=True)
+    return backup
+
+
+def _backup_stylesheet(path: Path, book_root: Path) -> Path:
+    backup_dir = Path(book_root) / "work" / "editor-backups" / "assets" / path.name
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
+    backup = backup_dir / f"{stamp}.css"
+    shutil.copy2(path, backup)
+    backups = sorted(backup_dir.glob("*.css"), reverse=True)
+    for stale in backups[MAX_BACKUPS_PER_STYLESHEET:]:
         stale.unlink(missing_ok=True)
     return backup
 
@@ -168,6 +320,52 @@ def save_page_source(
     return {
         "saved": True,
         "revision": source_revision(html),
+        "backup": str(backup.relative_to(Path(book_root))),
+        "invalidated": invalidated,
+        "validation": validation,
+    }
+
+
+def save_stylesheet_source(
+    book_root: Path,
+    filename: str,
+    css: str,
+    *,
+    expected_revision: str,
+) -> dict[str, Any]:
+    path = stylesheet_source_path(book_root, filename)
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    current = path.read_text(encoding="utf-8")
+    current_revision = source_revision(current)
+    if expected_revision != current_revision:
+        raise RuntimeError("Stylesheet changed after the editor loaded it; reload before saving")
+
+    validation = validate_stylesheet_source(css)
+    if not validation["valid"]:
+        messages = "; ".join(issue["message"] for issue in validation["issues"][:5])
+        raise ValueError(f"Cannot save invalid CSS: {messages}")
+
+    if css == current:
+        return {
+            "saved": False,
+            "revision": current_revision,
+            "backup": None,
+            "invalidated": [],
+            "validation": validation,
+        }
+
+    backup = _backup_stylesheet(path, Path(book_root))
+    atomic_write_text(path, css, encoding="utf-8")
+    invalidated = list(
+        dict.fromkeys(
+            _invalidate_derived_outputs(Path(book_root), "en")
+            + _invalidate_derived_outputs(Path(book_root), "vi")
+        )
+    )
+    return {
+        "saved": True,
+        "revision": source_revision(css),
         "backup": str(backup.relative_to(Path(book_root))),
         "invalidated": invalidated,
         "validation": validation,

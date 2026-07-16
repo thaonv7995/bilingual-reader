@@ -22,9 +22,13 @@ from books_core.asset_paths import normalize_per_page_asset_paths
 from books_core.validation import draft_html_file_valid
 from books_core.repair_report import read_repair_report
 from books_core.page_editor import (
+    list_stylesheet_sources,
     read_page_source,
+    read_stylesheet_source,
     save_page_source,
+    save_stylesheet_source,
     validate_page_source,
+    validate_stylesheet_source,
 )
 from books_cli.agy_settings import (
     credential_paths,
@@ -185,6 +189,11 @@ class ProcessConfig(BaseModel):
 class PageEditorPayload(BaseModel):
     lang: str = "en"
     html: str
+    revision: Optional[str] = None
+
+
+class StylesheetEditorPayload(BaseModel):
+    css: str
     revision: Optional[str] = None
 
 # Cache for active tasks and logs
@@ -1115,13 +1124,19 @@ async def repair_failed_page(slug: str, page: int):
     return {"success": True, "page": page, "message": f"Repair started for page {page}"}
 
 
-def _page_editor_book(slug: str, page: int) -> Path:
-    if not _valid_preview_segment(slug) or page < 1:
-        raise HTTPException(status_code=404, detail="Page not found")
+def _editor_book(slug: str) -> Path:
+    if not _valid_preview_segment(slug):
+        raise HTTPException(status_code=404, detail="Book not found")
     book_path = books_dir() / slug
     if not book_path.is_dir():
         raise HTTPException(status_code=404, detail="Book not found")
     return book_path
+
+
+def _page_editor_book(slug: str, page: int) -> Path:
+    if page < 1:
+        raise HTTPException(status_code=404, detail="Page not found")
+    return _editor_book(slug)
 
 
 def _page_editor_lock_reason(slug: str) -> str | None:
@@ -1172,6 +1187,64 @@ def update_page_source(slug: str, page: int, payload: PageEditorPayload):
         )
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"{payload.lang.upper()} HTML for page {page} was not found")
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    response_cache.clear(slug)
+    return {"success": True, **result}
+
+
+@app.get("/api/books/{slug}/editor/stylesheets")
+def get_editor_stylesheets(slug: str):
+    book_path = _editor_book(slug)
+    return {"stylesheets": list_stylesheet_sources(book_path)}
+
+
+@app.get("/api/books/{slug}/editor/stylesheets/{filename}/source")
+def get_stylesheet_source(slug: str, filename: str):
+    book_path = _editor_book(slug)
+    try:
+        source = read_stylesheet_source(book_path, filename)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Stylesheet {filename} was not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    lock_reason = _page_editor_lock_reason(slug)
+    return {**source, "locked": bool(lock_reason), "lock_reason": lock_reason}
+
+
+@app.post("/api/books/{slug}/editor/stylesheets/{filename}/validate")
+def validate_stylesheet(slug: str, filename: str, payload: StylesheetEditorPayload):
+    book_path = _editor_book(slug)
+    try:
+        path = read_stylesheet_source(book_path, filename)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Stylesheet {filename} was not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    if not path:
+        raise HTTPException(status_code=404, detail=f"Stylesheet {filename} was not found")
+    return validate_stylesheet_source(payload.css)
+
+
+@app.put("/api/books/{slug}/editor/stylesheets/{filename}/source")
+def update_stylesheet_source(slug: str, filename: str, payload: StylesheetEditorPayload):
+    book_path = _editor_book(slug)
+    lock_reason = _page_editor_lock_reason(slug)
+    if lock_reason:
+        raise HTTPException(status_code=409, detail=lock_reason)
+    if not payload.revision:
+        raise HTTPException(status_code=400, detail="A source revision is required when saving")
+    try:
+        result = save_stylesheet_source(
+            book_path,
+            filename,
+            payload.css,
+            expected_revision=payload.revision,
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Stylesheet {filename} was not found")
     except RuntimeError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
     except ValueError as exc:
