@@ -252,8 +252,9 @@ class LoginSession:
         self.process: Optional[asyncio.subprocess.Process] = None
         self.oauth_url: Optional[str] = None
         self.logs: List[str] = []
-        self.status: str = "idle"  # idle, starting, waiting_browser, waiting_code, verifying, success, failed
+        self.status: str = "idle"  # idle, starting, waiting_url, waiting_browser, waiting_code, verifying, success, failed
         self.requires_code: bool = False
+        self.url_file: Optional[Path] = None
 
 # Singleton login session
 login_session = LoginSession()
@@ -571,6 +572,8 @@ async def start_auth_login():
             await login_session.process.wait()
         except Exception:
             pass
+    if login_session.url_file:
+        login_session.url_file.unlink(missing_ok=True)
 
     # A stale or ineligible token makes AGY skip the login chooser. Reconnect is
     # an explicit user action, so clear only local OAuth credentials before
@@ -588,6 +591,7 @@ async def start_auth_login():
     url_fd, url_file = tempfile.mkstemp(prefix="agy_oauth_")
     os.close(url_fd)
     Path(url_file).unlink(missing_ok=True)
+    login_session.url_file = Path(url_file)
     
     try:
         script_path = Path(repo_root()) / "login_agy.exp"
@@ -595,6 +599,10 @@ async def start_auth_login():
             raise RuntimeError("The 'expect' command is required for AGY browser login.")
         env = dict(os.environ)
         env["AGY_OAUTH_URL_FILE"] = url_file
+        env.setdefault("TERM", "xterm-256color")
+        env["NO_COLOR"] = "1"
+        env["COLUMNS"] = "1000"
+        env["LINES"] = "100"
         # Capture browser launches instead of opening a browser on the server.
         dummy_bin_dir = str(Path(__file__).parent / "bin")
         env["BROWSER"] = str(Path(dummy_bin_dir) / "open")
@@ -615,6 +623,12 @@ async def start_auth_login():
 
     session = login_session
 
+    def mark_oauth_url(url: str) -> None:
+        if not url.startswith("http"):
+            return
+        session.oauth_url = url
+        session.status = "waiting_code" if session.requires_code else "waiting_browser"
+
     async def drain_stdout():
         while True:
             chunk_bytes = await proc.stdout.read(1024)
@@ -624,58 +638,70 @@ async def start_auth_login():
             session.logs.append(chunk)
             combined = "".join(session.logs[-12:])
             if not session.oauth_url:
-                session.oauth_url = extract_oauth_url(combined)
+                parsed_url = extract_oauth_url(combined)
+                if parsed_url:
+                    mark_oauth_url(parsed_url)
             lowered = combined.lower()
             if "authorization code" in lowered or "verification code" in lowered or "paste" in lowered and "code" in lowered:
                 session.requires_code = True
-            
-    asyncio.create_task(drain_stdout())
+                if session.oauth_url:
+                    session.status = "waiting_code"
 
-    url_found = False
-    for _ in range(90):  # AGY's browser link can take 10-20 seconds to render.
-        # 1. Check if expect script captured it
-        if session.oauth_url:
-            session.status = "waiting_code" if session.requires_code else "waiting_browser"
-            url_found = True
-        if url_found:
-            break
-            
-        # 2. Check if dummy browser script captured it
-        if Path(url_file).is_file():
-            url = Path(url_file).read_text().strip()
-            if url.startswith("http"):
-                login_session.oauth_url = url
-                login_session.status = "waiting_browser"
-                url_found = True
-                break
-                
-        if proc.returncode is not None:
+    async def monitor_oauth_url():
+        try:
+            while proc.returncode is None and not session.oauth_url:
+                if session.url_file and session.url_file.is_file():
+                    captured_url = session.url_file.read_text(errors="replace").strip()
+                    if captured_url.startswith("http"):
+                        mark_oauth_url(captured_url)
+                        break
+                await asyncio.sleep(0.5)
+            if proc.returncode is not None and not session.oauth_url:
+                if credentials_present():
+                    session.status = "success"
+                    _set_auth_state("connected", message="AGY authorization completed.")
+                else:
+                    session.status = "failed"
+        finally:
+            if session.url_file:
+                session.url_file.unlink(missing_ok=True)
+                session.url_file = None
+
+    asyncio.create_task(drain_stdout())
+    asyncio.create_task(monitor_oauth_url())
+
+    # Return quickly when AGY renders the link normally. If it is still
+    # starting, leave the process alive and let the Settings UI poll status.
+    for _ in range(16):
+        if session.oauth_url or credentials_present() or proc.returncode is not None:
             break
         await asyncio.sleep(0.5)
-        
-    try:
-        Path(url_file).unlink(missing_ok=True)
-    except Exception:
-        pass
-        
-    if url_found:
+
+    if session.oauth_url:
         return {
             "success": True,
-            "url": login_session.oauth_url,
-            "verification_mode": "code" if login_session.requires_code else "browser",
+            "url": session.oauth_url,
+            "verification_mode": "code" if session.requires_code else "browser",
         }
-    else:
-        try:
-            proc.kill()
-            await proc.wait()
-        except Exception:
-            pass
-        login_session.status = "failed"
+    if credentials_present():
+        session.status = "success"
+        _set_auth_state("connected", message="AGY authorization completed.")
+        return {"success": True, "already_authenticated": True, "state": "connected"}
+    if proc.returncode is not None:
+        session.status = "failed"
         return {
-            "success": False, 
-            "error": "Could not extract OAuth URL within 45 seconds.",
-            "logs": "".join(login_session.logs)
+            "success": False,
+            "error": "AGY exited before producing an OAuth URL.",
+            "logs": "".join(session.logs),
         }
+
+    session.status = "waiting_url"
+    return {
+        "success": True,
+        "pending": True,
+        "state": "waiting_url",
+        "message": "AGY is still preparing the OAuth link.",
+    }
 
 
 @app.post("/api/auth/complete")
@@ -791,6 +817,9 @@ async def cancel_auth_login():
     login_session.status = "idle"
     login_session.oauth_url = None
     login_session.process = None
+    if login_session.url_file:
+        login_session.url_file.unlink(missing_ok=True)
+        login_session.url_file = None
     if _auth_cache["state"] != "connected":
         _reset_agy_caches(state="disconnected", message="AGY CLI is not signed in.")
     return {"success": True}

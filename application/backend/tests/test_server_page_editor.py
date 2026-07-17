@@ -205,7 +205,8 @@ def test_studio_exposes_live_html_editor_controls() -> None:
     assert 'id="htmlEditor"' in template
     assert 'id="editorHighlightCode"' in template
     assert 'id="editorSuggestions"' in template
-    assert 'sandbox="allow-same-origin"' in template
+    assert 'sandbox="allow-same-origin allow-scripts"' in template
+    assert 'data-studio-script="disabled"' not in template
     assert "function highlightHtmlSource" in template
     assert "function highlightCss" in template
     assert "function highlightJavaScript" in template

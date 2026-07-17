@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import subprocess
+from pathlib import Path
 
 from books_cli import server
 
@@ -171,3 +173,16 @@ def test_code_auth_reports_success_when_authorized(monkeypatch) -> None:
     assert result["state"] == "connected"
     assert result["ready"] is True
     assert result["error"] is None
+
+
+def test_studio_keeps_polling_when_oauth_url_is_still_starting() -> None:
+    template = (Path(server.__file__).parent / "templates" / "index.html").read_text(
+        encoding="utf-8"
+    )
+
+    assert "data.success && data.pending" in template
+    assert "function startAgyUrlPolling()" in template
+    assert "data.login_status === 'waiting_url'" in template
+    assert "Could not extract OAuth URL within 45 seconds" not in inspect.getsource(
+        server.start_auth_login
+    )

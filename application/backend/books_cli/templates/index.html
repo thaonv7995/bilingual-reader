@@ -1632,7 +1632,7 @@
                 </div>
                 <div class="editor-preview-wrap">
                     <div class="editor-preview-frame-shell">
-                        <iframe id="editorPreviewFrame" class="editor-preview-frame" title="Live page preview" sandbox="allow-same-origin"></iframe>
+                        <iframe id="editorPreviewFrame" class="editor-preview-frame" title="Live page preview" sandbox="allow-same-origin allow-scripts"></iframe>
                     </div>
                 </div>
             </section>
@@ -1715,6 +1715,7 @@
         let activeSlug = null;
         let statusInterval = null;
         let quotaInterval = null;
+        let agyUrlPollTimer = null;
         let logEventSource = null;
         let currentPreviewPage = null;
         let currentPreviewTab = 'side-by-side';
@@ -2522,6 +2523,62 @@
             document.getElementById('checkConnectionBtn').style.display = isCode ? 'none' : 'inline-flex';
         }
 
+        function setAgyOAuthLinkPending() {
+            const link = document.getElementById('oauthLink');
+            link.removeAttribute('href');
+            link.setAttribute('aria-disabled', 'true');
+            link.style.pointerEvents = 'none';
+            link.style.opacity = '0.7';
+            link.innerHTML = '<span class="loading-spinner" style="width:12px;height:12px;border:2px solid rgba(255,255,255,0.08);border-top-color:var(--accent-primary);border-radius:50%;display:inline-block;"></span> Preparing OAuth link…';
+        }
+
+        function setAgyOAuthLinkReady(url) {
+            const link = document.getElementById('oauthLink');
+            link.href = url;
+            link.removeAttribute('aria-disabled');
+            link.style.pointerEvents = 'auto';
+            link.style.opacity = '1';
+            link.innerHTML = '<i data-lucide="external-link" style="width:14px;height:14px;"></i> Open authorization link';
+            lucide.createIcons();
+        }
+
+        function stopAgyUrlPolling() {
+            if (agyUrlPollTimer) clearTimeout(agyUrlPollTimer);
+            agyUrlPollTimer = null;
+        }
+
+        function startAgyUrlPolling() {
+            if (agyUrlPollTimer) return;
+            const poll = async () => {
+                agyUrlPollTimer = null;
+                try {
+                    const res = await api('/api/auth/status');
+                    const data = await res.json();
+                    if(data.oauth_url) {
+                        setAgyOAuthLinkReady(data.oauth_url);
+                        configureAgyAuthModal(data.login_status === 'waiting_code' ? 'code' : 'browser');
+                        showToast('OAuth link is ready. Open it to continue.', 'info');
+                        return;
+                    }
+                    if(data.state === 'connected' || data.login_status === 'success') {
+                        closeModal('verifyModal');
+                        await checkAgyAuth();
+                        return;
+                    }
+                    if(data.login_status === 'failed') {
+                        closeModal('verifyModal');
+                        showToast('AGY exited before producing an OAuth link.', 'error');
+                        await checkAgyAuth();
+                        return;
+                    }
+                    agyUrlPollTimer = setTimeout(poll, 1500);
+                } catch(e) {
+                    agyUrlPollTimer = setTimeout(poll, 2500);
+                }
+            };
+            agyUrlPollTimer = setTimeout(poll, 0);
+        }
+
         async function checkAgyAuth() {
             const box = document.getElementById('authStatusBox');
             const authBtn = document.getElementById('authBtn');
@@ -2530,6 +2587,7 @@
                 const data = await res.json();
                 const state = data.state || (data.logged_in ? 'connected' : 'disconnected');
                 if(state === 'connected') {
+                    stopAgyUrlPolling();
                     const firstChar = (data.email || 'A')[0].toUpperCase();
                     box.innerHTML = `
                         <div class="user-profile-card">
@@ -2580,11 +2638,17 @@
                     authBtn.style.display = 'inline-flex';
                     authBtn.innerHTML = `<i data-lucide="shield-alert"></i> ${state === 'error' ? 'Reconnect AGY CLI' : 'Authorize AGY CLI'}`;
                 }
-                const loginWaiting = data.login_status === 'waiting_browser' || data.login_status === 'waiting_code';
+                const waitingForUrl = data.login_status === 'starting' || data.login_status === 'waiting_url';
+                const loginWaiting = waitingForUrl || data.login_status === 'waiting_browser' || data.login_status === 'waiting_code';
                 if(state !== 'connected' && loginWaiting && data.oauth_url) {
-                    document.getElementById('oauthLink').href = data.oauth_url;
+                    setAgyOAuthLinkReady(data.oauth_url);
                     configureAgyAuthModal(data.login_status === 'waiting_code' ? 'code' : 'browser');
                     openModal('verifyModal');
+                } else if(state !== 'connected' && waitingForUrl) {
+                    configureAgyAuthModal('browser');
+                    setAgyOAuthLinkPending();
+                    openModal('verifyModal');
+                    startAgyUrlPolling();
                 } else if(state !== 'connected' && !loginWaiting) {
                     closeModal('verifyModal');
                 }
@@ -2632,11 +2696,18 @@
                 const res = await api("/api/auth/login", {method:"POST"});
                 const data = await res.json();
                 if(data.success && data.url) {
-                    document.getElementById('oauthLink').href = data.url;
+                    stopAgyUrlPolling();
+                    setAgyOAuthLinkReady(data.url);
                     configureAgyAuthModal(data.verification_mode || 'browser');
                     openModal('verifyModal');
                     window.open(data.url, '_blank');
                     showToast("Authentication initiated! Please check your browser to sign in.", "info");
+                } else if(data.success && data.pending) {
+                    configureAgyAuthModal('browser');
+                    setAgyOAuthLinkPending();
+                    openModal('verifyModal');
+                    startAgyUrlPolling();
+                    showToast('AGY is preparing the OAuth link. You can keep this dialog open.', 'info');
                 } else if(data.success && data.already_authenticated) {
                     showToast("AGY CLI is already connected.", "info");
                     await checkAgyAuth();
@@ -2650,6 +2721,7 @@
         }
 
         async function cancelAgyAuth() {
+            stopAgyUrlPolling();
             try {
                 await api("/api/auth/cancel_login", {method:"POST"});
                 showToast("Authentication canceled.", "info");
@@ -3538,7 +3610,6 @@
             const base = `<base href="${baseUrl}">`;
             const cleaned = source
                 .replace(/<base\b[^>]*>/i, '')
-                .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '<template data-studio-script="disabled"></template>')
                 .replace(/(["'(])(?:\.\.\/)+assets\//g, `$1${assetUrl}`);
             if(/<head\b[^>]*>/i.test(cleaned)) return cleaned.replace(/<head\b[^>]*>/i, match => `${match}${base}`);
             if(/<html\b[^>]*>/i.test(cleaned)) return cleaned.replace(/<html\b[^>]*>/i, match => `${match}<head>${base}</head>`);
