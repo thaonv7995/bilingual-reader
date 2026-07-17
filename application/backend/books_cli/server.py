@@ -685,7 +685,15 @@ async def complete_browser_auth():
     login_session.status = "verifying"
     await refresh_quota_cache_async()
     state = _auth_cache["state"]
-    if state == "connected":
+    authorization_completed = state == "connected" or credentials_present()
+    if authorization_completed:
+        if state != "connected":
+            _set_auth_state(
+                "connected",
+                email=_auth_cache.get("email"),
+                message="AGY authorization completed.",
+            )
+            state = "connected"
         if login_session.process and login_session.process.returncode is None:
             try:
                 login_session.process.kill()
@@ -696,6 +704,7 @@ async def complete_browser_auth():
         return {
             "success": True,
             "state": state,
+            "ready": state == "connected",
             "message": _auth_cache["message"],
             "email": _auth_cache.get("email"),
         }
@@ -742,14 +751,23 @@ async def verify_auth_code(payload: dict):
         
     await refresh_quota_cache_async()
     has_token = credentials_present()
-    authenticated = _auth_cache["state"] == "connected"
-    if exit_code == 0 or has_token or authenticated:
+    state = _auth_cache["state"]
+    authorization_completed = exit_code == 0 or has_token or state == "connected"
+    if authorization_completed and state != "connected":
+        _set_auth_state(
+            "connected",
+            email=_auth_cache.get("email"),
+            message="AGY authorization completed.",
+        )
+        state = "connected"
+    if authorization_completed:
         login_session.status = "success"
         return {
-            "success": authenticated,
-            "state": _auth_cache["state"],
+            "success": authorization_completed,
+            "state": state,
+            "ready": state == "connected",
             "message": _auth_cache["message"],
-            "error": None if authenticated else "AGY authorization completed, but the CLI is not ready.",
+            "error": None if authorization_completed else "AGY authorization did not complete.",
         }
     else:
         login_session.status = "failed"

@@ -41,12 +41,21 @@ def test_parse_connected_quota_snapshot() -> None:
     assert parsed["quota"]["groups"][0]["limits"][0]["percent"] == 46.88
 
 
-def test_parse_eligibility_failure_is_not_reported_as_ready() -> None:
+def test_parse_eligibility_failure_does_not_override_authorization() -> None:
     parsed = parse_quota_output("Eligibility check failed: verify your account\n" + QUOTA)
 
-    assert parsed["state"] == "needs_verification"
+    assert parsed["state"] == "connected"
     assert parsed["raw_has_quota"] is True
-    assert "verification" in parsed["message"].lower()
+
+
+def test_parse_account_header_is_enough_to_confirm_authorization() -> None:
+    parsed = parse_quota_output(
+        "Antigravity CLI 1.1.3\nperson@example.com\nEligibility check failed: unknown reason"
+    )
+
+    assert parsed["state"] == "connected"
+    assert parsed["quota"]["account"] == "person@example.com"
+    assert parsed["message"] == "AGY authorization completed."
 
 
 def test_parse_signed_out_snapshot() -> None:

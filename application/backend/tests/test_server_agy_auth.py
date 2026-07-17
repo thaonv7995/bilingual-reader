@@ -97,3 +97,77 @@ def test_quota_does_not_spawn_agy_again_after_explicit_logout(monkeypatch) -> No
 
     assert result["state"] == "disconnected"
     assert spawned == []
+
+
+def test_browser_auth_reports_success_when_authorized(monkeypatch) -> None:
+    async def fake_refresh() -> None:
+        server._auth_cache.update({
+            "state": "error",
+            "logged_in": False,
+            "email": "person@example.com",
+            "message": "Eligibility check failed.",
+        })
+
+    monkeypatch.setattr(server, "refresh_quota_cache_async", fake_refresh)
+    monkeypatch.setattr(server, "credentials_present", lambda: True)
+    monkeypatch.setattr(server, "_set_auth_state", lambda state, **kwargs: server._auth_cache.update({
+        "state": state,
+        "logged_in": state == "connected",
+        "email": kwargs.get("email"),
+        "message": kwargs.get("message") or "",
+    }))
+    server.login_session = server.LoginSession()
+
+    result = asyncio.run(server.complete_browser_auth())
+
+    assert result == {
+        "success": True,
+        "state": "connected",
+        "ready": True,
+        "message": "AGY authorization completed.",
+        "email": "person@example.com",
+    }
+    assert server.login_session.status == "success"
+
+
+def test_code_auth_reports_success_when_authorized(monkeypatch) -> None:
+    class FakeStdin:
+        def write(self, _data: bytes) -> None:
+            pass
+
+        async def drain(self) -> None:
+            pass
+
+    class FakeProcess:
+        returncode = None
+        stdin = FakeStdin()
+
+        async def wait(self) -> int:
+            self.returncode = 0
+            return 0
+
+    async def fake_refresh() -> None:
+        server._auth_cache.update({
+            "state": "error",
+            "logged_in": False,
+            "email": "person@example.com",
+            "message": "Eligibility check failed.",
+        })
+
+    monkeypatch.setattr(server, "refresh_quota_cache_async", fake_refresh)
+    monkeypatch.setattr(server, "credentials_present", lambda: True)
+    monkeypatch.setattr(server, "_set_auth_state", lambda state, **kwargs: server._auth_cache.update({
+        "state": state,
+        "logged_in": state == "connected",
+        "email": kwargs.get("email"),
+        "message": kwargs.get("message") or "",
+    }))
+    server.login_session = server.LoginSession()
+    server.login_session.process = FakeProcess()
+
+    result = asyncio.run(server.verify_auth_code({"code": "abc123"}))
+
+    assert result["success"] is True
+    assert result["state"] == "connected"
+    assert result["ready"] is True
+    assert result["error"] is None

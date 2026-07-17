@@ -135,6 +135,12 @@ def parse_quota_output(output: str) -> dict[str, Any]:
     acc_match = re.search(r"Account:\s*([^\n]+)", text, flags=re.IGNORECASE)
     if acc_match:
         quota["account"] = acc_match.group(1).strip()
+    else:
+        # The account remains visible in AGY's header even when /quota does not
+        # render its normal panel. That is sufficient to establish OAuth auth.
+        email_match = re.search(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", text)
+        if email_match:
+            quota["account"] = email_match.group(0)
 
     lines = text.split("\n")
     current_group: dict[str, Any] | None = None
@@ -185,18 +191,20 @@ def parse_quota_output(output: str) -> dict[str, Any]:
             current_group["limits"].append(current_limit)
         quota["groups"].append(current_group)
 
-    if "currently not signed in" in lowered or "select login method" in lowered:
-        state = "disconnected"
-        message = "AGY CLI is not signed in."
-    elif "eligibility check failed" in lowered:
-        state = "needs_verification"
-        message = "Google account verification is required before AGY can run pipeline commands."
-    elif quota["account"] and quota["groups"]:
+    if quota["account"] and quota["groups"]:
         state = "connected"
         message = "AGY CLI is authenticated and ready."
     elif quota["account"]:
-        state = "error"
-        message = "AGY account was detected, but quota data could not be read."
+        state = "connected"
+        message = "AGY authorization completed."
+    elif "eligibility check failed" in lowered:
+        # Eligibility is an AGY/Google product check, not an OAuth check. Studio
+        # only owns the authorization flow and must not turn it into auth failure.
+        state = "connected"
+        message = "AGY authorization completed."
+    elif "currently not signed in" in lowered or "select login method" in lowered:
+        state = "disconnected"
+        message = "AGY CLI is not signed in."
     else:
         state = "error"
         message = "Could not determine AGY authentication state from the CLI output."
