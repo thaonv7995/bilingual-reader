@@ -12,9 +12,11 @@ APP_NAME="books-studio"
 if [ "$EUID" -eq 0 ]; then
     INSTALL_DIR="/opt/$APP_NAME"
     BIN_DIR="/usr/local/bin"
+    WORK_DIR="/var/cache/$APP_NAME/tmp"
 else
     INSTALL_DIR="$HOME/.local/share/$APP_NAME"
     BIN_DIR="$HOME/.local/bin"
+    WORK_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/$APP_NAME/tmp"
 fi
 
 # Color helpers
@@ -104,7 +106,8 @@ do_install() {
     # installed application tree.  That tree is replaced below; keeping it as
     # the process cwd makes pip fail later with a path-less Errno 2 from getcwd().
     # Move to a stable directory before stopping or replacing anything.
-    cd /tmp
+    mkdir -p "$WORK_DIR"
+    cd "$WORK_DIR"
 
     echo -e "${BLUE}=== Starting Installation ===${NC}"
     echo -e "Target Directory: ${GREEN}$INSTALL_DIR${NC}"
@@ -123,18 +126,18 @@ do_install() {
     echo -e "Downloading from: ${GREEN}$download_url${NC}"
     
     mkdir -p "$INSTALL_DIR"
-    local temp_tar="/tmp/$APP_NAME-latest.tar.gz"
+    local temp_tar="$WORK_DIR/$APP_NAME-latest.tar.gz"
     curl -L "$download_url" -o "$temp_tar"
     
     echo -e "Extracting archive to target directory..."
     # Preserve user books directory if updating
     if [ -d "$INSTALL_DIR/books" ]; then
-        rm -rf "/tmp/$APP_NAME-books-backup"
-        mv "$INSTALL_DIR/books" "/tmp/$APP_NAME-books-backup"
+        rm -rf "$WORK_DIR/$APP_NAME-books-backup"
+        mv "$INSTALL_DIR/books" "$WORK_DIR/$APP_NAME-books-backup"
     fi
     # Preserve credentials if updating
     if [ -f "$INSTALL_DIR/.credentials" ]; then
-        cp "$INSTALL_DIR/.credentials" "/tmp/$APP_NAME-credentials-backup"
+        cp "$INSTALL_DIR/.credentials" "$WORK_DIR/$APP_NAME-credentials-backup"
     fi
     
     # Extract tarball
@@ -142,13 +145,13 @@ do_install() {
     tar -xzf "$temp_tar" -C "$INSTALL_DIR" --strip-components=1 || tar -xzf "$temp_tar" -C "$INSTALL_DIR"
     
     # Restore books directory if backed up
-    if [ -d "/tmp/$APP_NAME-books-backup" ]; then
+    if [ -d "$WORK_DIR/$APP_NAME-books-backup" ]; then
         rm -rf "$INSTALL_DIR/books"
-        mv "/tmp/$APP_NAME-books-backup" "$INSTALL_DIR/books"
+        mv "$WORK_DIR/$APP_NAME-books-backup" "$INSTALL_DIR/books"
     fi
     # Restore credentials if backed up
-    if [ -f "/tmp/$APP_NAME-credentials-backup" ]; then
-        mv "/tmp/$APP_NAME-credentials-backup" "$INSTALL_DIR/.credentials"
+    if [ -f "$WORK_DIR/$APP_NAME-credentials-backup" ]; then
+        mv "$WORK_DIR/$APP_NAME-credentials-backup" "$INSTALL_DIR/.credentials"
     fi
     
     # Cleanup temp tar
@@ -221,6 +224,7 @@ PID_FILE="$INSTALL_DIR/books-studio.pid"
 LOG_FILE="$INSTALL_DIR/books-studio.log"
 VENV_BIN="$INSTALL_DIR/application/.venv/bin/books-cli"
 USING_SYSTEMD=$using_systemd
+WORK_DIR="$WORK_DIR"
 
 stop_service() {
     if \$USING_SYSTEMD; then
@@ -295,7 +299,8 @@ case "\$1" in
     update|--update)
         # The caller may currently be somewhere below INSTALL_DIR.  The
         # installer replaces that directory, so leave it before spawning bash.
-        cd /tmp || exit 1
+        mkdir -p "\$WORK_DIR" || exit 1
+        cd "\$WORK_DIR" || exit 1
         if [ -f "$INSTALL_DIR/install.sh" ]; then
             echo "Running local install.sh with --update..."
             bash "$INSTALL_DIR/install.sh" --update
