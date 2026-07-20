@@ -17,7 +17,7 @@ from books_core.extract.service import (
     split_pdf_pages,
 )
 from books_core.assemble import assemble_book_html
-from books_core.ingest import find_inbox_pdfs, ingest_pdf
+from books_core.ingest import find_inbox_epubs, find_inbox_pdfs, ingest_epub, ingest_pdf
 from books_core.meta.reader import book_status_summary
 from books_core.paths import BookPaths
 from books_core.pipeline.process import process_page
@@ -86,15 +86,17 @@ def cmd_agent_run(args: argparse.Namespace) -> int:
 
 
 def cmd_ingest(args: argparse.Namespace) -> int:
-    """Drop PDF → books/<slug>/input/original.pdf (no library.json)."""
+    """Drop PDF/EPUB → books/<slug>/input/ (no library.json)."""
     if args.list_inbox:
-        pdfs = find_inbox_pdfs()
-        print(json.dumps({"inbox": [str(p) for p in pdfs]}, indent=2, ensure_ascii=False))
+        files = [*find_inbox_pdfs(), *find_inbox_epubs()]
+        print(json.dumps({"inbox": [str(p) for p in sorted(files)]}, indent=2, ensure_ascii=False))
         return 0
-    if not args.pdf:
-        print("Provide --pdf or --list-inbox", file=sys.stderr)
+    source = args.epub or args.pdf
+    if not source:
+        print("Provide --pdf, --epub, or --list-inbox", file=sys.stderr)
         return 2
-    out = ingest_pdf(Path(args.pdf), slug=args.slug, title=args.title)
+    ingest = ingest_epub if args.epub else ingest_pdf
+    out = ingest(Path(source), slug=args.slug, title=args.title)
     print(json.dumps(out, indent=2, ensure_ascii=False))
     return 0
 
@@ -223,15 +225,17 @@ def main(argv: list[str] | None = None) -> int:
 
     p_ingest = sub.add_parser(
         "ingest",
-        help="Drop PDF → books/<slug>/ (from books/inbox/ or any path)",
+        help="Drop PDF/EPUB → books/<slug>/ (from books/inbox/ or any path)",
     )
-    p_ingest.add_argument("--pdf", type=Path, help="Path to PDF file")
+    ingest_source = p_ingest.add_mutually_exclusive_group()
+    ingest_source.add_argument("--pdf", type=Path, help="Path to PDF file")
+    ingest_source.add_argument("--epub", type=Path, help="Path to EPUB file")
     p_ingest.add_argument("--slug", help="Book folder name (default: from filename)")
     p_ingest.add_argument("--title")
     p_ingest.add_argument(
         "--list-inbox",
         action="store_true",
-        help="List PDFs in books/inbox/",
+        help="List PDFs and EPUBs in books/inbox/",
     )
     p_ingest.set_defaults(func=cmd_ingest)
 

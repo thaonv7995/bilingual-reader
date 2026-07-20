@@ -56,6 +56,8 @@ def scaffold_book(
     pdf_source: Path,
     page_count: int,
     slug: str | None = None,
+    source_lang: str = "en",
+    source_format: str = "pdf",
 ) -> BookPaths:
     """
     Canonical layout:
@@ -72,6 +74,7 @@ def scaffold_book(
     book_dir.mkdir(parents=True, exist_ok=True)
     book = BookPaths.open(book_dir)
     book.ensure_book_dirs()
+    book.pages_dir(source_lang).mkdir(parents=True, exist_ok=True)
 
     shutil.copy2(pdf_source, book.input_dir / "original.pdf")
 
@@ -92,7 +95,15 @@ def scaffold_book(
         "slug": slug,
         "title": title,
         "page_count": page_count,
-        "source_lang": "en",
+        "source_lang": source_lang,
+        "source_format": source_format,
+        "languages": [
+            {"code": source_lang, "role": "primary"},
+            {
+                "code": "en" if source_lang == "vi" else "vi",
+                "role": "translation",
+            },
+        ],
         "layout": {
             "input": "input/original.pdf",
             "work": "work",
@@ -105,11 +116,11 @@ def scaffold_book(
     atomic_write_json(book.book_json, meta)
 
     rows = "\n".join(
-        f'        <tr><td>{n}</td><td>en/page_{n:04d}.html</td><td>pending</td></tr>'
+        f'        <tr><td>{n}</td><td>{source_lang}/page_{n:04d}.html</td><td>pending</td></tr>'
         for n in range(1, min(page_count, 30) + 1)
     )
     index = f"""<!doctype html>
-<html lang="en">
+<html lang="{source_lang}">
 <head>
   <meta charset="utf-8">
   <title>{title}</title>
@@ -285,8 +296,9 @@ def verify_book(
     from concurrent.futures import ThreadPoolExecutor
 
     default_lang = book.default_lang()
-    vi_dir = book.pages_dir("vi")
-    has_vi = vi_dir.is_dir()
+    translation_lang = "en" if default_lang == "vi" else "vi"
+    translation_dir = book.pages_dir(translation_lang)
+    has_translation = translation_dir.is_dir()
 
     def check_single_page(page: int) -> dict[str, Any]:
         res_dict = {
@@ -321,14 +333,14 @@ def verify_book(
                 res_dict["is_broken"] = True
                 res_dict["invalid_en"].append(f"Page {page} ({default_lang}) invalid: {e}")
 
-        # Check VI
-        if has_vi:
-            vi_path = book.page_lang_html(page, "vi")
+        # Check the optional second bilingual output.
+        if has_translation:
+            vi_path = book.page_lang_html(page, translation_lang)
             if not vi_path.is_file():
                 res_dict["missing_vi"].append(page)
                 res_dict["is_broken"] = True
             elif vi_path.stat().st_size == 0:
-                res_dict["invalid_vi"].append(f"Page {page} (vi) is empty")
+                res_dict["invalid_vi"].append(f"Page {page} ({translation_lang}) is empty")
                 res_dict["is_broken"] = True
             else:
                 try:
@@ -340,10 +352,10 @@ def verify_book(
                     if asset_errors:
                         res_dict["is_broken"] = True
                         for err in asset_errors:
-                            res_dict["invalid_vi"].append(f"Page {page} (vi) - {err}")
+                            res_dict["invalid_vi"].append(f"Page {page} ({translation_lang}) - {err}")
                 except Exception as e:
                     res_dict["is_broken"] = True
-                    res_dict["invalid_vi"].append(f"Page {page} (vi) invalid: {e}")
+                    res_dict["invalid_vi"].append(f"Page {page} ({translation_lang}) invalid: {e}")
         return res_dict
 
     # Run check in parallel using 12 threads
@@ -364,7 +376,7 @@ def verify_book(
 
     if missing_pages_en:
         warnings.append(f"Missing {len(missing_pages_en)} primary pages: {missing_pages_en[:10]}")
-    if missing_pages_vi and vi_dir.is_dir():
+    if missing_pages_vi and translation_dir.is_dir():
         warnings.append(f"Missing {len(missing_pages_vi)} translated pages: {missing_pages_vi[:10]}")
     warnings.extend(invalid_pages_en)
     warnings.extend(invalid_pages_vi)
@@ -374,29 +386,14 @@ def verify_book(
     assembly_ok = True
     try:
         from books_core.assemble import assemble_book_html
-        # Assemble EN
-        res_en = assemble_book_html(book, default_lang)
-        if res_en.get("ok"):
-            out_file = res_en.get("output")
-            assembled_files.append(out_file)
-            # assemble returns a path relative to book.root (e.g. "output/book.html")
-            out_path = (book.root / str(out_file)).resolve() if out_file else None
-            if out_path is not None and out_path.is_file():
-                content = out_path.read_text(encoding="utf-8")
-                asset_errors = _verify_html_assets(out_path, content)
-                if asset_errors:
-                    assembly_ok = False
-                for err in asset_errors:
-                    warnings.append(f"Assembled ({default_lang}) - {err}")
-        else:
-            assembly_ok = False
-            warnings.append(f"Assembly ({default_lang}) failed: {res_en.get('error')}")
-
-        # Assemble VI if it exists
-        if vi_dir.is_dir():
-            res_vi = assemble_book_html(book, "vi", "book.vi.html")
-            if res_vi.get("ok"):
-                out_file = res_vi.get("output")
+        languages = [default_lang]
+        if has_translation:
+            languages.append(translation_lang)
+        for lang in languages:
+            output_name = "book.html" if lang == "en" else f"book.{lang}.html"
+            result = assemble_book_html(book, lang, output_name)
+            if result.get("ok"):
+                out_file = result.get("output")
                 assembled_files.append(out_file)
                 out_path = (book.root / str(out_file)).resolve() if out_file else None
                 if out_path is not None and out_path.is_file():
@@ -405,10 +402,10 @@ def verify_book(
                     if asset_errors:
                         assembly_ok = False
                     for err in asset_errors:
-                        warnings.append(f"Assembled (vi) - {err}")
+                        warnings.append(f"Assembled ({lang}) - {err}")
             else:
                 assembly_ok = False
-                warnings.append(f"Assembly (vi) failed: {res_vi.get('error')}")
+                warnings.append(f"Assembly ({lang}) failed: {result.get('error')}")
     except Exception as ae:
         assembly_ok = False
         warnings.append(f"Assembly exception: {ae}")

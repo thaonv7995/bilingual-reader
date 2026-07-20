@@ -51,7 +51,7 @@ def get_agy_binary() -> str:
     raise FileNotFoundError("Could not find agy binary on PATH or common locations.")
 
 
-def get_translation_error_details(proc, vi_html, agy_log_path: Path) -> str:
+def get_translation_error_details(proc, target_html, agy_log_path: Path) -> str:
     stderr = (proc.stderr or "").strip()
     stdout = (proc.stdout or "").strip()
     
@@ -66,12 +66,12 @@ def get_translation_error_details(proc, vi_html, agy_log_path: Path) -> str:
             pass
             
     validation_err = ""
-    if vi_html.is_file():
+    if target_html.is_file():
         try:
-            normalize_per_page_asset_file(vi_html)
-            content = vi_html.read_text(encoding="utf-8")
+            normalize_per_page_asset_file(target_html)
+            content = target_html.read_text(encoding="utf-8")
             validate_draft_html(content)
-            asset_errors = _verify_html_assets(vi_html, content, ignore_page_figures=True)
+            asset_errors = _verify_html_assets(target_html, content, ignore_page_figures=True)
             if asset_errors:
                 raise ValueError("; ".join(asset_errors))
         except Exception as e:
@@ -92,14 +92,17 @@ def get_translation_error_details(proc, vi_html, agy_log_path: Path) -> str:
 
 def translate_page(book: BookPaths, page: int, agy_bin: str) -> dict:
     page_str = f"{page:04d}"
-    en_html = book.page_lang_html(page, "en")
-    vi_html = book.page_lang_html(page, "vi")
+    source_lang = book.default_lang()
+    target_lang = "en" if source_lang == "vi" else "vi"
+    source_name = "Vietnamese" if source_lang == "vi" else "English"
+    target_name = "English" if target_lang == "en" else "Vietnamese"
+    source_html = book.page_lang_html(page, source_lang)
+    target_html = book.page_lang_html(page, target_lang)
 
-    if not en_html.is_file():
-        return {"ok": False, "page": page, "error": "English HTML page missing."}
+    if not source_html.is_file():
+        return {"ok": False, "page": page, "error": f"{source_name} HTML page missing."}
 
-    # Ensure output directory for vi exists
-    vi_html.parent.mkdir(parents=True, exist_ok=True)
+    target_html.parent.mkdir(parents=True, exist_ok=True)
 
     # Prepare translate prompt
     agent_dir = book.page_work(page) / "agent"
@@ -113,30 +116,30 @@ You are a **page translator** for a bilingual digital library.
 
 ## Context
 Book folder: `{book.root}`
-Original page: `output/en/page_{page_str}.html`
+Original page: `output/{source_lang}/page_{page_str}.html`
 
 ## Goal
-Translate all visible English content in the original page to natural and accurate Vietnamese, preserving layout fidelity and writing the translated result to `output/vi/page_{page_str}.html`.
+Translate all visible {source_name} content in the original page to natural and accurate {target_name}, preserving layout fidelity and writing the translated result to `output/{target_lang}/page_{page_str}.html`.
 
 ## Inputs
-1. Original page HTML: `output/en/page_{page_str}.html` (contains layout and text)
-2. Glossary guidelines: `books/{slug}/translation/glossary-vi.md` (read for reference)
+1. Original page HTML: `output/{source_lang}/page_{page_str}.html` (contains layout and text)
+2. Optional glossary: `books/{slug}/translation/glossary-{target_lang}.md`
 
 ## Output
-Write the translated HTML to: `output/vi/page_{page_str}.html`
+Write the translated HTML to: `output/{target_lang}/page_{page_str}.html`
 
 ## Strict Rules
 1. **Preserve Layout and CSS**: Do not change HTML structure, classes, IDs, CSS stylesheets links (all per-page assets must remain under `../assets/...`), or javascript/inline styles. Keep the stand-alone A4 sheet wrapper structure:
    `<body class="book-standalone">` -> `<main class="book-page book-page--sheet">` -> `<article class="sheet-flow prose-page...">`
-2. **Strict translation bounds**: Translate only user-visible English text blocks (e.g. headings, paragraphs, labels, list items, table text). Do NOT translate class names, ID attributes, file paths, image source tags (`src`), tag attributes (unless they are labels like `alt`, `title`, or `aria-label`), code fragments, syntax/grammar keywords, or links.
-3. **No text expansion / overflow**: Keep translations concise. Ensure the entire page still fits on exactly ONE A4 sheet in print preview, exactly mirroring the layout of the English page.
-4. **Glossary rules**: Follow the terminology rules in `books/{slug}/translation/glossary-vi.md`.
-5. **No markdown tags or extra talk**: Output only the complete valid HTML file, writing it to `output/vi/page_{page_str}.html`. Do not reply with extra messages.
+2. **Strict translation bounds**: Translate only user-visible {source_name} text blocks (e.g. headings, paragraphs, labels, list items, table text). Do NOT translate class names, ID attributes, file paths, image source tags (`src`), tag attributes (unless they are labels like `alt`, `title`, or `aria-label`), code fragments, syntax/grammar keywords, or links.
+3. **No text expansion / overflow**: Keep translations concise. Ensure the entire page still fits on exactly ONE A4 sheet in print preview, exactly mirroring the source page.
+4. **Glossary rules**: If present, follow `books/{slug}/translation/glossary-{target_lang}.md`.
+5. **No markdown tags or extra talk**: Output only the complete valid HTML file, writing it to `output/{target_lang}/page_{page_str}.html`. Do not reply with extra messages.
 
 ## Efficiency & Speed Directives (CRITICAL)
 To avoid timing out, DO NOT perform redundant exploratory tool calls:
 - Do NOT read any stylesheets, other pages' HTML, or search other directories.
-- Translate the input English HTML and write the translated output HTML to output/vi/page_{page_str}.html immediately in 1-2 steps.
+- Translate the input HTML and write the translated output HTML to output/{target_lang}/page_{page_str}.html immediately in 1-2 steps.
 - **CRITICAL**: Always write the output HTML file with `IsArtifact: false` (i.e. do NOT set `IsArtifact: true` as it is forbidden and will fail because the output directory is outside the CLI brain).
 """
     prompt_path.write_text(prompt_content, encoding="utf-8")
@@ -165,7 +168,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
         state="running",
         step="translate",
         provider="antigravity",
-        message="Translating page EN → VI...",
+        message=f"Translating page {source_lang.upper()} → {target_lang.upper()}...",
     )
     append_live_log(book, page, f"$ {' '.join(cmd)}")
     append_live_log(book, page, f"Running translation agent...")
@@ -190,7 +193,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
                 append_stream_chunk(book, page, line)
                 clean_line = line.rstrip()
                 if clean_line and os.environ.get("BOOKS_SILENT_WORKERS") != "1":
-                    print(f"[Page {page:02d}] [VI] {clean_line}", flush=True)
+                    print(f"[Page {page:02d}] [{target_lang.upper()}] {clean_line}", flush=True)
 
         def pump_err(pipe, chunks):
             for line in pipe:
@@ -198,7 +201,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
                 append_live_log(book, page, f"[stderr] {line.rstrip()}")
                 clean_line = line.rstrip()
                 if clean_line and os.environ.get("BOOKS_SILENT_WORKERS") != "1":
-                    print(f"[Page {page:02d}] [VI ERR] {clean_line}", flush=True)
+                    print(f"[Page {page:02d}] [{target_lang.upper()} ERR] {clean_line}", flush=True)
 
         t_out = threading.Thread(target=pump_out, args=(proc.stdout, stdout_chunks), daemon=True)
         t_err = threading.Thread(target=pump_err, args=(proc.stderr, stderr_chunks), daemon=True)
@@ -211,9 +214,9 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
         completed_successfully = False
         timeout_s = 900
         while proc.poll() is None:
-            if vi_html.is_file() and vi_html.stat().st_mtime >= start_time - 1 and vi_html.stat().st_size > 0:
+            if target_html.is_file() and target_html.stat().st_mtime >= start_time - 1 and target_html.stat().st_size > 0:
                 try:
-                    content = vi_html.read_text(encoding="utf-8")
+                    content = target_html.read_text(encoding="utf-8")
                     validate_draft_html(content)
                     completed_successfully = True
                     proc.terminate()
@@ -239,8 +242,8 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
         if completed_successfully:
             returncode = 0
 
-        if returncode != 0 and not vi_html.is_file():
-            details = get_translation_error_details(proc, vi_html, agy_log_path)
+        if returncode != 0 and not target_html.is_file():
+            details = get_translation_error_details(proc, target_html, agy_log_path)
             err = f"agy failed with code {returncode}.\n{details}"
             write_process_status(
                 book,
@@ -253,7 +256,7 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
             append_live_log(book, page, f"Translation failed: {err}")
             return {"ok": False, "page": page, "error": err}
 
-        if not vi_html.is_file() or vi_html.stat().st_size == 0:
+        if not target_html.is_file() or target_html.stat().st_size == 0:
             # Fallback: Extract HTML from stdout if the subagent printed it instead of saving
             stdout_text = proc.stdout or ""
             html_content = ""
@@ -268,10 +271,10 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
                     html_content = stdout_text.strip()
 
             if html_content.startswith("<!DOCTYPE html>") or "<html" in html_content:
-                vi_html.write_text(html_content, encoding="utf-8")
+                target_html.write_text(html_content, encoding="utf-8")
             else:
-                details = get_translation_error_details(proc, vi_html, agy_log_path)
-                err = f"Translation completed but vi/page.html was not written and stdout did not contain valid HTML.\n{details}"
+                details = get_translation_error_details(proc, target_html, agy_log_path)
+                err = f"Translation completed but {target_lang}/page.html was not written and stdout did not contain valid HTML.\n{details}"
                 write_process_status(
                     book,
                     page,
@@ -285,15 +288,15 @@ To avoid timing out, DO NOT perform redundant exploratory tool calls:
 
         # Final validation check
         try:
-            normalize_per_page_asset_file(vi_html)
-            content = vi_html.read_text(encoding="utf-8")
+            normalize_per_page_asset_file(target_html)
+            content = target_html.read_text(encoding="utf-8")
             validate_draft_html(content)
-            asset_errors = _verify_html_assets(vi_html, content, ignore_page_figures=True)
+            asset_errors = _verify_html_assets(target_html, content, ignore_page_figures=True)
             if asset_errors:
                 raise ValueError("; ".join(asset_errors))
         except Exception as e:
-            details = get_translation_error_details(proc, vi_html, agy_log_path)
-            err = f"Translation completed but output vi/page.html failed validation: {e}\n{details}"
+            details = get_translation_error_details(proc, target_html, agy_log_path)
+            err = f"Translation completed but output {target_lang}/page.html failed validation: {e}\n{details}"
             write_process_status(
                 book,
                 page,
@@ -360,11 +363,13 @@ def parse_pages_spec(spec: str, max_page: int) -> list[int]:
 def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: bool, provider: str = "antigravity", force: bool = False, custom_prompt: str | None = None) -> dict:
     import time
     
-    # 1. Render EN page
-    en_html = book.page_lang_html(page, "en")
+    # 1. Render the source language page.
+    source_lang = book.default_lang()
+    target_lang = "en" if source_lang == "vi" else "vi"
+    source_html = book.page_lang_html(page, source_lang)
     render_ok = False
     
-    if not force and not custom_prompt and standalone_page_valid(en_html):
+    if not force and not custom_prompt and standalone_page_valid(source_html):
         render_ok = True
     else:
         max_retries = 3
@@ -396,10 +401,10 @@ def process_single_page(book: BookPaths, page: int, agy_bin: str, translate: boo
         if not render_ok:
             return {"ok": False, "page": page, "phase": "render", "error": last_error}
 
-    # 2. Translate to VI page
+    # 2. Translate to the other bilingual output.
     if translate:
-        vi_html = book.page_lang_html(page, "vi")
-        if not force and standalone_page_valid(vi_html):
+        target_html = book.page_lang_html(page, target_lang)
+        if not force and standalone_page_valid(target_html):
             pass
         else:
             translate_ok = False
@@ -437,13 +442,17 @@ def main() -> int:
     parser.add_argument("--pages", help="Specific pages/ranges to process, e.g. '1-5', '3', '1,3,5'")
     parser.add_argument("--force", action="store_true", help="Force re-render and re-translate existing pages")
     parser.add_argument("--threads", type=int, default=8, help="Number of parallel threads")
-    parser.add_argument("--translate", action="store_true", help="Also translate pages to VI")
+    parser.add_argument("--translate", action="store_true", help="Also create the other EN/VI language")
     parser.add_argument("--provider", default="antigravity", choices=["antigravity", "cursor", "codex", "claude"], help="Provider for rendering")
     parser.add_argument("--custom-prompt", help="Custom prompt instruction for page rendering")
     args = parser.parse_args()
 
     book_root = Path(args.book).resolve()
     book = BookPaths.open(book_root)
+    source_lang = book.default_lang()
+    target_lang = "en" if source_lang == "vi" else "vi"
+    if source_lang == "vi":
+        args.translate = True
     page_count = args.end_page if args.end_page else book.estimate_page_count()
 
     if args.pages:
@@ -461,14 +470,14 @@ def main() -> int:
         
     pages_to_process = []
     for page in candidate_pages:
-        en_html = book.page_lang_html(page, "en")
-        vi_html = book.page_lang_html(page, "vi")
+        source_html = book.page_lang_html(page, source_lang)
+        target_html = book.page_lang_html(page, target_lang)
         
-        en_valid = standalone_page_valid(en_html)
-        vi_valid = standalone_page_valid(vi_html)
+        source_valid = standalone_page_valid(source_html)
+        target_valid = standalone_page_valid(target_html)
 
-        need_render = args.force or args.custom_prompt or not en_valid
-        need_translate = args.translate and (args.force or args.custom_prompt or not vi_valid)
+        need_render = args.force or args.custom_prompt or not source_valid
+        need_translate = args.translate and (args.force or args.custom_prompt or not target_valid)
         
         if need_render or need_translate:
             pages_to_process.append(page)
@@ -487,7 +496,7 @@ def main() -> int:
                 try:
                     res = future.result()
                     if res.get("ok"):
-                        draft_status = "EN & VI drafts ready" if args.translate else "EN draft ready"
+                        draft_status = "EN & VI drafts ready" if args.translate else f"{source_lang.upper()} draft ready"
                         print(f"  ✓ Rendered Page {p} ({draft_status}; post-render pending)")
                     else:
                         print(f"\n======================================================================")
@@ -513,7 +522,7 @@ def main() -> int:
 
     # Asset materialization is intentionally serialized after the worker pool.
     # When some workers fail (for example due to provider quota exhaustion), still
-    # finalize every candidate with a valid EN draft.  Otherwise one late failure
+    # finalize every candidate with a valid source draft. Otherwise one late failure
     # leaves successful/skipped pages pointing at figure files that were never
     # created.  Do not move these scripts into the workers: they share the figure
     # manifest and concurrent read/modify/write cycles can lose entries.
@@ -521,13 +530,13 @@ def main() -> int:
         asset_pages = [
             page
             for page in candidate_pages
-            if standalone_page_valid(book.page_lang_html(page, "en"))
+            if standalone_page_valid(book.page_lang_html(page, source_lang))
         ]
         extract_args = [str(page) for page in asset_pages]
         if asset_pages:
             page_label = "page" if len(asset_pages) == 1 else "pages"
             print(
-                f"Finalizing figure assets for {len(asset_pages)} {page_label} with valid EN drafts "
+                f"Finalizing figure assets for {len(asset_pages)} {page_label} with valid {source_lang.upper()} drafts "
                 "before reporting worker errors..."
             )
     else:
@@ -547,7 +556,7 @@ def main() -> int:
         ("validate_page_fidelity.py", ["--lang", "all", "--pages-only"]),
     ]
 
-    # With worker errors and no valid EN drafts, an empty page argument would mean
+    # With worker errors and no valid source drafts, an empty page argument would mean
     # "all pages" to the asset scripts, so skip them instead.
     post_scripts = [] if errors and not extract_args else asset_scripts
     for script_name, extra_args in post_scripts:
@@ -575,7 +584,7 @@ def main() -> int:
             page_label = "page" if len(extract_args) == 1 else "pages"
             print(
                 f"Figure assets were finalized for {len(extract_args)} {page_label} "
-                "with valid EN drafts."
+                f"with valid {source_lang.upper()} drafts."
             )
         print("Skipping layout post-processing and assembly because rendering did not complete.")
         return 1
@@ -594,44 +603,29 @@ def main() -> int:
                 print("Batch processing failed during post-render; assembly was skipped.")
                 return 1
 
-    # Assemble EN
+    # Use stable assembled filenames: book.html = EN, book.vi.html = VI.
     books_cli_bin = str(Path(_BACKEND).parent / ".venv" / "bin" / "books-cli")
-    cmd_assemble_en = [
-        py_bin,
-        books_cli_bin,
-        "assemble",
-        "--book", str(book_root),
-        "--lang", "en",
-        "--output", "book.html"
-    ]
-    res_en = subprocess.run(cmd_assemble_en, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
-    if res_en.returncode != 0:
-        print(f"\n======================================================================")
-        print(f"✗ ERROR ASSEMBLING EN BOOK:")
-        print(f"----------------------------------------------------------------------")
-        print(res_en.stdout)
-        print(f"======================================================================\n", flush=True)
-        print("Batch processing failed while assembling the EN book.")
-        return 1
-
-    # Assemble VI
+    assembled_languages = [source_lang]
     if args.translate:
-        cmd_assemble_vi = [
+        assembled_languages.append(target_lang)
+    for language in assembled_languages:
+        output_name = "book.html" if language == "en" else f"book.{language}.html"
+        cmd_assemble = [
             py_bin,
             books_cli_bin,
             "assemble",
             "--book", str(book_root),
-            "--lang", "vi",
-            "--output", "book.vi.html"
+            "--lang", language,
+            "--output", output_name,
         ]
-        res_vi = subprocess.run(cmd_assemble_vi, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
-        if res_vi.returncode != 0:
+        result = subprocess.run(cmd_assemble, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+        if result.returncode != 0:
             print(f"\n======================================================================")
-            print(f"✗ ERROR ASSEMBLING VI BOOK:")
+            print(f"✗ ERROR ASSEMBLING {language.upper()} BOOK:")
             print(f"----------------------------------------------------------------------")
-            print(res_vi.stdout)
+            print(result.stdout)
             print(f"======================================================================\n", flush=True)
-            print("Batch processing failed while assembling the VI book.")
+            print(f"Batch processing failed while assembling the {language.upper()} book.")
             return 1
 
 

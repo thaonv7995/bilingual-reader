@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from books_core.repo import default_library_root, books_dir, repo_root
-from books_core.ingest import ingest_pdf
+from books_core.ingest import ingest_epub, ingest_pdf
 from books_core.paths import BookPaths
 from books_core.meta.reader import book_status_summary
 from books_core.package import pack_book
@@ -873,7 +873,11 @@ def list_books_endpoint():
 async def upload_file(file: UploadFile = File(...)):
     inbox = default_library_root() / "inbox"
     inbox.mkdir(parents=True, exist_ok=True)
-    temp_path = inbox / file.filename
+    safe_name = Path(file.filename or "upload").name
+    suffix = Path(safe_name).suffix.lower()
+    if suffix not in {".pdf", ".epub", ".bkb"}:
+        raise HTTPException(status_code=400, detail="Only PDF, EPUB, or BKB files are supported")
+    temp_path = inbox / safe_name
 
     logger.info(f"Saving uploaded file to {temp_path} in chunked mode")
     try:
@@ -890,7 +894,7 @@ async def upload_file(file: UploadFile = File(...)):
             temp_path.unlink()
         raise HTTPException(status_code=500, detail=f"File upload write error: {str(e)}")
 
-    if file.filename.lower().endswith(".bkb"):
+    if suffix == ".bkb":
         try:
             from books_core.package import unpack_book
             from books_core.repo import books_dir
@@ -906,7 +910,7 @@ async def upload_file(file: UploadFile = File(...)):
             raise HTTPException(status_code=500, detail=f"BKB unpack error: {str(e)}")
 
     try:
-        result = ingest_pdf(temp_path)
+        result = ingest_epub(temp_path) if suffix == ".epub" else ingest_pdf(temp_path)
         response_cache.clear()
         return {"success": True, "book": result}
     except Exception as e:
@@ -937,7 +941,11 @@ def get_book_status_endpoint(slug: str):
     pages_enriched = []
     for p in summary.get("pages", []):
         page_num = p["page"]
+        en_html = book.page_lang_html(page_num, "en")
         vi_html = book.page_lang_html(page_num, "vi")
+        # The UI contract names EN readiness "published" and VI readiness
+        # "translated", regardless of which language was rendered first.
+        p["published"] = draft_html_file_valid(en_html)
         p["translated"] = draft_html_file_valid(vi_html)
         
         # Load process.status.json if it exists to get real-time activity
@@ -958,6 +966,7 @@ def get_book_status_endpoint(slug: str):
         pages_enriched.append(p)
         
     summary["pages"] = pages_enriched
+    summary["published"] = sum(1 for page in pages_enriched if page.get("published"))
     summary["running"] = is_running
     
     bkb_path1 = books_dir() / f"{slug}.bkb"
@@ -1009,18 +1018,22 @@ async def read_subprocess_output(slug: str, process: asyncio.subprocess.Process,
         if process.returncode == 0:
             should_pack = False
             try:
-                summary = book_status_summary(BookPaths.open(book_path))
+                book = BookPaths.open(book_path)
+                summary = book_status_summary(book)
                 total_pages = summary.get("page_count", 0)
-                published_pages = summary.get("published", 0)
-                
-                # Check VI translations count if translate was requested
-                vi_complete = True
+                required_languages = [book.default_lang()]
                 if book_conf.get("translate", True):
-                    vi_dir = book_path / "output" / "vi"
-                    vi_pages = sum(1 for p in vi_dir.glob("page_*.html") if p.is_file() and p.stat().st_size > 0) if vi_dir.is_dir() else 0
-                    vi_complete = (vi_pages == total_pages)
-                
-                should_pack = (total_pages > 0) and (published_pages == total_pages) and vi_complete
+                    other_lang = "en" if book.default_lang() == "vi" else "vi"
+                    required_languages.append(other_lang)
+                languages_complete = all(
+                    sum(
+                        1
+                        for page in book.pages_dir(lang).glob("page_*.html")
+                        if draft_html_file_valid(page)
+                    ) == total_pages
+                    for lang in required_languages
+                )
+                should_pack = (total_pages > 0) and languages_complete
             except Exception as se:
                 logger.error(f"Error checking book completeness: {se}")
                 should_pack = False
@@ -1095,6 +1108,9 @@ async def start_book_processing_impl(
     book_path = books_dir() / slug
     if not book_path.is_dir():
         return False
+    # Vietnamese sources are always bilingual: render VI first, then create EN.
+    if BookPaths.open(book_path).default_lang() == "vi":
+        translate = True
         
     if slug in running_processes or slug in starting_processes:
         return False

@@ -1358,7 +1358,7 @@
                         </div>
                         <div class="option-group">
                             <input type="checkbox" id="translateToggle" checked style="width:16px;height:16px;">
-                            <label for="translateToggle">Translate VI</label>
+                            <label for="translateToggle">Create EN + VI</label>
                         </div>
                         <div class="option-group">
                             <input type="checkbox" id="forceToggle" style="width:16px;height:16px;">
@@ -1472,15 +1472,15 @@
     <div id="uploadModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header">
-                <h3 class="modal-title">Upload PDF or BKB</h3>
+                <h3 class="modal-title">Upload PDF, EPUB or BKB</h3>
                 <button class="btn-icon" onclick="closeModal('uploadModal')"><i data-lucide="x"></i></button>
             </div>
             <div class="upload-dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
                 <div class="upload-icon">
                     <i data-lucide="upload-cloud"></i>
                 </div>
-                <p id="uploadLabel" style="font-size:1.1rem; font-weight:500;">Click or drag PDF or .bkb here</p>
-                <input type="file" id="fileInput" accept=".pdf,.bkb" style="display:none;">
+                <p id="uploadLabel" style="font-size:1.1rem; font-weight:500;">Click or drag PDF, EPUB or .bkb here</p>
+                <input type="file" id="fileInput" accept=".pdf,.epub,.bkb" style="display:none;">
             </div>
         </div>
     </div>
@@ -2062,7 +2062,8 @@
         
         async function handleUpload(file) {
             const isBkb = file.name.toLowerCase().endsWith('.bkb');
-            if(!file.name.toLowerCase().endsWith('.pdf') && !isBkb) { showToast("PDF or BKB only", "warning"); return; }
+            const isEpub = file.name.toLowerCase().endsWith('.epub');
+            if(!file.name.toLowerCase().endsWith('.pdf') && !isEpub && !isBkb) { showToast("PDF, EPUB or BKB only", "warning"); return; }
             
             // Show loading state in dropzone
             const dropzone = document.getElementById('dropzone');
@@ -2096,9 +2097,9 @@
                     if (e.lengthComputable) {
                         const percent = Math.round((e.loaded / e.total) * 100);
                         if (percent < 100) {
-                            updateUploadProgress(percent, `Uploading ${isBkb ? 'BKB' : 'PDF'} (${percent}%)`);
+                            updateUploadProgress(percent, `Uploading ${isBkb ? 'BKB' : (isEpub ? 'EPUB' : 'PDF')} (${percent}%)`);
                         } else {
-                            updateUploadProgress(100, isBkb ? "Unpacking BKB archive..." : "Ingesting and splitting PDF...");
+                            updateUploadProgress(100, isBkb ? "Unpacking BKB archive..." : (isEpub ? "Converting EPUB to A4 pages..." : "Ingesting and splitting PDF..."));
                         }
                     }
                 });
@@ -2117,7 +2118,7 @@
                         
                         if (xhr.status >= 200 && xhr.status < 300) {
                             closeModal('uploadModal'); 
-                            showToast(isBkb ? "BKB archive imported successfully!" : "Book uploaded and ingested successfully!", "success");
+                            showToast(isBkb ? "BKB archive imported successfully!" : `${isEpub ? 'EPUB' : 'Book'} uploaded and ingested successfully!`, "success");
                             fetchLibrary();
                         } else {
                             let errorMsg = "Upload failed";
