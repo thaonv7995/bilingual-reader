@@ -2069,6 +2069,13 @@
             const dropzone = document.getElementById('dropzone');
             const originalHTML = dropzone.innerHTML;
             dropzone.style.pointerEvents = 'none';
+
+            function resetUploadUi() {
+                dropzone.style.pointerEvents = 'auto';
+                dropzone.innerHTML = originalHTML;
+                fi.value = '';
+                lucide.createIcons();
+            }
             
             function updateUploadProgress(percent, statusText) {
                 dropzone.innerHTML = `
@@ -2080,6 +2087,25 @@
                         </div>
                     </div>
                 `;
+            }
+
+            async function waitForUploadJob(jobId) {
+                while (true) {
+                    const response = await fetch(`/api/uploads/${encodeURIComponent(jobId)}`, {
+                        headers: { "Authorization": `Bearer ${localStorage.getItem("studio_token")}` },
+                        cache: "no-store"
+                    });
+                    if (response.status === 401) {
+                        logoutStudio();
+                        throw new Error("Unauthorized");
+                    }
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.detail || "Could not read upload status");
+                    if (data.status === "completed") return data;
+                    if (data.status === "failed") throw new Error(data.error || "Book ingestion failed");
+                    updateUploadProgress(100, data.message || "Processing book…");
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                }
             }
             
             updateUploadProgress(0, "Preparing upload...");
@@ -2104,23 +2130,28 @@
                     }
                 });
                 
-                xhr.onreadystatechange = () => {
+                xhr.onreadystatechange = async () => {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
-                        dropzone.style.pointerEvents = 'auto';
-                        dropzone.innerHTML = originalHTML;
-                        fi.value = '';
-                        lucide.createIcons();
-                        
                         if (xhr.status === 401) {
+                            resetUploadUi();
                             logoutStudio();
                             return;
                         }
                         
                         if (xhr.status >= 200 && xhr.status < 300) {
-                            closeModal('uploadModal'); 
-                            showToast(isBkb ? "BKB archive imported successfully!" : `${isEpub ? 'EPUB' : 'Book'} uploaded and ingested successfully!`, "success");
-                            fetchLibrary();
+                            try {
+                                const accepted = JSON.parse(xhr.responseText || "{}");
+                                if (accepted.job_id) await waitForUploadJob(accepted.job_id);
+                                resetUploadUi();
+                                closeModal('uploadModal');
+                                showToast(isBkb ? "BKB archive imported successfully!" : `${isEpub ? 'EPUB' : 'Book'} uploaded and ingested successfully!`, "success");
+                                fetchLibrary();
+                            } catch (error) {
+                                resetUploadUi();
+                                showToast(`Upload failed: ${error.message}`, "error");
+                            }
                         } else {
+                            resetUploadUi();
                             let errorMsg = "Upload failed";
                             try {
                                 const err = JSON.parse(xhr.responseText);
@@ -2134,10 +2165,7 @@
                 xhr.send(fd);
             } catch(e) { 
                 showToast("Error uploading", "error"); 
-                dropzone.style.pointerEvents = 'auto';
-                dropzone.innerHTML = originalHTML;
-                fi.value = '';
-                lucide.createIcons();
+                resetUploadUi();
             }
         }
 

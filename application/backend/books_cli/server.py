@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import time
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional
 from fastapi import FastAPI, File, UploadFile, BackgroundTasks, HTTPException, Response, Request
@@ -208,6 +209,10 @@ process_logs: Dict[str, List[str]] = {}
 # Long PDF exports run outside request lifetimes and publish progress via status.
 pdf_export_tasks: Dict[str, asyncio.Task] = {}
 pdf_export_status: Dict[str, dict] = {}
+# Upload requests must return before EPUB conversion / PDF splitting finishes,
+# otherwise reverse proxies can terminate the request with a 524 timeout.
+upload_tasks: Dict[str, asyncio.Task] = {}
+upload_jobs: Dict[str, dict] = {}
 
 # --- Caching Layer to prevent massive disk scanning lag ---
 class ResponseCache:
@@ -869,7 +874,68 @@ def list_books_endpoint():
     response_cache.set_library(res)
     return res
 
-@app.post("/api/upload")
+async def _run_upload_job(job_id: str, temp_path: Path, suffix: str) -> None:
+    upload_jobs[job_id].update({"status": "processing", "message": "Preparing book…"})
+    try:
+        if suffix == ".bkb":
+            from books_core.package import unpack_book
+
+            result = await asyncio.to_thread(unpack_book, temp_path, books_dir())
+            book = {
+                "slug": result["slug"],
+                "title": result.get("title") or result["slug"],
+            }
+            if temp_path.is_file():
+                temp_path.unlink()
+        else:
+            ingest = ingest_epub if suffix == ".epub" else ingest_pdf
+            upload_jobs[job_id]["message"] = (
+                "Converting EPUB to A4 pages…"
+                if suffix == ".epub"
+                else "Ingesting and splitting PDF…"
+            )
+            book = await asyncio.to_thread(ingest, temp_path)
+
+        response_cache.clear()
+        upload_jobs[job_id].update(
+            {
+                "status": "completed",
+                "message": "Book is ready",
+                "book": book,
+                "completed_at": time.time(),
+            }
+        )
+    except Exception as exc:
+        logger.exception("Background upload ingestion failed for %s", temp_path.name)
+        if temp_path.is_file():
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+        upload_jobs[job_id].update(
+            {
+                "status": "failed",
+                "message": "Ingestion failed",
+                "error": str(exc),
+                "completed_at": time.time(),
+            }
+        )
+    finally:
+        # The canonical input has already been copied into the book workspace.
+        # Remove this job's private staging directory on both success and failure.
+        shutil.rmtree(temp_path.parent, ignore_errors=True)
+        upload_tasks.pop(job_id, None)
+
+
+@app.get("/api/uploads/{job_id}")
+def get_upload_job(job_id: str):
+    job = upload_jobs.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Upload job not found")
+    return job
+
+
+@app.post("/api/upload", status_code=202)
 async def upload_file(file: UploadFile = File(...)):
     inbox = default_library_root() / "inbox"
     inbox.mkdir(parents=True, exist_ok=True)
@@ -877,7 +943,10 @@ async def upload_file(file: UploadFile = File(...)):
     suffix = Path(safe_name).suffix.lower()
     if suffix not in {".pdf", ".epub", ".bkb"}:
         raise HTTPException(status_code=400, detail="Only PDF, EPUB, or BKB files are supported")
-    temp_path = inbox / safe_name
+    job_id = uuid.uuid4().hex
+    staging_dir = inbox / ".uploads" / job_id
+    staging_dir.mkdir(parents=True, exist_ok=True)
+    temp_path = staging_dir / safe_name
 
     logger.info(f"Saving uploaded file to {temp_path} in chunked mode")
     try:
@@ -890,35 +959,31 @@ async def upload_file(file: UploadFile = File(...)):
                 f.write(chunk)
     except Exception as e:
         logger.error(f"Failed to write uploaded file chunk: {e}")
-        if temp_path.is_file():
-            temp_path.unlink()
+        shutil.rmtree(staging_dir, ignore_errors=True)
         raise HTTPException(status_code=500, detail=f"File upload write error: {str(e)}")
 
-    if suffix == ".bkb":
-        try:
-            from books_core.package import unpack_book
-            from books_core.repo import books_dir
-            res = unpack_book(temp_path, books_dir())
-            if temp_path.is_file():
-                temp_path.unlink()
-            response_cache.clear()
-            return {"success": True, "book": {"slug": res["slug"], "title": res.get("title") or res["slug"]}}
-        except Exception as e:
-            logger.error(f"BKB unpack failed: {e}")
-            if temp_path.is_file():
-                temp_path.unlink()
-            raise HTTPException(status_code=500, detail=f"BKB unpack error: {str(e)}")
+    # Keep a small bounded history for clients polling recently submitted jobs.
+    cutoff = time.time() - 86400
+    for old_id, old_job in list(upload_jobs.items()):
+        if old_job.get("created_at", 0) < cutoff and old_id not in upload_tasks:
+            upload_jobs.pop(old_id, None)
+            shutil.rmtree(inbox / ".uploads" / old_id, ignore_errors=True)
 
-    try:
-        result = ingest_epub(temp_path) if suffix == ".epub" else ingest_pdf(temp_path)
-        response_cache.clear()
-        return {"success": True, "book": result}
-    except Exception as e:
-        logger.error(f"Ingestion failed: {e}")
-        # Clean up the file if ingestion failed
-        if temp_path.is_file():
-            temp_path.unlink()
-        raise HTTPException(status_code=500, detail=f"Ingestion error: {str(e)}")
+    upload_jobs[job_id] = {
+        "job_id": job_id,
+        "filename": safe_name,
+        "status": "queued",
+        "message": "Upload complete; ingestion queued…",
+        "created_at": time.time(),
+    }
+    task = asyncio.create_task(_run_upload_job(job_id, temp_path, suffix))
+    upload_tasks[job_id] = task
+    return {
+        "success": True,
+        "accepted": True,
+        "job_id": job_id,
+        "status": "queued",
+    }
 
 @app.get("/api/books/{slug}/status")
 def get_book_status_endpoint(slug: str):
