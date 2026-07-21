@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+from fastapi import HTTPException
+
 from books_cli import server
 
 
@@ -54,6 +57,56 @@ def test_library_list_uses_overview_without_deep_page_status(
                 "has_bkb": False,
                 "running": False,
                 "status": "idle",
+                "library_state": "active",
             }
         ]
     }
+
+
+def test_books_can_be_marked_done_and_moved_back_to_active(
+    tmp_path: Path, monkeypatch
+) -> None:
+    book = tmp_path / "book-one"
+    book.mkdir()
+    (book / "book.json").write_text(
+        json.dumps({"slug": "book-one", "title": "Book One", "page_count": 1}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server, "books_dir", lambda: tmp_path)
+    state = server.StudioState()
+    monkeypatch.setattr(server, "studio_state", state)
+    server.response_cache.clear()
+
+    marked = server.update_books_library_state(
+        server.BookLibraryStateRequest(slugs=["book-one"], state="done")
+    )
+    assert marked == {"success": True, "slugs": ["book-one"], "state": "done"}
+    assert server.list_books_endpoint()["books"][0]["library_state"] == "done"
+
+    reloaded = server.StudioState()
+    assert reloaded.get_book_process("book-one")["library_state"] == "done"
+
+    server.update_books_library_state(
+        server.BookLibraryStateRequest(slugs=["book-one"], state="active")
+    )
+    assert server.list_books_endpoint()["books"][0]["library_state"] == "active"
+
+
+def test_running_book_cannot_be_marked_done(tmp_path: Path, monkeypatch) -> None:
+    book = tmp_path / "running-book"
+    book.mkdir()
+    (book / "book.json").write_text(
+        json.dumps({"slug": "running-book", "page_count": 1}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server, "books_dir", lambda: tmp_path)
+    monkeypatch.setattr(server, "studio_state", server.StudioState())
+    server.running_processes["running-book"] = object()  # membership is sufficient
+    try:
+        with pytest.raises(HTTPException) as error:
+            server.update_books_library_state(
+                server.BookLibraryStateRequest(slugs=["running-book"], state="done")
+            )
+        assert error.value.status_code == 409
+    finally:
+        server.running_processes.pop("running-book", None)

@@ -331,14 +331,32 @@ class StudioState:
         })
         self.save()
 
+    def update_library_states(self, slugs: list[str], library_state: str) -> None:
+        for slug in slugs:
+            if slug not in self.data["books"]:
+                self.data["books"][slug] = {}
+            self.data["books"][slug]["library_state"] = library_state
+        self.save()
+
+    def reset_book(self, slug: str) -> None:
+        self.data["books"][slug] = {"library_state": "active"}
+        self.save()
+
+    def remove_book(self, slug: str) -> None:
+        if self.data["books"].pop(slug, None) is not None:
+            self.save()
+
     def get_book_process(self, slug: str) -> dict:
-        return self.data["books"].get(slug, {
+        defaults = {
             "status": "idle",
             "threads": 4,
             "translate": True,
             "logs": [],
-            "last_processed": 0.0
-        })
+            "last_processed": 0.0,
+            "library_state": "active",
+        }
+        defaults.update(self.data["books"].get(slug, {}))
+        return defaults
 
 # Instantiate singleton persistent state
 studio_state = StudioState()
@@ -867,7 +885,8 @@ def list_books_endpoint():
                         "page_pdf_done": summary["page_pdf_done"],
                         "has_bkb": has_bkb,
                         "running": child.name in running_processes,
-                        "status": persisted_status
+                        "status": persisted_status,
+                        "library_state": book_conf.get("library_state", "active"),
                     })
                 except Exception as e:
                     logger.warning(f"Error scanning book '{child.name}': {e}")
@@ -875,6 +894,38 @@ def list_books_endpoint():
     res = {"books": found}
     response_cache.set_library(res)
     return res
+
+
+class BookLibraryStateRequest(BaseModel):
+    slugs: list[str]
+    state: str
+
+
+@app.patch("/api/books/library-state")
+def update_books_library_state(payload: BookLibraryStateRequest):
+    if payload.state not in {"active", "done"}:
+        raise HTTPException(status_code=422, detail="Library state must be 'active' or 'done'")
+    slugs = list(dict.fromkeys(slug.strip() for slug in payload.slugs if slug.strip()))
+    if not slugs:
+        raise HTTPException(status_code=422, detail="Select at least one book")
+
+    missing = [slug for slug in slugs if not (books_dir() / slug).is_dir()]
+    if missing:
+        raise HTTPException(status_code=404, detail=f"Books not found: {', '.join(missing)}")
+    if payload.state == "done":
+        running = [
+            slug for slug in slugs
+            if slug in running_processes or slug in starting_processes
+        ]
+        if running:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Stop processing before marking Done: {', '.join(running)}",
+            )
+
+    studio_state.update_library_states(slugs, payload.state)
+    response_cache.clear()
+    return {"success": True, "slugs": slugs, "state": payload.state}
 
 async def _run_upload_job(job_id: str, temp_path: Path, suffix: str) -> None:
     upload_jobs[job_id].update({"status": "processing", "message": "Preparing book…"})
@@ -897,6 +948,9 @@ async def _run_upload_job(job_id: str, temp_path: Path, suffix: str) -> None:
                 else "Ingesting and splitting PDF…"
             )
             book = await asyncio.to_thread(ingest, temp_path)
+
+        if suffix == ".bkb" or book.get("action") == "created":
+            studio_state.reset_book(book["slug"])
 
         response_cache.clear()
         upload_jobs[job_id].update(
@@ -1045,6 +1099,9 @@ def get_book_status_endpoint(slug: str):
     summary["has_book_vi_html"] = (book.output_dir / "book.vi.html").is_file()
     summary["has_book_pdf"] = (book.output_dir / "book.pdf").is_file()
     summary["has_book_vi_pdf"] = (book.output_dir / "book.vi.pdf").is_file()
+    summary["library_state"] = studio_state.get_book_process(slug).get(
+        "library_state", "active"
+    )
     summary["pdf_exporting"] = is_pdf_exporting
     summary["pdf_export"] = dict(pdf_export_status.get(slug, {}))
     summary["repair_report"] = read_repair_report(book.root)
@@ -1769,7 +1826,8 @@ def delete_book(slug: str):
         bkb_file2 = books_dir() / "bkbs" / f"{slug}.bkb"
         if bkb_file2.is_file():
             bkb_file2.unlink()
-            
+
+        studio_state.remove_book(slug)
         response_cache.clear(slug)
         return {"success": True}
     except Exception as e:

@@ -224,6 +224,62 @@
             font-weight: 700;
         }
 
+        .library-heading-group, .library-actions, .library-filters {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .library-heading-group { gap: 1.25rem; }
+
+        .library-filter {
+            border: 1px solid var(--border-subtle);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-secondary);
+            border-radius: 99px;
+            padding: 0.45rem 0.8rem;
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .library-filter.active {
+            color: #dbeafe;
+            border-color: rgba(59,130,246,0.55);
+            background: rgba(59,130,246,0.16);
+        }
+
+        .book-card.selected .book-cover-wrapper {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 2px rgba(96,165,250,0.55), 0 12px 24px rgba(0,0,0,0.4);
+        }
+
+        .book-select-button {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            z-index: 12;
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            padding: 0;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(15,23,42,0.78);
+            color: #e2e8f0;
+            cursor: pointer;
+            backdrop-filter: blur(6px);
+        }
+
+        .book-card.selected .book-select-button {
+            color: #fff;
+            background: #2563eb;
+            border-color: #60a5fa;
+        }
+
         .books-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -1283,10 +1339,19 @@
             <!-- Library View -->
             <div id="view-library" class="view-section active">
                 <div class="library-header">
-                    <h2 class="library-title">My Books</h2>
-                    <button class="btn btn-primary" onclick="openModal('uploadModal')">
-                        <i data-lucide="upload-cloud"></i> Upload Book
-                    </button>
+                    <div class="library-heading-group">
+                        <h2 class="library-title">My Books</h2>
+                        <div class="library-filters">
+                            <button id="libraryFilterActive" class="library-filter active" onclick="setLibraryFilter('active')">Ready & Processing</button>
+                            <button id="libraryFilterDone" class="library-filter" onclick="setLibraryFilter('done')">Done</button>
+                        </div>
+                    </div>
+                    <div class="library-actions">
+                        <button id="libraryBulkAction" class="btn btn-secondary" style="display:none;" onclick="applySelectedLibraryState()"></button>
+                        <button class="btn btn-primary" onclick="openModal('uploadModal')">
+                            <i data-lucide="upload-cloud"></i> Upload Book
+                        </button>
+                    </div>
                 </div>
                 <div id="booksGrid" class="books-grid">
                     <!-- Books render here -->
@@ -1713,6 +1778,9 @@
         
         let currentTab = 'library';
         let activeSlug = null;
+        let libraryBooks = [];
+        let libraryFilter = 'active';
+        const selectedLibraryBooks = new Set();
         let statusInterval = null;
         let quotaInterval = null;
         let agyUrlPollTimer = null;
@@ -2002,52 +2070,137 @@
         }
 
         // Library View
+        function setLibraryFilter(filter) {
+            libraryFilter = filter === 'done' ? 'done' : 'active';
+            selectedLibraryBooks.clear();
+            renderLibrary();
+        }
+
+        function toggleLibrarySelection(slug) {
+            if(selectedLibraryBooks.has(slug)) selectedLibraryBooks.delete(slug);
+            else selectedLibraryBooks.add(slug);
+            renderLibrary();
+        }
+
+        function openLibraryBook(slug) {
+            const book = libraryBooks.find(item => item.slug === slug);
+            openDetail(slug, book?.title || slug);
+        }
+
+        function editLibraryBook(slug) {
+            const book = libraryBooks.find(item => item.slug === slug);
+            openEdit(slug, book?.title || slug);
+        }
+
+        function renderLibrary() {
+            const grid = document.getElementById('booksGrid');
+            const activeBooks = libraryBooks.filter(book => book.library_state !== 'done');
+            const doneBooks = libraryBooks.filter(book => book.library_state === 'done');
+            const visibleBooks = libraryFilter === 'done' ? doneBooks : activeBooks;
+
+            const activeFilter = document.getElementById('libraryFilterActive');
+            const doneFilter = document.getElementById('libraryFilterDone');
+            activeFilter.classList.toggle('active', libraryFilter === 'active');
+            doneFilter.classList.toggle('active', libraryFilter === 'done');
+            activeFilter.textContent = `Ready & Processing (${activeBooks.length})`;
+            doneFilter.textContent = `Done (${doneBooks.length})`;
+
+            const visibleSlugs = new Set(visibleBooks.map(book => book.slug));
+            [...selectedLibraryBooks].forEach(slug => {
+                if(!visibleSlugs.has(slug)) selectedLibraryBooks.delete(slug);
+            });
+            const bulkAction = document.getElementById('libraryBulkAction');
+            const targetState = libraryFilter === 'done' ? 'active' : 'done';
+            bulkAction.style.display = selectedLibraryBooks.size ? 'inline-flex' : 'none';
+            bulkAction.innerHTML = targetState === 'done'
+                ? `<i data-lucide="check-circle-2"></i> Mark Done (${selectedLibraryBooks.size})`
+                : `<i data-lucide="undo-2"></i> Move to Ready (${selectedLibraryBooks.size})`;
+
+            if(visibleBooks.length === 0) {
+                const message = libraryFilter === 'done'
+                    ? 'No books marked Done.'
+                    : 'No Ready or Processing books. Upload a book or move one back from Done.';
+                grid.innerHTML = `<div class="empty-placeholder" style="grid-column:1/-1;">${message}</div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            grid.innerHTML = visibleBooks.map(book => {
+                const selected = selectedLibraryBooks.has(book.slug);
+                const escapedTitle = escapeHtml(book.title);
+                let badge = '';
+                if(book.running) badge = '<span class="badge badge-processing">Processing</span>';
+                else if(book.library_state === 'done') badge = '<span class="badge badge-success">Done</span>';
+                else if(book.status === 'failed') badge = '<span class="badge badge-failed">Failed</span>';
+                else badge = '<span class="badge badge-ready">Ready</span>';
+                badge = badge.replace('class="badge ', 'class="badge badge-floating ');
+                const nextState = book.library_state === 'done' ? 'active' : 'done';
+                const stateTitle = nextState === 'done' ? 'Mark Done' : 'Move to Ready';
+                const stateIcon = nextState === 'done' ? 'check-circle-2' : 'undo-2';
+
+                return `
+                    <div class="book-card ${selected ? 'selected' : ''}" onclick="openLibraryBook('${book.slug}')">
+                        <div class="book-cover-wrapper">
+                            ${badge}
+                            <button class="book-select-button" title="Select book" onclick="event.stopPropagation(); toggleLibrarySelection('${book.slug}')">
+                                <i data-lucide="${selected ? 'check-square' : 'square'}" style="width:17px;height:17px;"></i>
+                            </button>
+                            <canvas id="cvs-${book.slug}" class="book-cover-canvas"></canvas>
+                            <div class="book-cover-placeholder" style="display:none;"><i data-lucide="book" style="width:48px;height:48px;"></i></div>
+                            <div class="book-hover-actions">
+                                <button class="btn-icon" title="${stateTitle}" onclick="event.stopPropagation(); setLibraryState(['${book.slug}'], '${nextState}')"><i data-lucide="${stateIcon}" style="width:16px;height:16px;"></i></button>
+                                <button class="btn-icon" title="Edit Book" onclick="event.stopPropagation(); editLibraryBook('${book.slug}')"><i data-lucide="edit-2" style="width:16px;height:16px;"></i></button>
+                                <button class="btn-icon" title="Delete Book" onclick="event.stopPropagation(); deleteBook('${book.slug}')"><i data-lucide="trash-2" style="width:16px;height:16px;color:#fca5a5;"></i></button>
+                            </div>
+                        </div>
+                        <div class="book-info">
+                            <div class="book-title" title="${escapedTitle}">${escapedTitle}</div>
+                            <div class="book-meta">
+                                <span>${book.page_count} Pages</span>
+                                <span>${book.page_pdf_done} split</span>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+            lucide.createIcons();
+            setTimeout(() => visibleBooks.forEach(book => renderCover(book.slug, `cvs-${book.slug}`)), 100);
+        }
+
+        async function setLibraryState(slugs, state) {
+            try {
+                await api('/api/books/library-state', {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({slugs, state})
+                });
+                const changed = new Set(slugs);
+                libraryBooks.forEach(book => {
+                    if(changed.has(book.slug)) book.library_state = state;
+                });
+                slugs.forEach(slug => selectedLibraryBooks.delete(slug));
+                renderLibrary();
+                showToast(
+                    state === 'done' ? 'Book moved to Done.' : 'Book moved back to Ready.',
+                    'success'
+                );
+            } catch(error) {
+                showToast(`Could not update book state: ${error.message}`, 'error');
+            }
+        }
+
+        function applySelectedLibraryState() {
+            if(!selectedLibraryBooks.size) return;
+            const state = libraryFilter === 'done' ? 'active' : 'done';
+            setLibraryState([...selectedLibraryBooks], state);
+        }
+
         async function fetchLibrary() {
             const grid = document.getElementById('booksGrid');
             try {
                 const res = await api("/api/books");
                 const data = await res.json();
-                if(data.books.length===0) { grid.innerHTML = '<div class="empty-placeholder" style="grid-column:1/-1;">No books in library. Upload one to start!</div>'; return; }
-                
-                let html = '';
-                data.books.forEach(b => {
-                    let badge = '';
-                    if(b.running) badge = '<span class="badge badge-processing">Processing</span>';
-                    else if(b.status==='failed') badge = '<span class="badge badge-failed">Failed</span>';
-                    else if(b.status==='success' || b.has_bkb) badge = '<span class="badge badge-success">Done</span>';
-                    else badge = '<span class="badge badge-ready">Ready</span>';
-
-                    // Modify badge to include badge-floating
-                    badge = badge.replace('class="badge ', 'class="badge badge-floating ');
-                    html += `
-                        <div class="book-card" onclick="openDetail('${b.slug}', '${b.title.replace(/'/g, "\'")}')">
-                            <div class="book-cover-wrapper">
-                                ${badge}
-                                <canvas id="cvs-${b.slug}" class="book-cover-canvas"></canvas>
-                                <div class="book-cover-placeholder" style="display:none;"><i data-lucide="book" style="width:48px;height:48px;"></i></div>
-                                <div class="book-hover-actions">
-                                    <button class="btn-icon" title="Edit Book" onclick="event.stopPropagation(); openEdit('${b.slug}', '${b.title.replace(/'/g, "\'")}')"><i data-lucide="edit-2" style="width:16px;height:16px;"></i></button>
-                                    <button class="btn-icon" title="Delete Book" onclick="event.stopPropagation(); deleteBook('${b.slug}')"><i data-lucide="trash-2" style="width:16px;height:16px;color:#fca5a5;"></i></button>
-                                </div>
-                            </div>
-                            <div class="book-info">
-                                <div class="book-title" title="${b.title.replace(/"/g, '&quot;')}">${b.title}</div>
-                                <div class="book-meta">
-                                    <span>${b.page_count} Pages</span>
-                                    <span>${b.page_pdf_done} split</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                grid.innerHTML = html;
-                lucide.createIcons();
-                
-                // Lazy render covers
-                setTimeout(() => {
-                    data.books.forEach(b => renderCover(b.slug, `cvs-${b.slug}`));
-                }, 100);
-                
+                libraryBooks = data.books || [];
+                renderLibrary();
             } catch(e) {
                 console.error(e);
                 grid.innerHTML = `
