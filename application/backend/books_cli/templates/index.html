@@ -2003,10 +2003,10 @@
 
         // Library View
         async function fetchLibrary() {
+            const grid = document.getElementById('booksGrid');
             try {
                 const res = await api("/api/books");
                 const data = await res.json();
-                const grid = document.getElementById('booksGrid');
                 if(data.books.length===0) { grid.innerHTML = '<div class="empty-placeholder" style="grid-column:1/-1;">No books in library. Upload one to start!</div>'; return; }
                 
                 let html = '';
@@ -2048,7 +2048,15 @@
                     data.books.forEach(b => renderCover(b.slug, `cvs-${b.slug}`));
                 }, 100);
                 
-            } catch(e) { console.error(e); }
+            } catch(e) {
+                console.error(e);
+                grid.innerHTML = `
+                    <div class="empty-placeholder" style="grid-column:1/-1;">
+                        <p style="margin-bottom:12px;">Could not load library: ${escapeHtml(e.message || 'Unknown error')}</p>
+                        <button class="btn btn-secondary" onclick="fetchLibrary()"><i data-lucide="refresh-cw"></i> Retry</button>
+                    </div>`;
+                lucide.createIcons();
+            }
         }
 
         // Upload

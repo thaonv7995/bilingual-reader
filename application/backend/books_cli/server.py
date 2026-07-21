@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from books_core.repo import default_library_root, books_dir, repo_root
 from books_core.ingest import ingest_epub, ingest_pdf
 from books_core.paths import BookPaths
-from books_core.meta.reader import book_status_summary
+from books_core.meta.reader import book_overview_summary, book_status_summary
 from books_core.package import pack_book
 from books_core.asset_paths import normalize_per_page_asset_paths
 from books_core.validation import draft_html_file_valid
@@ -846,7 +846,9 @@ def list_books_endpoint():
                 continue
             if child.is_dir() and BookPaths.open(child).book_json.is_file():
                 try:
-                    summary = book_status_summary(BookPaths.open(child))
+                    # Library cards only need inexpensive overview metadata.
+                    # Per-page manifests and HTML validation belong to /status.
+                    summary = book_overview_summary(BookPaths.open(child))
                     
                     # Check if packed file exists
                     bkb_path1 = books_folder / f"{child.name}.bkb"

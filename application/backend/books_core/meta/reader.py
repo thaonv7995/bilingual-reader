@@ -3,11 +3,58 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 from pathlib import Path
 from typing import Any
 
 from books_core.extract.pages_init import read_page_manifest
 from books_core.paths import BookPaths
+
+
+_PAGE_HTML_RE = re.compile(r"^page_\d{4,}\.html$")
+
+
+def _count_page_pdfs(work_dir: Path) -> int:
+    """Count extracted page PDFs without reading per-page manifests."""
+    try:
+        with os.scandir(work_dir) as entries:
+            return sum(
+                1
+                for entry in entries
+                if entry.name.startswith("page_")
+                and entry.is_dir(follow_symlinks=False)
+                and os.path.isfile(os.path.join(entry.path, "source.pdf"))
+            )
+    except OSError:
+        return 0
+
+
+def _count_page_html_files(pages_dir: Path) -> int:
+    """Count page outputs by directory entry only; content validation is detail-only."""
+    try:
+        with os.scandir(pages_dir) as entries:
+            return sum(
+                1
+                for entry in entries
+                if _PAGE_HTML_RE.match(entry.name) and entry.is_file(follow_symlinks=False)
+            )
+    except OSError:
+        return 0
+
+
+def book_overview_summary(book: BookPaths) -> dict[str, Any]:
+    """Return library-card metadata without scanning or parsing individual pages."""
+    metadata = book.load_book_json()
+    source_lang = str(metadata.get("source_lang") or "en")
+    return {
+        "slug": metadata.get("slug") or book.root.name,
+        "title": metadata.get("title") or book.root.name.replace("-", " ").title(),
+        "source_lang": source_lang,
+        "page_count": int(metadata.get("page_count") or 0),
+        "page_pdf_done": _count_page_pdfs(book.work),
+        "published": _count_page_html_files(book.pages_dir(source_lang)),
+    }
 
 
 def _step_done(path: Path) -> bool:
