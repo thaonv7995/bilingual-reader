@@ -86,6 +86,13 @@ def test_books_can_be_marked_done_and_moved_back_to_active(
     reloaded = server.StudioState()
     assert reloaded.get_book_process("book-one")["library_state"] == "done"
 
+    # The per-book metadata survives application updates even if the shared
+    # Studio state file is lost or replaced.
+    reloaded.state_file.unlink()
+    monkeypatch.setattr(server, "studio_state", server.StudioState())
+    server.response_cache.clear()
+    assert server.list_books_endpoint()["books"][0]["library_state"] == "done"
+
     server.update_books_library_state(
         server.BookLibraryStateRequest(slugs=["book-one"], state="active")
     )

@@ -51,6 +51,7 @@ def book_overview_summary(book: BookPaths) -> dict[str, Any]:
         "slug": metadata.get("slug") or book.root.name,
         "title": metadata.get("title") or book.root.name.replace("-", " ").title(),
         "source_lang": source_lang,
+        "library_state": metadata.get("library_state", "active"),
         "page_count": int(metadata.get("page_count") or 0),
         "page_pdf_done": _count_page_pdfs(book.work),
         "published": _count_page_html_files(book.pages_dir(source_lang)),

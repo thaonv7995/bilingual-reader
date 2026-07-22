@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 from books_core.repo import default_library_root, books_dir, repo_root
 from books_core.ingest import ingest_epub, ingest_pdf
+from books_core.io import atomic_write_json
 from books_core.paths import BookPaths
 from books_core.meta.reader import book_overview_summary, book_status_summary
 from books_core.package import pack_book
@@ -876,6 +877,13 @@ def list_books_endpoint():
                     # Persisted processing status
                     book_conf = studio_state.get_book_process(child.name)
                     persisted_status = book_conf.get("status", "idle")
+                    library_state = (
+                        studio_state.data.get("books", {})
+                        .get(child.name, {})
+                        .get("library_state")
+                    )
+                    if library_state not in {"active", "done"}:
+                        library_state = summary.get("library_state", "active")
                     
                     found.append({
                         "slug": child.name,
@@ -886,7 +894,7 @@ def list_books_endpoint():
                         "has_bkb": has_bkb,
                         "running": child.name in running_processes,
                         "status": persisted_status,
-                        "library_state": book_conf.get("library_state", "active"),
+                        "library_state": library_state,
                     })
                 except Exception as e:
                     logger.warning(f"Error scanning book '{child.name}': {e}")
@@ -899,6 +907,14 @@ def list_books_endpoint():
 class BookLibraryStateRequest(BaseModel):
     slugs: list[str]
     state: str
+
+
+def _persist_book_library_state(slug: str, state: str) -> None:
+    """Keep library state with the book so application updates cannot lose it."""
+    book = BookPaths.open(books_dir() / slug)
+    metadata = book.load_book_json()
+    metadata["library_state"] = state
+    atomic_write_json(book.book_json, metadata)
 
 
 @app.patch("/api/books/library-state")
@@ -923,6 +939,8 @@ def update_books_library_state(payload: BookLibraryStateRequest):
                 detail=f"Stop processing before marking Done: {', '.join(running)}",
             )
 
+    for slug in slugs:
+        _persist_book_library_state(slug, payload.state)
     studio_state.update_library_states(slugs, payload.state)
     response_cache.clear()
     return {"success": True, "slugs": slugs, "state": payload.state}
@@ -950,6 +968,7 @@ async def _run_upload_job(job_id: str, temp_path: Path, suffix: str) -> None:
             book = await asyncio.to_thread(ingest, temp_path)
 
         if suffix == ".bkb" or book.get("action") == "created":
+            _persist_book_library_state(book["slug"], "active")
             studio_state.reset_book(book["slug"])
 
         response_cache.clear()
@@ -1099,9 +1118,12 @@ def get_book_status_endpoint(slug: str):
     summary["has_book_vi_html"] = (book.output_dir / "book.vi.html").is_file()
     summary["has_book_pdf"] = (book.output_dir / "book.pdf").is_file()
     summary["has_book_vi_pdf"] = (book.output_dir / "book.vi.pdf").is_file()
-    summary["library_state"] = studio_state.get_book_process(slug).get(
-        "library_state", "active"
+    stored_library_state = (
+        studio_state.data.get("books", {}).get(slug, {}).get("library_state")
     )
+    if stored_library_state not in {"active", "done"}:
+        stored_library_state = book.load_book_json().get("library_state", "active")
+    summary["library_state"] = stored_library_state
     summary["pdf_exporting"] = is_pdf_exporting
     summary["pdf_export"] = dict(pdf_export_status.get(slug, {}))
     summary["repair_report"] = read_repair_report(book.root)
