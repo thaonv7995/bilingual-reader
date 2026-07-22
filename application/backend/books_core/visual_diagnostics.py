@@ -65,6 +65,7 @@ HTML_PAGE_FIGURE_RE = re.compile(r"page_(\d{4})_fig_([A-Za-z0-9_.-]+)\.png", re.
 HTML_VISUAL_ID_RE = re.compile(r"data-visual-id=[\"']([^\"']+)[\"']", re.I)
 HTML_LAYOUT_MODE_RE = re.compile(r'data-layout-mode=[\"\']([^\"\']+)[\"\']', re.I)
 HTML_SOURCE_REGION_RE = re.compile(r'data-source-region=[\"\']([^\"\']+)[\"\']', re.I)
+HTML_PAGE_FACSIMILE_RE = re.compile(r'data-page-facsimile=[\"\']true[\"\']', re.I)
 HTML_IMG_TAG_RE = re.compile(r"<img\b[^>]*>", re.I | re.S)
 RECONSTRUCTABLE_LABEL_RE = re.compile(
     r"\b(?:icon|pictogram|glyph|exercise[\s_-]+marker|section[\s_-]+marker|"
@@ -683,6 +684,8 @@ def validate_html_against_visual_plan(
         actual_regions = set(HTML_SOURCE_REGION_RE.findall(html))
         for region_id in sorted(expected_regions - actual_regions):
             issues.append(f"source-anchored visual plan region {region_id} has no HTML anchor")
+        if page_layout.get("facsimile") is True and not HTML_PAGE_FACSIMILE_RE.search(html):
+            issues.append("facsimile visual plan requires data-page-facsimile=true")
     for figure_id in sorted((html_ids | tagged_ids) - set(plan_figures)):
         issues.append(f"HTML references unplanned figure id {figure_id}")
     required_raster = {

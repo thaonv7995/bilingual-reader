@@ -23,7 +23,7 @@ from books_core.pipeline.process import process_page
 from books_core.repo import repo_root
 from books_core.extract.service import run_page_pdf
 from books_core.asset_paths import normalize_per_page_asset_file
-from books_core.book_layout import _verify_html_assets
+from books_core.book_layout import _verify_html_assets, sync_standard_assets
 from books_core.validation import validate_draft_html
 from books_core.visual_diagnostics import validate_html_file_against_visual_plan
 from books_core.repair_report import write_repair_report
@@ -451,6 +451,7 @@ def main() -> int:
 
     book_root = Path(args.book).resolve()
     book = BookPaths.open(book_root)
+    sync_standard_assets(book)
     source_lang = book.default_lang()
     target_lang = "en" if source_lang == "vi" else "vi"
     if source_lang == "vi":

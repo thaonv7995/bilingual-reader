@@ -49,6 +49,21 @@ def _copy_if_exists(src: Path, dest: Path) -> None:
         shutil.copy2(src, dest)
 
 
+def sync_standard_assets(book: BookPaths) -> None:
+    """Refresh generated CSS assets so existing books receive renderer fixes."""
+    templates = Path(__file__).parent / "templates"
+    assets = book.output_dir / "assets"
+    for name in (
+        "book.css",
+        "page-tokens.css",
+        "prose-page.css",
+        "toc-page.css",
+        "code-page.css",
+        "figures-page.css",
+    ):
+        _copy_if_exists(templates / name, assets / name)
+
+
 def scaffold_book(
     book_dir: Path,
     *,
@@ -78,12 +93,7 @@ def scaffold_book(
 
     shutil.copy2(pdf_source, book.input_dir / "original.pdf")
 
-    tpl_dir = Path(__file__).parent / "templates"
-    assets = book.output_dir / "assets"
-    _copy_if_exists(tpl_dir / "book.css", assets / "book.css")
-    _copy_if_exists(tpl_dir / "page-tokens.css", assets / "page-tokens.css")
-    for name in ("prose-page.css", "toc-page.css", "code-page.css", "figures-page.css"):
-        _copy_if_exists(tpl_dir / name, assets / name)
+    sync_standard_assets(book)
 
     from books_core.page_chrome import detect_page_chrome_from_pdf
 

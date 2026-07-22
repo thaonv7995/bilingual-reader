@@ -81,6 +81,9 @@ If the plan also contains `page_layout.facsimile: true`, render only the planned
 aspect ratio. Do not recreate, OCR, translate, reorder, or restyle its headings, page number,
 notes, drawings, or tables as separate HTML. Do not add a generic running header or footer over
 the facsimile. Exact source content and geometry take priority over semantic reconstruction.
+Set `data-page-facsimile="true"` on `main.book-page`. The full-page figure must use
+`data-source-region="full-page"`, contain no caption, and must not have inline width/height,
+padding, margin, or transform that shrinks it. Standard `book.css` owns its 100% A4 sizing.
 
 Copy every source color exactly from the visual reference and layout plan: header fills, section
 bands, page-number badges, table fills, border/stroke colors, text colors, logo colors, and

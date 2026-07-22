@@ -550,7 +550,7 @@ def test_source_anchored_layout_requires_html_region_markers() -> None:
     assert "source-anchored visual plan region notes has no HTML anchor" in missing
 
     complete = validate_html_against_visual_plan(
-        '<main data-layout-mode="source-anchored">'
+        '<main data-layout-mode="source-anchored" data-page-facsimile="true">'
         '<section data-source-region="header"></section>'
         '<section data-source-region="notes"></section>'
         "</main>",
@@ -591,7 +591,7 @@ def test_composite_facsimile_requires_one_full_page_raster() -> None:
 
     assert validate_agent_visual_plan(plan, page_num=76) is False
     html = (
-        '<main data-layout-mode="source-anchored">'
+        '<main data-layout-mode="source-anchored" data-page-facsimile="true">'
         '<figure data-source-region="full-page" data-visual-id="1">'
         '<img src="../assets/images/page_0076_fig_1.png" alt="Page 76">'
         "</figure></main>"
