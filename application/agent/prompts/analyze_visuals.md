@@ -25,17 +25,25 @@ When page 1 is a single scanned or embedded raster covering essentially the whol
 
 ## Strategy decision
 
-- `reconstruct-html-svg`: structured content whose meaning is carried by text, basic geometry, connectors, symbols, spacing, or relationships and can be faithfully rebuilt using semantic HTML/CSS and/or inline SVG.
-- `extract-raster`: content whose meaning or fidelity depends on continuous-tone pixels, irregular hand-drawn detail, texture, or complex illustration that cannot be safely reconstructed.
+- `reconstruct-html-svg`: only a **basic diagram** whose geometry and styling can be reproduced essentially exactly with a few HTML/CSS/SVG primitives.
+- `extract-raster`: the default for drawings, illustrations, maps, schematics, detailed charts, branded artwork, and any non-basic diagram. It preserves source pixels and targets at least 99% visual fidelity.
 
-Use a **reconstruction-first test**. Ignore how the PDF encoded the region and ask what the reader sees:
+Technical exception: use `extract-raster` for dense engineering/architectural drawings,
+dimensioned construction details, and composite technical sheets when exact line weights,
+colors, dimensions, symbols, logo artwork, or spatial registration cannot be reproduced
+reliably. Use a specific type such as `technical-drawing`, `engineering-schematic`,
+`construction-detail`, or `composite-engineering-sheet`. Crop logical visual regions rather
+than rebuilding a simplified substitute. Tables and prose outside those crops remain semantic.
 
-- Family trees, pedigrees, organization charts, flowcharts, timelines, matching exercises, worksheet diagrams, labeled boxes, forms, and tables made from text plus rules/connectors MUST use `reconstruct-html-svg`.
-- A visual typed `diagram` or any `*-diagram` is treated as structured and MUST use `reconstruct-html-svg`. If it truly depends on irreducible pixels, classify it accurately as `complex-illustration`, `photo`, `textured-art`, or another pixel-dependent type instead of `diagram`.
+Use a **source-pixel-first test**. Ignore how the PDF encoded the region and ask what the reader sees:
+
+- Family trees, pedigrees, organization charts, flowcharts, timelines, matching exercises, worksheet diagrams, labeled boxes, forms, and semantic tables may use `reconstruct-html-svg` only when they are visually basic. Set `"complexity": "basic"` and explain why exact reconstruction is safe.
+- A generic `diagram` or any `*-diagram` without explicit `"complexity": "basic"` MUST use `extract-raster`. Never simplify a complex visual merely to make reconstruction easier.
 - Simple icons, pictograms, glyphs, exercise markers, and standard symbols MUST use `reconstruct-html-svg`. Recreate them as compact inline SVG, CSS geometry, or a reliable Unicode symbol; never create a raster crop merely for an icon.
-- A scanned source, distressed typeface, gender symbols, many labels, or a large/dense layout does not by itself justify raster extraction.
+- Many labels, special typography, colored strokes/fills, fine dimensions, layered geometry, logos, or a large/dense layout require raster extraction because reconstruction risks visible drift.
 - Use HTML for readable text and form fields; use inline SVG for connector lines, brackets, arrows, and geometry. A hybrid HTML/SVG figure is valid.
-- Choose `extract-raster` only when essential visual information would be lost by replacing pixels with text and geometry. State that raster-only property in `reason`.
+- For every non-basic drawing, set `"strategy": "extract-raster"`, `"fidelity_target": 0.99`, and `"preservation_mode": "source-pixels"`.
+- Record source fidelity anchors in `reason`: dominant colors, line/detail density, and the region's position relative to neighboring tables, notes, and headings.
 
 ## Bounding boxes
 
@@ -61,6 +69,9 @@ Write exactly one JSON object to `work/page_NNNN/visual-diagnosis.json`:
       "id": "1",
       "type": "photo",
       "strategy": "extract-raster",
+      "complexity": "complex",
+      "fidelity_target": 0.99,
+      "preservation_mode": "source-pixels",
       "bbox_normalized": [0.20, 0.25, 0.80, 0.65],
       "caption_bbox_normalized": [0.15, 0.67, 0.85, 0.72],
       "confidence": 0.98,

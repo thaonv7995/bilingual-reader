@@ -23,9 +23,21 @@ FIGURE_RE = re.compile(
 )
 
 VISUAL_STRATEGIES = {"reconstruct-html-svg", "extract-raster"}
+PIXEL_FIDELITY_TYPES = {
+    "artwork",
+    "illustration",
+    "complex-illustration",
+    "map",
+    "technical-illustration",
+    "technical-drawing",
+    "engineering-drawing",
+    "engineering-schematic",
+    "architectural-drawing",
+    "construction-detail",
+    "composite-engineering-sheet",
+    "dense-technical-diagram",
+}
 RECONSTRUCTION_ONLY_TYPES = {
-    "diagram",
-    "structured-diagram",
     "icon",
     "simple-icon",
     "pictogram",
@@ -66,14 +78,33 @@ def _normalized_visual_type(figure: dict[str, Any]) -> str:
 
 def _requires_reconstruction(figure: dict[str, Any]) -> bool:
     figure_type = _normalized_visual_type(figure)
+    complexity = str(figure.get("complexity") or "").strip().lower()
     descriptor = " ".join(
         str(figure.get(key) or "") for key in ("type", "label")
     )
+    label_is_explicitly_basic = bool(RECONSTRUCTABLE_LABEL_RE.search(descriptor))
+    if figure_type in PIXEL_FIDELITY_TYPES and complexity != "basic" and not label_is_explicitly_basic:
+        return False
     return (
         figure_type in RECONSTRUCTION_ONLY_TYPES
         or figure_type.endswith("-icon")
-        or figure_type.endswith("-diagram")
-        or bool(RECONSTRUCTABLE_LABEL_RE.search(descriptor))
+        or (figure_type in {"diagram", "structured-diagram"} and complexity == "basic")
+        or (figure_type.endswith("-diagram") and complexity == "basic")
+        or label_is_explicitly_basic
+    )
+
+
+def _requires_pixel_fidelity(figure: dict[str, Any]) -> bool:
+    figure_type = _normalized_visual_type(figure)
+    complexity = str(figure.get("complexity") or "").strip().lower()
+    if complexity == "basic" and _requires_reconstruction(figure):
+        return False
+    if figure_type in PIXEL_FIDELITY_TYPES:
+        return True
+    return (
+        (figure_type in {"diagram", "structured-diagram"} or figure_type.endswith("-diagram"))
+        and complexity != "basic"
+        and not _requires_reconstruction(figure)
     )
 
 
@@ -357,7 +388,15 @@ def validate_agent_visual_plan(data: Any, *, page_num: int) -> bool:
         if figure.get("strategy") not in VISUAL_STRATEGIES:
             raise ValueError(f"visual plan figure {figure_id} has an invalid strategy")
         figure_type = _normalized_visual_type(figure)
-        if _requires_reconstruction(figure) and figure.get("strategy") != "reconstruct-html-svg":
+        if _requires_pixel_fidelity(figure) and figure.get("strategy") != "extract-raster":
+            previous = str(figure["strategy"])
+            figure["strategy"] = "extract-raster"
+            figure["strategy_overridden_from"] = previous
+            figure["strategy_override_reason"] = (
+                f"Visual type {figure_type} requires source-pixel preservation."
+            )
+            changed = True
+        elif _requires_reconstruction(figure) and figure.get("strategy") != "reconstruct-html-svg":
             previous = str(figure["strategy"])
             figure["strategy"] = "reconstruct-html-svg"
             figure["strategy_overridden_from"] = previous
@@ -365,6 +404,13 @@ def validate_agent_visual_plan(data: Any, *, page_num: int) -> bool:
                 f"Structured visual type {figure_type} must be rebuilt with HTML/SVG."
             )
             changed = True
+        if figure.get("strategy") == "extract-raster" and _requires_pixel_fidelity(figure):
+            if figure.get("fidelity_target") != 0.99:
+                figure["fidelity_target"] = 0.99
+                changed = True
+            if figure.get("preservation_mode") != "source-pixels":
+                figure["preservation_mode"] = "source-pixels"
+                changed = True
         if not (
             _valid_bbox(figure.get("bbox_normalized"), normalized=True)
             or _valid_bbox(figure.get("art_bbox"), normalized=False)

@@ -183,11 +183,12 @@ def test_render_context_includes_visual_strategy_before_agent_runs(tmp_path: Pat
                 "schema_version": "2.0",
                 "producer": "agent-vision",
                 "page": 32,
-                "figures": [
+                    "figures": [
                     {
-                        "id": "1.1",
-                        "type": "diagram",
-                        "strategy": "reconstruct-html-svg",
+                            "id": "1.1",
+                            "type": "diagram",
+                            "complexity": "basic",
+                            "strategy": "reconstruct-html-svg",
                         "bbox_normalized": [0.14, 0.13, 0.65, 0.62],
                         "caption_bbox_normalized": [0.67, 0.30, 0.95, 0.40],
                         "confidence": 0.98,
@@ -221,7 +222,7 @@ def test_full_page_raster_cover_collapses_agent_subregions(tmp_path: Path) -> No
                 "schema_version": "2.0",
                 "producer": "agent-vision",
                 "page": 1,
-                "figures": [
+                    "figures": [
                     {
                         "id": "1",
                         "type": "illustration",
@@ -457,6 +458,7 @@ def test_structured_diagram_raster_plan_is_normalized_before_render() -> None:
                     "id": "1",
                     "type": figure_type,
                     "label": label,
+                    "complexity": "basic",
                     "strategy": "extract-raster",
                     "bbox_normalized": [0.03, 0.08, 0.97, 0.92],
                 }
@@ -466,6 +468,54 @@ def test_structured_diagram_raster_plan_is_normalized_before_render() -> None:
         assert validate_agent_visual_plan(plan, page_num=154) is True
         assert plan["figures"][0]["strategy"] == "reconstruct-html-svg"
         assert plan["figures"][0]["strategy_overridden_from"] == "extract-raster"
+
+
+def test_dense_technical_visuals_can_preserve_source_pixels() -> None:
+    for figure_type in (
+        "technical-drawing",
+        "engineering-schematic",
+        "construction-detail",
+        "composite-engineering-sheet",
+        "dense-technical-diagram",
+    ):
+        plan = {
+            "page": 76,
+            "figures": [
+                {
+                    "id": "1",
+                    "type": figure_type,
+                    "label": "Dimensioned structural steel drawing",
+                    "strategy": "extract-raster",
+                    "bbox_normalized": [0.08, 0.15, 0.92, 0.72],
+                }
+            ],
+        }
+
+        assert validate_agent_visual_plan(plan, page_num=76) is True
+        assert plan["figures"][0]["strategy"] == "extract-raster"
+        assert plan["figures"][0]["fidelity_target"] == 0.99
+        assert plan["figures"][0]["preservation_mode"] == "source-pixels"
+
+
+def test_non_basic_diagram_is_forced_to_source_pixel_preservation() -> None:
+    plan = {
+        "page": 76,
+        "figures": [
+            {
+                "id": "1",
+                "type": "diagram",
+                "complexity": "complex",
+                "label": "Detailed structural assembly",
+                "strategy": "reconstruct-html-svg",
+                "bbox_normalized": [0.08, 0.15, 0.92, 0.72],
+            }
+        ],
+    }
+
+    assert validate_agent_visual_plan(plan, page_num=76) is True
+    assert plan["figures"][0]["strategy"] == "extract-raster"
+    assert plan["figures"][0]["strategy_overridden_from"] == "reconstruct-html-svg"
+    assert plan["figures"][0]["fidelity_target"] == 0.99
 
 
 def test_simple_icon_cannot_create_a_raster_asset_dependency() -> None:
@@ -518,10 +568,11 @@ def test_published_diagram_placeholder_invalidates_cached_page(tmp_path: Path) -
                 "status": "finalized",
                 "page": 154,
                 "figures": [
-                    {
-                        "id": "1",
-                        "type": "diagram",
-                        "strategy": "extract-raster",
+                        {
+                            "id": "1",
+                            "type": "diagram",
+                            "complexity": "basic",
+                            "strategy": "extract-raster",
                         "bbox_normalized": [0.03, 0.08, 0.97, 0.92],
                     }
                 ],

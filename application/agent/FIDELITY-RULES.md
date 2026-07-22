@@ -69,6 +69,7 @@ See `.cursor/skills/books-pdf-to-html/special-layouts.md`. Summary:
 | **Structured diagrams** (UML, flow, family tree, org chart, timeline) | `<figure class="diagram">` with semantic HTML + inline SVG | `figures-page.css` |
 | **Simple icons / pictograms** | Inline `<span data-visual-id>` with SVG/CSS/Unicode | Match surrounding text size/baseline |
 | **Pixel-dependent visuals** (photos, textured art, complex maps) | `<figure class="diagram"><img src="../assets/images/…">` | `figures-page.css` |
+| **Dense technical drawings** (engineering/architectural sheets, dimensioned construction details) | Cropped source visual in `<figure class="diagram">`; keep surrounding tables/text semantic | `figures-page.css` |
 | Simple math / metrics | `.math`, `.frac`, `.metric-block`, `.formula-display` | `figures-page.css` |
 | Tables | `<table class="data-table">` | `code-page.css` |
 | Footnotes | `.footnotes` at bottom (before footer) | `prose-page.css` |
@@ -83,7 +84,9 @@ See `.cursor/skills/books-pdf-to-html/special-layouts.md`. Summary:
 
 ## Rule 4 — Figures & images
 
-**Strategy invariant:** classify by visible content, never by the PDF container. Simple icons/pictograms and every visual typed `diagram` or `*-diagram`—including family trees, pedigrees, org charts, flowcharts, timelines, forms, tables, and worksheet diagrams—MUST be reconstructed with semantic HTML and inline SVG/CSS. This remains true when the source is a scan. Extract raster only when fidelity depends on original pixels such as a photograph, painting, texture, hand-drawn detail, genuine irreproducible brand artwork, or irreducibly complex artwork; use a pixel-dependent type rather than `diagram` in that case.
+**Strict 99% visual rule:** classify by visible content, never by the PDF container. Every drawing, illustration, map, schematic, branded artwork, detailed chart, and non-basic diagram MUST preserve source pixels with `extract-raster`; the target is at least 99% visual similarity for the visual region. Do not redraw, simplify, recolor, restyle, reinterpret, or substitute these visuals. Only a genuinely basic diagram made from a small number of boxes, lines, arrows, and labels may use semantic HTML/inline SVG, and its visual plan must explicitly set `complexity: basic`. Semantic prose and tables outside protected visual crops remain HTML.
+
+For every protected source-pixel visual, the plan must contain `fidelity_target: 0.99` and `preservation_mode: source-pixels`. A generic `diagram` or `*-diagram` without explicit `complexity: basic` is treated as non-basic and must be raster-preserved.
 
 **Raster pipeline (only for visuals classified `extract-raster`):**
 
@@ -121,6 +124,9 @@ Before accepting a page, verify:
 3. [ ] Figures between the paragraphs that reference them
 4. [ ] Footnotes after body, **before** `.book-footer`
 5. [ ] No content from page N+1 / missing content from page N
+6. [ ] Dominant colors match the source; no generic theme color replaces source branding
+7. [ ] Major regions retain their source relationships (left/right and top/middle/bottom)
+8. [ ] Technical drawings retain exact line work and are not simplified substitutes
 
 ---
 

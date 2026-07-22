@@ -99,6 +99,9 @@ def build_context(book: BookPaths, page: int, phase: AgentPhase) -> dict[str, An
             "extract-raster uses a standard image placeholder."
         )
         hints.append(
+            "Do not simplify dense engineering drawings or replace source colors/layout with a generic theme."
+        )
+        hints.append(
             "After render: materialize_vector_figures → extract_pdf_figures → "
             "upgrade_figure_html → fix_book_layout → validate_page_fidelity."
         )

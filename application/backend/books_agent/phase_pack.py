@@ -19,7 +19,7 @@ PHASE_PACKS: dict[AgentPhase, dict[str, Any]] = {
         "output_contract": [
             "Open the complete page PNG and inspect it visually; do not rely on extracted text alone.",
             "Identify every meaningful visual region and assign stable figure ids in reading order.",
-            "Choose reconstruct-html-svg for simple diagrams and extract-raster for photos or complex art.",
+            "Source-pixel first: every non-basic drawing/illustration/schematic uses extract-raster with a 0.99 fidelity target; only diagrams explicitly marked complexity=basic may use reconstruct-html-svg.",
             "Write work/page_NNNN/visual-diagnosis.json using normalized 0..1 bboxes.",
             "Do not write or modify page HTML in this phase.",
         ],
@@ -62,13 +62,14 @@ PHASE_PACKS: dict[AgentPhase, dict[str, Any]] = {
         ],
         "raster_policy": [
             "Simple vector diagrams/charts: semantic HTML/CSS or inline SVG.",
-            "Photos, embedded rasters, and complex artwork: PNG crop from source.pdf.",
+            "Every non-basic drawing, illustration, map, schematic, detailed chart, and branded artwork: PNG crop from source.pdf with source pixels preserved.",
             "No ascii-figure for diagrams.",
             "Code: pre.code-block in figure.listing; no gray background.",
         ],
         "quality_gate": [
             "validate_page_fidelity.py + validate_a4_page.py pass.",
             "Side-by-side: order, chrome, listings, figures match source.pdf.",
+            "Dominant colors and major left/right, top/middle/bottom region relationships match source.pdf.",
         ],
     },
 }

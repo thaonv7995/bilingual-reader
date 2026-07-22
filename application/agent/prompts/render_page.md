@@ -52,6 +52,16 @@ Read the finalized agent-vision plan at `work/page_NNNN/visual-diagnosis.json` b
 
 For a family tree, pedigree, org chart, flowchart, timeline, form, or worksheet diagram, keep every visible label and answer blank as real HTML text/elements and draw only connectors or geometry with inline SVG/CSS. Preserve topology and relative grouping; do not substitute a screenshot just because the source page was scanned.
 
+For a finalized raster technical visual (`technical-drawing`, `engineering-schematic`,
+`construction-detail`, `composite-engineering-sheet`, or `dense-technical-diagram`), do not
+redesign, simplify, recolor, or redraw it. Preserve the crop's aspect ratio, line work, symbols,
+dimensions, and colors. Keep its placement and scale relative to neighboring notes and tables.
+
+Apply the same strict rule to every non-basic drawing, illustration, map, schematic, branded
+visual, or detailed chart: use the planned source-pixel image and target at least 99% visual
+fidelity. Only a visual explicitly marked `complexity: basic` may be reconstructed. Never replace
+a protected crop with a cleaner, generic, translated, recolored, or simplified SVG.
+
 For a simple icon, pictogram, glyph, exercise marker, or standard symbol, render a compact accessible inline SVG, CSS shape, or reliable Unicode character. Match its size and baseline beside the surrounding heading/text. Do not emit an `<img>` placeholder or asset path for it.
 
 If a simple vector figure was not reconstructed by the agent, the post-render pipeline may replace its image placeholder with a clipped inline SVG from the source PDF as a fidelity fallback.
@@ -96,3 +106,7 @@ After writing the HTML file, you MUST perform a self-verification pass using you
 ## Done when
 
 Side-by-side with `source.pdf`: correct **order**, **block types**, **chrome**, **listings**, **figures**, **math**; page N only. Must fit onto exactly one A4 page without clipping or overflow.
+
+Also verify that dominant source colors are not replaced by a generic theme and that major
+regions remain in the same top/middle/bottom and left/right relationships. A page with correct
+text but simplified drawings, changed colors, or reordered regions is not done.
