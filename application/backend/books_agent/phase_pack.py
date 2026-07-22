@@ -18,10 +18,12 @@ PHASE_PACKS: dict[AgentPhase, dict[str, Any]] = {
         "output_path_key": "visual_plan_output",
         "output_contract": [
             "Open the complete page PNG and inspect it visually; do not rely on extracted text alone.",
+            "Choose page preservation mode first: facsimile, then source-anchored, and semantic reconstruction only as a last resort.",
             "Identify every meaningful visual region and assign stable figure ids in reading order.",
             "Source-pixel first: every non-basic drawing/illustration/schematic uses extract-raster with a 0.99 fidelity target; only diagrams explicitly marked complexity=basic may use reconstruct-html-svg.",
             "Write work/page_NNNN/visual-diagnosis.json using normalized 0..1 bboxes.",
             "For composite technical sheets, write page_layout.mode=source-anchored and normalized region bboxes for every major section.",
+            "Dense composite engineering sheets use facsimile=true and one full-page extract-raster visual; never regenerate their numbers or section identity.",
             "Do not write or modify page HTML in this phase.",
         ],
         "raster_policy": [
@@ -51,11 +53,13 @@ PHASE_PACKS: dict[AgentPhase, dict[str, Any]] = {
         "output_path_key": "published_html",
         "output_contract": [
             "Read FIDELITY-RULES.md and the finalized agent-vision visual plan before writing.",
+            "Honor the page-level preservation mode; never downgrade facsimile or source-anchored pages to normal flow.",
             "Open the complete source PNG first; scanned pages can contain no extractable PDF text.",
             "Never write an empty article when the source page contains visible content.",
             "Only a genuinely blank source page may use data-intentionally-blank=true on article.",
             "Block order = visual PDF order (not text-extract order).",
             "If page_layout.mode=source-anchored, use anchored coordinate-preserving layout; absolute positioning is required inside the page canvas.",
+            "If page_layout.facsimile=true, render only the full-page planned raster and no reconstructed content blocks.",
             "Follow visual-diagnosis.json for every detected figure.",
             "reconstruct-html-svg: draw as semantic HTML/CSS or inline SVG; do not add an img placeholder.",
             "extract-raster: use the standard PNG placeholder for extract_pdf_figures.py.",

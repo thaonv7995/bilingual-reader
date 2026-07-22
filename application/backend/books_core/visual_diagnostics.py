@@ -449,6 +449,18 @@ def validate_agent_visual_plan(data: Any, *, page_num: int) -> bool:
         caption_bbox = figure.get("caption_bbox_normalized")
         if caption_bbox is not None and not _valid_bbox(caption_bbox, normalized=True):
             raise ValueError(f"visual plan figure {figure_id} has an invalid caption bbox")
+    if isinstance(page_layout, dict) and page_layout.get("facsimile") is True:
+        facsimiles = [
+            figure
+            for figure in figures
+            if _normalized_visual_type(figure) == "composite-engineering-sheet"
+            and figure.get("strategy") == "extract-raster"
+            and figure.get("bbox_normalized") == [0, 0, 1, 1]
+        ]
+        if len(facsimiles) != 1:
+            raise ValueError(
+                "facsimile page_layout requires exactly one full-page composite-engineering-sheet raster"
+            )
     return changed
 
 

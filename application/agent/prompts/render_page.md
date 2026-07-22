@@ -43,6 +43,10 @@ To prevent resource loading issues (broken CSS, JS, or images), you MUST follow 
 
 ## Figure strategy (CRITICAL)
 
+Honor the page-level preservation mode before rendering any individual block. A facsimile plan
+cannot be downgraded to source-anchored or semantic flow. A source-anchored plan cannot be
+downgraded to normal flow. Semantic reconstruction is the final fallback only.
+
 Read the finalized agent-vision plan at `work/page_NNNN/visual-diagnosis.json` before building figures and follow its id, bbox, caption, and strategy for each figure. Do not independently invent a second visual interpretation:
 
 - **`reconstruct-html-svg`**: redraw the visual using semantic HTML/CSS or inline SVG. Preserve its labels, arrows, grouping, colors, and relationships. Do **not** add an `<img>` placeholder for this figure. Inline SVG is preferred over canvas because page HTML must work without JavaScript.
@@ -71,6 +75,12 @@ section into another region. Use source coordinates to place raster crops and tr
 allow wrapping only inside the anchored region. The final HTML must include
 `data-layout-mode="source-anchored"` on the page shell and `data-source-region="..."` on every
 anchored major section.
+
+If the plan also contains `page_layout.facsimile: true`, render only the planned full-page
+`composite-engineering-sheet` raster inside the A4 shell. It must fill the page while preserving
+aspect ratio. Do not recreate, OCR, translate, reorder, or restyle its headings, page number,
+notes, drawings, or tables as separate HTML. Do not add a generic running header or footer over
+the facsimile. Exact source content and geometry take priority over semantic reconstruction.
 
 Copy every source color exactly from the visual reference and layout plan: header fills, section
 bands, page-number badges, table fills, border/stroke colors, text colors, logo colors, and

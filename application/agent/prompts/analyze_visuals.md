@@ -23,13 +23,32 @@ Do not classify ordinary prose, headings, captions, rules, backgrounds, or white
 
 Also classify the page layout. For a composite technical sheet (multiple drawings, notes,
 tables, headers, or base plans arranged as a designed plate), include:
-`"page_layout": {"mode": "source-anchored", "page_type": "composite-engineering-sheet"}`.
+`"page_layout": {"mode": "source-anchored", "page_type": "composite-engineering-sheet", "facsimile": true}`.
 Record each major section's normalized bbox in `regions` in visual reading order. These regions
 are layout anchors, not optional suggestions; they must remain in the same positions in HTML.
+For this page type, create exactly one additional full-page visual with type
+`composite-engineering-sheet`, strategy `extract-raster`, bbox `[0, 0, 1, 1]`,
+`fidelity_target: 0.99`, and `preservation_mode: source-pixels`. This facsimile is the rendered
+page; do not ask the HTML agent to recreate tables, numbers, notes, chrome, or headings.
 
 When page 1 is a single scanned or embedded raster covering essentially the whole page **and its meaning depends on the original pixels** (for example a cover, photograph, painting, or textured illustration), model it as exactly one `extract-raster` visual with id `1` and bbox `[0, 0, 1, 1]`. Do not apply this exception to a worksheet, form, table, family tree, flowchart, or other structured text-and-line layout merely because the PDF stored the whole page as one scan.
 
 ## Strategy decision
+
+### Mandatory page-first decision order
+
+Choose the page preservation mode before classifying individual figures:
+
+1. **Full-page facsimile first** — if the page is a designed plate, dense technical sheet,
+   scanned form, complex poster, infographic, or any page where reconstruction could change
+   content, geometry, color, order, or numeric data, preserve the complete page as one raster.
+2. **Source-anchored second** — use anchored regions only when selectable/translated text is
+   required and every section can still be kept at its source bbox without overlap or reflow.
+3. **Semantic reconstruction last** — use normal HTML/SVG flow only when the page is simple
+   enough to reproduce faithfully. Never choose reconstruction merely because it is easier to
+   translate or edit.
+
+When uncertain, choose facsimile. Fidelity has priority over semantic editability.
 
 - `reconstruct-html-svg`: only a **basic diagram** whose geometry and styling can be reproduced essentially exactly with a few HTML/CSS/SVG primitives.
 - `extract-raster`: the default for drawings, illustrations, maps, schematics, detailed charts, branded artwork, and any non-basic diagram. It preserves source pixels and targets at least 99% visual fidelity.
@@ -73,22 +92,21 @@ Write exactly one JSON object to `work/page_NNNN/visual-diagnosis.json`:
   "page_layout": {
     "mode": "source-anchored",
     "page_type": "composite-engineering-sheet",
+    "facsimile": true,
     "regions": [
-      {"id": "header", "bbox_normalized": [0.08, 0.05, 0.92, 0.14], "fill_color": "#ef8426", "text_color": "#ffffff"},
-      {"id": "page-number", "bbox_normalized": [0.03, 0.94, 0.10, 0.99], "fill_color": "#ef8426", "text_color": "#ffffff"},
-      {"id": "main-left", "bbox_normalized": [0.08, 0.18, 0.48, 0.55], "fill_color": "#ffffff", "text_color": "#111111"}
+      {"id": "full-page", "bbox_normalized": [0, 0, 1, 1], "fill_color": "source-pixels", "text_color": "source-pixels"}
     ]
   },
   "figures": [
     {
       "id": "1",
-      "type": "photo",
+      "type": "composite-engineering-sheet",
       "strategy": "extract-raster",
       "complexity": "complex",
       "fidelity_target": 0.99,
       "preservation_mode": "source-pixels",
-      "bbox_normalized": [0.20, 0.25, 0.80, 0.65],
-      "caption_bbox_normalized": [0.15, 0.67, 0.85, 0.72],
+      "bbox_normalized": [0, 0, 1, 1],
+      "caption_bbox_normalized": null,
       "confidence": 0.98,
       "label": "Short visual identifier",
       "reason": "Why this strategy is appropriate"

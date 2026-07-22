@@ -560,6 +560,45 @@ def test_source_anchored_layout_requires_html_region_markers() -> None:
     assert complete == []
 
 
+def test_composite_facsimile_requires_one_full_page_raster() -> None:
+    plan = {
+        "page": 76,
+        "page_layout": {
+            "mode": "source-anchored",
+            "page_type": "composite-engineering-sheet",
+            "facsimile": True,
+            "regions": [
+                {
+                    "id": "full-page",
+                    "bbox_normalized": [0, 0, 1, 1],
+                    "fill_color": "source-pixels",
+                    "text_color": "source-pixels",
+                }
+            ],
+        },
+        "figures": [
+            {
+                "id": "1",
+                "type": "composite-engineering-sheet",
+                "complexity": "complex",
+                "strategy": "extract-raster",
+                "fidelity_target": 0.99,
+                "preservation_mode": "source-pixels",
+                "bbox_normalized": [0, 0, 1, 1],
+            }
+        ],
+    }
+
+    assert validate_agent_visual_plan(plan, page_num=76) is False
+    html = (
+        '<main data-layout-mode="source-anchored">'
+        '<figure data-source-region="full-page" data-visual-id="1">'
+        '<img src="../assets/images/page_0076_fig_1.png" alt="Page 76">'
+        "</figure></main>"
+    )
+    assert validate_html_against_visual_plan(html, plan, page_num=76) == []
+
+
 def test_simple_icon_cannot_create_a_raster_asset_dependency() -> None:
     for figure_type, label in (
         ("icon", "Book"),
