@@ -62,6 +62,22 @@ visual, or detailed chart: use the planned source-pixel image and target at leas
 fidelity. Only a visual explicitly marked `complexity: basic` may be reconstructed. Never replace
 a protected crop with a cleaner, generic, translated, recolored, or simplified SVG.
 
+If `visual-diagnosis.json` contains `page_layout.mode: source-anchored`, this is a composite
+technical sheet. Reproduce the page on a coordinate-preserving canvas using the listed region
+`bbox_normalized` anchors. Use a controlled `position: absolute` exception inside the A4 sheet:
+each major section (header, notes, drawings, diagrams, tables, captions) must occupy its source
+region and retain its source width/height and z-order. Do not let normal flex/grid flow move a
+section into another region. Use source coordinates to place raster crops and translated text;
+allow wrapping only inside the anchored region. The final HTML must include
+`data-layout-mode="source-anchored"` on the page shell and `data-source-region="..."` on every
+anchored major section.
+
+Copy every source color exactly from the visual reference and layout plan: header fills, section
+bands, page-number badges, table fills, border/stroke colors, text colors, logo colors, and
+accent rules. Use the plan's `fill_color`, `stroke_color`, and `text_color` values as source
+anchors. Never substitute a generic green/blue theme, browser default, or translation-language
+theme. Page numbers and running chrome are protected regions and retain source colors.
+
 For a simple icon, pictogram, glyph, exercise marker, or standard symbol, render a compact accessible inline SVG, CSS shape, or reliable Unicode character. Match its size and baseline beside the surrounding heading/text. Do not emit an `<img>` placeholder or asset path for it.
 
 If a simple vector figure was not reconstructed by the agent, the post-render pipeline may replace its image placeholder with a clipped inline SVG from the source PDF as a fidelity fallback.
@@ -110,3 +126,5 @@ Side-by-side with `source.pdf`: correct **order**, **block types**, **chrome**, 
 Also verify that dominant source colors are not replaced by a generic theme and that major
 regions remain in the same top/middle/bottom and left/right relationships. A page with correct
 text but simplified drawings, changed colors, or reordered regions is not done.
+Verify exact color anchors for header, section bands, page number, table fills, borders, and
+running chrome before completing the page.

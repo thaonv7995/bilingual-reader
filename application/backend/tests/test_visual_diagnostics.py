@@ -518,6 +518,48 @@ def test_non_basic_diagram_is_forced_to_source_pixel_preservation() -> None:
     assert plan["figures"][0]["fidelity_target"] == 0.99
 
 
+def test_source_anchored_layout_requires_html_region_markers() -> None:
+    plan = {
+        "page": 76,
+        "page_layout": {
+            "mode": "source-anchored",
+            "page_type": "composite-engineering-sheet",
+            "regions": [
+                {
+                    "id": "header",
+                    "bbox_normalized": [0.08, 0.05, 0.92, 0.14],
+                    "fill_color": "#ef8426",
+                    "text_color": "#ffffff",
+                },
+                {
+                    "id": "notes",
+                    "bbox_normalized": [0.55, 0.18, 0.92, 0.42],
+                    "fill_color": "#ffffff",
+                    "text_color": "#111111",
+                },
+            ],
+        },
+        "figures": [],
+    }
+    assert validate_agent_visual_plan(plan, page_num=76) is False
+
+    missing = validate_html_against_visual_plan(
+        '<main data-layout-mode="source-anchored"></main>', plan, page_num=76
+    )
+    assert "source-anchored visual plan region header has no HTML anchor" in missing
+    assert "source-anchored visual plan region notes has no HTML anchor" in missing
+
+    complete = validate_html_against_visual_plan(
+        '<main data-layout-mode="source-anchored">'
+        '<section data-source-region="header"></section>'
+        '<section data-source-region="notes"></section>'
+        "</main>",
+        plan,
+        page_num=76,
+    )
+    assert complete == []
+
+
 def test_simple_icon_cannot_create_a_raster_asset_dependency() -> None:
     for figure_type, label in (
         ("icon", "Book"),

@@ -63,6 +63,8 @@ RECONSTRUCTION_ONLY_TYPES = {
 }
 HTML_PAGE_FIGURE_RE = re.compile(r"page_(\d{4})_fig_([A-Za-z0-9_.-]+)\.png", re.I)
 HTML_VISUAL_ID_RE = re.compile(r"data-visual-id=[\"']([^\"']+)[\"']", re.I)
+HTML_LAYOUT_MODE_RE = re.compile(r'data-layout-mode=[\"\']([^\"\']+)[\"\']', re.I)
+HTML_SOURCE_REGION_RE = re.compile(r'data-source-region=[\"\']([^\"\']+)[\"\']', re.I)
 HTML_IMG_TAG_RE = re.compile(r"<img\b[^>]*>", re.I | re.S)
 RECONSTRUCTABLE_LABEL_RE = re.compile(
     r"\b(?:icon|pictogram|glyph|exercise[\s_-]+marker|section[\s_-]+marker|"
@@ -378,6 +380,34 @@ def validate_agent_visual_plan(data: Any, *, page_num: int) -> bool:
         raise ValueError("visual plan figures must be an array")
     seen: set[str] = set()
     changed = False
+    page_layout = data.get("page_layout")
+    if page_layout is not None:
+        if not isinstance(page_layout, dict):
+            raise ValueError("visual plan page_layout must be an object")
+        mode = str(page_layout.get("mode") or "").strip()
+        if mode not in {"source-anchored", "flow"}:
+            raise ValueError("visual plan page_layout.mode must be source-anchored or flow")
+        if mode == "source-anchored":
+            regions = page_layout.get("regions")
+            if not isinstance(regions, list) or not regions:
+                raise ValueError("source-anchored page_layout requires regions")
+            region_ids: set[str] = set()
+            for region in regions:
+                if not isinstance(region, dict):
+                    raise ValueError("page_layout region must be an object")
+                region_id = str(region.get("id") or "").strip()
+                if not region_id or region_id in region_ids:
+                    raise ValueError("page_layout regions require unique ids")
+                region_ids.add(region_id)
+                if not _valid_bbox(region.get("bbox_normalized"), normalized=True):
+                    raise ValueError(f"page_layout region {region_id} has invalid bbox")
+                if not any(
+                    str(region.get(key) or "").strip()
+                    for key in ("fill_color", "stroke_color", "text_color")
+                ):
+                    raise ValueError(
+                        f"page_layout region {region_id} requires source color anchors"
+                    )
     for index, figure in enumerate(figures, start=1):
         if not isinstance(figure, dict):
             raise ValueError(f"visual plan figure {index} must be an object")
@@ -627,6 +657,20 @@ def validate_html_against_visual_plan(
         canonical(match.group(1)) for match in HTML_VISUAL_ID_RE.finditer(html)
     }
     issues: list[str] = []
+    page_layout = plan.get("page_layout")
+    if isinstance(page_layout, dict) and page_layout.get("mode") == "source-anchored":
+        if "source-anchored" not in {
+            value.strip().lower() for value in HTML_LAYOUT_MODE_RE.findall(html)
+        }:
+            issues.append("source-anchored visual plan requires data-layout-mode=source-anchored")
+        expected_regions = {
+            str(region.get("id"))
+            for region in page_layout.get("regions", [])
+            if isinstance(region, dict) and region.get("id")
+        }
+        actual_regions = set(HTML_SOURCE_REGION_RE.findall(html))
+        for region_id in sorted(expected_regions - actual_regions):
+            issues.append(f"source-anchored visual plan region {region_id} has no HTML anchor")
     for figure_id in sorted((html_ids | tagged_ids) - set(plan_figures)):
         issues.append(f"HTML references unplanned figure id {figure_id}")
     required_raster = {

@@ -86,6 +86,10 @@ See `.cursor/skills/books-pdf-to-html/special-layouts.md`. Summary:
 
 **Strict 99% visual rule:** classify by visible content, never by the PDF container. Every drawing, illustration, map, schematic, branded artwork, detailed chart, and non-basic diagram MUST preserve source pixels with `extract-raster`; the target is at least 99% visual similarity for the visual region. Do not redraw, simplify, recolor, restyle, reinterpret, or substitute these visuals. Only a genuinely basic diagram made from a small number of boxes, lines, arrows, and labels may use semantic HTML/inline SVG, and its visual plan must explicitly set `complexity: basic`. Semantic prose and tables outside protected visual crops remain HTML.
 
+**Composite sheet layout rule:** pages containing multiple technical sections must set `page_layout.mode: source-anchored` with normalized bboxes for every major region. Render these pages on a coordinate-preserving A4 canvas. Use controlled absolute positioning inside the canvas; ordinary flex/grid flow must not reorder or push sections away from their source regions. Every anchored section must carry `data-source-region`, and the page shell must carry `data-layout-mode="source-anchored"`.
+
+**Color fidelity rule:** source colors are immutable. Preserve exact header/section fills, page-number badge colors, table fills, border/stroke colors, text colors, logos, rules, and running chrome. Sample colors from the source reference and record them as `fill_color`, `stroke_color`, or `text_color` anchors in `page_layout.regions`. Never apply a generic theme or change colors because the target language differs.
+
 For every protected source-pixel visual, the plan must contain `fidelity_target: 0.99` and `preservation_mode: source-pixels`. A generic `diagram` or `*-diagram` without explicit `complexity: basic` is treated as non-basic and must be raster-preserved.
 
 **Raster pipeline (only for visuals classified `extract-raster`):**
