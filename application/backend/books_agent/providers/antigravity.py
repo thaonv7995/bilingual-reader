@@ -49,9 +49,9 @@ class AntigravityProvider(Provider):
                         cwd=str(repo_root()),
                     )
                     output = (proc.stdout or "") + (proc.stderr or "")
-                    if proc.returncode != 0 or not any(
-                        name in output for name in ("Gemini", "Claude", "GPT")
-                    ):
+                    # Model names are controlled by AGY and change over time.
+                    # Readiness must not depend on a hard-coded vendor/model list.
+                    if proc.returncode != 0 or not output.strip():
                         base.runnable = False
                         base.message = (
                             output.strip()[:300]

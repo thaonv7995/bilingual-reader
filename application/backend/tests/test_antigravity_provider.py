@@ -69,6 +69,37 @@ def test_antigravity_auth_probe_is_shared_across_batch_threads(monkeypatch) -> N
     assert all(result.runnable for result in results)
 
 
+def test_antigravity_auth_probe_accepts_models_without_known_vendor_names(monkeypatch) -> None:
+    provider = AntigravityProvider()
+    monkeypatch.setattr(
+        antigravity,
+        "detect_binary",
+        lambda *_args: DetectResult(
+            id="antigravity",
+            label="Antigravity CLI",
+            installed=True,
+            path="/usr/local/bin/agy",
+            version="test",
+            runnable=True,
+            message="found",
+        ),
+    )
+    monkeypatch.setattr(
+        antigravity.subprocess,
+        "run",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(
+            ["agy", "models"],
+            0,
+            stdout="future-model-7-ultra\nnext-generation-reasoner\n",
+            stderr="",
+        ),
+    )
+
+    result = provider.detect()
+
+    assert result.runnable
+
+
 def test_antigravity_probe_timeout_is_shared_across_waiting_threads(monkeypatch) -> None:
     provider = AntigravityProvider()
     model_calls: list[int] = []
