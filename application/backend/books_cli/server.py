@@ -210,6 +210,8 @@ process_logs: Dict[str, List[str]] = {}
 # Long PDF exports run outside request lifetimes and publish progress via status.
 pdf_export_tasks: Dict[str, asyncio.Task] = {}
 pdf_export_status: Dict[str, dict] = {}
+# Chromium PDF printing is deliberately serialized to keep peak CPU/RAM bounded.
+pdf_export_semaphore = asyncio.Semaphore(1)
 # Upload requests must return before EPUB conversion / PDF splitting finishes,
 # otherwise reverse proxies can terminate the request with a 524 timeout.
 upload_tasks: Dict[str, asyncio.Task] = {}
@@ -1630,61 +1632,17 @@ def pack_book_endpoint(slug: str):
 
 
 async def _run_pdf_export(slug: str, book_path: Path) -> None:
-    from books_core.assemble import assemble_book_html
-    from books_core.pdf_export import export_html_pdf
-
     status = pdf_export_status[slug]
     generated: dict[str, dict] = {}
     skipped: dict[str, str] = {}
     try:
-        book = BookPaths.open(book_path)
-        expected_pages = book.estimate_page_count()
-        for lang, html_name, pdf_name in (
-            ("en", "book.html", "book.pdf"),
-            ("vi", "book.vi.html", "book.vi.pdf"),
-        ):
-            pages = sorted(book.pages_dir(lang).glob("page_*.html")) if book.pages_dir(lang).is_dir() else []
-            if not pages:
-                skipped[lang] = "No rendered HTML pages"
-                continue
-            if expected_pages and len(pages) != expected_pages:
-                skipped[lang] = f"Expected {expected_pages} pages, found {len(pages)}"
-                continue
-            invalid_pages = [
-                int(path.stem.split("_")[1])
-                for path in pages
-                if not draft_html_file_valid(path)
-            ]
-            if invalid_pages:
-                skipped[lang] = (
-                    f"{len(invalid_pages)} blank/invalid page(s): {invalid_pages[:10]}"
-                )
-                continue
-            status.update({"state": "running", "language": lang, "message": f"Exporting {lang.upper()} PDF..."})
-            response_cache.clear(slug)
-            assemble_book_html(book, lang, html_name)
-            generated[lang] = await export_html_pdf(
-                book.output_dir / html_name,
-                book.output_dir / pdf_name,
+        if pdf_export_semaphore.locked():
+            status.update(
+                {"state": "queued", "message": "Waiting for the active PDF export..."}
             )
-
-        if not generated:
-            details = "; ".join(f"{lang.upper()}: {reason}" for lang, reason in skipped.items())
-            raise RuntimeError(f"No complete language is ready for PDF export. {details}")
-        state = "success" if not skipped else "partial"
-        message = f"Generated {', '.join(lang.upper() for lang in generated)} PDF"
-        if skipped:
-            message += "; skipped " + ", ".join(lang.upper() for lang in skipped)
-        status.update(
-            {
-                "state": state,
-                "language": None,
-                "message": message,
-                "generated": generated,
-                "skipped": skipped,
-                "error": None,
-            }
-        )
+            response_cache.clear(slug)
+        async with pdf_export_semaphore:
+            await _export_book_pdfs(slug, book_path, status, generated, skipped)
     except Exception as exc:
         logger.exception("PDF export failed for %s", slug)
         status.update(
@@ -1700,6 +1658,92 @@ async def _run_pdf_export(slug: str, book_path: Path) -> None:
     finally:
         pdf_export_tasks.pop(slug, None)
         response_cache.clear(slug)
+
+
+async def _export_book_pdfs(
+    slug: str,
+    book_path: Path,
+    status: dict,
+    generated: dict[str, dict],
+    skipped: dict[str, str],
+) -> None:
+    from books_core.assemble import assemble_book_html
+    from books_core.pdf_export import export_html_pdf
+
+    book = BookPaths.open(book_path)
+    missing_figure_pages: set[int] = set()
+    figure_ref = re.compile(
+        r"(?:\.\./)?assets/images/(page_(\d{4})_fig_[A-Za-z0-9_.-]+\.png)",
+        re.I,
+    )
+    for page_html in sorted(book.output_dir.glob("*/page_*.html")):
+        content = page_html.read_text(encoding="utf-8", errors="replace")
+        for match in figure_ref.finditer(content):
+            asset = book.output_dir / "assets" / "images" / match.group(1)
+            if not asset.is_file() or asset.stat().st_size == 0:
+                missing_figure_pages.add(int(match.group(2)))
+    if missing_figure_pages:
+        raise RuntimeError(
+            "PDF export found missing figure assets on page(s) "
+            f"{sorted(missing_figure_pages)[:10]}. Repair or force-render those pages first."
+        )
+    expected_pages = book.estimate_page_count()
+    for lang, html_name, pdf_name in (
+        ("en", "book.html", "book.pdf"),
+        ("vi", "book.vi.html", "book.vi.pdf"),
+    ):
+        pages = (
+            sorted(book.pages_dir(lang).glob("page_*.html"))
+            if book.pages_dir(lang).is_dir()
+            else []
+        )
+        if not pages:
+            skipped[lang] = "No rendered HTML pages"
+            continue
+        if expected_pages and len(pages) != expected_pages:
+            skipped[lang] = f"Expected {expected_pages} pages, found {len(pages)}"
+            continue
+        invalid_pages = [
+            int(path.stem.split("_")[1])
+            for path in pages
+            if not draft_html_file_valid(path)
+        ]
+        if invalid_pages:
+            skipped[lang] = (
+                f"{len(invalid_pages)} blank/invalid page(s): {invalid_pages[:10]}"
+            )
+            continue
+        status.update(
+            {
+                "state": "running",
+                "language": lang,
+                "message": f"Exporting {lang.upper()} PDF...",
+            }
+        )
+        response_cache.clear(slug)
+        await asyncio.to_thread(assemble_book_html, book, lang, html_name)
+        generated[lang] = await export_html_pdf(
+            book.output_dir / html_name,
+            book.output_dir / pdf_name,
+        )
+
+    if not generated:
+        details = "; ".join(f"{lang.upper()}: {reason}" for lang, reason in skipped.items())
+        raise RuntimeError(f"No complete language is ready for PDF export. {details}")
+    state = "success" if not skipped else "partial"
+    message = f"Generated {', '.join(lang.upper() for lang in generated)} PDF"
+    if skipped:
+        message += "; skipped " + ", ".join(lang.upper() for lang in skipped)
+    status.update(
+        {
+            "state": state,
+            "language": None,
+            "message": message,
+            "generated": generated,
+            "skipped": skipped,
+            "error": None,
+        }
+    )
 
 
 @app.post("/api/books/{slug}/export-pdf")

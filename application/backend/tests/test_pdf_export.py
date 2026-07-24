@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from books_cli import server
 from books_core.assemble import assemble_book_html
 from books_core.paths import BookPaths
-from books_core.pdf_export import _validate_pdf, find_chromium
+from books_core.pdf_export import _chunk_documents, _validate_pdf, find_chromium
 
 
 def _write_book(tmp_path: Path, *, include_vi: bool = True) -> Path:
@@ -122,6 +122,76 @@ def test_pdf_export_builds_complete_en_and_vi_books(tmp_path: Path, monkeypatch)
     assert server.pdf_export_status[book.name]["state"] == "success"
     assert set(server.pdf_export_status[book.name]["generated"]) == {"en", "vi"}
     assert book.name not in server.pdf_export_tasks
+
+
+def test_pdf_exports_wait_for_global_capacity(tmp_path: Path, monkeypatch) -> None:
+    book = _write_book(tmp_path, include_vi=False)
+
+    async def fake_export(_html_path: Path, pdf_path: Path) -> dict[str, object]:
+        pdf_path.write_bytes(b"%PDF-test")
+        return {"path": str(pdf_path), "pages": 2, "bytes": pdf_path.stat().st_size}
+
+    async def scenario() -> None:
+        semaphore = asyncio.Semaphore(1)
+        await semaphore.acquire()
+        monkeypatch.setattr(server, "pdf_export_semaphore", semaphore)
+        monkeypatch.setattr("books_core.pdf_export.export_html_pdf", fake_export)
+        server.pdf_export_status[book.name] = {}
+        task = asyncio.create_task(server._run_pdf_export(book.name, book))
+        server.pdf_export_tasks[book.name] = task
+
+        await asyncio.sleep(0)
+        assert server.pdf_export_status[book.name]["state"] == "queued"
+        semaphore.release()
+        await task
+
+        assert server.pdf_export_status[book.name]["state"] == "partial"
+
+    asyncio.run(scenario())
+
+
+def test_chunk_documents_preserves_all_sheets_in_bounded_parts() -> None:
+    sheets = "".join(
+        f'<section class="book-sheet" id="page-{page:04d}">Page {page}</section>'
+        for page in range(1, 6)
+    )
+    html = f"<html><head></head><body><main>{sheets}</main></body></html>"
+
+    chunks = _chunk_documents(html, chunk_size=2)
+
+    assert len(chunks) == 3
+    assert [chunk.count('class="book-sheet"') for chunk in chunks] == [2, 2, 1]
+    assert sum(chunk.count('class="book-sheet"') for chunk in chunks) == 5
+    assert all(chunk.endswith("</main></body></html>") for chunk in chunks)
+
+
+def test_pdf_export_rejects_missing_page_figure_before_assembly(
+    tmp_path: Path, monkeypatch
+) -> None:
+    book = _write_book(tmp_path, include_vi=False)
+    page = book / "output" / "en" / "page_0001.html"
+    content = page.read_text(encoding="utf-8").replace(
+        "</article>",
+        '<img src="../assets/images/page_0001_fig_2.png" alt="Figure"></article>',
+    )
+    page.write_text(content, encoding="utf-8")
+    repaired = book / "output" / "assets" / "images" / "page_0001_fig_2.png"
+
+    async def fake_export(_html_path: Path, pdf_path: Path) -> dict[str, object]:
+        pytest.fail("Export must not start while referenced figures are missing")
+        pdf_path.write_bytes(b"%PDF-test")
+        return {"path": str(pdf_path), "pages": 2, "bytes": pdf_path.stat().st_size}
+
+    monkeypatch.setattr("books_core.pdf_export.export_html_pdf", fake_export)
+    server.pdf_export_status[book.name] = {}
+    server.pdf_export_tasks[book.name] = object()  # type: ignore[assignment]
+
+    asyncio.run(server._run_pdf_export(book.name, book))
+
+    status = server.pdf_export_status[book.name]
+    assert status["state"] == "failed"
+    assert "missing figure assets" in status["error"]
+    assert not repaired.exists()
 
 
 def test_pdf_export_skips_incomplete_language(tmp_path: Path, monkeypatch) -> None:
