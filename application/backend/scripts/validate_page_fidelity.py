@@ -15,9 +15,18 @@ if str(_BACKEND) not in sys.path:
 
 from books_core.asset_paths import lint_images_in_html  # noqa: E402
 from books_core.book_layout import _verify_html_assets  # noqa: E402
+from books_core.content_fidelity import (  # noqa: E402
+    validate_bilingual_structure,
+    validate_source_html_content,
+)
+from books_core.paths import BookPaths  # noqa: E402
 from books_core.validation import ArtifactValidationError, validate_draft_html  # noqa: E402
 from books_core.repair_report import clear_repair_report, write_repair_report  # noqa: E402
 from books_core.rendered_layout import validate_rendered_pages  # noqa: E402
+from books_core.visual_diagnostics import (  # noqa: E402
+    diagnosis_path,
+    validate_html_file_against_visual_plan,
+)
 
 
 def _lint_per_page(path: Path, *, chrome: dict[str, str] | None, book: Path) -> list[str]:
@@ -29,6 +38,40 @@ def _lint_per_page(path: Path, *, chrome: dict[str, str] | None, book: Path) -> 
         validate_draft_html(text)
     except ArtifactValidationError as exc:
         issues.append(f"{name}: {exc}")
+
+    visual_issues = validate_html_file_against_visual_plan(path)
+    issues.extend(f"{name}: {issue}" for issue in visual_issues)
+
+    try:
+        book_paths = BookPaths.open(book)
+        page_match = re.fullmatch(r"page_(\d{4})\.html", path.name, re.I)
+        if page_match:
+            page = int(page_match.group(1))
+            plan = None
+            plan_file = diagnosis_path(book_paths.root, page)
+            if plan_file.is_file():
+                plan = json.loads(plan_file.read_text(encoding="utf-8"))
+            if path.parent.name == book_paths.default_lang():
+                source_pdf = book_paths.source_page_pdf(page)
+                if source_pdf.is_file():
+                    issues.extend(
+                        f"{name}: {issue}"
+                        for issue in validate_source_html_content(
+                            source_pdf,
+                            path,
+                            page_num=page,
+                            plan=plan,
+                        )
+                    )
+            else:
+                source_html = book_paths.page_lang_html(page, book_paths.default_lang())
+                if source_html.is_file():
+                    issues.extend(
+                        f"{name}: {issue}"
+                        for issue in validate_bilingual_structure(source_html, path)
+                    )
+    except Exception as exc:
+        issues.append(f"{name}: content fidelity validation failed: {exc}")
 
     if "page-copyright" in text:
         issues.append(f"{name}: use .book-footer not .page-copyright")

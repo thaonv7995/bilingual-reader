@@ -412,7 +412,10 @@ def test_page_pipeline_runs_agent_vision_before_html_render(tmp_path: Path, monk
         else:
             output = book_arg.page_lang_html(page, "en")
             output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(_standalone_page_html("1", "Figure 1 Photo"), encoding="utf-8")
+            output.write_text(
+                _standalone_page_html("1", "Figure 2.1 Product photograph"),
+                encoding="utf-8",
+            )
         return {"exit_code": 0}
 
     monkeypatch.setattr(pipeline_process, "_run_agent_step", fake_agent_step)

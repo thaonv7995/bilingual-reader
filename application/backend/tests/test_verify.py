@@ -54,3 +54,40 @@ def test_verify_cli(tmp_path: Path) -> None:
     exit_code = main(argv)
     assert exit_code == 0
     assert (book_root / "output" / "assets" / "book.css").is_file()
+
+
+def test_verify_book_treats_rendered_geometry_as_release_gate(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    book_root = tmp_path / "geometry-book"
+    (book_root / "output" / "en").mkdir(parents=True)
+    (book_root / "book.json").write_text(
+        '{"title":"Geometry","page_count":1,"source_lang":"en"}',
+        encoding="utf-8",
+    )
+    (book_root / "output" / "en" / "page_0001.html").write_text(
+        """<!doctype html><html><head>
+<link rel="stylesheet" href="../assets/book.css">
+<link rel="stylesheet" href="../assets/page-tokens.css">
+<link rel="stylesheet" href="../assets/prose-page.css">
+</head><body class="book-standalone"><main class="book-page book-page--sheet">
+<article class="sheet-flow prose-page"><p>Geometry</p></article>
+</main></body></html>""",
+        encoding="utf-8",
+    )
+
+    import books_core.rendered_layout as rendered_layout
+
+    monkeypatch.setattr(
+        rendered_layout,
+        "validate_rendered_pages",
+        lambda paths, **kwargs: {
+            Path(paths[0]).resolve(): ["horizontal overflow by 12.0px near p"]
+        },
+    )
+
+    result = verify_book(book_root)
+
+    assert result["ready_to_pack"] is False
+    assert any("horizontal overflow" in warning for warning in result["warnings"])

@@ -24,8 +24,12 @@ from books_core.repo import repo_root
 from books_core.extract.service import run_page_pdf
 from books_core.asset_paths import normalize_per_page_asset_file
 from books_core.book_layout import _verify_html_assets, sync_standard_assets
+from books_core.content_fidelity import (
+    validate_bilingual_structure,
+    validate_source_html_content,
+)
 from books_core.validation import validate_draft_html
-from books_core.visual_diagnostics import validate_html_file_against_visual_plan
+from books_core.visual_diagnostics import diagnosis_path, validate_html_file_against_visual_plan
 from books_core.repair_report import write_repair_report
 
 
@@ -38,6 +42,27 @@ def standalone_page_valid(path: Path) -> bool:
         validate_draft_html(content)
         if validate_html_file_against_visual_plan(path):
             return False
+        match = re.fullmatch(r"page_(\d{4})\.html", path.name, re.I)
+        if match and len(path.parents) >= 3:
+            book = BookPaths.open(path.parents[2])
+            page = int(match.group(1))
+            plan = None
+            plan_path = diagnosis_path(book.root, page)
+            if plan_path.is_file():
+                plan = json.loads(plan_path.read_text(encoding="utf-8"))
+            if path.parent.name == book.default_lang():
+                source_pdf = book.source_page_pdf(page)
+                if source_pdf.is_file() and validate_source_html_content(
+                    source_pdf,
+                    path,
+                    page_num=page,
+                    plan=plan,
+                ):
+                    return False
+            else:
+                primary = book.page_lang_html(page, book.default_lang())
+                if primary.is_file() and validate_bilingual_structure(primary, path):
+                    return False
         return not _verify_html_assets(path, content, ignore_page_figures=True)
     except Exception:
         return False
@@ -74,6 +99,9 @@ def get_translation_error_details(proc, target_html, agy_log_path: Path) -> str:
             asset_errors = _verify_html_assets(target_html, content, ignore_page_figures=True)
             if asset_errors:
                 raise ValueError("; ".join(asset_errors))
+            structure_errors = validate_bilingual_structure(source_html, target_html)
+            if structure_errors:
+                raise ValueError("; ".join(structure_errors))
         except Exception as e:
             validation_err = f"\n[validation error]: {e}"
             

@@ -8,6 +8,10 @@ from typing import Any
 from books_agent.session import prepare_session, run_agent
 from books_core.compile.gates import PipelineGateError, require_page_pdf
 from books_core.paths import BookPaths
+from books_core.content_fidelity import (
+    validate_bilingual_structure,
+    validate_source_html_content,
+)
 from books_core.pipeline.status import (
     append_live_log,
     clear_live_log,
@@ -36,6 +40,9 @@ def _page_ready_at(path, *, asset_base=None) -> bool:
 
         if validate_html_file_against_visual_plan(path):
             return False
+        fidelity_errors = _page_fidelity_errors(path)
+        if fidelity_errors:
+            return False
         return not _verify_html_assets(
             path,
             content,
@@ -44,6 +51,43 @@ def _page_ready_at(path, *, asset_base=None) -> bool:
         )
     except Exception:
         return False
+
+
+def _page_fidelity_errors(path) -> list[str]:
+    """Run source-content and bilingual structure checks when book context exists."""
+    import re
+
+    match = re.fullmatch(r"page_(\d{4})\.html", path.name, re.I)
+    if not match or len(path.parents) < 3:
+        return []
+    book_root = path.parents[2]
+    try:
+        book = BookPaths.open(book_root)
+        page = int(match.group(1))
+        lang = path.parent.name
+        plan = None
+        plan_path = diagnosis_path(book.root, page)
+        if plan_path.is_file():
+            plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        errors: list[str] = []
+        if lang == book.default_lang():
+            source_pdf = book.source_page_pdf(page)
+            if source_pdf.is_file():
+                errors.extend(
+                    validate_source_html_content(
+                        source_pdf,
+                        path,
+                        page_num=page,
+                        plan=plan,
+                    )
+                )
+        else:
+            primary = book.page_lang_html(page, book.default_lang())
+            if primary.is_file():
+                errors.extend(validate_bilingual_structure(primary, path))
+        return errors
+    except Exception as exc:
+        return [f"content fidelity validation failed: {exc}"]
 
 
 def _published_ready(book: BookPaths, page: int, lang: str | None = None) -> bool:
@@ -66,6 +110,9 @@ def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
             normalize_per_page_asset_file(published)
             content = published.read_text(encoding="utf-8")
             validate_draft_html(content)
+            fidelity_errors = _page_fidelity_errors(published)
+            if fidelity_errors:
+                return f"{published.name} failed fidelity: " + "; ".join(fidelity_errors)
             
             # Verify CSS, JS, and image assets! Ignore page figures as they are cropped post-render
             from books_core.book_layout import _verify_html_assets
@@ -87,6 +134,9 @@ def check_published_errors(book: BookPaths, page: int, lang: str) -> str | None:
             normalize_per_page_asset_file(final)
             content = final.read_text(encoding="utf-8")
             validate_draft_html(content)
+            fidelity_errors = _page_fidelity_errors(final)
+            if fidelity_errors:
+                return f"{final.name} failed fidelity: " + "; ".join(fidelity_errors)
             
             # Verify CSS, JS, and image assets! Ignore page figures as they are cropped post-render
             from books_core.book_layout import _verify_html_assets

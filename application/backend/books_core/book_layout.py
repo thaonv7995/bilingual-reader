@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 from html.parser import HTMLParser
 from pathlib import Path
@@ -302,7 +303,15 @@ def verify_book(
     invalid_pages_vi = []
 
     from books_core.asset_paths import normalize_per_page_asset_file
+    from books_core.content_fidelity import (
+        validate_bilingual_structure,
+        validate_source_html_content,
+    )
     from books_core.validation import validate_draft_html
+    from books_core.visual_diagnostics import (
+        diagnosis_path,
+        validate_html_file_against_visual_plan,
+    )
     from concurrent.futures import ThreadPoolExecutor
 
     default_lang = book.default_lang()
@@ -334,6 +343,27 @@ def verify_book(
                     res_dict["normalized"].append(str(en_path.relative_to(book.root)))
                 content = en_path.read_text(encoding="utf-8")
                 validate_draft_html(content)
+                for issue in validate_html_file_against_visual_plan(en_path):
+                    res_dict["is_broken"] = True
+                    res_dict["invalid_en"].append(
+                        f"Page {page} ({default_lang}) - {issue}"
+                    )
+                source_pdf = book.source_page_pdf(page)
+                if source_pdf.is_file():
+                    plan = None
+                    plan_file = diagnosis_path(book.root, page)
+                    if plan_file.is_file():
+                        plan = json.loads(plan_file.read_text(encoding="utf-8"))
+                    for issue in validate_source_html_content(
+                        source_pdf,
+                        en_path,
+                        page_num=page,
+                        plan=plan,
+                    ):
+                        res_dict["is_broken"] = True
+                        res_dict["invalid_en"].append(
+                            f"Page {page} ({default_lang}) - {issue}"
+                        )
                 asset_errors = _verify_html_assets(en_path, content)
                 if asset_errors:
                     res_dict["is_broken"] = True
@@ -358,6 +388,16 @@ def verify_book(
                         res_dict["normalized"].append(str(vi_path.relative_to(book.root)))
                     content = vi_path.read_text(encoding="utf-8")
                     validate_draft_html(content)
+                    for issue in validate_html_file_against_visual_plan(vi_path):
+                        res_dict["is_broken"] = True
+                        res_dict["invalid_vi"].append(
+                            f"Page {page} ({translation_lang}) - {issue}"
+                        )
+                    for issue in validate_bilingual_structure(en_path, vi_path):
+                        res_dict["is_broken"] = True
+                        res_dict["invalid_vi"].append(
+                            f"Page {page} ({translation_lang}) - {issue}"
+                        )
                     asset_errors = _verify_html_assets(vi_path, content)
                     if asset_errors:
                         res_dict["is_broken"] = True
@@ -419,6 +459,27 @@ def verify_book(
     except Exception as ae:
         assembly_ok = False
         warnings.append(f"Assembly exception: {ae}")
+
+    # Geometry is a release gate, not merely an advisory lint.  Validate every
+    # standalone language page so clipped text/images cannot be hidden by the
+    # assembled document's page breaks.
+    page_paths = [
+        path.resolve()
+        for lang in ([default_lang, translation_lang] if has_translation else [default_lang])
+        for path in sorted(book.pages_dir(lang).glob("page_*.html"))
+    ]
+    if page_paths:
+        try:
+            from books_core.rendered_layout import validate_rendered_pages
+
+            rendered_issues = validate_rendered_pages(page_paths, concurrency=4)
+            for path, issues in rendered_issues.items():
+                for issue in issues:
+                    assembly_ok = False
+                    warnings.append(f"{path.parent.name}/{path.name} - {issue}")
+        except (FileNotFoundError, RuntimeError, OSError) as exc:
+            assembly_ok = False
+            warnings.append(f"Rendered layout validation unavailable: {exc}")
 
     # Ready to pack requires no missing/invalid pages and successful assembly with no local asset errors in pages
     # Note: we check if there are any warnings/invalid pages.

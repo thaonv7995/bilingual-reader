@@ -22,6 +22,26 @@ def _write_source_pdf(path: Path) -> None:
     page.insert_text((30, 150), "Cover", fontsize=28, color=(1, 1, 1))
     doc.save(path)
     doc.close()
+    page_num = int(path.parent.name.split("_")[-1])
+    (path.parent / "visual-diagnosis.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "2.0",
+                "producer": "agent-vision",
+                "status": "finalized",
+                "page": page_num,
+                "figures": [
+                    {
+                        "id": "1",
+                        "type": "cover",
+                        "strategy": "extract-raster",
+                        "bbox_normalized": [0.0, 0.0, 1.0, 1.0],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
 
 
 def _page_html(body: str) -> str:

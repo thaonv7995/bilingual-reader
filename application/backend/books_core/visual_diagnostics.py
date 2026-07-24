@@ -619,6 +619,10 @@ def finalize_agent_visual_plan(book_root: Path, page_num: int) -> dict[str, Any]
         "source_pdf": str(pdf_path),
         "source_image": reference,
         "page_bbox": reference["page_bbox"],
+        # Preserve the agent's page-level geometry contract.  Dropping this
+        # field during finalization silently converted source-anchored plans
+        # into ordinary figure-only plans.
+        "page_layout": data.get("page_layout"),
         "figures": figures,
     }
     atomic_write_json(plan_path, finalized)
@@ -729,9 +733,14 @@ def validate_html_file_against_visual_plan(html_path: Path) -> list[str]:
     book_root = html_path.parents[2]
     plan_path = diagnosis_path(book_root, page_num)
     if not plan_path.is_file():
+        source_pdf = book_root / "work" / f"page_{page_num:04d}" / "source.pdf"
+        if source_pdf.is_file():
+            return [f"missing finalized visual plan: {plan_path}"]
         return []
     try:
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        if not isinstance(plan, dict):
+            return [f"visual plan is not an object: {plan_path}"]
         if plan.get("producer") == "agent-vision" and validate_agent_visual_plan(
             plan, page_num=page_num
         ):
@@ -741,8 +750,8 @@ def validate_html_file_against_visual_plan(html_path: Path) -> list[str]:
             plan,
             page_num=page_num,
         )
-    except (OSError, ValueError, TypeError, json.JSONDecodeError):
-        return []
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        return [f"visual plan validation failed for {plan_path}: {exc}"]
 
 
 def ensure_visual_diagnosis(
