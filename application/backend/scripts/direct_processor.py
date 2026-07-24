@@ -31,6 +31,7 @@ from books_core.visual_diagnostics import (
     validate_agent_visual_plan,
     validate_html_file_against_visual_plan,
 )
+from books_core.source_profile import build_source_profile
 
 
 import time
@@ -155,6 +156,21 @@ def analyze_visuals_direct(book: BookPaths, page: int) -> bool:
     except (json.JSONDecodeError, ValueError) as exc:
         raise RuntimeError(f"Visual analysis for Page {page} returned invalid JSON: {exc}") from exc
     atomic_write_json(diagnosis_path(book.root, page), raw_plan)
+    # Persist deterministic source geometry separately from the agent's visual
+    # interpretation.  Layout generation and overflow repair use this profile
+    # as the source-of-truth for density and fit policy.
+    source_profile_path = book.page_work(page) / "source-profile.json"
+    source_profile_path.write_text(
+        json.dumps(
+            build_source_profile(
+                book.source_page_pdf(page),
+                diagnosis_path(book.root, page),
+            ),
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     finalize_agent_visual_plan(book.root, page)
     print(f"  ✓ Analyzed Page {page} visuals")
     return True

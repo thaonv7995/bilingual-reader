@@ -9,6 +9,9 @@ For each overflowing page:
 """
 import sys, json, asyncio, pathlib, re
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+from books_core.source_profile import load_source_profile
+
 BOOK_DIR = pathlib.Path("/Users/thaonv/Desktop/Books HTML/books/english-idioms-in-use-advanced/output")
 A4_HEIGHT_PX = 1123
 TOLERANCE_PX = 5
@@ -54,7 +57,8 @@ def compute_fix_params(overflow_px: int, base_font: float = 10.5):
     # Scale = available / (available + overflow)
     available = A4_HEIGHT_PX - TOLERANCE_PX
     scale = available / (available + overflow_px)
-    scale = max(0.72, min(0.98, scale))  # clamp to reasonable range
+    # Never use the old 0.72 fallback: it makes dense pages unreadably small.
+    scale = max(0.92, min(0.96, scale))
     
     font_size = round(base_font * scale, 2)
     line_height = round(1.35 * scale + (1 - scale) * 1.1, 3)
@@ -140,8 +144,27 @@ async def fix_overflow(lang: str):
             html_path = pathlib.Path(item['path'])
             initial_overflow = item['overflowPx']
             page_num = item['page']
+            profile = load_source_profile(html_path, page_num)
+            policy = (profile or {}).get("fit_policy", {})
+            density = (profile or {}).get("density", "unknown")
             
             print(f"\n  [{lang}/page_{page_num:04d}] overflow={initial_overflow}px", flush=True)
+
+            # A tight source page must be repaired structurally (or split), not
+            # globally scaled.  Preserve the issue for the page-level repair UI.
+            if density in {"tight", "overfull-source"} or initial_overflow > 80:
+                print(
+                    f"    ! source-aware hold: density={density}, "
+                    f"overflow={initial_overflow}px; skipping global scale",
+                    flush=True,
+                )
+                still_overflowing.append({
+                    **item,
+                    "repair": "source-aware-local-or-split",
+                    "source_density": density,
+                    "min_body_font_pt": policy.get("min_body_font_pt", 11.0),
+                })
+                continue
             
             # Iterative fix - try up to 4 passes with increasing aggressiveness
             current_overflow = initial_overflow
